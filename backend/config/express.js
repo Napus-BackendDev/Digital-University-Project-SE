@@ -10,6 +10,8 @@ let isReady = false;
 module.exports = function () {
   const app = express();
 
+  app.use(express.json());
+
   // Swagger setup
   // swagger(app);
 

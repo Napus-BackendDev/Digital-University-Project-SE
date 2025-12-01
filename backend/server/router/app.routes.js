@@ -1,10 +1,7 @@
+// Import routes
+const questionRoutes = require('../Project/Questions/questions.routes');
+
 module.exports = function (app) {
-    // Import routes here
-    // const formRoutes = require('../Project/Form/form.routes');
-    
-    // Register routes
-    // formRoutes(app);
-    
     // Default route
     app.get('/', (req, res) => {
         res.json({
@@ -13,6 +10,8 @@ module.exports = function (app) {
             timestamp: new Date()
         });
     });
+
+    app.use('/question', questionRoutes);
     
     // 404 handler
     app.use((req, res) => {
