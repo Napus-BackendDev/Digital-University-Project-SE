@@ -32,6 +32,23 @@ exports.onCreate = async function (request, response) {
     }
 };
 
+exports.onDuplicate = async function (request, response) {
+    try {
+        let query = {}
+        query._id = new mongo.ObjectId(request.body._id);
+        const doc = await form.onQuery(query);
+        if (doc.can_duplicate === false) {
+            return ResMessage.sendResponse(response, 0, 40302);
+        }
+        delete doc._id;
+        const duplicate_Doc = await form.onCreate(doc);
+        return ResMessage.sendResponse(response, 0 , 20000, duplicate_Doc);
+    } catch (err) {
+        console.log(err);
+        return ResMessage.sendResponse(response, 0, 40400);
+    }
+};
+
 exports.onUpdate = async function (request, response) {
     try {
         let query = {}
