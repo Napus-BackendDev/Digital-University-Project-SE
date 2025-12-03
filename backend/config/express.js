@@ -2,7 +2,7 @@
 const express = require("express");
 const initialize = require("../helpers/initialize");
 const middlewares = require('../middleware/middlewares');
-// const swagger = require("../swagger/swagger");
+const swagger = require("../swagger/swagger");
 const routes = require("../server/router/app.routes");
 
 let isReady = false;
@@ -10,10 +10,8 @@ let isReady = false;
 module.exports = function () {
   const app = express();
 
-  app.use(express.json());
-
   // Swagger setup
-  // swagger(app);
+  swagger(app);
 
   initialize.init(function (status) {
     if (status) {
