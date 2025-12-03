@@ -1,7 +1,7 @@
 //app.js
 const express = require("express");
 const initialize = require("../helpers/initialize");
-// const middlewares = require('../middleware/middlewares');
+const middlewares = require('../middleware/middlewares');
 // const swagger = require("../swagger/swagger");
 const routes = require("../server/router/app.routes");
 
@@ -15,7 +15,7 @@ module.exports = function () {
 
   initialize.init(function (status) {
     if (status) {
-      // middlewares(app);
+      middlewares(app);
       app.use(function (req, res, next) {
         if (req.method === "OPTIONS") {
           const headers = {
