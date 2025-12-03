@@ -1,3 +1,5 @@
+// Import routes
+const questionRoutes = require('../Project/Questions/questions.routes');
 const formRoutes = require("../Project/Form/form.routes");
 const responseRoutes = require("../Project/Response/response.routes");
 
@@ -6,12 +8,13 @@ module.exports = function (app) {
 
   app.use(path + "/form", formRoutes);
   app.use(path + "/response", responseRoutes);
+  app.use(path + '/question', questionRoutes);
 
   // 404 handler
   app.use((req, res) => {
     res.status(404).json({
-      message: "Route not found",
-      path: req.path,
+      message: 'Route not found',
+      path: req.path
     });
   });
 };
