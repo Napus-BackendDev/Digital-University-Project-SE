@@ -16,7 +16,7 @@ const { corsOptions, ipCheckMiddleware } = require('../config/corsAndIP');
 const { limiter, blockMiddleware } = require('../config/rateLimit');
 
 // Import logger
-const  loggerMiddleware  = require('../config/logger');
+const loggerMiddleware  = require('../config/logger');
 
 module.exports = function (app) {
 
@@ -51,7 +51,7 @@ module.exports = function (app) {
     app.use(express.static(path.join(__dirname, "../node_modules/bootstrap/dist")));
 
     // การใช้งาน logger ใน Express
-    // app.use(loggerMiddleware);
+    app.use(loggerMiddleware);
 
     // Handle errors
     app.use((err, req, res, next) => {
