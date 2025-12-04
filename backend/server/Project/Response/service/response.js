@@ -1,49 +1,47 @@
-const mongo = require('mongodb');
-const form = require("../controller/form"); 
+const mongo = require("mongodb");
+const responseService = require("../controller/response");
 const ResMessage = require("../../Settings/service/message");
 
 exports.onQuery = async function (request, response) {
     try {
         let query = {};
-        const doc = await form.onQuery(query);
+        const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         return ResMessage.sendResponse(response, 0, 40400);
     }
 }
 
-exports.onQuerys = async function (request, response) {
+exports.onGetByFormId = async function (request, response) {
     try {
         let query = {};
-        const doc = await form.onQuerys(query);
+        query.form_id = request.query.form_id;
+        const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         return ResMessage.sendResponse(response, 0, 40400);
     }
+};
+
+exports.onGetById = async function (request, response) {
+    try {
+        let query = {};
+        query._id = new mongo.ObjectId(request.query._id);
+        const doc = await responseService.onQuery(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        return ResMessage.sendResponse(response, 0, 40400);
+    }
+};
+
+exports.onExportResponses = async function (request, response) {
+    //Need to implement export .csv functionality
 };
 
 exports.onCreate = async function (request, response) {
     try {
-        const doc = await form.onCreate(request.body);
+        const doc = await responseService.onCreate(request.body);
         return ResMessage.sendResponse(response, 0, 20000, doc);
-    } catch (err) {
-        console.log(err);
-        return ResMessage.sendResponse(response, 0, 40400);
-    }
-};
-
-exports.onDuplicate = async function (request, response) {
-    try {
-        let query = {}
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await form.onQuery(query);
-        if (doc.can_duplicate === false || doc.status !== 'draft') {
-            return ResMessage.sendResponse(response, 0, 40302);
-        }
-        doc.originalFormId = request.body._id;
-        delete doc._id;
-        const duplicate_Doc = await form.onCreate(doc);
-        return ResMessage.sendResponse(response, 0 , 20000, duplicate_Doc);
     } catch (err) {
         console.log(err);
         return ResMessage.sendResponse(response, 0, 40400);
@@ -54,22 +52,22 @@ exports.onUpdate = async function (request, response) {
     try {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
-        const doc = await form.onUpdate(query, request.body);
+        const doc = await responseService.onUpdate(query, request.body);
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
         console.log(err);
         return ResMessage.sendResponse(response, 0, 40400);
     }
-}
+};
 
 exports.onDelete = async function (request, response) {
     try {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
-        const doc = await form.onDelete(query);
+        const doc = await responseService.onDelete(query);
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
         console.log(err);
         return ResMessage.sendResponse(response, 0, 40400);
     }
-}
+};
