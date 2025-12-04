@@ -7,7 +7,7 @@ var Schema = mongoose.Schema;
 var objSchema = new Schema({
     // creator : { type: Schema.Types.ObjectId, ref: 'users' },
     title : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
-    // questions: [{ type: Schema.Types.ObjectId, ref: 'questions' }],
+    questions: [{ type: Schema.Types.ObjectId, ref: 'questions' }],
     can_duplicate: { type: Boolean, default: false },
     // permissionRole: [{ type: Schema.Types.ObjectId, ref: 'roles' }],
     status: { type: String, enum: ['draft', 'open','close'], default: 'draft' },
