@@ -1,5 +1,5 @@
 const mongo = require("mongodb");
-const responseService = require("../controllers/response");
+const responseService = require("../controller/response");
 const ResMessage = require("../../Settings/service/message");
 
 exports.onQuery = async function (request, response) {
@@ -71,7 +71,3 @@ exports.onDelete = async function (request, response) {
         return ResMessage.sendResponse(response, 0, 40400);
     }
 };
-
-
-
-

@@ -3,7 +3,8 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var questionSchema = new Schema({
+var objSchema = new Schema({
+    form: { type: Schema.Types.ObjectId, ref: 'Forms' },
     order: { type: Number, default: 1 },
     questionText: { type: String, required: true },
     type: { type: String, enum: ['Text', 'Rating', 'Checkbox', 'Choices'], required: true },
@@ -29,7 +30,17 @@ var ChoicesSchema = new Schema({
     subQuestion: [{ type: Schema.Types.ObjectId, ref: 'Questions' }]
 });
 
-var Questions = mongoose.model('Questions', questionSchema);
+objSchema.post('save', async function (doc, next) {
+    try {
+        const Form = mongoose.model('Forms');
+        await Form.findByIdAndUpdate(doc.form, { $push: { questions: doc._id } });
+        next();
+    } catch (err) {
+        next(err);
+    }
+}) 
+
+var Questions = mongoose.model('Questions', objSchema, 'Questions');
 
 var TextQuestion = Questions.discriminator('Text', TextSchema);
 var RatingQuestion = Questions.discriminator('Rating', RatingSchema);

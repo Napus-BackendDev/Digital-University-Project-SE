@@ -6,8 +6,8 @@ const defaultPopulate = [
     // { path: 'users' , select: '' },
     { path: 'questions' , select: '' },
     // { path: 'permissionRole' , select: '' },
-    // { path: 'response' , select: '' },
-    // { path: 'forms' , select: '' }
+    { path: 'responses' , select: '' },
+    { path: 'originalFormId' , select: '' }
 ]
 
 module.exports = createBaseService(objSchema, defaultPopulate);

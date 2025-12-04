@@ -37,9 +37,10 @@ exports.onDuplicate = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await form.onQuery(query);
-        if (doc.can_duplicate === false) {
+        if (doc.can_duplicate === false || doc.status !== 'draft') {
             return ResMessage.sendResponse(response, 0, 40302);
         }
+        doc.originalFormId = request.body._id;
         delete doc._id;
         const duplicate_Doc = await form.onCreate(doc);
         return ResMessage.sendResponse(response, 0 , 20000, duplicate_Doc);
