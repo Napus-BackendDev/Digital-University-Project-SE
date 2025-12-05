@@ -12,11 +12,7 @@ var objSchema = new Schema({
     // permissionRole: [{ type: Schema.Types.ObjectId, ref: 'roles' }],
     status: { type: String, enum: ['draft', 'open','close'], default: 'draft' },
     schedule: {
-        mode: { 
-            type: String, 
-            enum: ['manual', 'auto'], 
-            default: 'manual' 
-        },
+        mode: { type: String, enum: ['manual', 'auto'], default: 'manual' },
         startAt: { type: Date, default: null },
         endAt: { type: Date, default: null }
     },

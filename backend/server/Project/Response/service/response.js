@@ -8,7 +8,7 @@ exports.onQuery = async function (request, response) {
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400);
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
 }
 
@@ -19,7 +19,7 @@ exports.onGetByFormId = async function (request, response) {
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400);
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
 };
 
@@ -30,7 +30,7 @@ exports.onGetById = async function (request, response) {
         const doc = await responseService.onQuery(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400);
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
 };
 
@@ -44,7 +44,7 @@ exports.onCreate = async function (request, response) {
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
-        return ResMessage.sendResponse(response, 0, 40400);
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
 };
 
@@ -56,7 +56,7 @@ exports.onUpdate = async function (request, response) {
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
         console.log(err);
-        return ResMessage.sendResponse(response, 0, 40400);
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
 };
 
@@ -68,6 +68,6 @@ exports.onDelete = async function (request, response) {
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
         console.log(err);
-        return ResMessage.sendResponse(response, 0, 40400);
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
 };

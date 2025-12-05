@@ -2,7 +2,6 @@ const mongo = require("mongodb");
 var infomation_messages = require('../controller/message')
 var resMsg = require('./message');
 
-
 exports.onQuery = async function (request, response, next) {
     try {
 

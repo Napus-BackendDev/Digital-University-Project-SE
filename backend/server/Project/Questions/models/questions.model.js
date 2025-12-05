@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
-    form: { type: Schema.Types.ObjectId, ref: 'Forms' },
+    form: { type: Schema.Types.ObjectId, ref: 'Forms', required: true },
     order: { type: Number, default: 1 },
     questionText: { type: String, required: true },
     type: { type: String, enum: ['Text', 'Rating', 'Checkbox', 'Choices'], required: true },
@@ -32,8 +32,8 @@ var ChoicesSchema = new Schema({
 
 objSchema.post('save', async function (doc, next) {
     try {
-        const Form = mongoose.model('Forms');
-        await Form.findByIdAndUpdate(doc.form, { $push: { questions: doc._id } });
+        const form = mongoose.model('Forms');
+        await form.findByIdAndUpdate(doc.form, { $push: { questions: doc._id } });
         next();
     } catch (err) {
         next(err);
