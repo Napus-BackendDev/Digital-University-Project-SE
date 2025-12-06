@@ -2,7 +2,7 @@ const mongo = require("mongodb");
 const responseService = require("../controllers/response");
 const ResMessage = require("../../Settings/service/message");
 
-exports.onQuery = async function (request, response) {
+exports.onQuerys = async function (request, response) {
     try {
         let query = {};
         const doc = await responseService.onQuerys(query);
@@ -15,7 +15,17 @@ exports.onQuery = async function (request, response) {
 exports.onGetByFormId = async function (request, response) {
     try {
         let query = {};
-        query.form_id = request.query.form_id;
+        query.form = request.query.form_id;
+        const doc = await responseService.onQuerys(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        return ResMessage.sendResponse(response, 0, 40400);
+    }
+};
+exports.onGetByUserId = async function (request, response) {
+    try {
+        let query = {};
+        query.responder = request.query.user_id;
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
@@ -30,12 +40,14 @@ exports.onGetById = async function (request, response) {
         const doc = await responseService.onQuery(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
+        console.log(err);
         return ResMessage.sendResponse(response, 0, 40400);
     }
 };
 
 exports.onExportResponses = async function (request, response) {
     //Need to implement export .csv functionality
+    // 
 };
 
 exports.onCreate = async function (request, response) {
@@ -64,6 +76,17 @@ exports.onDelete = async function (request, response) {
     try {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
+        const doc = await responseService.onDelete(query);
+        return ResMessage.sendResponse(response, 0 , 20000, doc);
+    } catch (err) {
+        console.log(err);
+        return ResMessage.sendResponse(response, 0, 40400);
+    }
+};
+exports.onDeleteByFormId = async function (request, response) {
+    try {
+        let query = {}
+        query.form = request.body.form_id;
         const doc = await responseService.onDelete(query);
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {

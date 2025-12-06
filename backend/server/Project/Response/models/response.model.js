@@ -4,10 +4,10 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
-    responder: { type: Schema.Types.ObjectId, ref: 'users' },
+    responder_id: {type: Schema.Types.ObjectId, ref: 'users'},
     form: { type: Schema.Types.ObjectId, ref: 'forms' },
     answers: [{ 
-        question: { type: Schema.Types.ObjectId, ref: 'questions' },
+        question: { type: Schema.Types.ObjectId, ref: 'Questions' },
         response: { type: Schema.Types.Mixed }
     }],
     submittedAt: { type: Date, default: Date.now }

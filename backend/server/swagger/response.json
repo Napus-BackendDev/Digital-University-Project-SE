@@ -1,0 +1,413 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Digital University Project API",
+        "version": "1.0.0",
+        "description": "API Document starting with /api/v1"
+    },
+    "paths": {
+        "/response": {
+            "get": {
+                "summary": "Get all responses",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "_id": {
+                                                        "type": "string",
+                                                        "example": "693316fcd9ad108ceec2b0f8"
+                                                    },
+                                                    "responder_id": {
+                                                        "type": "string",
+                                                        "example": "693316fcd9ad108ceec2b0d4"
+                                                    },
+                                                    "form": {
+                                                        "type": "string",
+                                                        "example": "693316fcd9ad108ceec2b0c7"
+                                                    },
+                                                    "answers": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "_id": {
+                                                                    "type": "string"
+                                                                },
+                                                                "question": {
+                                                                    "type": "string"
+                                                                },
+                                                                "response": {}
+                                                            }
+                                                        }
+                                                    },
+                                                    "submittedAt": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "createdAt": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updatedAt": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Submit a new response",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "form",
+                                    "answers"
+                                ],
+                                "properties": {
+                                    "responder_id": {
+                                        "type": "string"
+                                    },
+                                    "form": {
+                                        "type": "string"
+                                    },
+                                    "answers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "response": {}
+                                            }
+                                        }
+                                    },
+                                    "submittedAt": {
+                                        "type": "date"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            },
+            "put": {
+                "summary": "Update a response",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    },
+                                    "responder_id": {
+                                        "type": "string"
+                                    },
+                                    "form": {
+                                        "type": "string"
+                                    },
+                                    "answers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "response": {}
+                                            }
+                                        }
+                                    },
+                                    "submittedAt": {
+                                        "type": "date"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete a response",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/response/getByFormId": {
+            "get": {
+                "summary": "Get responses by form ID",
+                "parameters": [
+                    {
+                        "name": "form_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "responder_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "form": {
+                                                        "type": "object"
+                                                    },
+                                                    "answers": {
+                                                        "type": "array"
+                                                    },
+                                                    "submittedAt": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/response/getByUserId": {
+            "get": {
+                "summary": "Get responses by user ID",
+                "parameters": [
+                    {
+                        "name": "responder_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "responder_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "form": {
+                                                        "type": "object"
+                                                    },
+                                                    "answers": {
+                                                        "type": "array"
+                                                    },
+                                                    "submittedAt": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/response/getById": {
+            "get": {
+                "summary": "Get response by ID",
+                "parameters": [
+                    {
+                        "name": "response_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "_id": {
+                                                    "type": "string"
+                                                },
+                                                "responder_id": {
+                                                    "type": "string"
+                                                },
+                                                "form": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "_id": {
+                                                            "type": "string"
+                                                        },
+                                                        "title": {
+                                                            "type": "array"
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "answers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "question": {
+                                                                "type": "object"
+                                                            },
+                                                            "response": {}
+                                                        }
+                                                    }
+                                                },
+                                                "submittedAt": {
+                                                    "type": "string"
+                                                },
+                                                "createdAt": {
+                                                    "type": "string"
+                                                },
+                                                "updatedAt": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/response/exportResponsesByFormId": {
+            "get": {
+                "summary": "Export responses by form ID",
+                "parameters": [
+                    {
+                        "name": "form_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/response/deleteByFormId": {
+            "delete": {
+                "summary": "Delete all responses by form ID",
+                "parameters": [
+                    {
+                        "name": "form_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        }
+    }
+}

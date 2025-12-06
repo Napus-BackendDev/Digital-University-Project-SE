@@ -4,6 +4,7 @@ require('dotenv').config({ path: '.env.dev' });
 const mongoose = require('mongoose');
 const Form = require('./server/Project/Form/models/form.model');
 const Response = require('./server/Project/Response/models/response.model');
+const { Questions, TextQuestion, RatingQuestion, CheckboxQuestion, ChoicesQuestion } = require('./server/Project/Questions/models/questions.model');
 
 // MongoDB connection
 const mongoURI = process.env.MONGODB;
@@ -20,9 +21,199 @@ async function seedDatabase() {
         // Clear existing data (optional - comment out if you want to keep existing data)
         await Form.deleteMany({});
         await Response.deleteMany({});
+        await Questions.deleteMany({});
         console.log('🗑️  Cleared existing data');
 
-        // Create demo forms with questions
+        // ============================================
+        // 1. CREATE QUESTIONS
+        // ============================================
+        
+        // Questions for Student Satisfaction Survey
+        const satisfactionQuestions = [
+            await TextQuestion.create({
+                order: 1,
+                questionText: 'What do you think about our university?',
+                required: true,
+                subquestionText: 'Please provide detailed feedback'
+            }),
+            await RatingQuestion.create({
+                order: 2,
+                questionText: 'Rate your overall satisfaction',
+                required: true,
+                min: 1,
+                max: 5,
+                step: 1
+            }),
+            await CheckboxQuestion.create({
+                order: 3,
+                questionText: 'What aspects did you like the most? (Select all that apply)',
+                required: false,
+                checked: false
+            }),
+            await RatingQuestion.create({
+                order: 4,
+                questionText: 'Rate the course content',
+                required: true,
+                min: 1,
+                max: 5,
+                step: 1
+            }),
+            await RatingQuestion.create({
+                order: 5,
+                questionText: 'Rate the instructor',
+                required: true,
+                min: 1,
+                max: 5,
+                step: 1
+            }),
+            await TextQuestion.create({
+                order: 6,
+                questionText: 'Any suggestions for improvement?',
+                required: false,
+                subquestionText: 'Your feedback helps us improve'
+            })
+        ];
+
+        // Questions for Course Feedback Form
+        const courseFeedbackQuestions = [
+            await TextQuestion.create({
+                order: 1,
+                questionText: 'Course Name',
+                required: true,
+                subquestionText: 'Enter the full course name'
+            }),
+            await RatingQuestion.create({
+                order: 2,
+                questionText: 'Overall course rating',
+                required: true,
+                min: 1,
+                max: 5,
+                step: 1
+            }),
+            await TextQuestion.create({
+                order: 3,
+                questionText: 'What did you learn from this course?',
+                required: false,
+                subquestionText: 'Describe key takeaways'
+            })
+        ];
+
+        // Questions for Event Registration
+        const eventQuestions = [
+            await TextQuestion.create({
+                order: 1,
+                questionText: 'Full Name',
+                required: true,
+                subquestionText: 'First and Last Name'
+            }),
+            await TextQuestion.create({
+                order: 2,
+                questionText: 'Email Address',
+                required: true,
+                subquestionText: 'University email preferred'
+            }),
+            await CheckboxQuestion.create({
+                order: 3,
+                questionText: 'Select sessions to attend',
+                required: false,
+                checked: false
+            })
+        ];
+
+        // Questions for Library Services
+        const libraryQuestions = [
+            await RatingQuestion.create({
+                order: 1,
+                questionText: 'Rate library facilities',
+                required: true,
+                min: 1,
+                max: 5,
+                step: 1
+            }),
+            await CheckboxQuestion.create({
+                order: 2,
+                questionText: 'Which services do you use?',
+                required: false,
+                checked: false
+            })
+        ];
+
+        // Questions for IT Support
+        const itSupportQuestions = [
+            await TextQuestion.create({
+                order: 1,
+                questionText: 'Describe your issue',
+                required: true,
+                subquestionText: 'Provide as much detail as possible'
+            }),
+            await CheckboxQuestion.create({
+                order: 2,
+                questionText: 'Problem category',
+                required: true,
+                checked: false
+            }),
+            await RatingQuestion.create({
+                order: 3,
+                questionText: 'Urgency level (1=Low, 5=Critical)',
+                required: true,
+                min: 1,
+                max: 5,
+                step: 1
+            })
+        ];
+
+        // Questions with Sub-questions for Advanced Survey
+        const subQuestion1 = await TextQuestion.create({
+            order: 1,
+            questionText: 'Please specify which programming languages',
+            required: false,
+            subquestionText: 'List programming languages you use'
+        });
+
+        const subQuestion2 = await RatingQuestion.create({
+            order: 2,
+            questionText: 'Rate your satisfaction with technical support',
+            required: true,
+            min: 1,
+            max: 5,
+            step: 1
+        });
+
+        const advancedSurveyQuestions = [
+            await TextQuestion.create({
+                order: 1,
+                questionText: 'What is your role?',
+                required: true,
+                subquestionText: 'e.g., Student, Faculty, Staff'
+            }),
+            await ChoicesQuestion.create({
+                order: 2,
+                questionText: 'Do you use programming in your work/studies?',
+                required: true,
+                option: false,
+                subQuestion: [subQuestion1._id]
+            }),
+            await ChoicesQuestion.create({
+                order: 3,
+                questionText: 'Have you contacted technical support?',
+                required: true,
+                option: false,
+                subQuestion: [subQuestion2._id]
+            }),
+            await CheckboxQuestion.create({
+                order: 4,
+                questionText: 'Which facilities do you use regularly?',
+                required: false,
+                checked: false
+            })
+        ];
+
+        console.log(`✅ Created ${satisfactionQuestions.length + courseFeedbackQuestions.length + eventQuestions.length + libraryQuestions.length + itSupportQuestions.length + advancedSurveyQuestions.length + 2} questions (including 2 sub-questions)`);
+
+        // ============================================
+        // 2. CREATE FORMS WITH QUESTION REFERENCES
+        // ============================================
+        
         const forms = await Form.insertMany([
             {
                 title: [
@@ -35,56 +226,7 @@ async function seedDatabase() {
                     mode: 'auto',
                     startAt: new Date('2025-01-01'),
                     endAt: new Date('2025-12-31')
-                },
-                questions: [
-                    {
-                        id: 'q1',
-                        type: 'text',
-                        question: 'What do you think about our university?',
-                        required: true
-                    },
-                    {
-                        id: 'q2',
-                        type: 'rating',
-                        question: 'Rate your overall satisfaction (1-5)',
-                        required: true,
-                        min: 1,
-                        max: 5
-                    },
-                    {
-                        id: 'q3',
-                        type: 'checkbox',
-                        question: 'What aspects did you like the most?',
-                        required: false,
-                        options: ['Teaching quality', 'Course materials', 'Lab facilities', 'Campus environment', 'Support services']
-                    },
-                    {
-                        id: 'q4',
-                        type: 'section',
-                        question: 'Course Experience',
-                        subQuestions: [
-                            {
-                                id: 'q4a',
-                                type: 'rating',
-                                question: 'Rate the course content',
-                                min: 1,
-                                max: 5
-                            },
-                            {
-                                id: 'q4b',
-                                type: 'rating',
-                                question: 'Rate the instructor',
-                                min: 1,
-                                max: 5
-                            },
-                            {
-                                id: 'q4c',
-                                type: 'text',
-                                question: 'Any suggestions for improvement?'
-                            }
-                        ]
-                    }
-                ]
+                }
             },
             {
                 title: [
@@ -97,29 +239,7 @@ async function seedDatabase() {
                     mode: 'manual',
                     startAt: null,
                     endAt: null
-                },
-                questions: [
-                    {
-                        id: 'q1',
-                        type: 'text',
-                        question: 'Course Name',
-                        required: true
-                    },
-                    {
-                        id: 'q2',
-                        type: 'rating',
-                        question: 'Overall course rating',
-                        required: true,
-                        min: 1,
-                        max: 5
-                    },
-                    {
-                        id: 'q3',
-                        type: 'text',
-                        question: 'What did you learn from this course?',
-                        required: false
-                    }
-                ]
+                }
             },
             {
                 title: [
@@ -132,27 +252,7 @@ async function seedDatabase() {
                     mode: 'manual',
                     startAt: null,
                     endAt: null
-                },
-                questions: [
-                    {
-                        id: 'q1',
-                        type: 'text',
-                        question: 'Full Name',
-                        required: true
-                    },
-                    {
-                        id: 'q2',
-                        type: 'text',
-                        question: 'Email',
-                        required: true
-                    },
-                    {
-                        id: 'q3',
-                        type: 'checkbox',
-                        question: 'Select sessions to attend',
-                        options: ['Morning Session', 'Afternoon Session', 'Evening Workshop']
-                    }
-                ]
+                }
             },
             {
                 title: [
@@ -165,22 +265,7 @@ async function seedDatabase() {
                     mode: 'auto',
                     startAt: new Date('2024-01-01'),
                     endAt: new Date('2024-12-31')
-                },
-                questions: [
-                    {
-                        id: 'q1',
-                        type: 'rating',
-                        question: 'Rate library facilities',
-                        min: 1,
-                        max: 5
-                    },
-                    {
-                        id: 'q2',
-                        type: 'checkbox',
-                        question: 'Which services do you use?',
-                        options: ['Book borrowing', 'Study rooms', 'Online resources', 'Research assistance']
-                    }
-                ]
+                }
             },
             {
                 title: [
@@ -193,184 +278,236 @@ async function seedDatabase() {
                     mode: 'manual',
                     startAt: null,
                     endAt: null
-                },
-                questions: [
-                    {
-                        id: 'q1',
-                        type: 'text',
-                        question: 'Describe your issue',
-                        required: true
-                    },
-                    {
-                        id: 'q2',
-                        type: 'checkbox',
-                        question: 'Problem category',
-                        options: ['Email', 'Network', 'Software', 'Hardware', 'Other']
-                    },
-                    {
-                        id: 'q3',
-                        type: 'rating',
-                        question: 'Urgency level (1=Low, 5=Critical)',
-                        min: 1,
-                        max: 5
-                    }
-                ]
+                }
+            },
+            {
+                title: [
+                    { key: 'en', value: 'Advanced University Survey' },
+                    { key: 'th', value: 'แบบสำรวจขั้นสูงของมหาวิทยาลัย' }
+                ],
+                can_duplicate: false,
+                status: 'open',
+                schedule: {
+                    mode: 'auto',
+                    startAt: new Date('2025-01-01'),
+                    endAt: new Date('2025-06-30')
+                }
             }
         ]);
 
         console.log(`✅ Created ${forms.length} forms`);
 
-        // Create demo responses with detailed answers
+        // ============================================
+        // 3. CREATE RESPONSES WITH QUESTION REFERENCES
+        // ============================================
+        
         const responses = await Response.insertMany([
             {
+                responder_id: new mongoose.Types.ObjectId(),
                 form: forms[0]._id,
                 answers: [
                     { 
-                        questionId: 'q1',
+                        question: satisfactionQuestions[0]._id,
                         response: 'Very satisfied with the course content and teaching methods. The professors are knowledgeable and helpful.' 
                     },
                     { 
-                        questionId: 'q2',
+                        question: satisfactionQuestions[1]._id,
                         response: 5 
                     },
                     { 
-                        questionId: 'q3',
+                        question: satisfactionQuestions[2]._id,
                         response: ['Teaching quality', 'Course materials', 'Campus environment'] 
                     },
                     {
-                        questionId: 'q4',
-                        response: {
-                            'q4a': 5,
-                            'q4b': 5,
-                            'q4c': 'More practical exercises would be great'
-                        }
+                        question: satisfactionQuestions[3]._id,
+                        response: 5
+                    },
+                    {
+                        question: satisfactionQuestions[4]._id,
+                        response: 5
+                    },
+                    {
+                        question: satisfactionQuestions[5]._id,
+                        response: 'More practical exercises would be great'
                     }
                 ],
                 submittedAt: new Date('2025-02-15')
             },
             {
-                form: forms[0]._id,
+                responder_id: new mongoose.Types.ObjectId(),
+                form: forms[3]._id,
                 answers: [
                     { 
-                        questionId: 'q1',
-                        response: 'Good overall experience, but some facilities need improvement' 
-                    },
-                    { 
-                        questionId: 'q2',
+                        question: libraryQuestions[0]._id,
                         response: 4 
                     },
                     { 
-                        questionId: 'q3',
-                        response: ['Teaching quality', 'Support services'] 
-                    },
-                    {
-                        questionId: 'q4',
-                        response: {
-                            'q4a': 4,
-                            'q4b': 5,
-                            'q4c': 'More lab sessions would help'
-                        }
-                    }
-                ],
-                submittedAt: new Date('2025-03-10')
-            },
-            {
-                form: forms[0]._id,
-                answers: [
-                    { 
-                        questionId: 'q1',
-                        response: 'The curriculum is comprehensive but challenging' 
-                    },
-                    { 
-                        questionId: 'q2',
-                        response: 3 
-                    },
-                    { 
-                        questionId: 'q3',
-                        response: ['Course materials', 'Lab facilities'] 
-                    },
-                    {
-                        questionId: 'q4',
-                        response: {
-                            'q4a': 3,
-                            'q4b': 4,
-                            'q4c': 'Need better equipment in labs'
-                        }
+                        question: libraryQuestions[1]._id,
+                        response: ['Study rooms', 'Computer labs'] 
                     }
                 ],
                 submittedAt: new Date('2025-03-20')
             },
             {
+                responder_id: new mongoose.Types.ObjectId(),
+                form: forms[4]._id,
+                answers: [
+                    { 
+                        question: satisfactionQuestions[0]._id,
+                        response: 'The curriculum is comprehensive but challenging' 
+                    },
+                    { 
+                        question: satisfactionQuestions[1]._id,
+                        response: 3 
+                    },
+                    { 
+                        question: satisfactionQuestions[2]._id,
+                        response: ['Course materials', 'Lab facilities'] 
+                    },
+                    {
+                        question: satisfactionQuestions[3]._id,
+                        response: 3
+                    },
+                    {
+                        question: satisfactionQuestions[4]._id,
+                        response: 4
+                    },
+                    {
+                        question: satisfactionQuestions[5]._id,
+                        response: 'Need better equipment in labs'
+                    }
+                ],
+                submittedAt: new Date('2025-03-20')
+            },
+            {
+                responder_id: new mongoose.Types.ObjectId(),
                 form: forms[1]._id,
                 answers: [
                     { 
-                        questionId: 'q1',
+                        question: courseFeedbackQuestions[0]._id,
                         response: 'Software Engineering SE301' 
                     },
                     { 
-                        questionId: 'q2',
+                        question: courseFeedbackQuestions[1]._id,
                         response: 5 
                     },
                     { 
-                        questionId: 'q3',
+                        question: courseFeedbackQuestions[2]._id,
                         response: 'Learned agile methodologies, design patterns, and best practices for software development' 
                     }
                 ],
                 submittedAt: new Date('2025-02-20')
             },
             {
-                form: forms[1]._id,
+                responder_id: new mongoose.Types.ObjectId(),
+                form: forms[3]._id,
                 answers: [
                     { 
-                        questionId: 'q1',
+                        question: courseFeedbackQuestions[0]._id,
                         response: 'Database Systems DB201' 
                     },
                     { 
-                        questionId: 'q2',
+                        question: courseFeedbackQuestions[1]._id,
                         response: 4 
                     },
                     { 
-                        questionId: 'q3',
+                        question: courseFeedbackQuestions[2]._id,
                         response: 'Understanding of SQL, database design, normalization, and query optimization' 
                     }
                 ],
                 submittedAt: new Date('2025-03-05')
             },
             {
+                responder_id: new mongoose.Types.ObjectId(),
                 form: forms[4]._id,
                 answers: [
                     { 
-                        questionId: 'q1',
+                        question: itSupportQuestions[0]._id,
                         response: 'Cannot access university email account. Keep getting authentication errors.' 
                     },
                     { 
-                        questionId: 'q2',
+                        question: itSupportQuestions[1]._id,
                         response: ['Email'] 
                     },
                     { 
-                        questionId: 'q3',
+                        question: itSupportQuestions[2]._id,
                         response: 4 
                     }
                 ],
                 submittedAt: new Date('2025-04-01')
             },
             {
+                responder_id: new mongoose.Types.ObjectId(),
                 form: forms[4]._id,
                 answers: [
                     { 
-                        questionId: 'q1',
+                        question: itSupportQuestions[0]._id,
                         response: 'Wi-Fi connection is very slow in the library area' 
                     },
                     { 
-                        questionId: 'q2',
+                        question: itSupportQuestions[1]._id,
                         response: ['Network'] 
                     },
                     { 
-                        questionId: 'q3',
+                        question: itSupportQuestions[2]._id,
                         response: 2 
                     }
                 ],
-                submittedAt: new Date('2025-04-02')
+                submittedAt: new Date('2025-03-15')
+            },
+            {
+                responder_id: new mongoose.Types.ObjectId(),
+                form: forms[5]._id,
+                answers: [
+                    { 
+                        question: advancedSurveyQuestions[0]._id,
+                        response: 'Graduate Student' 
+                    },
+                    { 
+                        question: advancedSurveyQuestions[1]._id,
+                        response: 'Yes'
+                    },
+                    { 
+                        question: subQuestion1._id,
+                        response: 'Python, JavaScript, Java, C++' 
+                    },
+                    { 
+                        question: advancedSurveyQuestions[2]._id,
+                        response: 'Yes'
+                    },
+                    { 
+                        question: subQuestion2._id,
+                        response: 4
+                    },
+                    { 
+                        question: advancedSurveyQuestions[3]._id,
+                        response: ['Library', 'Computer Lab', 'Study Rooms']
+                    }
+                ],
+                submittedAt: new Date('2025-03-15')
+            },
+            {
+                responder_id: new mongoose.Types.ObjectId(),
+                form: forms[5]._id,
+                answers: [
+                    { 
+                        question: advancedSurveyQuestions[0]._id,
+                        response: 'Faculty Member' 
+                    },
+                    { 
+                        question: advancedSurveyQuestions[1]._id,
+                        response: 'No'
+                    },
+                    { 
+                        question: advancedSurveyQuestions[2]._id,
+                        response: 'No'
+                    },
+                    { 
+                        question: advancedSurveyQuestions[3]._id,
+                        response: ['Library', 'Meeting Rooms']
+                    }
+                ],
+                submittedAt: new Date('2025-03-16')
             }
         ]);
 
@@ -379,14 +516,24 @@ async function seedDatabase() {
         // Display summary
         console.log('\n📊 Seed Summary:');
         console.log('================');
+        const totalQuestions = satisfactionQuestions.length + courseFeedbackQuestions.length + 
+                              eventQuestions.length + libraryQuestions.length + itSupportQuestions.length;
+        console.log(`Questions created: ${totalQuestions}`);
         console.log(`Forms created: ${forms.length}`);
         console.log(`Responses created: ${responses.length}`);
+        
         console.log('\n📝 Form IDs for testing:');
         forms.forEach((form, index) => {
             const title = form.title.find(t => t.key === 'en')?.value || 'Untitled';
             console.log(`${index + 1}. ${title}`);
-            console.log(`   ID: ${form._id}`);
+            console.log(`   Form ID: ${form._id}`);
             console.log(`   Status: ${form.status}`);
+        });
+
+        console.log('\n🔍 Question IDs for testing:');
+        console.log('Student Satisfaction Survey Questions:');
+        satisfactionQuestions.forEach((q, i) => {
+            console.log(`   Q${i + 1}: ${q._id} (${q.type})`);
         });
 
         console.log('\n✨ Database seeded successfully!');
