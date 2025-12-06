@@ -15,7 +15,12 @@ exports.onQuerys = async function (request, response) {
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400);
+        console.log(err);
+        return response.status(500).json({
+            success: false,
+            message: "Failed to fetch responses",
+            error: err.message
+        });
     }
 }
 
@@ -26,17 +31,27 @@ exports.onGetByFormId = async function (request, response) {
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400);
+        console.log(err);
+        return response.status(500).json({
+            success: false,
+            message: "Failed to fetch responses by form ID",
+            error: err.message
+        });
     }
 };
 exports.onGetByUserId = async function (request, response) {
     try {
         let query = {};
-        query.responder = request.query.user_id;
+        query.responder = request.user.id;
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400);
+        console.log(err);
+        return response.status(500).json({
+            success: false,
+            message: "Failed to fetch responses by user ID",
+            error: err.message
+        });
     }
 };
 
@@ -45,10 +60,20 @@ exports.onGetById = async function (request, response) {
         let query = {};
         query._id = new mongo.ObjectId(request.query._id);
         const doc = await responseService.onQuery(query);
+        if(!doc){
+            return response.status(404).json({
+                success: false,
+                message: "Response not found"
+            });
+        }
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
-        return ResMessage.sendResponse(response, 0, 40400);
+        return response.status(500).json({
+            success: false,
+            message: "Failed to fetch response",
+            error: err.message
+        });
     }
 };
 
@@ -57,14 +82,20 @@ exports.onExportResponses = async function (request, response) {
         const {form_id} = request.query;
         if(!form_id|| !mongo.ObjectId.isValid(form_id)){
             console.log("Invalid form_id");
-            return ResMessage.sendResponse(response, 0, 40000); // Bad request
+            return response.status(400).json({
+                success: false,
+                message: "Invalid form ID"
+            });
         }
         
         // Get form
         const form = await formModel.findById(form_id).lean();
         if(!form){
             console.log("Form not found");
-            return ResMessage.sendResponse(response, 0, 40400); // Not found
+            return response.status(404).json({
+                success: false,
+                message: "Form not found"
+            });
         }
         
         // Get responses with populated questions and sub-questions
@@ -79,7 +110,10 @@ exports.onExportResponses = async function (request, response) {
             
         if(!responses || responses.length === 0){
             console.log("No responses found for the form");
-            return ResMessage.sendResponse(response, 0, 40400); // Not found
+            return response.status(404).json({
+                success: false,
+                message: "No responses found for this form"
+            });
         }
 
         // Collect all unique questions (including sub-questions) from responses
@@ -111,7 +145,10 @@ exports.onExportResponses = async function (request, response) {
         
         if(questions.length === 0){
             console.log("No questions found in responses");
-            return ResMessage.sendResponse(response, 0, 40400);
+            return response.status(404).json({
+                success: false,
+                message: "No questions found in responses"
+            });
         }
 
         // Prepare CSV headers
@@ -171,11 +208,19 @@ exports.onExportResponses = async function (request, response) {
 
 exports.onCreate = async function (request, response) {
     try {
-        const doc = await responseService.onCreate(request.body);
+        const responseData = {
+            ...request.body,
+            responder_id: request.user.id
+        };
+        const doc = await responseService.onCreate(responseData);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
-        return ResMessage.sendResponse(response, 0, 40400);
+        return response.status(500).json({
+            success: false,
+            message: "Failed to create response",
+            error: err.message
+        });
     }
 };
 
@@ -184,10 +229,20 @@ exports.onUpdate = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await responseService.onUpdate(query, request.body);
+        if(!doc){
+            return response.status(404).json({
+                success: false,
+                message: "Response not found"
+            });
+        }
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
         console.log(err);
-        return ResMessage.sendResponse(response, 0, 40400);
+        return response.status(500).json({
+            success: false,
+            message: "Failed to update response",
+            error: err.message
+        });
     }
 };
 
@@ -199,7 +254,11 @@ exports.onDelete = async function (request, response) {
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
         console.log(err);
-        return ResMessage.sendResponse(response, 0, 40400);
+        return response.status(500).json({
+            success: false,
+            message: "Failed to delete response",
+            error: err.message
+        });
     }
 };
 exports.onDeleteByFormId = async function (request, response) {
@@ -210,7 +269,11 @@ exports.onDeleteByFormId = async function (request, response) {
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
         console.log(err);
-        return ResMessage.sendResponse(response, 0, 40400);
+        return response.status(500).json({
+            success: false,
+            message: "Failed to delete responses by form ID",
+            error: err.message
+        });
     }
 };
 

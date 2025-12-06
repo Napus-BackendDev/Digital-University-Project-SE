@@ -36,6 +36,21 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to fetch users"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -92,6 +107,21 @@
                     "roles": ["693454ebdd1b76f3b7416c6b"],
                     "createdAt": "2025-12-06T15:49:19.002Z",
                     "updatedAt": "2025-12-06T15:49:19.002Z"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to create user"},
+                    "error": {"type": "string"}
                   }
                 }
               }
@@ -154,6 +184,35 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "User not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to update user"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -188,6 +247,21 @@
                 "example": {
                   "data": {
                     "deletedCount": 1
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to delete user"},
+                    "error": {"type": "string"}
                   }
                 }
               }
@@ -231,6 +305,35 @@
                     ],
                     "createdAt": "2025-12-06T15:49:19.002Z",
                     "updatedAt": "2025-12-06T15:49:19.002Z"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "User not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to fetch profile"},
+                    "error": {"type": "string"}
                   }
                 }
               }

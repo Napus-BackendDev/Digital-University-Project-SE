@@ -23,16 +23,35 @@
                       "name": "ADMIN",
                       "description": "Administrator role",
                       "permissions": [
-                        "manage_users",
-                        "manage_roles",
-                        "manage_forms",
-                        "manage_responses",
-                        "view_all_data"
+                        "VIEW_USERS",
+                        "DELETE_USER",
+                        "VIEW_FORMS",
+                        "CREATE_FORM",
+                        "UPDATE_FORM",
+                        "DELETE_FORM",
+                        "VIEW_RESPONSES",
+                        "SUBMIT_RESPONSES",
+                        "EXPORT_RESPONSES"
                       ],
                       "createdAt": "2025-12-06T15:00:00.000Z",
                       "updatedAt": "2025-12-06T15:00:00.000Z"
                     }
                   ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to fetch roles"},
+                    "error": {"type": "string"}
+                  }
                 }
               }
             }
@@ -93,6 +112,21 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to create role"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -131,6 +165,21 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to delete role"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -162,12 +211,42 @@
                     "name": "ADMIN",
                     "description": "Administrator role",
                     "permissions": [
-                      "manage_users",
-                      "manage_roles",
-                      "manage_forms"
+                      "VIEW_USERS",
+                      "VIEW_FORMS",
+                      "CREATE_FORM",
+                      "UPDATE_FORM"
                     ],
                     "createdAt": "2025-12-06T15:00:00.000Z",
                     "updatedAt": "2025-12-06T15:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Role not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to fetch role"},
+                    "error": {"type": "string"}
                   }
                 }
               }
@@ -229,7 +308,7 @@
                     "_id": "693454ebdd1b76f3b7416c6b",
                     "name": "ADMIN",
                     "description": "Updated administrator role",
-                    "permissions": ["manage_users", "manage_roles", "manage_forms", "manage_responses"],
+                    "permissions": ["VIEW_USERS", "VIEW_FORMS", "CREATE_FORM", "VIEW_RESPONSES", "SUBMIT_RESPONSES"],
                     "createdAt": "2025-12-06T15:00:00.000Z",
                     "updatedAt": "2025-12-06T16:00:00.000Z"
                   }
@@ -287,9 +366,52 @@
                   "data": {
                     "_id": "693454ebdd1b76f3b7416c6b",
                     "name": "ADMIN",
-                    "permissions": ["manage_users", "manage_forms", "view_all_data"],
+                    "permissions": ["VIEW_USERS", "VIEW_FORMS", "CREATE_FORM", "UPDATE_FORM"],
                     "createdAt": "2025-12-06T15:00:00.000Z",
                     "updatedAt": "2025-12-06T16:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Permissions must be an array"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Role not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to set permissions"},
+                    "error": {"type": "string"}
                   }
                 }
               }
@@ -328,7 +450,7 @@
                 "required": ["permission"]
               },
               "example": {
-                "permission": "export_data"
+                "permission": "EXPORT_RESPONSES"
               }
             }
           }
@@ -342,9 +464,52 @@
                   "data": {
                     "_id": "693454ebdd1b76f3b7416c6b",
                     "name": "ADMIN",
-                    "permissions": ["manage_users", "manage_forms", "export_data"],
+                    "permissions": ["VIEW_USERS", "VIEW_FORMS", "EXPORT_RESPONSES"],
                     "createdAt": "2025-12-06T15:00:00.000Z",
                     "updatedAt": "2025-12-06T16:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Permission is required"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Role not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to add permission"},
+                    "error": {"type": "string"}
                   }
                 }
               }
@@ -383,7 +548,7 @@
                 "required": ["permission"]
               },
               "example": {
-                "permission": "manage_users"
+                "permission": "VIEW_USERS"
               }
             }
           }
@@ -404,9 +569,54 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Permission is required"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Role not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to remove permission"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
           }
         }
       }
     }
   }
 }
+
+

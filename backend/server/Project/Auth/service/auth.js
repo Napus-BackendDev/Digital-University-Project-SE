@@ -9,17 +9,26 @@ exports.onLogin=async function(request,response){
         const {email,password}=request.body;
         if(!email || !password){
             console.log("Invalid email or password");
-            return ResMessage.sendResponse(response,0,40000); // Bad request
+            return response.status(400).json({
+                success: false,
+                message: "Email and password are required"
+            });
         }
         const user=await userModel.findOne({email:email});
         if(!user){
             console.log("User not found or incorrect password");
-            return ResMessage.sendResponse(response,0,40401); // User not found
+            return response.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
         }
         const isMatch=await bcrypt.compare(password,user.password);
         if(!isMatch){
             console.log("User not found or incorrect password");
-            return ResMessage.sendResponse(response,0,40401); // User not found
+            return response.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
         }
         const token=jwt.sign(
             {userId:user._id,role:user.role},
@@ -35,7 +44,11 @@ exports.onLogin=async function(request,response){
         return ResMessage.sendResponse(response,0,20000,token);
     }catch(err){
         console.log(err);
-        return ResMessage.sendResponse(response,0,40400);
+        return response.status(500).json({
+            success: false,
+            message: "Login failed",
+            error: err.message
+        });
     }
 };
 
@@ -44,17 +57,26 @@ exports.onRegister=async function(request,response){
         const {name,email,password,roleId}=request.body;
         if(!name || !email || !password || !roleId){
             console.log("Invalid registration data");
-            return ResMessage.sendResponse(response,0,40000);
+            return response.status(400).json({
+                success: false,
+                message: "Name, email, password, and roleId are required"
+            });
         }
         const existingUser=await userModel.findOne({email:email});
         if(existingUser){
             console.log("Email already in use");
-            return ResMessage.sendResponse(response,0,40900);
+            return response.status(409).json({
+                success: false,
+                message: "Email already in use"
+            });
         }
         const roleData=await role.onQuery({_id:roleId});
         if(!roleData){
             console.log("Role not found");
-            return ResMessage.sendResponse(response,0,40402);
+            return response.status(404).json({
+                success: false,
+                message: "Role not found"
+            });
         }
         const hashedPassword=await bcrypt.hash(password,10);
         const newUser=new userModel({
@@ -71,7 +93,11 @@ exports.onRegister=async function(request,response){
         return ResMessage.sendResponse(response,0,20100,populatedUser);
     }catch(err){
         console.log(err);
-        return ResMessage.sendResponse(response,0,40400);
+        return response.status(500).json({
+            success: false,
+            message: "Registration failed",
+            error: err.message
+        });
     }
 };
 exports.onLogout=async function(request,response){

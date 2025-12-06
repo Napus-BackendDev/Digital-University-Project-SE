@@ -39,9 +39,6 @@ async function seedDatabase() {
                 permissions: [
                     // User Management
                     'VIEW_USERS',
-                    'VIEW_USER',
-                    'CREATE_USER',
-                    'UPDATE_USER',
                     'DELETE_USER',
                     // Form Management
                     'VIEW_FORMS',
@@ -92,9 +89,9 @@ async function seedDatabase() {
                     // Form Viewing
                     'VIEW_FORMS',
                     // Response Submission
-                    'SUBMIT_RESPONSES',
-                    'VIEW_USER',
-                    'VIEW_OWN_RESPONSES'
+                    'SUBMIT_RESPONSES', 
+                    'VIEW_OWN_RESPONSES',
+                    
                 ]
             }
         ]);
