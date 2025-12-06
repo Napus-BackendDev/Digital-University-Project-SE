@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth, requirePermission } = require('../../../middleware/auth');
 
 const user=require('./service/user');
 
-router.get("", user.onQuerys);
-router.get("/getById", user.onGetById);
-router.post("", user.onCreate);
-router.put("", user.onUpdate);
-router.delete("", user.onDelete);
+router.get("", requireAuth, requirePermission('VIEW_USERS'), user.onQuerys);
+router.get("/:id", requireAuth, requirePermission('VIEW_USER'), user.onGetById);
+router.post("", requireAuth, requirePermission('CREATE_USER'), user.onCreate);
+router.put("/:id", requireAuth, requirePermission('UPDATE_USER'), user.onUpdate);
+router.delete("/:id", requireAuth, requirePermission('DELETE_USER'), user.onDelete);
 
 module.exports = router;

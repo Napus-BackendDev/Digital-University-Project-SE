@@ -4,9 +4,14 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
-    id:{type: Schema.Types.ObjectId},
-    name: { type: String, required: true },
-    description: { type: String  },
+    name: { 
+        type: String, 
+        required: true,
+        uppercase: true,
+        unique: true
+    },
+    description: { type: String },
     permissions: [{ type: String }]
-})
-module.exports = mongoose.model('roles', objSchema, "roles");
+}, { timestamps: true });
+
+module.exports = mongoose.model('Roles', objSchema, "roles");

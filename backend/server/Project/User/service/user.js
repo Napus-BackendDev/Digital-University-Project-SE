@@ -36,7 +36,7 @@ exports.onCreate=async function(request,response){
 exports.onUpdate=async function(request,response){
     try{
         let query={}
-        query._id=new mongo.ObjectId(request.body._id);
+        query.id=new mongo.ObjectId(request.body.id);
         const doc=await userService.onUpdate(query,request.body);
         return ResMessage.sendResponse(response,0 , 20000,doc);
     }catch(err){

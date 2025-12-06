@@ -8,8 +8,7 @@ var objSchema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     name: { type: String, required: true },
-    roles: [{ type: Schema.Types.ObjectId, ref: 'roles' }],
-    isActive: { type: Boolean, default: true },
+    roles: [{ type: Schema.Types.ObjectId, ref: 'Roles' }],
     createdAt: { type: Date, default: Date.now},
     updatedAt: { type: Date, default: Date.now}
 });
