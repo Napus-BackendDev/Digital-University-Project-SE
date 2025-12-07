@@ -5,6 +5,7 @@ const ResMessage = require("../../Settings/service/message");
 exports.onQuery = async function (request, response) {
     try {
         let query = {};
+        query._id = new mongo.ObjectId(request.query._id);
         const doc = await Form.onQuery(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {

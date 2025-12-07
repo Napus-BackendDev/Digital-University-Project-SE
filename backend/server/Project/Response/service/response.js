@@ -5,27 +5,6 @@ const ResMessage = require("../../Settings/service/message");
 exports.onQuery = async function (request, response) {
     try {
         let query = {};
-        const doc = await responseService.onQuerys(query);
-        return ResMessage.sendResponse(response, 0, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400, err.message);
-    }
-}
-
-exports.onGetByFormId = async function (request, response) {
-    try {
-        let query = {};
-        query.form_id = request.query.form_id;
-        const doc = await responseService.onQuerys(query);
-        return ResMessage.sendResponse(response, 0, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400, err.message);
-    }
-};
-
-exports.onGetById = async function (request, response) {
-    try {
-        let query = {};
         query._id = new mongo.ObjectId(request.query._id);
         const doc = await responseService.onQuery(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
@@ -34,7 +13,28 @@ exports.onGetById = async function (request, response) {
     }
 };
 
-exports.onExportResponses = async function (request, response) {
+exports.onQuerys = async function (request, response) {
+    try {
+        let query = {};
+        const doc = await responseService.onQuerys(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
+    }
+}
+
+exports.onQueryByFormId = async function (request, response) {
+    try {
+        let query = {};
+        query.form_id = request.query.form_id;
+        const doc = await responseService.onQuery(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
+    }
+};
+
+exports.onExport = async function (request, response) {
     //Need to implement export .csv functionality
 };
 

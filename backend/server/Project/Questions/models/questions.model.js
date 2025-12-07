@@ -6,14 +6,15 @@ var Schema = mongoose.Schema;
 var objSchema = new Schema({
     form: { type: Schema.Types.ObjectId, ref: 'Forms', required: true },
     order: { type: Number, default: 1 },
-    questionText: { type: String, required: true },
+    title: [
+        {
+            key: { type: String, required: true },
+            value: { type: String, required: true }
+        }
+    ],
     type: { type: String, enum: ['Text', 'Rating', 'Checkbox', 'Choices'], required: true },
     required: { type: Boolean, default: false },
 }, { discriminatorKey: 'type', collection: 'Questions' });
-
-var TextSchema = new Schema({
-    subquestionText: { type: String, required: true }
-});
 
 var RatingSchema = new Schema({
     min: { type: Number, default: 1 },
@@ -30,6 +31,7 @@ var ChoicesSchema = new Schema({
     subQuestion: [{ type: Schema.Types.ObjectId, ref: 'Questions' }]
 });
 
+// Auto-update Form's questions array when a new Question is created
 objSchema.post('save', async function (doc, next) {
     try {
         const form = mongoose.model('Forms');
@@ -38,18 +40,16 @@ objSchema.post('save', async function (doc, next) {
     } catch (err) {
         next(err);
     }
-}) 
+})
 
 var Questions = mongoose.model('Questions', objSchema, 'Questions');
 
-var TextQuestion = Questions.discriminator('Text', TextSchema);
 var RatingQuestion = Questions.discriminator('Rating', RatingSchema);
 var CheckboxQuestion = Questions.discriminator('Checkbox', CheckboxSchema);
 var ChoicesQuestion = Questions.discriminator('Choices', ChoicesSchema);
 
 module.exports = {
     Questions,
-    TextQuestion,
     RatingQuestion,
     CheckboxQuestion,
     ChoicesQuestion
