@@ -1,0 +1,622 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Role API",
+    "version": "1.0.0",
+    "description": "API endpoints for role management"
+  },
+  "paths": {
+    "/api/v1/role": {
+      "get": {
+        "tags": ["Role"],
+        "summary": "Get all roles",
+        "description": "Retrieve a list of all roles",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "_id": "693454ebdd1b76f3b7416c6b",
+                      "name": "ADMIN",
+                      "description": "Administrator role",
+                      "permissions": [
+                        "VIEW_USERS",
+                        "DELETE_USER",
+                        "VIEW_FORMS",
+                        "CREATE_FORM",
+                        "UPDATE_FORM",
+                        "DELETE_FORM",
+                        "VIEW_RESPONSES",
+                        "SUBMIT_RESPONSES",
+                        "EXPORT_RESPONSES"
+                      ],
+                      "createdAt": "2025-12-06T15:00:00.000Z",
+                      "updatedAt": "2025-12-06T15:00:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to fetch roles"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Role"],
+        "summary": "Create a new role",
+        "description": "Create a new role with permissions",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Role name (will be converted to uppercase)"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Role description"
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of permission strings"
+                  }
+                },
+                "required": ["name"]
+              },
+              "example": {
+                "name": "MANAGER",
+                "description": "Manager role with limited permissions",
+                "permissions": ["manage_forms", "view_all_data"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role created successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "_id": "693454ebdd1b76f3b7416c6b",
+                    "name": "MANAGER",
+                    "description": "Manager role with limited permissions",
+                    "permissions": ["manage_forms", "view_all_data"],
+                    "createdAt": "2025-12-06T15:00:00.000Z",
+                    "updatedAt": "2025-12-06T15:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to create role"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Role"],
+        "summary": "Delete role",
+        "description": "Delete a role by ID",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "_id": {
+                    "type": "string"
+                  }
+                },
+                "required": ["_id"]
+              },
+              "example": {
+                "_id": "693454ebdd1b76f3b7416c6b"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role deleted successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "deletedCount": 1
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to delete role"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/role/{id}": {
+      "get": {
+        "tags": ["Role"],
+        "summary": "Get role by ID",
+        "description": "Retrieve a specific role by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Role ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "_id": "693454ebdd1b76f3b7416c6b",
+                    "name": "ADMIN",
+                    "description": "Administrator role",
+                    "permissions": [
+                      "VIEW_USERS",
+                      "VIEW_FORMS",
+                      "CREATE_FORM",
+                      "UPDATE_FORM"
+                    ],
+                    "createdAt": "2025-12-06T15:00:00.000Z",
+                    "updatedAt": "2025-12-06T15:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Role not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to fetch role"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Role"],
+        "summary": "Update role",
+        "description": "Update role details including permissions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Role ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "example": {
+                "name": "ADMIN",
+                "description": "Updated administrator role",
+                "permissions": ["manage_users", "manage_roles", "manage_forms", "manage_responses"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role updated successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "_id": "693454ebdd1b76f3b7416c6b",
+                    "name": "ADMIN",
+                    "description": "Updated administrator role",
+                    "permissions": ["VIEW_USERS", "VIEW_FORMS", "CREATE_FORM", "VIEW_RESPONSES", "SUBMIT_RESPONSES"],
+                    "createdAt": "2025-12-06T15:00:00.000Z",
+                    "updatedAt": "2025-12-06T16:00:00.000Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/role/{id}/permissions": {
+      "put": {
+        "tags": ["Role"],
+        "summary": "Set role permissions",
+        "description": "Replace all permissions for a role",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Role ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": ["permissions"]
+              },
+              "example": {
+                "permissions": ["manage_users", "manage_forms", "view_all_data"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissions updated successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "_id": "693454ebdd1b76f3b7416c6b",
+                    "name": "ADMIN",
+                    "permissions": ["VIEW_USERS", "VIEW_FORMS", "CREATE_FORM", "UPDATE_FORM"],
+                    "createdAt": "2025-12-06T15:00:00.000Z",
+                    "updatedAt": "2025-12-06T16:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Permissions must be an array"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Role not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to set permissions"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/role/{id}/permissions/add": {
+      "post": {
+        "tags": ["Role"],
+        "summary": "Add permission to role",
+        "description": "Add a single permission to a role",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Role ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "permission": {
+                    "type": "string"
+                  }
+                },
+                "required": ["permission"]
+              },
+              "example": {
+                "permission": "EXPORT_RESPONSES"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permission added successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "_id": "693454ebdd1b76f3b7416c6b",
+                    "name": "ADMIN",
+                    "permissions": ["VIEW_USERS", "VIEW_FORMS", "EXPORT_RESPONSES"],
+                    "createdAt": "2025-12-06T15:00:00.000Z",
+                    "updatedAt": "2025-12-06T16:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Permission is required"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Role not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to add permission"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/role/{id}/permissions/remove": {
+      "post": {
+        "tags": ["Role"],
+        "summary": "Remove permission from role",
+        "description": "Remove a single permission from a role",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Role ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "permission": {
+                    "type": "string"
+                  }
+                },
+                "required": ["permission"]
+              },
+              "example": {
+                "permission": "VIEW_USERS"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permission removed successfully",
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "_id": "693454ebdd1b76f3b7416c6b",
+                    "name": "ADMIN",
+                    "permissions": ["manage_forms", "view_all_data"],
+                    "createdAt": "2025-12-06T15:00:00.000Z",
+                    "updatedAt": "2025-12-06T16:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Permission is required"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Role not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Role not found"}
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean", "example": false},
+                    "message": {"type": "string", "example": "Failed to remove permission"},
+                    "error": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
