@@ -31,7 +31,7 @@ exports.onQueryByUserId = async function (request, response) {
 exports.onQueryByFormId = async function (request, response) {
     try {
         let query = {};
-        query.form_id = request.query.form_id;
+        query.form = request.query.form;
         const doc = await responseService.onQuery(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
@@ -51,9 +51,9 @@ exports.onQuerys = async function (request, response) {
 
 exports.onExport = async function (request, response) {
     try {
-        const { form_id } = request.query;
-        if (!form_id || !mongo.ObjectId.isValid(form_id)) {
-            console.log("Invalid form_id");
+        const { form } = request.query;
+        if (!form || !mongo.ObjectId.isValid(form)) {
+            console.log("Invalid form");
             return response.status(400).json({
                 success: false,
                 message: "Invalid form ID"
@@ -61,8 +61,8 @@ exports.onExport = async function (request, response) {
         }
 
         // Get form
-        const form = await formModel.findById(form_id).lean();
-        if (!form) {
+        const formData = await formModel.findById(form).lean();
+        if (!formData) {
             console.log("Form not found");
             return response.status(404).json({
                 success: false,
@@ -71,7 +71,7 @@ exports.onExport = async function (request, response) {
         }
 
         // Get responses with populated questions and sub-questions
-        const responses = await responseModel.find({ form: form_id })
+        const responses = await responseModel.find({ form: form })
             .populate({
                 path: 'answers.question',
                 populate: {
@@ -138,7 +138,7 @@ exports.onExport = async function (request, response) {
 
             const row = {
                 'Response ID': resp._id.toString(),
-                'Responder ID': resp.responder_id ? resp.responder_id.toString() : 'N/A',
+                'Responder ID': resp.responder ? resp.responder.toString() : 'N/A',
                 'Submitted At': resp.submittedAt || 'N/A'
             };
 
@@ -182,7 +182,7 @@ exports.onCreate = async function (request, response) {
     try {
         const responseData = {
             ...request.body,
-            responder_id: request.user.id
+            responder: request.user.id
         };
         const doc = await responseService.onCreate(responseData);
         return ResMessage.sendResponse(response, 0, 20000, doc);
