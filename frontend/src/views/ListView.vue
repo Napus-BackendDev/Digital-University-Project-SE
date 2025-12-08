@@ -11,6 +11,9 @@
         <div class="navbar-user-section">
           <span class="navbar-user-email">{{ userEmail }}</span>
           <button class="navbar-logout-btn" @click="handleLogout">
+            <svg class="icon-16" viewBox="0 0 16 16" fill="none">
+              <path d="M10.6667 11.3333L14 8M14 8L10.6667 4.66667M14 8H6M6 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V3.33333C2 2.97971 2.14048 2.64057 2.39052 2.39052C2.64057 2.14048 2.97971 2 3.33333 2H6" stroke="#333333" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
             <span>Logout</span>
           </button>
         </div>
@@ -51,6 +54,9 @@
         <div class="toolbar-actions">
           <div class="filter-dropdown" ref="filterDropdownRef">
             <button class="filter-btn" @click="toggleFilterDropdown">
+              <svg class="icon-16" viewBox="0 0 16 16" fill="none">
+                <path d="M14 2.66667H2L6.66667 8.10667V12L9.33333 13.3333V8.10667L14 2.66667Z" stroke="#737373" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
               <span>{{ filterLabel }}</span>
               <svg class="icon-16" viewBox="0 0 16 16" fill="none">
                 <path d="M4 6L8 10L12 6" stroke="#737373" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
@@ -399,6 +405,9 @@ onUnmounted(() => {
 }
 
 .navbar-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 6px 12px;
   background: transparent;
   border: none;
@@ -528,8 +537,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 0 12px;
-  gap: 16px;
-  width: 140px;
+  gap: 8px;
+  min-width: 140px;
   height: 36px;
   background: rgba(229, 229, 229, 0.3);
   border: 1px solid #E5E5E5;
