@@ -4,7 +4,9 @@
     <nav class="navbar">
       <div class="navbar-container">
         <router-link to="/" class="navbar-logo-link">
-          <div class="navbar-logo-icon"></div>
+          <div class="navbar-logo-icon">
+            <img src="https://archives.mfu.ac.th/wp-content/uploads/2019/06/Mae-Fah-Luang-University-2-1.png" alt="MFU Logo" class="logo-image" />
+          </div>
           <span class="navbar-logo-text">FormBuilder</span>
         </router-link>
 
@@ -154,7 +156,28 @@
           </div>
 
           <!-- Preview -->
-          <div v-if="form.hasPreview" class="card-preview"></div>
+          <div v-if="form.hasPreview" class="card-preview">
+            <div class="form-preview-container">
+              <div class="preview-header">
+                <div class="preview-title">{{ form.title }}</div>
+                <div class="preview-description">{{ form.description }}</div>
+              </div>
+              <div class="preview-questions">
+                <div class="preview-question">
+                  <div class="preview-label">Question 1</div>
+                  <div class="preview-input"></div>
+                </div>
+                <div class="preview-question">
+                  <div class="preview-label">Question 2</div>
+                  <div class="preview-options">
+                    <div class="preview-radio"></div>
+                    <div class="preview-radio"></div>
+                    <div class="preview-radio"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -195,12 +218,39 @@ const forms = ref([
   {
     id: 1,
     title: "Customer Satisfaction Survey",
-    description: "Help us improve our services by sharing your feedb",
+    description: "Help us improve our services by sharing your feedback",
     status: "open",
     visibility: "public",
     createdDate: "15/11/2024",
     responses: 156,
-    hasPreview: true
+    hasPreview: true,
+    questions: [
+      {
+        id: 1,
+        label: "What is your name?",
+        type: "text",
+        required: true
+      },
+      {
+        id: 2,
+        label: "How satisfied are you with our service?",
+        type: "radio",
+        required: true,
+        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"]
+      },
+      {
+        id: 3,
+        label: "Rate your overall experience",
+        type: "rating",
+        required: true
+      },
+      {
+        id: 4,
+        label: "What can we do to improve?",
+        type: "textarea",
+        required: false
+      }
+    ]
   },
   {
     id: 2,
@@ -210,7 +260,34 @@ const forms = ref([
     visibility: "public",
     createdDate: "10/11/2024",
     responses: 89,
-    hasPreview: true
+    hasPreview: true,
+    questions: [
+      {
+        id: 1,
+        label: "Full Name",
+        type: "text",
+        required: true
+      },
+      {
+        id: 2,
+        label: "Email Address",
+        type: "text",
+        required: true
+      },
+      {
+        id: 3,
+        label: "Which session are you interested in?",
+        type: "radio",
+        required: true,
+        options: ["Morning Session (9:00 AM)", "Afternoon Session (2:00 PM)", "Both Sessions"]
+      },
+      {
+        id: 4,
+        label: "Any dietary restrictions?",
+        type: "textarea",
+        required: false
+      }
+    ]
   },
   {
     id: 3,
@@ -220,37 +297,27 @@ const forms = ref([
     visibility: "private",
     createdDate: "01/12/2024",
     responses: 0,
-    hasPreview: true
-  },
-  {
-    id: 4,
-    title: "Customer Satisfaction Survey",
-    description: "Help us improve our services by sharing your feedb",
-    status: "open",
-    visibility: "public",
-    createdDate: "15/11/2024",
-    responses: 156,
-    hasPreview: true
-  },
-  {
-    id: 5,
-    title: "Customer Satisfaction Survey",
-    description: "Help us improve our services by sharing your feedb",
-    status: "open",
-    visibility: "public",
-    createdDate: "15/11/2024",
-    responses: 156,
-    hasPreview: true
-  },
-  {
-    id: 6,
-    title: "Customer Satisfaction Survey",
-    description: "Help us improve our services by sharing your feedb",
-    status: "open",
-    visibility: "public",
-    createdDate: "15/11/2024",
-    responses: 156,
-    hasPreview: true
+    hasPreview: true,
+    questions: [
+      {
+        id: 1,
+        label: "Employee ID",
+        type: "text",
+        required: true
+      },
+      {
+        id: 2,
+        label: "How would you rate the work environment?",
+        type: "rating",
+        required: true
+      },
+      {
+        id: 3,
+        label: "What improvements would you suggest?",
+        type: "textarea",
+        required: true
+      }
+    ]
   }
 ]);
 
@@ -302,7 +369,7 @@ const handleClickOutside = (event) => {
 
 const handleFormClick = (formId) => {
   console.log('Form clicked:', formId);
-  // router.push({ name: 'FormDetail', params: { id: formId } });
+  router.push({ name: 'FormPreview', params: { id: formId } });
 };
 
 const handleMenuClick = (formId, event) => {
@@ -379,8 +446,16 @@ onUnmounted(() => {
 .navbar-logo-icon {
   width: 32px;
   height: 32px;
-  background: #BA0C2F;
-  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .navbar-logo-text {
@@ -776,8 +851,104 @@ onUnmounted(() => {
 .card-preview {
   width: 100%;
   height: 167px;
-  background: #D9D9D9;
+  background: #FAFAFA;
   border-radius: 0px;
+  overflow: hidden;
+}
+
+.form-preview-container {
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transform: scale(0.85);
+  transform-origin: top left;
+}
+
+.preview-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #E5E5E5;
+}
+
+.preview-title {
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 14px;
+  color: #333333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-description {
+  font-size: 8px;
+  line-height: 10px;
+  color: #737373;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-question {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-label {
+  font-size: 8px;
+  line-height: 10px;
+  color: #525252;
+  font-weight: 500;
+}
+
+.preview-input {
+  width: 100%;
+  height: 16px;
+  background: rgba(229, 229, 229, 0.3);
+  border: 1px solid #E5E5E5;
+  border-radius: 4px;
+}
+
+.preview-options {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.preview-radio {
+  display: flex;
+  align-items: center;
+  height: 12px;
+  gap: 4px;
+}
+
+.preview-radio::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #D4D4D4;
+  background: rgba(229, 229, 229, 0.3);
+  flex-shrink: 0;
+}
+
+.preview-radio::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #E5E5E5;
 }
 
 /* ==================== STATISTICS ==================== */
