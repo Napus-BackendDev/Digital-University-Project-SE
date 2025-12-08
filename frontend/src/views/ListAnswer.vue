@@ -1,5 +1,5 @@
 <template>
-  <div class="form-preview-page">
+  <div class="list-answer">
     <!-- Navbar -->
     <nav class="navbar">
       <div class="navbar-container">
