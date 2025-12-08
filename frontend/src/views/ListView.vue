@@ -35,6 +35,10 @@
       <div class="toolbar">
         <!-- Search -->
         <div class="search-container">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="7" cy="7" r="5.66667" stroke="#A3A3A3" stroke-width="1.33333"/>
+            <path d="M11.3333 11.3333L14 14" stroke="#A3A3A3" stroke-width="1.33333" stroke-linecap="round"/>
+          </svg>
           <input 
             type="text" 
             class="search-input" 
@@ -45,12 +49,38 @@
 
         <!-- Actions -->
         <div class="toolbar-actions">
-          <button class="filter-btn" @click="cycleFilter">
-            <span>{{ filterLabel }}</span>
-            <svg class="icon-16" viewBox="0 0 16 16" fill="none">
-              <path d="M4 6L8 10L12 6" stroke="#737373" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <div class="filter-dropdown" ref="filterDropdownRef">
+            <button class="filter-btn" @click="toggleFilterDropdown">
+              <span>{{ filterLabel }}</span>
+              <svg class="icon-16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 6L8 10L12 6" stroke="#737373" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            
+            <div v-if="showFilterDropdown" class="dropdown-menu">
+              <button 
+                class="dropdown-item" 
+                :class="{ active: currentFilter === 'all' }"
+                @click="selectFilter('all')"
+              >
+                All Status
+              </button>
+              <button 
+                class="dropdown-item" 
+                :class="{ active: currentFilter === 'open' }"
+                @click="selectFilter('open')"
+              >
+                Open
+              </button>
+              <button 
+                class="dropdown-item" 
+                :class="{ active: currentFilter === 'draft' }"
+                @click="selectFilter('draft')"
+              >
+                Draft
+              </button>
+            </div>
+          </div>
 
           <button class="create-form-btn" @click="handleCreateForm">
             <svg class="icon-16" viewBox="0 0 16 16" fill="none">
@@ -142,7 +172,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -152,6 +182,8 @@ const userEmail = ref('user@example.com');
 const searchQuery = ref('');
 const currentFilter = ref('all');
 const loading = ref(false);
+const showFilterDropdown = ref(false);
+const filterDropdownRef = ref(null);
 
 const forms = ref([
   {
@@ -172,7 +204,7 @@ const forms = ref([
     visibility: "public",
     createdDate: "10/11/2024",
     responses: 89,
-    hasPreview: false
+    hasPreview: true
   },
   {
     id: 3,
@@ -182,7 +214,7 @@ const forms = ref([
     visibility: "private",
     createdDate: "01/12/2024",
     responses: 0,
-    hasPreview: false
+    hasPreview: true
   },
   {
     id: 4,
@@ -212,7 +244,7 @@ const forms = ref([
     visibility: "public",
     createdDate: "15/11/2024",
     responses: 156,
-    hasPreview: false
+    hasPreview: true
   }
 ]);
 
@@ -247,11 +279,19 @@ const statistics = computed(() => ({
 }));
 
 // Methods
-const cycleFilter = () => {
-  const filters = ['all', 'open', 'draft'];
-  const currentIndex = filters.indexOf(currentFilter.value);
-  const nextIndex = (currentIndex + 1) % filters.length;
-  currentFilter.value = filters[nextIndex];
+const toggleFilterDropdown = () => {
+  showFilterDropdown.value = !showFilterDropdown.value;
+};
+
+const selectFilter = (filter) => {
+  currentFilter.value = filter;
+  showFilterDropdown.value = false;
+};
+
+const handleClickOutside = (event) => {
+  if (filterDropdownRef.value && !filterDropdownRef.value.contains(event.target)) {
+    showFilterDropdown.value = false;
+  }
 };
 
 const handleFormClick = (formId) => {
@@ -281,6 +321,11 @@ const toggleMenu = () => {
 // Lifecycle
 onMounted(() => {
   loading.value = false;
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -315,7 +360,7 @@ onMounted(() => {
   max-width: 1216px;
   height: 64px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0;
 }
 
 .navbar-logo-link {
@@ -393,7 +438,7 @@ onMounted(() => {
 .main-content {
   max-width: 1216px;
   margin: 0 auto;
-  padding: 97px 20px 40px;
+  padding: 97px 0 40px 0;
 }
 
 /* ==================== PAGE HEADER ==================== */
@@ -427,13 +472,23 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  gap: 16px;
+  gap: 8px;
 }
 
 .search-container {
   position: relative;
   flex: 1;
   max-width: 914px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 }
 
 .search-input {
@@ -464,6 +519,10 @@ onMounted(() => {
   gap: 8px;
 }
 
+.filter-dropdown {
+  position: relative;
+}
+
 .filter-btn {
   display: flex;
   justify-content: space-between;
@@ -486,6 +545,45 @@ onMounted(() => {
 
 .filter-btn:hover {
   background: rgba(229, 229, 229, 0.5);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 140px;
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  z-index: 100;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.150391px;
+  color: #333333;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background: #F5F5F5;
+}
+
+.dropdown-item.active {
+  background: rgba(23, 23, 23, 0.05);
+  font-weight: 500;
 }
 
 .create-form-btn {
@@ -514,9 +612,10 @@ onMounted(() => {
 /* ==================== FORMS GRID ==================== */
 .forms-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 389px));
   gap: 24px;
   margin-bottom: 40px;
+  justify-content: flex-start;
 }
 
 .form-card {
@@ -599,6 +698,7 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .badge {
@@ -638,7 +738,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0 24px 0;
+  padding-top: 16px;
   border-top: 1px solid #F5F5F5;
 }
 
@@ -668,8 +768,7 @@ onMounted(() => {
   width: 100%;
   height: 167px;
   background: #D9D9D9;
-  border-radius: 8px;
-  margin-bottom: 16px;
+  border-radius: 0px;
 }
 
 /* ==================== STATISTICS ==================== */
@@ -744,6 +843,14 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .navbar-container {
+    padding: 0 20px;
+  }
+  
+  .main-content {
+    padding: 97px 20px 40px 20px;
+  }
+  
   .burger-menu {
     display: flex;
   }
@@ -788,7 +895,11 @@ onMounted(() => {
 
 @media (max-width: 480px) {
   .main-content {
-    padding: 80px 16px 24px;
+    padding: 80px 16px 24px 16px;
+  }
+  
+  .navbar-container {
+    padding: 0 16px;
   }
   
   .navbar-user-email {
