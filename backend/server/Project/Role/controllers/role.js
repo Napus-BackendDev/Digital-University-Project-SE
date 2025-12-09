@@ -5,7 +5,7 @@ const createBaseService = require("../../../../helpers/base.service")
 const defaultPopulate = []
 const baseService = createBaseService(objSchema, defaultPopulate);
 
-// Permission management methods
+// Permission management 
 baseService.setPermissions = async (roleId, permissions) => {
     return objSchema.findByIdAndUpdate(
         roleId,
