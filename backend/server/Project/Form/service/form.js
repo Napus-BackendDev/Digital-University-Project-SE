@@ -1,6 +1,7 @@
 const mongo = require('mongodb');
 const Form = require("../controller/form"); 
 const ResMessage = require("../../Settings/service/message");
+const { STATUS } = require('../service/formStatus'); 
 
 exports.onQuery = async function (request, response) {
     try {
@@ -37,11 +38,10 @@ exports.onDuplicate = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await Form.onQuery(query);
-        if (doc.can_duplicate === false || doc.status !== 'draft') {
-            return ResMessage.sendResponse(response, 0, 40302);
-        }
-        doc.originalFormId = request.body._id;
+        
         delete doc._id;
+        doc.originalFormId = request.body._id;
+
         const duplicate_Doc = await Form.onCreate(doc);
         return ResMessage.sendResponse(response, 0 , 20000, duplicate_Doc);
     } catch (err) {
