@@ -55,13 +55,7 @@
                                         }
                                     },
                                     "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "text",
-                                            "rating",
-                                            "checkbox",
-                                            "choices"
-                                        ]
+                                        "type": "string"
                                     },
                                     "required": {
                                         "type": "boolean"
@@ -185,13 +179,7 @@
                                         }
                                     },
                                     "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "text",
-                                            "rating",
-                                            "checkbox",
-                                            "choices"
-                                        ]
+                                        "type": "string"
                                     },
                                     "required": {
                                         "type": "boolean"

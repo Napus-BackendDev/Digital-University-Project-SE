@@ -5,7 +5,6 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
-    // creator : { type: Schema.Types.ObjectId, ref: 'users' },
     title: [
         {
             key: { type: String, default: null },
@@ -14,10 +13,8 @@ var objSchema = new Schema({
     ],
     questions: { type: [{ type: Schema.Types.ObjectId, ref: 'Questions' }], default: [] },
     can_duplicate: { type: Boolean, default: false },
-    // permissionRole: [{ type: Schema.Types.ObjectId, ref: 'roles' }],
-    status: { type: String, enum: ['draft', 'open', 'close'], default: 'draft' },
+    status: { type: String, default: 'draft' }, // ['draft', 'open', 'close']
     schedule: {
-        mode: { type: String, enum: ['manual', 'auto'], default: 'manual' },
         startAt: { type: Date, default: null },
         endAt: { type: Date, default: null }
     },

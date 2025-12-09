@@ -3,13 +3,11 @@ const FormModel = require('../models/form.model');
 
 cron.schedule('* * * * *', async () => {
     const now = new Date();
-    console.log("Cron running at:", now);
 
     // 1) เปิดฟอร์มอัตโนมัติ (เฉพาะ auto mode)
     await FormModel.updateMany(
         {
             status: 'draft',
-            "schedule.mode": "auto",
             "schedule.startAt": { $lte: now }
         },
         {
@@ -21,7 +19,6 @@ cron.schedule('* * * * *', async () => {
     await FormModel.updateMany(
         {
             status: { $ne: 'close' },
-            "schedule.mode": "auto",
             "schedule.endAt": { $lte: now }
         },
         {
