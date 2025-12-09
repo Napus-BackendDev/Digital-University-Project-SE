@@ -12,7 +12,7 @@ var objSchema = new Schema({
             value: { type: String, required: true }
         }
     ],
-    type: { type: String, enum: ['Text', 'Rating', 'Checkbox', 'Choices'], required: true },
+    type: { type: String, required: true }, // enum: ['Text', 'Rating', 'Checkbox', 'Choices']
     required: { type: Boolean, default: false },
 }, { discriminatorKey: 'type', collection: 'Questions' });
 
