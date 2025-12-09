@@ -1,6 +1,7 @@
 const express = require('express');
 const formScheduler = require('../server/Project/Form/service/formScheduler');
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const nocache = require("nocache");
 const nosniff = require("dont-sniff-mimetype");
 const xssFilter = require("x-xss-protection");

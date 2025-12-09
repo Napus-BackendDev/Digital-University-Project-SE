@@ -10,13 +10,13 @@ const logger = winston.createLogger({
         winston.format.json()  // บันทึก log ในรูปแบบ JSON
     ),
     transports: [
-        new winston.transports.MongoDB({
-            db: 'mongodb://localhost:27017/logs',  // URL ของ MongoDB
-            collection: 'logs',  // ชื่อ collection ที่จะเก็บ log
-            level: 'info',  // กำหนดระดับ log ที่จะบันทึก (สามารถปรับให้เหมาะสมได้)
-            storeHost: true,  // เก็บ hostname
-            tryReconnect: true,  // ลองเชื่อมต่อใหม่หากการเชื่อมต่อ MongoDB ล้มเหลว
-        })
+        // new winston.transports.MongoDB({
+        //     db: 'mongodb://localhost:27017/logs',  // URL ของ MongoDB
+        //     collection: 'logs',  // ชื่อ collection ที่จะเก็บ log
+        //     level: 'info',  // กำหนดระดับ log ที่จะบันทึก (สามารถปรับให้เหมาะสมได้)
+        //     storeHost: true,  // เก็บ hostname
+        //     tryReconnect: true,  // ลองเชื่อมต่อใหม่หากการเชื่อมต่อ MongoDB ล้มเหลว
+        // })
     ]
 });
 
