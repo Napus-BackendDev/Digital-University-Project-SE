@@ -1,8 +1,12 @@
 const QUESTION_TYPE = {
-    TEXT: 'text',
-    RATING: 'rating',
+    SHORT: 'short',
+    PARAGRAPH: 'paragraph',
+    CHOICES: 'choices',
     CHECKBOX: 'checkbox',
-    CHOICES: 'choices'
+    DROPDOWN: 'dropdown',
+    RATING: 'rating',
+    TITLE: 'title',
+    FILE: 'file',
 }
 
 module.exports = QUESTION_TYPE;
