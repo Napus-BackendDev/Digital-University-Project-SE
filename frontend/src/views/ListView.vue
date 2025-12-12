@@ -1,172 +1,186 @@
 <template>
-  <div class="list-view">
+  <div class="from-list-page">
     <!-- Navbar -->
     <nav class="navbar">
       <div class="navbar-container">
-        <router-link to="/" class="navbar-logo-link">
-          <div class="navbar-logo-icon">
-            <img src="https://archives.mfu.ac.th/wp-content/uploads/2019/06/Mae-Fah-Luang-University-2-1.png" alt="MFU Logo" class="logo-image" />
+        <div class="navbar-link">
+          <div class="navbar-logo">
+            <img 
+              src="https://archives.mfu.ac.th/wp-content/uploads/2019/06/Mae-Fah-Luang-University-2-1.png" 
+              alt="MFU Logo"
+            />
           </div>
-          <span class="navbar-logo-text">FormBuilder</span>
-        </router-link>
-
-        <div class="navbar-user-section">
-          <span class="navbar-user-email">{{ userEmail }}</span>
-          <button class="navbar-logout-btn" @click="handleLogout">
-            <svg class="icon-16" viewBox="0 0 16 16" fill="none">
-              <path d="M10.6667 11.3333L14 8M14 8L10.6667 4.66667M14 8H6M6 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V3.33333C2 2.97971 2.14048 2.64057 2.39052 2.39052C2.64057 2.14048 2.97971 2 3.33333 2H6" stroke="#333333" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <div class="navbar-brand">
+            <div class="brand-text">FormBuilder</div>
+            <div class="brand-subtext">มหาวิทยาลัย</div>
+          </div>
+        </div>
+        <div class="navbar-user-container">
+          <div class="user-text">user@example.com</div>
+          <div class="logout-link" @click="handleLogout">
+            <i class="pi pi-sign-out"></i>
             <span>Logout</span>
-          </button>
+          </div>
         </div>
       </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
+    <!-- Form List Page -->
+    <main class="form-list-page-main">
       <!-- Page Header -->
-      <header class="page-header">
+      <div class="page-container">
         <h1 class="page-heading">My Forms</h1>
-        <p class="page-description">Create and manage your forms</p>
-      </header>
+        <p class="page-paragraph">Create and manage your forms</p>
+      </div>
 
       <!-- Toolbar -->
-      <div class="toolbar">
-        <!-- Search -->
-        <div class="search-container">
-          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
-            <circle cx="7" cy="7" r="5.66667" stroke="#A3A3A3" stroke-width="1.33333"/>
-            <path d="M11.3333 11.3333L14 14" stroke="#A3A3A3" stroke-width="1.33333" stroke-linecap="round"/>
-          </svg>
-          <input 
-            type="text" 
-            class="search-input" 
-            placeholder="Search forms..."
+      <div class="toolbar-container">
+        <!-- Search Input -->
+        <div class="search-wrapper">
+          <input
+            type="text"
             v-model="searchQuery"
-          >
+            placeholder="Search forms..."
+            class="search-input"
+          />
+          <i class="pi pi-search search-icon"></i>
         </div>
 
-        <!-- Actions -->
-        <div class="toolbar-actions">
-          <div class="filter-dropdown" ref="filterDropdownRef">
-            <button class="filter-btn" @click="toggleFilterDropdown">
-              <svg class="icon-16" viewBox="0 0 16 16" fill="none">
-                <path d="M14 2.66667H2L6.66667 8.10667V12L9.33333 13.3333V8.10667L14 2.66667Z" stroke="#737373" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span>{{ filterLabel }}</span>
-              <svg class="icon-16" viewBox="0 0 16 16" fill="none">
-                <path d="M4 6L8 10L12 6" stroke="#737373" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+        <!-- Right Actions -->
+        <div class="toolbar-right">
+          <!-- Filter Dropdown -->
+          <div class="filter-wrapper" ref="filterRef">
+            <button class="filter-button" @click="toggleFilterDropdown">
+              <i class="pi pi-filter"></i>
+              <span class="filter-span">{{ filterLabel }}</span>
+              <i class="pi pi-chevron-down chevron-icon"></i>
             </button>
             
-            <div v-if="showFilterDropdown" class="dropdown-menu">
+            <div v-if="showFilterDropdown" class="filter-dropdown-menu">
               <button 
-                class="dropdown-item" 
-                :class="{ active: currentFilter === 'all' }"
+                class="filter-option" 
+                :class="{ active: statusFilter === 'all' }"
                 @click="selectFilter('all')"
               >
                 All Status
               </button>
               <button 
-                class="dropdown-item" 
-                :class="{ active: currentFilter === 'open' }"
+                class="filter-option" 
+                :class="{ active: statusFilter === 'open' }"
                 @click="selectFilter('open')"
               >
                 Open
               </button>
               <button 
-                class="dropdown-item" 
-                :class="{ active: currentFilter === 'draft' }"
+                class="filter-option" 
+                :class="{ active: statusFilter === 'draft' }"
                 @click="selectFilter('draft')"
               >
                 Draft
               </button>
+              <button 
+                class="filter-option" 
+                :class="{ active: statusFilter === 'closed' }"
+                @click="selectFilter('closed')"
+              >
+                Closed
+              </button>
             </div>
           </div>
 
-          <button class="create-form-btn" @click="handleCreateForm">
-            <svg class="icon-16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 3.33334V12.6667M3.33334 8H12.6667" stroke="#FAFAFA" stroke-width="1.33333" stroke-linecap="round"/>
-            </svg>
+          <!-- Create Form Button -->
+          <div class="create-link" @click="handleCreateForm">
+            <i class="pi pi-plus"></i>
             <span>Create Form</span>
-          </button>
+          </div>
         </div>
       </div>
 
-      <!-- Forms Grid -->
-      <div v-if="loading" class="loading">
-        <div class="spinner"></div>
-      </div>
-
-      <div v-else-if="filteredForms.length === 0" class="empty-state">
-        <h3>No forms found</h3>
-        <p>Try adjusting your search or filter criteria</p>
-      </div>
-
-      <div v-else class="forms-grid">
-        <div 
-          v-for="form in filteredForms" 
-          :key="form.id" 
-          class="form-card"
-          @click="handleFormClick(form.id)"
-        >
-          <!-- Card Header -->
-          <div class="card-header">
-            <div class="card-content">
-              <a href="#" class="card-title" @click.prevent>
-                {{ form.title }}
-              </a>
-              <p class="card-description">{{ form.description }}</p>
-            </div>
-            <button 
-              class="card-menu-btn" 
-              @click.stop="handleMenuClick(form.id, $event)"
-            >
-              <svg class="icon-16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="3" r="1" fill="#333333"/>
-                <circle cx="8" cy="8" r="1" fill="#333333"/>
-                <circle cx="8" cy="13" r="1" fill="#333333"/>
-              </svg>
-            </button>
-          </div>
-
-          <!-- Badges -->
-          <div class="card-badges">
-            <span :class="['badge', `badge-${form.status}`]">
-              {{ form.status === 'open' ? 'Open' : 'Draft' }}
-            </span>
-            <span :class="['badge', `badge-${form.visibility}`]">
-              {{ form.visibility === 'public' ? 'Public' : 'Private' }}
-            </span>
-          </div>
-
-          <!-- Footer -->
-          <div class="card-footer">
-            <span class="card-date">Created {{ form.createdDate }}</span>
-            <span class="card-responses">
-              <strong>{{ form.responses }}</strong>
-              <span>responses</span>
-            </span>
-          </div>
-
-          <!-- Preview -->
-          <div v-if="form.hasPreview" class="card-preview">
-            <div class="form-preview-container">
-              <div class="preview-header">
-                <div class="preview-title">{{ form.title }}</div>
-                <div class="preview-description">{{ form.description }}</div>
+      <!-- Table Container -->
+      <div class="table-wrapper">
+        <div class="table-container">
+          <div class="table">
+            <!-- Table Header -->
+            <div class="table-header">
+              <div class="table-row header-row">
+                <div class="table-head form-name-head">Form Name</div>
+                <div class="table-head status-head">Status</div>
+                <div class="table-head responses-head">Responses</div>
+                <div class="table-head modified-head">Last Modified</div>
+                <div class="table-head actions-head">Actions</div>
               </div>
-              <div class="preview-questions">
-                <div class="preview-question">
-                  <div class="preview-label">Question 1</div>
-                  <div class="preview-input"></div>
+            </div>
+
+            <!-- Table Body -->
+            <div class="table-body">
+              <div 
+                v-for="form in filteredForms" 
+                :key="form.id" 
+                class="table-row data-row"
+                @click="handleFormClick(form.id)"
+              >
+                <!-- Form Name Cell -->
+                <div class="table-cell form-name-cell">
+                  <div class="form-info">
+                    <div class="form-title">{{ form.title }}</div>
+                    <div class="form-description">{{ form.description }}</div>
+                  </div>
                 </div>
-                <div class="preview-question">
-                  <div class="preview-label">Question 2</div>
-                  <div class="preview-options">
-                    <div class="preview-radio"></div>
-                    <div class="preview-radio"></div>
-                    <div class="preview-radio"></div>
+
+                <!-- Status Cell -->
+                <div class="table-cell status-cell">
+                  <div :class="['status-badge', `status-${form.status}`]">
+                    <div class="status-dot"></div>
+                    <div class="status-text">
+                      {{ form.status === 'open' ? 'Open' : form.status === 'draft' ? 'Draft' : 'Closed' }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Responses Cell -->
+                <div class="table-cell responses-cell">
+                  <div class="responses-info">
+                    <div class="responses-icon-wrapper">
+                      <i class="pi pi-comment"></i>
+                    </div>
+                    <div class="responses-content">
+                      <div class="responses-count">{{ form.responses }}</div>
+                      <div class="responses-label">responses</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Last Modified Cell -->
+                <div class="table-cell modified-cell">
+                  <div class="modified-info">
+                    <i class="pi pi-calendar"></i>
+                    <div class="modified-text">{{ form.createdDate }}</div>
+                  </div>
+                </div>
+
+                <!-- Actions Cell -->
+                <div class="table-cell actions-cell">
+                  <div class="actions-buttons" ref="actionsRef">
+                    <div class="action-more-wrapper">
+                      <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
+                        <i class="pi pi-ellipsis-v"></i>
+                      </button>
+                      
+                      <div v-if="showActionsDropdown === form.id" class="actions-dropdown-menu">
+                        <button class="action-dropdown-item" @click.stop="handleEdit(form.id)">
+                          <i class="pi pi-pencil"></i>
+                          <span>Edit</span>
+                        </button>
+                        <button class="action-dropdown-item" @click.stop="handleGenerateLink(form.id)">
+                          <i class="pi pi-link"></i>
+                          <span>Generate Link</span>
+                        </button>
+                        <button class="action-dropdown-item danger" @click.stop="handleDelete(form.id)">
+                          <i class="pi pi-trash"></i>
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -174,357 +188,313 @@
           </div>
         </div>
       </div>
-
-      <!-- Statistics -->
-      <div class="statistics">
-        <div class="stat-item">
-          <strong>{{ statistics.totalForms }}</strong>
-          <span> total forms</span>
-        </div>
-        <div class="stat-item">
-          <strong>{{ statistics.activeForms }}</strong>
-          <span> active</span>
-        </div>
-        <div class="stat-item">
-          <strong>{{ statistics.totalResponses }}</strong>
-          <span> total responses</span>
-        </div>
-      </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
-
-// Data
-const userEmail = ref('user@example.com');
-const searchQuery = ref('');
-const currentFilter = ref('all');
-const loading = ref(false);
-const showFilterDropdown = ref(false);
-const filterDropdownRef = ref(null);
+const router = useRouter()
+const searchQuery = ref('')
+const statusFilter = ref('all')
+const showFilterDropdown = ref(false)
+const filterRef = ref(null)
+const showActionsDropdown = ref(null)
+const actionsRef = ref(null)
 
 const forms = ref([
   {
     id: 1,
-    title: "Customer Satisfaction Survey",
-    description: "Help us improve our services by sharing your feedback",
-    status: "open",
-    visibility: "public",
-    createdDate: "15/11/2024",
-    responses: 156,
-    hasPreview: true,
-    questions: [
-      {
-        id: 1,
-        label: "What is your name?",
-        type: "text",
-        required: true
-      },
-      {
-        id: 2,
-        label: "How satisfied are you with our service?",
-        type: "radio",
-        required: true,
-        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"]
-      },
-      {
-        id: 3,
-        label: "Rate your overall experience",
-        type: "rating",
-        required: true
-      },
-      {
-        id: 4,
-        label: "What can we do to improve?",
-        type: "textarea",
-        required: false
-      }
-    ]
+    title: 'Comprehensive Survey - All Question Types',
+    description: 'A demonstration survey showcasing all available qu',
+    status: 'open',
+    responses: 6,
+    createdDate: 'Dec 10, 2025'
   },
   {
     id: 2,
-    title: "Event Registration Form",
-    description: "Register for our upcoming webinar on December 15th",
-    status: "open",
-    visibility: "public",
-    createdDate: "10/11/2024",
-    responses: 89,
-    hasPreview: true,
-    questions: [
-      {
-        id: 1,
-        label: "Full Name",
-        type: "text",
-        required: true
-      },
-      {
-        id: 2,
-        label: "Email Address",
-        type: "text",
-        required: true
-      },
-      {
-        id: 3,
-        label: "Which session are you interested in?",
-        type: "radio",
-        required: true,
-        options: ["Morning Session (9:00 AM)", "Afternoon Session (2:00 PM)", "Both Sessions"]
-      },
-      {
-        id: 4,
-        label: "Any dietary restrictions?",
-        type: "textarea",
-        required: false
-      }
-    ]
+    title: 'Customer Satisfaction Survey',
+    description: 'Help us improve our services by sharing your feedb',
+    status: 'open',
+    responses: 156,
+    createdDate: 'Nov 20, 2024'
   },
   {
     id: 3,
-    title: "Employee Feedback Q4 2024",
-    description: "Internal feedback survey for team members",
-    status: "draft",
-    visibility: "private",
-    createdDate: "01/12/2024",
+    title: 'Event Registration Form',
+    description: 'Register for our upcoming webinar on December 15th',
+    status: 'open',
+    responses: 89,
+    createdDate: 'Nov 18, 2024'
+  },
+  {
+    id: 4,
+    title: 'Employee Feedback Q4 2024',
+    description: 'Internal feedback survey for team members',
+    status: 'draft',
     responses: 0,
-    hasPreview: true,
-    questions: [
-      {
-        id: 1,
-        label: "Employee ID",
-        type: "text",
-        required: true
-      },
-      {
-        id: 2,
-        label: "How would you rate the work environment?",
-        type: "rating",
-        required: true
-      },
-      {
-        id: 3,
-        label: "What improvements would you suggest?",
-        type: "textarea",
-        required: true
-      }
-    ]
+    createdDate: 'Dec 2, 2024'
+  },
+  {
+    id: 5,
+    title: 'Product Feature Request',
+    description: 'Share your ideas for new features',
+    status: 'open',
+    responses: 234,
+    createdDate: 'Nov 25, 2024'
+  },
+  {
+    id: 6,
+    title: 'Weekly Team Check-in',
+    description: 'Quick pulse check for the team',
+    status: 'closed',
+    responses: 12,
+    createdDate: 'Nov 8, 2024'
+  },
+  {
+    id: 7,
+    title: 'Conference Feedback 2024',
+    description: '',
+    status: 'open',
+    responses: 45,
+    createdDate: 'Nov 30, 2024'
   }
-]);
+])
 
-// Computed
 const filteredForms = computed(() => {
-  return forms.value.filter(form => {
-    const matchesSearch = 
-      form.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      form.description.toLowerCase().includes(searchQuery.value.toLowerCase());
-    
-    const matchesFilter = 
-      currentFilter.value === 'all' || 
-      form.status === currentFilter.value;
-    
-    return matchesSearch && matchesFilter;
-  });
-});
+  let filtered = forms.value
+
+  // Filter by status
+  if (statusFilter.value !== 'all') {
+    filtered = filtered.filter(form => form.status === statusFilter.value)
+  }
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(form =>
+      form.title.toLowerCase().includes(query) ||
+      form.description.toLowerCase().includes(query)
+    )
+  }
+
+  return filtered
+})
 
 const filterLabel = computed(() => {
-  const labels = {
-    all: 'All Status',
-    open: 'Open',
-    draft: 'Draft'
-  };
-  return labels[currentFilter.value] || 'All Status';
-});
+  if (statusFilter.value === 'all') return 'All Status'
+  if (statusFilter.value === 'open') return 'Open'
+  if (statusFilter.value === 'draft') return 'Draft'
+  if (statusFilter.value === 'closed') return 'Closed'
+  return 'All Status'
+})
 
-const statistics = computed(() => ({
-  totalForms: forms.value.length,
-  activeForms: forms.value.filter(f => f.status === 'open').length,
-  totalResponses: forms.value.reduce((sum, f) => sum + f.responses, 0)
-}));
-
-// Methods
 const toggleFilterDropdown = () => {
-  showFilterDropdown.value = !showFilterDropdown.value;
-};
+  showFilterDropdown.value = !showFilterDropdown.value
+}
 
 const selectFilter = (filter) => {
-  currentFilter.value = filter;
-  showFilterDropdown.value = false;
-};
-
-const handleClickOutside = (event) => {
-  if (filterDropdownRef.value && !filterDropdownRef.value.contains(event.target)) {
-    showFilterDropdown.value = false;
-  }
-};
+  statusFilter.value = filter
+  showFilterDropdown.value = false
+}
 
 const handleFormClick = (formId) => {
-  console.log('Form clicked:', formId);
-  router.push({ name: 'FormPreview', params: { id: formId } });
-};
-
-const handleMenuClick = (formId, event) => {
-  console.log('Menu clicked:', formId);
-};
+  router.push(`/form/${formId}/preview`)
+}
 
 const handleCreateForm = () => {
-  console.log('Create form');
-  // router.push({ name: 'FormBuilder' });
-};
+  console.log('Create new form')
+}
 
 const handleLogout = () => {
-  if (confirm('Are you sure you want to logout?')) {
-    console.log('Logging out...');
+  console.log('Logout')
+}
+
+const handleEdit = (formId) => {
+  console.log('Edit form:', formId)
+}
+
+const handleMore = (formId) => {
+  console.log('More options for form:', formId)
+}
+
+const toggleActionsDropdown = (formId) => {
+  showActionsDropdown.value = showActionsDropdown.value === formId ? null : formId
+}
+
+const handleGenerateLink = (formId) => {
+  console.log('Generate link for form:', formId)
+  showActionsDropdown.value = null
+}
+
+const handleDelete = (formId) => {
+  console.log('Delete form:', formId)
+  showActionsDropdown.value = null
+}
+
+const handleClickOutside = (event) => {
+  if (filterRef.value && !filterRef.value.contains(event.target)) {
+    showFilterDropdown.value = false
   }
-};
+  if (actionsRef.value && !actionsRef.value.contains(event.target)) {
+    showActionsDropdown.value = null
+  }
+}
 
-const toggleMenu = () => {
-  console.log('Toggle mobile menu');
-};
-
-// Lifecycle
 onMounted(() => {
-  loading.value = false;
-  document.addEventListener('click', handleClickOutside);
-});
+  document.addEventListener('click', handleClickOutside)
+})
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* ==================== BASE ==================== */
-.list-view {
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.from-list-page {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background: #FAFAFA;
+  background: #F5F5F5;
   font-family: 'Inter', sans-serif;
 }
 
-/* ==================== NAVBAR ==================== */
+/* Navbar */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  width: 100%;
+  height: 65px;
   background: #FFFFFF;
   border-bottom: 1px solid #E5E5E5;
-  z-index: 1000;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  z-index: 100;
 }
 
 .navbar-container {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  max-width: 1216px;
-  height: 64px;
+  width: 100%;
+  max-width: 1143px;
   margin: 0 auto;
-  padding: 0;
 }
 
-.navbar-logo-link {
+.navbar-link {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 8px;
-  text-decoration: none;
+  gap: 12px;
 }
 
-.navbar-logo-icon {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
+.navbar-logo {
+  width: 40px;
+  height: 40px;
 }
 
-.logo-image {
+.navbar-logo img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-.navbar-logo-text {
+.navbar-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.brand-text {
   font-weight: 600;
   font-size: 16px;
-  line-height: 24px;
+  line-height: 20px;
   letter-spacing: -0.3125px;
   color: #1A1A1A;
 }
 
-.navbar-user-section {
+.brand-subtext {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 15px;
+  color: #737373;
+}
+
+.navbar-user-container {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 16px;
 }
 
-.navbar-user-email {
+.user-text {
+  font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
   color: #525252;
 }
 
-.navbar-logout-btn {
+.logout-link {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  background: transparent;
-  border: none;
   border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-link:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.logout-link i {
+  font-size: 16px;
+  color: #333333;
+}
+
+.logout-link span {
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
   color: #333333;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.navbar-logout-btn:hover {
-  background: #F5F5F5;
-}
-
-.burger-menu {
-  display: none;
+/* Main Content */
+.form-list-page-main {
+  display: flex;
   flex-direction: column;
-  gap: 5px;
-  width: 24px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.burger-menu span {
-  width: 24px;
-  height: 2px;
-  background: #000000;
-  border-radius: 20px;
-}
-
-/* ==================== MAIN CONTENT ==================== */
-.main-content {
-  max-width: 1216px;
+  align-items: flex-start;
+  padding: 97px 32px 0px;
+  gap: 32px;
+  max-width: 1143px;
   margin: 0 auto;
-  padding: 97px 0 40px 0;
+  background: #FAFAFA;
 }
 
-/* ==================== PAGE HEADER ==================== */
-.page-header {
+/* Page Header */
+.page-container {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 32px;
+  width: 100%;
 }
 
 .page-heading {
@@ -533,50 +503,41 @@ onUnmounted(() => {
   line-height: 40px;
   letter-spacing: -0.530859px;
   color: #333333;
-  margin: 0;
 }
 
-.page-description {
+.page-paragraph {
+  font-weight: 400;
   font-size: 16px;
   line-height: 24px;
   letter-spacing: -0.3125px;
   color: #525252;
-  margin: 0;
 }
 
-/* ==================== TOOLBAR ==================== */
-.toolbar {
+/* Toolbar */
+.toolbar-container {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  gap: 8px;
+  width: 100%;
+  height: 36px;
 }
 
-.search-container {
+.search-wrapper {
   position: relative;
-  flex: 1;
-  max-width: 914px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  pointer-events: none;
+  width: 777.17px;
 }
 
 .search-input {
+  box-sizing: border-box;
   width: 100%;
-  padding: 4px 12px 4px 40px;
   height: 36px;
+  padding: 4px 12px 4px 40px;
   background: rgba(229, 229, 229, 0.3);
   border: 1px solid #E5E5E5;
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
+  font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
@@ -584,48 +545,65 @@ onUnmounted(() => {
   outline: none;
 }
 
-.search-input:focus {
-  border-color: #BA0C2F;
-}
-
 .search-input::placeholder {
-  color: #737373;
+  color: #333333;
 }
 
-.toolbar-actions {
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  width: 16px;
+  height: 16px;
+  color: #A3A3A3;
+  pointer-events: none;
+}
+
+.toolbar-right {
   display: flex;
   gap: 8px;
 }
 
-.filter-dropdown {
+.filter-wrapper {
   position: relative;
 }
 
-.filter-btn {
+.filter-button {
+  box-sizing: border-box;
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 0 12px;
-  gap: 8px;
-  min-width: 140px;
+  padding: 0px 12px;
+  gap: 16px;
+  width: 140px;
   height: 36px;
   background: rgba(229, 229, 229, 0.3);
   border: 1px solid #E5E5E5;
   border-radius: 12px;
+  cursor: pointer;
   font-family: 'Inter', sans-serif;
+}
+
+.filter-button i {
+  font-size: 16px;
+  color: #737373;
+}
+
+.filter-span {
+  font-weight: 400;
   font-size: 14px;
   line-height: 20px;
+  text-align: center;
   letter-spacing: -0.150391px;
   color: #333333;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.filter-btn:hover {
-  background: rgba(229, 229, 229, 0.5);
+.chevron-icon {
+  opacity: 0.5;
 }
 
-.dropdown-menu {
+.filter-dropdown-menu {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -634,464 +612,440 @@ onUnmounted(() => {
   border: 1px solid #E5E5E5;
   border-radius: 12px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 4px;
-  z-index: 100;
+  overflow: hidden;
+  z-index: 10;
 }
 
-.dropdown-item {
+.filter-option {
   display: block;
   width: 100%;
   padding: 8px 12px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
   font-family: 'Inter', sans-serif;
+  font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
   color: #333333;
+  background: none;
+  border: none;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 }
 
-.dropdown-item:hover {
+.filter-option:hover {
   background: #F5F5F5;
 }
 
-.dropdown-item.active {
-  background: rgba(23, 23, 23, 0.05);
-  font-weight: 500;
+.filter-option.active {
+  background: #BA0C2F;
+  color: #FFFFFF;
 }
 
-.create-form-btn {
+.create-link {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
+  justify-content: center;
+  gap: 12px;
+  width: 137.83px;
   height: 36px;
-  background: #171717;
-  border: none;
+  background: #BA0C2F;
   border-radius: 12px;
-  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.create-link:hover {
+  background: #9A0A27;
+}
+
+.create-link i {
+  font-size: 16px;
+  color: #FAFAFA;
+}
+
+.create-link span {
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
   color: #FAFAFA;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.create-form-btn:hover {
-  background: #0a0a0a;
-}
-
-/* ==================== FORMS GRID ==================== */
-.forms-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 389px));
-  gap: 24px;
-  margin-bottom: 40px;
-  justify-content: flex-start;
-}
-
-.form-card {
-  display: flex;
-  flex-direction: column;
-  padding: 25px 25px 1px;
-  gap: 16px;
+/* Table */
+.table-wrapper {
+  box-sizing: border-box;
+  width: 100%;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 1px;
 }
 
-.form-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.12);
+.table-container {
+  width: 100%;
 }
 
-.card-header {
+.table {
+  width: 100%;
+}
+
+/* Table Header */
+.table-header {
+  width: 100%;
+}
+
+.header-row {
+  display: grid;
+  grid-template-columns: 547.41px 122.05px 146.38px 159.78px 124px;
+  background: #FAFAFA;
+  border-bottom: 1px solid #E5E5E5;
+  height: 52.5px;
+}
+
+.table-head {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.card-content {
-  flex: 1;
-}
-
-.card-title {
-  display: block;
+  align-items: center;
+  padding-left: 24px;
   font-weight: 600;
-  font-size: 24px;
-  line-height: 32px;
-  letter-spacing: 0.0703125px;
-  color: #333333;
-  margin: 0 0 8px 0;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.card-title:hover {
-  color: #BA0C2F;
-}
-
-.card-description {
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
+  color: #404040;
+}
+
+.actions-head {
+  justify-content: flex-end;
+  padding-right: 24px;
+}
+
+/* Table Body */
+.table-body {
+  width: 100%;
+}
+
+.data-row {
+  display: grid;
+  grid-template-columns: 547.41px 122.05px 146.38px 159.78px 124px;
+  border-bottom: 1px solid #F5F5F5;
+  min-height: 87px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.data-row:hover {
+  background: #FAFAFA;
+}
+
+.table-cell {
+  display: flex;
+  align-items: center;
+  padding: 20.5px 24px;
+}
+
+/* Form Name Cell */
+.form-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-title {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.150391px;
+  color: #1A1A1A;
+}
+
+.form-description {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 23px;
+  letter-spacing: -0.150391px;
   color: #525252;
-  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
+  max-width: 499.41px;
 }
 
-.card-menu-btn {
+/* Status Cell */
+.status-badge {
+  box-sizing: border-box;
   display: flex;
-  justify-content: center;
   align-items: center;
-  width: 36px;
-  height: 36px;
-  background: transparent;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  flex-shrink: 0;
+  gap: 12px;
+  padding: 5px 12px 5px 11px;
+  height: 26px;
+  border-radius: 33554400px;
 }
 
-.card-menu-btn:hover {
+.status-open {
+  background: #ECFDF5;
+  border: 1px solid #A4F4CF;
+}
+
+.status-draft {
   background: #F5F5F5;
+  border: 1px solid #E5E5E5;
 }
 
-.card-badges {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: flex-start;
+.status-closed {
+  background: #FEF2F2;
+  border: 1px solid #FFC9C9;
 }
 
-.badge {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2px 8px;
-  gap: 4px;
-  border-radius: 12px;
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-open .status-dot {
+  background: #00BC7D;
+}
+
+.status-draft .status-dot {
+  background: #A3A3A3;
+}
+
+.status-closed .status-dot {
+  background: #FB2C36;
+}
+
+.status-text {
   font-weight: 500;
   font-size: 12px;
   line-height: 16px;
 }
 
-.badge-open {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16A34A;
+.status-open .status-text {
+  color: #007A55;
 }
 
-.badge-draft {
-  background: #F5F5F5;
+.status-draft .status-text {
   color: #404040;
 }
 
-.badge-public {
-  background: #FEE2E2;
-  color: #9A0A27;
+.status-closed .status-text {
+  color: #C10007;
 }
 
-.badge-private {
-  background: transparent;
-  color: #333333;
-  border: 1px solid #E5E5E5;
-}
-
-.card-footer {
+/* Responses Cell */
+.responses-info {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding-top: 16px;
-  border-top: 1px solid #F5F5F5;
-}
-
-.card-date {
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: -0.150391px;
-  color: #737373;
-}
-
-.card-responses {
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: -0.150391px;
-}
-
-.card-responses strong {
-  color: #1A1A1A;
-  font-weight: 400;
-}
-
-.card-responses span {
-  color: #737373;
-}
-
-.card-preview {
-  width: 100%;
-  height: 167px;
-  background: #FAFAFA;
-  border-radius: 0px;
-  overflow: hidden;
-}
-
-.form-preview-container {
-  width: 100%;
-  height: 100%;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
   gap: 8px;
-  transform: scale(0.85);
-  transform-origin: top left;
 }
 
-.preview-header {
+.responses-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  background: #FEF2F2;
+  border-radius: 16px;
+}
+
+.responses-icon-wrapper i {
+  font-size: 16px;
+  color: #BA0C2F;
+}
+
+.responses-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #E5E5E5;
 }
 
-.preview-title {
+.responses-count {
   font-weight: 600;
-  font-size: 11px;
-  line-height: 14px;
-  color: #333333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.preview-description {
-  font-size: 8px;
-  line-height: 10px;
-  color: #737373;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.preview-questions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.preview-question {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.preview-label {
-  font-size: 8px;
-  line-height: 10px;
-  color: #525252;
-  font-weight: 500;
-}
-
-.preview-input {
-  width: 100%;
-  height: 16px;
-  background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
-  border-radius: 4px;
-}
-
-.preview-options {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.preview-radio {
-  display: flex;
-  align-items: center;
-  height: 12px;
-  gap: 4px;
-}
-
-.preview-radio::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1px solid #D4D4D4;
-  background: rgba(229, 229, 229, 0.3);
-  flex-shrink: 0;
-}
-
-.preview-radio::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: #E5E5E5;
-}
-
-/* ==================== STATISTICS ==================== */
-.statistics {
-  display: flex;
-  justify-content: center;
-  gap: 32px;
-  padding: 20px 0;
-  flex-wrap: wrap;
-}
-
-.stat-item {
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
-}
-
-.stat-item strong {
   color: #1A1A1A;
-  font-weight: 500;
 }
 
-.stat-item span {
+.responses-label {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #737373;
+}
+
+/* Modified Cell */
+.modified-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modified-info i {
+  font-size: 16px;
+  color: #A3A3A3;
+}
+
+.modified-text {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.150391px;
   color: #525252;
 }
 
-/* ==================== LOADING & EMPTY ==================== */
-.loading {
+/* Actions Cell */
+.actions-cell {
+  justify-content: flex-end;
+}
+
+.actions-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.action-button {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 60px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #E5E5E5;
-  border-top-color: #BA0C2F;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.edit-button {
+  opacity: 0;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.more-button {
+  opacity: 0.6;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #525252;
+.data-row:hover .edit-button {
+  opacity: 1;
 }
 
-.empty-state h3 {
-  font-size: 20px;
-  margin-bottom: 8px;
+.action-button:hover {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.action-button i {
+  font-size: 16px;
   color: #333333;
 }
 
-/* ==================== UTILITIES ==================== */
-.icon-16 {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
+.action-more-wrapper {
+  position: relative;
 }
 
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 1280px) {
-  .forms-grid {
-    grid-template-columns: repeat(2, 1fr);
+.actions-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 180px;
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.action-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.150391px;
+  color: #333333;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.action-dropdown-item:hover {
+  background: #F5F5F5;
+}
+
+.action-dropdown-item.danger {
+  color: #BA0C2F;
+}
+
+.action-dropdown-item.danger:hover {
+  background: #FEF2F2;
+}
+
+.action-dropdown-item i {
+  font-size: 16px;
+  color: currentColor;
+}
+
+.action-dropdown-item span {
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .form-list-page-main {
+    padding: 97px 16px 0px;
+  }
+
+  .navbar {
+    padding: 0 16px;
+  }
+
+  .search-wrapper {
+    width: auto;
+    flex: 1;
+  }
+
+  .header-row,
+  .data-row {
+    grid-template-columns: 2fr 1fr 1fr 1fr 100px;
   }
 }
 
 @media (max-width: 768px) {
-  .navbar-container {
-    padding: 0 20px;
-  }
-  
-  .main-content {
-    padding: 97px 20px 40px 20px;
-  }
-  
-  .burger-menu {
-    display: flex;
-  }
-
-  .toolbar {
+  .toolbar-container {
     flex-direction: column;
+    height: auto;
+    gap: 12px;
     align-items: stretch;
   }
-  
-  .search-container {
-    max-width: 100%;
-  }
-  
-  .toolbar-actions {
+
+  .search-wrapper {
     width: 100%;
+  }
+
+  .toolbar-right {
     justify-content: space-between;
   }
-  
-  .filter-btn {
+
+  .filter-button {
     flex: 1;
   }
 
-  .create-form-btn {
-    flex: 1;
-  }
-  
-  .forms-grid {
+  .header-row,
+  .data-row {
     grid-template-columns: 1fr;
   }
-  
-  .page-heading {
-    font-size: 28px;
-    line-height: 36px;
-  }
-  
-  .statistics {
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-  }
-}
 
-@media (max-width: 480px) {
-  .main-content {
-    padding: 80px 16px 24px 16px;
-  }
-  
-  .navbar-container {
-    padding: 0 16px;
-  }
-  
-  .navbar-user-email {
+  .table-head:not(.form-name-head),
+  .table-cell:not(.form-name-cell) {
     display: none;
-  }
-  
-  .form-card {
-    padding: 20px 20px 1px;
-  }
-
-  .card-title {
-    font-size: 20px;
-    line-height: 28px;
-  }
-
-  .page-heading {
-    font-size: 24px;
-    line-height: 32px;
   }
 }
 </style>
