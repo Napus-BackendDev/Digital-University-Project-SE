@@ -1,8 +1,14 @@
 <template>
   <div class="left-section">
     <div class="header">
-      <div class="logo-circle"></div>
       <h1 class="brand-name">FormBuilder</h1>
+      <div class="university-logo-container">
+        <img 
+          src="@/assets/photos/mfu-logo.png" 
+          alt="Mae Fah Luang University Logo" 
+          class="university-logo"
+        />
+      </div>
     </div>
     
     <div class="content">
@@ -11,7 +17,7 @@
         Build, share, and analyze forms with powerful features and elegant design. Perfect for surveys, registrations, and feedback collection.
       </p>
       
-      <div class="image-container">
+      <div class="university-container">
         <img 
           src="@/assets/photos/mfu.png" 
           alt="Mae Fah Luang University Campus" 
@@ -23,7 +29,7 @@
 </template>
 
 <script setup>
-// No props needed for now, but can add later if needed
+
 </script>
 
 <style scoped>
@@ -41,13 +47,6 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 80px;
-}
-
-.logo-circle {
-  width: 40px;
-  height: 40px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
 }
 
 .brand-name {
@@ -78,7 +77,20 @@
   opacity: 0.95;
 }
 
-.image-container {
+.university-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.university-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.university-container {
   flex: 1;
   display: flex;
   align-items: center;

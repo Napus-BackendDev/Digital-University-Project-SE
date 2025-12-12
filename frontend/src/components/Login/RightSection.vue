@@ -4,54 +4,49 @@
       <h2 class="welcome-title">Welcome back</h2>
       <p class="welcome-subtitle">Sign in to your account to continue</p>
 
-      <form @submit.prevent="handleLogin" class="login-form">
-        <div class="form-group">
-          <label for="email">Email address</label>
-          <input
-            id="email"
-            type="email"
-            v-model="email"
-            placeholder="you@example.com"
-            required
-            class="form-input"
-          />
-        </div>
+      <CForm @submit.prevent="handleLogin" class="login-form">
+        <CFormInput
+          type="email"
+          id="email"
+          v-model="email"
+          label="Email address"
+          placeholder="you@lamduan.mfu.ac.th"
+          required
+        />
 
-        <div class="form-group">
+        <div class="password-wrapper">
           <div class="password-label-row">
-            <label for="password">Password</label>
+            <label class="form-label">Password</label>
             <a href="#" class="forgot-password" @click.prevent="handleForgotPassword">
               Forgot password?
             </a>
           </div>
-          <input
-            id="password"
+          <CFormInput
             type="password"
+            id="password"
             v-model="password"
             placeholder="Enter your password"
             required
-            class="form-input"
           />
         </div>
 
-        <button type="submit" class="sign-in-button" :disabled="isLoading">
+        <CButton type="submit" color="dark" class="sign-in-button" :disabled="isLoading">
           {{ isLoading ? 'Signing in...' : 'Sign in' }}
-        </button>
+        </CButton>
 
         <div class="divider">
           <span>Or continue with</span>
         </div>
 
-        <button type="button" class="google-button" @click="handleGoogleLogin">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
-            <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.18l-2.909-2.259c-.806.54-1.837.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.438 15.983 5.482 18 9.003 18z" fill="#34A853"/>
-            <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-            <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.482 0 2.438 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335"/>
-          </svg>
+        <CButton type="button" color="light" class="google-button" @click="handleGoogleLogin">
+          <img src="@/assets/photos/google-icon-logo-svgrepo-com.svg" 
+          alt="Google Logo" 
+          width="20" 
+          height="20" 
+          />
           Google
-        </button>
-      </form>
+        </CButton>
+      </CForm>
     </div>
   </div>
 </template>
@@ -59,6 +54,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { CForm, CFormInput, CButton } from '@coreui/vue'
 
 const router = useRouter()
 const email = ref('')
@@ -67,30 +63,15 @@ const isLoading = ref(false)
 
 const handleLogin = async () => {
   isLoading.value = true
-  try {
-    // TODO: Implement actual login logic
-    console.log('Login attempt:', { email: email.value, password: password.value })
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Navigate to home or dashboard after successful login
-    // router.push('/dashboard')
-  } catch (error) {
-    console.error('Login error:', error)
-  } finally {
-    isLoading.value = false
-  }
+
 }
 
 const handleForgotPassword = () => {
-  // TODO: Implement forgot password logic
-  console.log('Forgot password clicked')
+  
 }
 
 const handleGoogleLogin = () => {
-  // TODO: Implement Google OAuth login
-  console.log('Google login clicked')
+  
 }
 </script>
 
@@ -128,7 +109,7 @@ const handleGoogleLogin = () => {
   gap: 24px;
 }
 
-.form-group {
+.password-wrapper {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -138,12 +119,14 @@ const handleGoogleLogin = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
 }
 
-label {
+.password-label-row .form-label {
   font-size: 14px;
   font-weight: 500;
   color: #333;
+  margin: 0;
 }
 
 .forgot-password {
@@ -157,7 +140,15 @@ label {
   text-decoration: underline;
 }
 
-.form-input {
+/* Style CoreUI form inputs */
+:deep(.form-label) {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+:deep(.form-control) {
   width: 100%;
   padding: 12px 16px;
   font-size: 16px;
@@ -167,37 +158,35 @@ label {
   font-family: inherit;
 }
 
-.form-input:focus {
+:deep(.form-control:focus) {
   outline: none;
   border-color: #c41e3a;
   box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
 }
 
-.form-input::placeholder {
+:deep(.form-control::placeholder) {
   color: #9ca3af;
 }
 
-.sign-in-button {
+:deep(.sign-in-button) {
   width: 100%;
   padding: 14px 24px;
   font-size: 16px;
   font-weight: 600;
-  color: white;
-  background-color: #1a1a1a;
-  border: none;
   border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s;
   font-family: inherit;
 }
 
-.sign-in-button:hover:not(:disabled) {
-  background-color: #000000;
+:deep(.sign-in-button.btn-dark) {
+  color: white !important;
+  background-color: #1a1a1a;
+  border-color: #1a1a1a;
 }
 
-.sign-in-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+:deep(.sign-in-button.btn-dark:hover:not(:disabled)) {
+  color: white !important;
+  background-color: #000000;
+  border-color: #000000;
 }
 
 .divider {
@@ -211,7 +200,7 @@ label {
   content: '';
   position: absolute;
   top: 50%;
-  width: 42%;
+  width: 35%;
   height: 1px;
   background-color: #e5e7eb;
 }
@@ -232,17 +221,13 @@ label {
   position: relative;
 }
 
-.google-button {
-  width: 100%;
+:deep(.google-button) {
+  width: 50%;
+  margin: 0 auto;
   padding: 12px 24px;
   font-size: 16px;
   font-weight: 500;
-  color: #333;
-  background-color: white;
-  border: 1px solid #d1d5db;
   border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
   font-family: inherit;
   display: flex;
   align-items: center;
@@ -250,7 +235,13 @@ label {
   gap: 12px;
 }
 
-.google-button:hover {
+:deep(.google-button.btn-light) {
+  color: #333;
+  background-color: white;
+  border: 1px solid #d1d5db;
+}
+
+:deep(.google-button.btn-light:hover) {
   background-color: #f9fafb;
   border-color: #9ca3af;
 }

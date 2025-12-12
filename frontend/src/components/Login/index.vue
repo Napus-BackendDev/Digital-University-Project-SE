@@ -1,14 +1,14 @@
+<script setup>
+import LeftSection from './LeftSection.vue'
+import RightSection from './RightSection.vue'
+</script>
+
 <template>
   <div class="login-container">
     <LeftSection />
     <RightSection />
   </div>
 </template>
-
-<script setup>
-import LeftSection from './LeftSection.vue'
-import RightSection from './RightSection.vue'
-</script>
 
 <style scoped>
 .login-container {

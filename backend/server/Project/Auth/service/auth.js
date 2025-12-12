@@ -75,6 +75,7 @@ exports.onRegister = async function (request, response) {
         return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
 };
+
 exports.onLogout = async function (request, response) {
     try {
         response.clearCookie('token', {
