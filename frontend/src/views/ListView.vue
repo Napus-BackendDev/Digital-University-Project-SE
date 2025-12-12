@@ -19,12 +19,6 @@
             <span>Logout</span>
           </button>
         </div>
-
-        <button class="burger-menu" @click="toggleMenu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
       </div>
     </nav>
 
