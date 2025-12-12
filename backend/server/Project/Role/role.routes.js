@@ -6,11 +6,11 @@ const { requireAuth, requireRole } = require('../../../middleware/auth');
 
 router.get("/id", role.onQuery);
 router.get("", role.onQuerys);
-router.post("", requireAuth, requireRole('ADMIN'), role.onCreate);
-router.put("", requireAuth, requireRole('ADMIN'), role.onUpdate);
-router.delete("", requireAuth, requireRole('ADMIN'), role.onDelete);
-router.put('/id/permissions', requireAuth, requireRole('ADMIN'), role.setPermissions);
-router.post('/id/permissions/add', requireAuth, requireRole('ADMIN'), role.addPermission);
-router.post('/id/permissions/remove', requireAuth, requireRole('ADMIN'), role.removePermission);
+router.post("", role.onCreate);
+router.put("", role.onUpdate);
+router.delete("", role.onDelete);
+router.put('/id/permissions', role.setPermissions);
+router.post('/id/permissions/add', role.addPermission);
+router.post('/id/permissions/remove', role.removePermission);
 
 module.exports = router;

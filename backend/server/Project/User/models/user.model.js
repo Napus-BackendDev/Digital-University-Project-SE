@@ -12,4 +12,4 @@ var objSchema = new Schema({
     updatedAt: { type: Date, default: Date.now}
 });
 
-module.exports = mongoose.model('users', objSchema, "users");
+module.exports = mongoose.model('Users', objSchema, "Users");

@@ -30,21 +30,103 @@
                             "schema": {
                                 "type": "object",
                                 "required": [
-                                    "questionText",
+                                    "form",
                                     "type"
                                 ],
                                 "properties": {
+                                    "form": {
+                                        "type": "string"
+                                    },
                                     "order": {
                                         "type": "number"
                                     },
-                                    "questionText": {
-                                        "type": "string"
+                                    "title": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
                                     },
                                     "type": {
                                         "type": "string"
                                     },
                                     "required": {
                                         "type": "boolean"
+                                    },
+                                    "rating": {
+                                        "type": "object",
+                                        "properties": {
+                                            "min": {
+                                                "type": "number"
+                                            },
+                                            "max": {
+                                                "type": "number"
+                                            },
+                                            "step": {
+                                                "type": "number"
+                                            }
+                                        }
+                                    },
+                                    "checkbox": {
+                                        "type": "object",
+                                        "properties": {
+                                            "options": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "key": {
+                                                            "type": "string"
+                                                        },
+                                                        "value": {
+                                                            "type": "string"
+                                                        },
+                                                        "checked": {
+                                                            "type": "boolean"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "choices": {
+                                        "type": "object",
+                                        "properties": {
+                                            "options": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "key": {
+                                                            "type": "string"
+                                                        },
+                                                        "value": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "key",
+                                                        "value"
+                                                    ]
+                                                }
+                                            },
+                                            "isQuestion": {
+                                                "type": "boolean"
+                                            },
+                                            "subQuestion": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -75,17 +157,96 @@
                                     "_id": {
                                         "type": "string"
                                     },
+                                    "form": {
+                                        "type": "string",
+                                        "description": "Form ID"
+                                    },
                                     "order": {
                                         "type": "number"
                                     },
-                                    "questionText": {
-                                        "type": "string"
+                                    "title": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
                                     },
                                     "type": {
                                         "type": "string"
                                     },
                                     "required": {
                                         "type": "boolean"
+                                    },
+                                    "rating": {
+                                        "type": "object",
+                                        "properties": {
+                                            "min": {
+                                                "type": "number"
+                                            },
+                                            "max": {
+                                                "type": "number"
+                                            },
+                                            "step": {
+                                                "type": "number"
+                                            }
+                                        }
+                                    },
+                                    "checkbox": {
+                                        "type": "object",
+                                        "properties": {
+                                            "options": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "key": {
+                                                            "type": "string"
+                                                        },
+                                                        "value": {
+                                                            "type": "string"
+                                                        },
+                                                        "checked": {
+                                                            "type": "boolean"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "choices": {
+                                        "type": "object",
+                                        "properties": {
+                                            "options": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "key": {
+                                                            "type": "string"
+                                                        },
+                                                        "value": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "isQuestion": {
+                                                "type": "boolean"
+                                            },
+                                            "subQuestion": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
