@@ -277,6 +277,28 @@ exports.onDeleteByFormId = async function (request, response) {
     }
 };
 
+exports.generateExportLinkFormId = async function (request, response) {
+    try {
+        const { form_id } = request.body;
+        if (!form_id || !mongo.ObjectId.isValid(form_id)) {
+            return response.status(400).json({
+                success: false,
+                message: "Invalid form ID"
+            });
+        }
+        const exportLink = `${request.protocol}://${request.get('host')}/api/v1/response/export/?form_id=${form_id}`;
+
+        return ResMessage.sendResponse(response, 0, 20000, { exportLink });
+    } catch (err) {
+        console.log(err);
+        return response.status(500).json({
+            success: false,
+            message: "Failed to generate export link",
+            error: err.message
+        });
+    }
+};
+
 
 
 

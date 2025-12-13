@@ -2,18 +2,14 @@
 const questionRoutes = require('../Project/Questions/questions.routes');
 const formRoutes = require("../Project/Form/form.routes");
 const responseRoutes = require("../Project/Response/response.routes");
-const userRoutes = require("../Project/User/user.routes");
-const roleRoutes = require("../Project/Role/role.routes");
-const authRoutes = require("../Project/Auth/auth.routes");
+
 module.exports = function (app) {
   var path = "/api/v1";
 
   app.use(path + "/form", formRoutes);
   app.use(path + "/response", responseRoutes);
   app.use(path + '/question', questionRoutes);
-  app.use(path + '/user', userRoutes);
-  app.use(path + '/role', roleRoutes);
-  app.use(path+ '/auth', authRoutes);
+  
 
   // 404 handler
   app.use((req, res) => {
