@@ -1,5 +1,5 @@
 var mongo = require("mongoose");
-var objSchema = require("../models/response.model");
+var objSchema = require("../model/response.model");
 const createBaseService = require("../../../../helpers/base.service")
 
 const defaultPopulate = [

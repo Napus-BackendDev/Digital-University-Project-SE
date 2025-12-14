@@ -1,43 +1,273 @@
-// 'use strict';
+'use strict';
 
-// require('dotenv').config({ path: '.env.dev' });
-// const mongoose = require('mongoose');
-// const Form = require('./server/Project/Form/models/form.model');
-// const Response = require('./server/Project/Response/models/response.model');
-// const Role = require('./server/Project/Role/models/role.model');
-// const User = require('./server/Project/User/models/user.model');
-// const { Questions, TextQuestion, RatingQuestion, CheckboxQuestion, ChoicesQuestion } = require('./server/Project/Questions/models/questions.model');
+require('dotenv').config({ path: '.env.dev' });
+const mongoose = require('mongoose');
+const Form = require('./server/Project/Form/models/form.model');
+const Response = require('./server/Project/Response/model/response.model');
+const { Questions } = require('./server/Project/Questions/models/questions.model');
+const QUESTION_TYPE = require('./server/Project/Questions/service/questiontype');
 
-// // MongoDB connection
-// const mongoURI = process.env.MONGODB;
+// MongoDB connection
+const mongoURI = process.env.MONGODB;
 
-// async function seedDatabase() {
-//     try {
-//         // Connect to MongoDB
-//         await mongoose.connect(mongoURI, {
-//             useNewUrlParser: true,
-//             useUnifiedTopology: true
-//         });
-//         console.log('✅ Connected to MongoDB');
+async function seedDatabase() {
+    try {
+        // Connect to MongoDB
+        await mongoose.connect(mongoURI);
+        console.log('✅ Connected to MongoDB');
 
-//         // Clear existing data (optional - comment out if you want to keep existing data)
-//         await Form.deleteMany({});
-//         await Response.deleteMany({});
-//         await Questions.deleteMany({});
-//         await Role.deleteMany({});
-//         await User.deleteMany({});
-//         console.log('🗑️  Cleared existing data');
+        // Clear existing data
+        await Form.deleteMany({});
+        await Response.deleteMany({});
+        await Questions.deleteMany({});
+        console.log('🗑️  Cleared existing data');
 
 //         // ============================================
 //         // 0. CREATE ROLES
 //         // ============================================
         
 //         const roles = await Role.create([
-//             {
-//                 name: 'ADMIN',
-//                 description: 'Administrator with full system access',
-//                 permissions: [
-//                     // User Management
+        // ============================================
+        // 1. CREATE FORMS
+        // ============================================
+        
+        const form1 = await Form.create({
+            title: [
+                { key: 'en', value: 'Student Satisfaction Survey 2025' },
+                { key: 'th', value: 'แบบสำรวจความพึงพอใจของนักศึกษา 2025' }
+            ],
+            can_duplicate: true,
+            status: 'open',
+            schedule: {
+                startAt: new Date('2025-01-01'),
+                endAt: new Date('2025-12-31')
+            }
+        });
+
+        const form2 = await Form.create({
+            title: [
+                { key: 'en', value: 'Course Evaluation Form' },
+                { key: 'th', value: 'แบบประเมินหลักสูตร' }
+            ],
+            can_duplicate: false,
+            status: 'open',
+            schedule: {
+                startAt: new Date('2025-01-01'),
+                endAt: new Date('2025-06-30')
+            }
+        });
+
+        console.log(`✅ Created ${2} forms`);
+
+        // ============================================
+        // 2. CREATE QUESTIONS FOR FORM 1
+        // ============================================
+        
+        const q1_1 = await Questions.create({
+            order: 1,
+            title: [
+                { key: 'en', value: 'What is your name?' },
+                { key: 'th', value: 'คุณชื่ออะไร?' }
+            ],
+            type: QUESTION_TYPE.SHORT,
+            required: true,
+            config: {}
+        });
+
+        const q1_2 = await Questions.create({
+            order: 2,
+            title: [
+                { key: 'en', value: 'Rate your overall satisfaction' },
+                { key: 'th', value: 'ให้คะแนนความพึงพอใจโดยรวม' }
+            ],
+            type: QUESTION_TYPE.RATING,
+            required: true,
+            config: { min: 1, max: 5, step: 1 }
+        });
+
+        const q1_3 = await Questions.create({
+            order: 3,
+            title: [
+                { key: 'en', value: 'Which facilities did you use?' },
+                { key: 'th', value: 'คุณใช้สิ่งอำนวยความสะดวกใดบ้าง?' }
+            ],
+            type: QUESTION_TYPE.CHECKBOX,
+            required: false,
+            config: { 
+                options: [
+                    { key: 'en', value: 'Library' },
+                    { key: 'en', value: 'Computer Lab' },
+                    { key: 'en', value: 'Cafeteria' }
+                ]
+            }
+        });
+
+        const q1_4 = await Questions.create({
+            order: 4,
+            title: [
+                { key: 'en', value: 'How did you hear about us?' },
+                { key: 'th', value: 'คุณทราบข้อมูลเกี่ยวกับเราจากที่ใด?' }
+            ],
+            type: QUESTION_TYPE.CHOICES,
+            required: true,
+            config: {
+                options: [
+                    { key: 'en', value: 'Social Media' },
+                    { key: 'en', value: 'Friend Recommendation' },
+                    { key: 'en', value: 'Website' }
+                ]
+            }
+        });
+
+        const q1_5 = await Questions.create({
+            order: 5,
+            title: [
+                { key: 'en', value: 'Any additional comments?' },
+                { key: 'th', value: 'ความคิดเห็นเพิ่มเติม?' }
+            ],
+            type: QUESTION_TYPE.PARAGRAPH,
+            required: false,
+            config: {}
+        });
+
+        console.log(`✅ Created ${5} questions for Form 1`);
+
+        // ============================================
+        // 3. CREATE QUESTIONS FOR FORM 2
+        // ============================================
+        
+        const q2_1 = await Questions.create({
+            order: 1,
+            title: [
+                { key: 'en', value: 'Rate the course content' },
+                { key: 'th', value: 'ให้คะแนนเนื้อหาหลักสูตร' }
+            ],
+            type: QUESTION_TYPE.RATING,
+            required: true,
+            config: { min: 1, max: 5, step: 1 }
+        });
+
+        const q2_2 = await Questions.create({
+            order: 2,
+            title: [
+                { key: 'en', value: 'Rate the instructor' },
+                { key: 'th', value: 'ให้คะแนนผู้สอน' }
+            ],
+            type: QUESTION_TYPE.RATING,
+            required: true,
+            config: { min: 1, max: 5, step: 1 }
+        });
+
+        const q2_3 = await Questions.create({
+            order: 3,
+            title: [
+                { key: 'en', value: 'What did you like most about the course?' },
+                { key: 'th', value: 'คุณชอบอะไรมากที่สุดในหลักสูตรนี้?' }
+            ],
+            type: QUESTION_TYPE.PARAGRAPH,
+            required: false,
+            config: {}
+        });
+
+        console.log(`✅ Created ${3} questions for Form 2`);
+
+        // ============================================
+        // 4. CREATE SAMPLE RESPONSES
+        // ============================================
+        
+        const response1 = await Response.create({
+            responder: null, // Demo without user
+            form: form1._id,
+            answers: [
+                {
+                    question: q1_1._id,
+                    response: 'John Doe'
+                },
+                {
+                    question: q1_2._id,
+                    response: 4
+                },
+                {
+                    question: q1_3._id,
+                    response: true
+                },
+                {
+                    question: q1_4._id,
+                    response: 'Social Media'
+                },
+                {
+                    question: q1_5._id,
+                    response: 'Great experience overall!'
+                }
+            ]
+        });
+
+        const response2 = await Response.create({
+            responder: null,
+            form: form1._id,
+            answers: [
+                {
+                    question: q1_1._id,
+                    response: 'Jane Smith'
+                },
+                {
+                    question: q1_2._id,
+                    response: 5
+                },
+                {
+                    question: q1_3._id,
+                    response: false
+                },
+                {
+                    question: q1_4._id,
+                    response: 'Friend Recommendation'
+                },
+                {
+                    question: q1_5._id,
+                    response: 'Excellent service and support'
+                }
+            ]
+        });
+
+        const response3 = await Response.create({
+            responder: null,
+            form: form2._id,
+            answers: [
+                {
+                    question: q2_1._id,
+                    response: 4
+                },
+                {
+                    question: q2_2._id,
+                    response: 5
+                },
+                {
+                    question: q2_3._id,
+                    response: 'The interactive sessions and practical examples were very helpful'
+                }
+            ]
+        });
+
+        console.log(`✅ Created ${3} sample responses`);
+
+        // ============================================
+        // SUMMARY
+        // ============================================
+        
+        console.log('\n📊 Seed Summary:');
+        console.log(`   - Forms: 2`);
+        console.log(`   - Questions: 8`);
+        console.log(`   - Responses: 3`);
+        console.log('\n✅ Database seeded successfully!');
+        
+        process.exit(0);
+    } catch (error) {
+        console.error('❌ Error seeding database:', error);
+        process.exit(1);
+    }
+}
+
+seedDatabase();
 //                     'VIEW_USERS',
 //                     'DELETE_USER',
 //                     // Form Management

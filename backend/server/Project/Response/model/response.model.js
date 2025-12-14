@@ -5,7 +5,7 @@ var Schema = mongoose.Schema;
 
 var objSchema = new Schema(
   {
-    responder: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
+    responder: { type: Schema.Types.ObjectId, ref: "Users", default: null },
     form: { type: Schema.Types.ObjectId, ref: "Forms", required: true },
     answers: [
       {
@@ -18,15 +18,15 @@ var objSchema = new Schema(
   { timestamps: true }
 );
 
-// // Auto-update Form's responses array when a new Response is created
-// objSchema.post("save", async function (doc, next) {
-//   try {
-//     const Form = mongoose.model("Forms");
-//     await Form.findByIdAndUpdate(doc.form, { $push: { responses: doc._id } });
-//     next();
-//   } catch (err) {
-//     next(err);
-//   }
-// });
+// Auto-update Form's responses array when a new Response is created
+objSchema.post("save", async function (doc, next) {
+  try {
+    const Form = mongoose.model("Forms");
+    await Form.findByIdAndUpdate(doc.form, { $push: { responses: doc._id } });
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = mongoose.model("Responses", objSchema, "Responses");
