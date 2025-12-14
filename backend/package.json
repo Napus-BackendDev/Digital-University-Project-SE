@@ -4,11 +4,9 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon -r dotenv/config server.js dotenv_config_path=.env.dev",
     "start": "nodemon -r dotenv/config server.js",
     "serve:test": "node -r dotenv/config server.js dotenv_config_path=.env.test",
-    "serve:prod": "node -r dotenv/config server.js dotenv_config_path=.env.prod",
-    "seed": "node seed.js"
+    "serve:prod": "node -r dotenv/config server.js dotenv_config_path=.env.prod"
   },
   "keywords": [],
   "author": "",

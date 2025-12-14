@@ -54,6 +54,34 @@ module.exports = function createBaseService(objSchema, defaultPopulate = []) {
         },
 
         // ====================================
+        // 🔹 Create Many
+        // ====================================
+        onCreateMany: async (data, populate = defaultPopulate, select = '') => {
+            const newObj = await objSchema.create(data);
+            const populated = await objSchema.populate(newObj, populate);
+
+            if (!select) return populated;
+
+            const populatedFields = (populatedData) => {
+                // เลือกเฉพาะ fields ที่ต้องการ
+                const result = {};
+                select.split(' ').forEach(field => {
+                    if (field && populatedData[field] !== undefined) {
+                        result[field] = populatedData[field];
+                    }
+                });
+                return result;
+            }
+
+            if (Array.isArray(populated)) {
+                return populated.map(populatedFields);
+            } else {
+                return populatedFields(populated);
+            }
+
+        },
+
+        // ====================================
         // 🔹 Update
         // ====================================
         onUpdate: async (query, data, populate = defaultPopulate, select = '') => {

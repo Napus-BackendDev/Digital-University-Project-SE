@@ -1,5 +1,4 @@
 const express = require('express');
-const formScheduler = require('../server/Project/Form/service/formScheduler');
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const nocache = require("nocache");
@@ -24,8 +23,6 @@ module.exports = function (app) {
 
     app.use(express.json({ limit: '10mb' }));
     app.use(express.urlencoded({ limit: '10mb', extended: true }));
-    app.use(cookieParser());
-    app.use(loggerMiddleware);
 
     app.use(compression());
     if (process.env.NODE_ENV === 'production') {

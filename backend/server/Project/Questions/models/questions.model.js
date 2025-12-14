@@ -1,45 +1,45 @@
 'use strict';
 
+const QUESTION_TYPE = require('../service/questiontype');
+
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var questionSchema = new Schema({
+var objSchema = new Schema({
+    // form: [{ type: Schema.Types.ObjectId, ref: 'Forms', required: true }],
     order: { type: Number, default: 1 },
-    questionText: { type: String, required: true },
-    type: { type: String, enum: ['Text', 'Rating', 'Checkbox', 'Choices'], required: true },
+    title: [
+        {
+            _id: false,
+            key: { type: String, required: true },
+            value: { type: String, required: true }
+        }
+    ],
+    type: {
+        type: String,
+        required: true,
+        validate: {
+            validator: (value) => Object.values(QUESTION_TYPE).includes(value), // ['text', 'rating', 'checkbox', 'choices'] 
+            message: props => `${props.value} is not a valid question type!`
+        }
+    },
     required: { type: Boolean, default: false },
-}, { discriminatorKey: 'type', collection: 'Questions' });
+    config: { type: Schema.Types.Mixed, default: {} } // Config of each question type
+}, { timestamps: true });
 
-var TextSchema = new Schema({
-    subquestionText: { type: String, required: true }
-});
+// Auto-update Form's questions array when a new Question is created
+// objSchema.post('save', async function (doc, next) {
+//     try {
+//         const form = mongoose.model('Forms');
+//         await form.findByIdAndUpdate(doc.form, { $push: { questions: doc._id } });
+//         next();
+//     } catch (err) {
+//         next(err);
+//     }
+// })
 
-var RatingSchema = new Schema({
-    min: { type: Number, default: 1 },
-    max: { type: Number, default: 5 },
-    step: { type: Number, default: 1 }
-});
-
-var CheckboxSchema = new Schema({
-    checked: { type: Boolean, default: false },
-});
-
-var ChoicesSchema = new Schema({
-    option: { type: Boolean, default: false },
-    subQuestion: [{ type: Schema.Types.ObjectId, ref: 'Questions' }]
-});
-
-var Questions = mongoose.model('Questions', questionSchema);
-
-var TextQuestion = Questions.discriminator('Text', TextSchema);
-var RatingQuestion = Questions.discriminator('Rating', RatingSchema);
-var CheckboxQuestion = Questions.discriminator('Checkbox', CheckboxSchema);
-var ChoicesQuestion = Questions.discriminator('Choices', ChoicesSchema);
+var Questions = mongoose.model('Questions', objSchema, 'Questions');
 
 module.exports = {
-    Questions,
-    TextQuestion,
-    RatingQuestion,
-    CheckboxQuestion,
-    ChoicesQuestion
+    Questions
 };
