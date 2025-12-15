@@ -155,8 +155,6 @@
     margin-bottom: 30px;
   }
   
-  .image-container {
-    display: none;
-  }
+ 
 }
 </style>
