@@ -1,5 +1,5 @@
 <template>
-  <div class="from-list-page">
+  <div class="editor-list">
     <!-- Navbar -->
     <nav class="navbar">
       <div class="navbar-container">
@@ -98,7 +98,39 @@
 
       <!-- Table Container -->
       <div class="table-wrapper">
-        <div class="table-container">
+        <!-- Loading State -->
+        <div v-if="loading" class="loading-container">
+          <div class="loading-spinner">
+            <i class="pi pi-spinner pi-spin"></i>
+          </div>
+          <p class="loading-text">Loading forms...</p>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="error" class="error-container">
+          <div class="error-icon">
+            <i class="pi pi-exclamation-circle"></i>
+          </div>
+          <p class="error-text">{{ error }}</p>
+          <button class="retry-button" @click="fetchForms">
+            <i class="pi pi-refresh"></i>
+            <span>Retry</span>
+          </button>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="filteredForms.length === 0" class="empty-container">
+          <div class="empty-icon">
+            <i class="pi pi-inbox"></i>
+          </div>
+          <p class="empty-text">No forms found</p>
+          <p class="empty-subtext">
+            {{ searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Create your first form to get started' }}
+          </p>
+        </div>
+
+        <!-- Table with Data -->
+        <div v-else class="table-container">
           <div class="table">
             <!-- Table Header -->
             <div class="table-header">
@@ -114,7 +146,7 @@
             <!-- Table Body -->
             <div class="table-body">
               <div 
-                v-for="form in filteredForms" 
+                v-for="form in paginatedForms" 
                 :key="form.id" 
                 class="table-row data-row"
                 @click="handleFormClick(form.id)"
@@ -168,13 +200,18 @@
                       
                       <div v-if="showActionsDropdown === form.id" class="actions-dropdown-menu">
                         <button class="action-dropdown-item" @click.stop="handleEdit(form.id)">
-                          <i class="pi pi-pencil"></i>
-                          <span>Edit</span>
+                          <i class="pi pi-file-edit"></i>
+                          <span>Edit Form</span>
                         </button>
-                        <button class="action-dropdown-item" @click.stop="handleGenerateLink(form.id)">
-                          <i class="pi pi-link"></i>
-                          <span>Generate Link</span>
+                        <button class="action-dropdown-item" @click.stop="handlePreview(form.id)">
+                          <i class="pi pi-eye"></i>
+                          <span>Preview</span>
                         </button>
+                        <button class="action-dropdown-item" @click.stop="handleDuplicate(form.id)">
+                          <i class="pi pi-copy"></i>
+                          <span>Duplicate</span>
+                        </button>
+                        <div class="dropdown-divider"></div>
                         <button class="action-dropdown-item danger" @click.stop="handleDelete(form.id)">
                           <i class="pi pi-trash"></i>
                           <span>Delete</span>
@@ -188,6 +225,39 @@
           </div>
         </div>
       </div>
+
+      <!-- Pagination -->
+      <div class="pagination-container" v-if="totalPages > 0">
+        <button 
+          class="pagination-button prev-button" 
+          :disabled="!hasPreviousPage"
+          @click="previousPage"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 12L6 8L10 4" stroke="#333333" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Previous</span>
+        </button>
+        <button 
+          v-for="page in totalPages" 
+          :key="page"
+          class="pagination-number" 
+          :class="{ active: currentPage === page }"
+          @click="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+        <button 
+          class="pagination-button next-button"
+          :disabled="!hasNextPage"
+          @click="nextPage"
+        >
+          <span>Next</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 4L10 8L6 12" stroke="#333333" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
     </main>
   </div>
 </template>
@@ -195,6 +265,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { formAPI } from '@/services/api'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -203,65 +274,88 @@ const showFilterDropdown = ref(false)
 const filterRef = ref(null)
 const showActionsDropdown = ref(null)
 const actionsRef = ref(null)
+const forms = ref([])
+const loading = ref(false)
+const error = ref(null)
+const currentPage = ref(1)
+const itemsPerPage = ref(7)
 
-const forms = ref([
-  {
-    id: 1,
-    title: 'Comprehensive Survey - All Question Types',
-    description: 'A demonstration survey showcasing all available qu',
-    status: 'open',
-    responses: 6,
-    createdDate: 'Dec 10, 2025'
-  },
-  {
-    id: 2,
-    title: 'Customer Satisfaction Survey',
-    description: 'Help us improve our services by sharing your feedb',
-    status: 'open',
-    responses: 156,
-    createdDate: 'Nov 20, 2024'
-  },
-  {
-    id: 3,
-    title: 'Event Registration Form',
-    description: 'Register for our upcoming webinar on December 15th',
-    status: 'open',
-    responses: 89,
-    createdDate: 'Nov 18, 2024'
-  },
-  {
-    id: 4,
-    title: 'Employee Feedback Q4 2024',
-    description: 'Internal feedback survey for team members',
-    status: 'draft',
-    responses: 0,
-    createdDate: 'Dec 2, 2024'
-  },
-  {
-    id: 5,
-    title: 'Product Feature Request',
-    description: 'Share your ideas for new features',
-    status: 'open',
-    responses: 234,
-    createdDate: 'Nov 25, 2024'
-  },
-  {
-    id: 6,
-    title: 'Weekly Team Check-in',
-    description: 'Quick pulse check for the team',
-    status: 'closed',
-    responses: 12,
-    createdDate: 'Nov 8, 2024'
-  },
-  {
-    id: 7,
-    title: 'Conference Feedback 2024',
-    description: '',
-    status: 'open',
-    responses: 45,
-    createdDate: 'Nov 30, 2024'
+// Format date helper
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  const options = { year: 'numeric', month: 'short', day: 'numeric' }
+  return date.toLocaleDateString('en-US', options)
+}
+
+// Get title from multilingual array
+const getTitle = (titleArray) => {
+  if (!titleArray || !Array.isArray(titleArray) || titleArray.length === 0) {
+    return ''
   }
-])
+  
+  // Try to find English title first
+  const enTitle = titleArray.find(t => 
+    (t.lang === 'en' || t.key === 'en') && (t.text || t.value)
+  )
+  
+  if (enTitle) {
+    return enTitle.text || enTitle.value || ''
+  }
+  
+  // Return first available that has text or value
+  const firstValid = titleArray.find(t => t.text || t.value)
+  if (firstValid) {
+    return firstValid.text || firstValid.value || ''
+  }
+  
+  return ''
+}
+
+// Fetch forms from API
+const fetchForms = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    const response = await formAPI.getAllForms()
+    console.log('API Response:', response.data)
+    console.log('API Response Type:', typeof response.data)
+    console.log('API Response Keys:', Object.keys(response.data))
+    
+    // Backend returns data in "data" key (not "datas")
+    const formData = response.data.data || response.data.datas || []
+    
+    console.log('Form Data:', formData) // Debug log
+    console.log('Form Data Length:', formData.length)
+    
+    // Transform API data to match component structure
+    forms.value = formData.map(form => {
+      console.log('Processing form:', form) // Debug each form
+      
+      const title = getTitle(form.title)
+      const description = getTitle(form.description)
+      
+      console.log('Extracted title:', title) // Debug extracted values
+      console.log('Extracted description:', description)
+      
+      return {
+        id: form._id,
+        title: title || 'Untitled Form',
+        description: description || 'No description',
+        status: form.status || 'draft',
+        responses: form.responseCount || 0,
+        createdDate: formatDate(form.updatedAt || form.createdAt)
+      }
+    })
+    
+    console.log('Final forms:', forms.value) // Debug final result
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to load forms'
+    console.error('Error fetching forms:', err)
+  } finally {
+    loading.value = false
+  }
+}
 
 const filteredForms = computed(() => {
   let filtered = forms.value
@@ -283,6 +377,24 @@ const filteredForms = computed(() => {
   return filtered
 })
 
+const totalPages = computed(() => {
+  return Math.ceil(filteredForms.value.length / itemsPerPage.value)
+})
+
+const paginatedForms = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredForms.value.slice(start, end)
+})
+
+const hasNextPage = computed(() => {
+  return currentPage.value < totalPages.value
+})
+
+const hasPreviousPage = computed(() => {
+  return currentPage.value > 1
+})
+
 const filterLabel = computed(() => {
   if (statusFilter.value === 'all') return 'All Status'
   if (statusFilter.value === 'open') return 'Open'
@@ -298,6 +410,25 @@ const toggleFilterDropdown = () => {
 const selectFilter = (filter) => {
   statusFilter.value = filter
   showFilterDropdown.value = false
+  currentPage.value = 1 // Reset to first page when filter changes
+}
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+const nextPage = () => {
+  if (hasNextPage.value) {
+    currentPage.value++
+  }
+}
+
+const previousPage = () => {
+  if (hasPreviousPage.value) {
+    currentPage.value--
+  }
 }
 
 const handleFormClick = (formId) => {
@@ -306,14 +437,30 @@ const handleFormClick = (formId) => {
 
 const handleCreateForm = () => {
   console.log('Create new form')
+  // TODO: Navigate to form creation page
 }
 
 const handleLogout = () => {
   console.log('Logout')
+  // TODO: Implement logout functionality
 }
 
 const handleEdit = (formId) => {
   console.log('Edit form:', formId)
+  showActionsDropdown.value = null
+  // TODO: Navigate to edit page
+}
+
+const handlePreview = (formId) => {
+  console.log('Preview form:', formId)
+  showActionsDropdown.value = null
+  // TODO: Navigate to preview page
+}
+
+const handleDuplicate = (formId) => {
+  console.log('Duplicate form:', formId)
+  showActionsDropdown.value = null
+  // TODO: Implement duplicate functionality
 }
 
 const handleMore = (formId) => {
@@ -324,14 +471,21 @@ const toggleActionsDropdown = (formId) => {
   showActionsDropdown.value = showActionsDropdown.value === formId ? null : formId
 }
 
-const handleGenerateLink = (formId) => {
-  console.log('Generate link for form:', formId)
+const handleDelete = async (formId) => {
   showActionsDropdown.value = null
-}
-
-const handleDelete = (formId) => {
-  console.log('Delete form:', formId)
-  showActionsDropdown.value = null
+  
+  if (!confirm('Are you sure you want to delete this form?')) {
+    return
+  }
+  
+  try {
+    await formAPI.deleteForm(formId)
+    // Refresh the forms list
+    await fetchForms()
+  } catch (err) {
+    console.error('Error deleting form:', err)
+    alert('Failed to delete form. Please try again.')
+  }
 }
 
 const handleClickOutside = (event) => {
@@ -345,6 +499,8 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  // Fetch forms when component is mounted
+  fetchForms()
 })
 
 onUnmounted(() => {
@@ -361,74 +517,85 @@ onUnmounted(() => {
   padding: 0;
 }
 
-.from-list-page {
-  position: relative;
-  width: 100%;
+.editor-list {
+  width: 1536px;
   min-height: 100vh;
   background: #F5F5F5;
   font-family: 'Inter', sans-serif;
+  overflow-x: auto;
+  margin: 0 auto;
 }
 
 /* Navbar */
 .navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
+  width: 1536px;
   height: 65px;
+  padding: 0px 160px 1px 160px;
   background: #FFFFFF;
   border-bottom: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
-  padding: 0 32px;
-  z-index: 100;
+  position: relative;
 }
 
 .navbar-container {
+  width: 1216px;
+  height: 48px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  max-width: 1143px;
-  margin: 0 auto;
 }
 
 .navbar-link {
+  width: 145.05px;
+  height: 48px;
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 12px;
+  text-decoration: none;
 }
 
 .navbar-logo {
   width: 40px;
   height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .navbar-logo img {
-  width: 100%;
-  height: 100%;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
 }
 
 .navbar-brand {
+  width: 93.05px;
+  height: 48px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 0px;
 }
 
 .brand-text {
+  width: 93.05px;
+  height: 20px;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
   font-size: 16px;
-  line-height: 20px;
+  line-height: 24px;
   letter-spacing: -0.3125px;
   color: #1A1A1A;
 }
 
 .brand-subtext {
+  width: 93.05px;
+  height: 15px;
+  font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 12px;
   line-height: 15px;
@@ -439,22 +606,34 @@ onUnmounted(() => {
   display: flex;
   flex-direction: row;
   align-items: center;
+  padding: 0px;
   gap: 16px;
+  height: 32px;
 }
 
 .user-text {
+  width: auto;
+  max-width: 150px;
+  height: 20px;
+  font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
   color: #525252;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logout-link {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 6px 12px;
+  width: 96.03px;
+  height: 32px;
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.2s;
@@ -470,6 +649,7 @@ onUnmounted(() => {
 }
 
 .logout-link span {
+  font-family: 'Inter', sans-serif;
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
@@ -477,15 +657,15 @@ onUnmounted(() => {
   color: #333333;
 }
 
-/* Main Content */
+/* Form List Page */
 .form-list-page-main {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  padding: 97px 32px 0px;
+  align-items: center;
+  padding: 40px 160px 40px;
   gap: 32px;
-  max-width: 1143px;
-  margin: 0 auto;
+  width: 1536px;
+  min-height: 1020px;
   background: #FAFAFA;
 }
 
@@ -493,46 +673,63 @@ onUnmounted(() => {
 .page-container {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
   gap: 8px;
-  width: 100%;
+  width: 1216px;
+  height: 72px;
 }
 
 .page-heading {
+  width: 1216px;
+  height: 40px;
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
   font-size: 36px;
   line-height: 40px;
   letter-spacing: -0.530859px;
   color: #333333;
+  margin: 0;
 }
 
 .page-paragraph {
+  width: 1216px;
+  height: 24px;
+  font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 16px;
   line-height: 24px;
   letter-spacing: -0.3125px;
   color: #525252;
+  margin: 0;
 }
 
 /* Toolbar */
 .toolbar-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+  position: relative;
+  width: 1216px;
   height: 36px;
 }
 
 .search-wrapper {
-  position: relative;
-  width: 777.17px;
+  position: absolute;
+  width: 914.17px;
+  height: 36px;
+  left: 0px;
+  top: 0px;
 }
 
 .search-input {
   box-sizing: border-box;
-  width: 100%;
-  height: 36px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   padding: 4px 12px 4px 40px;
+  position: absolute;
+  width: 914.17px;
+  height: 36px;
+  left: 0px;
+  top: 0px;
   background: rgba(229, 229, 229, 0.3);
   border: 1px solid #E5E5E5;
   border-radius: 12px;
@@ -551,21 +748,31 @@ onUnmounted(() => {
 
 .search-icon {
   position: absolute;
-  left: 12px;
-  top: 10px;
   width: 16px;
   height: 16px;
+  left: 12px;
+  top: 10px;
   color: #A3A3A3;
   pointer-events: none;
 }
 
 .toolbar-right {
   display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 0px;
   gap: 8px;
+  position: absolute;
+  width: 285.83px;
+  height: 36px;
+  left: 930.17px;
+  top: 0px;
 }
 
 .filter-wrapper {
   position: relative;
+  width: 140px;
+  height: 36px;
 }
 
 .filter-button {
@@ -582,24 +789,34 @@ onUnmounted(() => {
   border: 1px solid #E5E5E5;
   border-radius: 12px;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  flex: none;
+  order: 0;
+  flex-grow: 1;
 }
 
 .filter-button i {
+  width: 16px;
+  height: 16px;
   font-size: 16px;
   color: #737373;
 }
 
 .filter-span {
+  height: 20px;
+  font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   text-align: center;
   letter-spacing: -0.150391px;
   color: #333333;
+  white-space: nowrap;
+  flex: 1;
 }
 
 .chevron-icon {
+  width: 16px;
+  height: 16px;
   opacity: 0.5;
 }
 
@@ -650,9 +867,13 @@ onUnmounted(() => {
   width: 137.83px;
   height: 36px;
   background: #BA0C2F;
+  border: none;
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.2s;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
 }
 
 .create-link:hover {
@@ -660,11 +881,14 @@ onUnmounted(() => {
 }
 
 .create-link i {
+  width: 16px;
+  height: 16px;
   font-size: 16px;
   color: #FAFAFA;
 }
 
 .create-link span {
+  font-family: 'Inter', sans-serif;
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
@@ -672,15 +896,120 @@ onUnmounted(() => {
   color: #FAFAFA;
 }
 
-/* Table */
+/* Table Wrapper */
 .table-wrapper {
   box-sizing: border-box;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1px;
+  width: 1216px;
+  height: 653px;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
-  padding: 1px;
+  flex: none;
+  order: 2;
+  align-self: stretch;
+  flex-grow: 0;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  width: 100%;
+  min-height: 400px;
+}
+
+.loading-spinner i {
+  font-size: 48px;
+  color: #BA0C2F;
+}
+
+.loading-text {
+  margin-top: 16px;
+  font-weight: 500;
+  font-size: 16px;
+  color: #525252;
+}
+
+/* Error State */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+}
+
+.error-icon i {
+  font-size: 48px;
+  color: #FB2C36;
+}
+
+.error-text {
+  margin-top: 16px;
+  font-weight: 500;
+  font-size: 16px;
+  color: #333333;
+}
+
+.retry-button {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #BA0C2F;
+  border: none;
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.retry-button:hover {
+  background: #9A0A27;
+}
+
+.retry-button i {
+  font-size: 14px;
+}
+
+/* Empty State */
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+}
+
+.empty-icon i {
+  font-size: 48px;
+  color: #A3A3A3;
+}
+
+.empty-text {
+  margin-top: 16px;
+  font-weight: 600;
+  font-size: 18px;
+  color: #333333;
+}
+
+.empty-subtext {
+  margin-top: 8px;
+  font-weight: 400;
+  font-size: 14px;
+  color: #737373;
 }
 
 .table-container {
@@ -698,10 +1027,10 @@ onUnmounted(() => {
 
 .header-row {
   display: grid;
-  grid-template-columns: 547.41px 122.05px 146.38px 159.78px 124px;
+  grid-template-columns: 604.36px 134.75px 161.61px 176.41px 136.91px;
   background: #FAFAFA;
   border-bottom: 1px solid #E5E5E5;
-  height: 52.5px;
+  height: 52px;
 }
 
 .table-head {
@@ -716,8 +1045,12 @@ onUnmounted(() => {
 }
 
 .actions-head {
-  justify-content: flex-end;
+  text-align: right;
   padding-right: 24px;
+  padding-left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 /* Table Body */
@@ -727,7 +1060,7 @@ onUnmounted(() => {
 
 .data-row {
   display: grid;
-  grid-template-columns: 547.41px 122.05px 146.38px 159.78px 124px;
+  grid-template-columns: 604.36px 134.75px 161.61px 176.41px 136.91px;
   border-bottom: 1px solid #F5F5F5;
   min-height: 87px;
   cursor: pointer;
@@ -951,10 +1284,11 @@ onUnmounted(() => {
   min-width: 180px;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   z-index: 10;
+  padding: 4px 0;
 }
 
 .action-dropdown-item {
@@ -962,7 +1296,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 10px 16px;
+  padding: 12px 16px;
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 14px;
@@ -981,7 +1315,7 @@ onUnmounted(() => {
 }
 
 .action-dropdown-item.danger {
-  color: #BA0C2F;
+  color: #DC2626;
 }
 
 .action-dropdown-item.danger:hover {
@@ -990,11 +1324,26 @@ onUnmounted(() => {
 
 .action-dropdown-item i {
   font-size: 16px;
-  color: currentColor;
+  color: #737373;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-dropdown-item.danger i {
+  color: #DC2626;
 }
 
 .action-dropdown-item span {
   flex: 1;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #E5E5E5;
+  margin: 4px 0;
 }
 
 /* Responsive */
@@ -1047,5 +1396,87 @@ onUnmounted(() => {
   .table-cell:not(.form-name-cell) {
     display: none;
   }
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0px;
+  gap: 4px;
+  width: 299.66px;
+  height: 36px;
+  flex: none;
+  order: 3;
+  flex-grow: 0;
+}
+
+.pagination-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0px 12px;
+  background: none;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.150391px;
+  color: #333333;
+  transition: background 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-button.prev-button {
+  width: 100.97px;
+}
+
+.pagination-button.next-button {
+  width: 74.69px;
+}
+
+.pagination-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.150391px;
+  color: #333333;
+  transition: background 0.2s;
+}
+
+.pagination-number:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.pagination-number.active {
+  box-sizing: border-box;
+  background: rgba(229, 229, 229, 0.3);
+  border: 1px solid #E5E5E5;
+  color: #0A0A0A;
 }
 </style>

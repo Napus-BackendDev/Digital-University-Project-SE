@@ -1,5 +1,5 @@
 <template>
-  <div class="list-answer">
+  <div class="preview">
     <!-- Navbar -->
     <nav class="navbar">
       <div class="navbar-container">
@@ -7,7 +7,10 @@
           <div class="navbar-logo-icon">
             <img src="https://archives.mfu.ac.th/wp-content/uploads/2019/06/Mae-Fah-Luang-University-2-1.png" alt="MFU Logo" class="logo-image" />
           </div>
-          <span class="navbar-logo-text">FormBuilder</span>
+          <div class="navbar-logo-text-container">
+            <span class="navbar-logo-text">FormBuilder</span>
+            <span class="navbar-logo-subtitle">UNLIMITED</span>
+          </div>
         </router-link>
 
         <div class="navbar-user-section">
@@ -29,7 +32,7 @@
         <svg class="icon-16" viewBox="0 0 16 16" fill="none">
           <path d="M10 12L6 8L10 4" stroke="#333333" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span>Back to Edit</span>
+        <span>Back to Forms</span>
       </button>
 
       <!-- Form Container -->
@@ -93,7 +96,7 @@
             <span class="required">*</span>
             <span>Required field</span>
           </div>
-          <button class="submit-btn" disabled>Submit</button>
+          <button class="submit-btn" disabled>Submit (Preview Mode)</button>
         </div>
       </div>
     </main>
@@ -221,48 +224,53 @@ const handleLogout = () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-.list-answer {
+.preview {
   min-height: 100vh;
-  background: #FAFAFA;
+  background: #F5F5F5;
   font-family: 'Inter', sans-serif;
 }
 
 /* ==================== NAVBAR ==================== */
 .navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0px 167.5px 1px;
+  width: 1551px;
+  height: 65px;
   background: #FFFFFF;
   border-bottom: 1px solid #E5E5E5;
-  z-index: 1000;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
+  margin: 0 auto;
 }
 
 .navbar-container {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  max-width: 1216px;
+  padding: 0px;
+  gap: 832.42px;
+  width: 1216px;
   height: 64px;
-  margin: 0 auto;
-  padding: 0;
 }
 
 .navbar-logo-link {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  padding: 0px;
+  gap: 12px;
+  height: 40px;
   text-decoration: none;
 }
 
 .navbar-logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
 }
 
 .logo-image {
@@ -271,12 +279,29 @@ const handleLogout = () => {
   object-fit: contain;
 }
 
+.navbar-logo-text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0px;
+}
+
 .navbar-logo-text {
+  font-family: 'Inter';
   font-weight: 600;
   font-size: 16px;
-  line-height: 24px;
+  line-height: 20px;
   letter-spacing: -0.3125px;
   color: #1A1A1A;
+}
+
+.navbar-logo-subtitle {
+  font-family: 'Inter';
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 12px;
+  letter-spacing: -0.3125px;
+  color: #737373;
 }
 
 .navbar-user-section {
@@ -315,15 +340,19 @@ const handleLogout = () => {
 
 /* ==================== MAIN CONTENT ==================== */
 .main-content {
-  max-width: 1216px;
+  position: relative;
+  width: 1551px;
+  height: 2493px;
   margin: 0 auto;
-  padding: 97px 0 40px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 0;
 }
 
 .back-btn {
+  position: absolute;
+  width: 150.69px;
+  height: 36px;
+  left: 159px;
+  top: 92px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -331,6 +360,7 @@ const handleLogout = () => {
   background: transparent;
   border: 1px solid #E5E5E5;
   border-radius: 12px;
+  font-family: 'Inter';
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
@@ -338,8 +368,6 @@ const handleLogout = () => {
   color: #333333;
   cursor: pointer;
   transition: all 0.2s;
-  margin-bottom: 24px;
-  align-self: flex-start;
 }
 
 .back-btn:hover {
@@ -348,26 +376,34 @@ const handleLogout = () => {
 
 /* ==================== FORM CONTAINER ==================== */
 .form-container {
+  position: absolute;
   width: 704px;
+  left: 416px;
+  top: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 33px 33px 1px;
+  gap: 32px;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
-  padding: 33px 33px 1px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
 }
 
 .form-header {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  padding: 0px 0px 24px;
   gap: 8px;
-  padding-bottom: 1px;
+  width: 638px;
   border-bottom: 1px solid #E5E5E5;
 }
 
 .form-title {
+  width: 638px;
+  font-family: 'Inter';
   font-weight: 700;
   font-size: 36px;
   line-height: 40px;
@@ -377,6 +413,9 @@ const handleLogout = () => {
 }
 
 .form-description {
+  width: 638px;
+  font-family: 'Inter';
+  font-weight: 400;
   font-size: 16px;
   line-height: 24px;
   letter-spacing: -0.3125px;
@@ -388,18 +427,27 @@ const handleLogout = () => {
 .questions-container {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
   gap: 32px;
+  width: 638px;
 }
 
 .question-block {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  padding: 0px 0px 1px;
   gap: 8px;
-  padding-bottom: 1px;
+  width: 638px;
   border-bottom: 1px solid #F5F5F5;
 }
 
 .question-label {
+  width: 638px;
+  height: 20px;
+  font-family: 'Inter';
+  font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
@@ -409,16 +457,23 @@ const handleLogout = () => {
 .question-content {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
   gap: 12px;
+  width: 638px;
 }
 
 .question-title {
+  width: 638px;
+  height: 20px;
+  font-family: 'Inter';
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
   color: #333333;
   display: flex;
+  align-items: center;
   gap: 4px;
 }
 
@@ -428,24 +483,31 @@ const handleLogout = () => {
 }
 
 .form-input {
-  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   padding: 4px 12px;
+  width: 638px;
   height: 36px;
   background: rgba(229, 229, 229, 0.3);
+  opacity: 0.5;
   border: 1px solid #E5E5E5;
   border-radius: 12px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter';
+  font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
   color: #333333;
-  opacity: 0.5;
 }
 
 .radio-group {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
   gap: 12px;
+  width: 638px;
 }
 
 .radio-option {
@@ -490,27 +552,35 @@ const handleLogout = () => {
 }
 
 .form-textarea {
-  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
   padding: 8px 12px;
+  width: 638px;
   height: 98px;
   background: rgba(229, 229, 229, 0.3);
+  opacity: 0.5;
   border: 1px solid #E5E5E5;
   border-radius: 12px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter';
+  font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
   color: #333333;
   resize: none;
-  opacity: 0.5;
 }
 
 /* ==================== FORM FOOTER ==================== */
 .form-footer {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-top: 32px;
+  padding: 0px;
+  gap: 336.28px;
+  width: 638px;
+  height: 65px;
   border-top: 1px solid #E5E5E5;
 }
 
@@ -524,11 +594,19 @@ const handleLogout = () => {
 }
 
 .submit-btn {
-  padding: 0 24px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0px 24px;
+  gap: 8px;
+  width: 202.16px;
   height: 40px;
   background: #171717;
+  opacity: 0.5;
   border: none;
   border-radius: 12px;
+  font-family: 'Inter';
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
@@ -536,7 +614,6 @@ const handleLogout = () => {
   letter-spacing: -0.150391px;
   color: #FAFAFA;
   cursor: not-allowed;
-  opacity: 0.5;
 }
 
 /* ==================== UTILITIES ==================== */
