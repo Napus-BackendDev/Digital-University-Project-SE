@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * HomeView - หน้าแรกแสดงรายการฟอร์มทั้งหมด
+ * ผู้ใช้สามารถสร้าง, แก้ไข, ลบฟอร์มได้จากหน้านี้
+ */
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFormStore } from '@/stores/form'
@@ -6,22 +10,36 @@ import { useFormStore } from '@/stores/form'
 const router = useRouter()
 const formStore = useFormStore()
 
+// ดึงค่าจาก store
 const loading = computed(() => formStore.loading)
 const error = computed(() => formStore.error)
 const forms = computed(() => formStore.forms)
 
+// โหลดฟอร์มเมื่อ component mount
 onMounted(async () => {
   await formStore.fetchForms()
 })
 
-const getFormTitle = (form) => {
+
+/* ===================================
+   Helper Functions - ฟังก์ชันช่วย
+   =================================== */
+
+/**
+ * ดึงชื่อฟอร์มจากข้อมูล
+ * title เก็บเป็น array ของ { key, value }
+ */
+function getFormTitle(form) {
   if (form.title && form.title.length > 0) {
     return form.title[0].value || 'Untitled Form'
   }
   return 'Untitled Form'
 }
 
-const getStatusLabel = (status) => {
+/**
+ * แปลง status code เป็นข้อความ
+ */
+function getStatusLabel(status) {
   const labels = {
     'draft': 'Draft',
     'open': 'Active',
@@ -30,8 +48,13 @@ const getStatusLabel = (status) => {
   return labels[status] || status
 }
 
-const formatDate = (dateString) => {
+/**
+ * แปลงวันที่ให้อ่านง่าย
+ * เช่น "Dec 19, 2025"
+ */
+function formatDate(dateString) {
   if (!dateString) return ''
+  
   const date = new Date(dateString)
   return date.toLocaleDateString('en-US', { 
     year: 'numeric', 
@@ -40,19 +63,34 @@ const formatDate = (dateString) => {
   })
 }
 
-const createNewForm = async () => {
+
+/* ===================================
+   Actions - การทำงานหลัก
+   =================================== */
+
+/**
+ * สร้างฟอร์มใหม่แล้วไปหน้า form builder
+ */
+async function createNewForm() {
   const newForm = await formStore.createForm({ title: 'Untitled Form' })
   if (newForm) {
     router.push(`/form-builder/${newForm._id}`)
   }
 }
 
-const editForm = (formId) => {
+/**
+ * ไปหน้าแก้ไขฟอร์ม
+ */
+function editForm(formId) {
   router.push(`/form-builder/${formId}`)
 }
 
-const deleteForm = async (e, formId) => {
-  e.stopPropagation()
+/**
+ * ลบฟอร์ม (ถามยืนยันก่อน)
+ */
+async function deleteForm(event, formId) {
+  event.stopPropagation() // ไม่ให้ click ไปถึง card
+  
   if (confirm('Are you sure you want to delete this form?')) {
     await formStore.deleteForm(formId)
   }

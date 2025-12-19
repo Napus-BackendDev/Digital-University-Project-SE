@@ -1,6 +1,15 @@
 <script setup>
+/**
+ * AccessControl - ตั้งค่าการเข้าถึงฟอร์ม
+ * - กำหนดว่าใครสามารถตอบฟอร์มได้
+ * - จัดการ collaborators (เพิ่ม/ลบ/แก้ไข)
+ */
 import { defineProps, defineEmits } from 'vue'
 
+
+/* ===================================
+   Props & Emits
+   =================================== */
 const props = defineProps({
   whoCanRespond: { type: String, default: 'anyone' },
   collaborators: { type: Array, default: () => [] }
@@ -8,6 +17,10 @@ const props = defineProps({
 
 const emit = defineEmits(['update:whoCanRespond', 'update:collaborators', 'add-collaborator', 'remove-collaborator'])
 
+
+/* ===================================
+   Options - ตัวเลือกต่างๆ
+   =================================== */
 const accessOptions = [
   { value: 'anyone', label: 'Anyone with the link' },
   { value: 'organization', label: 'Only people in my organization' },
@@ -16,14 +29,21 @@ const accessOptions = [
 
 const roleOptions = ['Editor', 'Viewer']
 
-const updateCollaboratorEmail = (id, email) => {
+
+/* ===================================
+   Functions - จัดการ collaborators
+   =================================== */
+
+// อัพเดทอีเมลของ collaborator
+function updateCollaboratorEmail(id, email) {
   const updated = props.collaborators.map(c => 
     c.id === id ? { ...c, email } : c
   )
   emit('update:collaborators', updated)
 }
 
-const updateCollaboratorRole = (id, role) => {
+// อัพเดท role ของ collaborator
+function updateCollaboratorRole(id, role) {
   const updated = props.collaborators.map(c => 
     c.id === id ? { ...c, role } : c
   )

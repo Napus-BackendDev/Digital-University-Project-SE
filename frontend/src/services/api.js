@@ -1,19 +1,34 @@
-// API Configuration
+/**
+ * API Service สำหรับเชื่อมต่อกับ Backend
+ * ใช้จัดการ HTTP requests ทั้งหมดของแอป
+ */
+
+// ดึง API URL จาก environment variable หรือใช้ค่า default
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
-// Generic fetch wrapper
+/**
+ * ฟังก์ชันหลักสำหรับเรียก API
+ * รองรับ GET, POST, PUT, DELETE
+ * 
+ * @param {string} endpoint - path ของ API เช่น '/form'
+ * @param {object} options - ตัวเลือกเพิ่มเติม (method, body, headers)
+ * @returns {Promise} ข้อมูลที่ได้จาก API
+ */
 async function fetchAPI(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`
   
+  // กำหนด headers เริ่มต้น
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
     },
   }
   
+  // เรียก API
   const response = await fetch(url, { ...defaultOptions, ...options })
   const data = await response.json()
   
+  // ถ้า response ไม่ ok ให้ throw error
   if (!response.ok) {
     throw new Error(data.message || 'API request failed')
   }
@@ -21,19 +36,22 @@ async function fetchAPI(endpoint, options = {}) {
   return data
 }
 
-// Form API
+
+/* ===================================
+   Form API - จัดการฟอร์ม
+   =================================== */
 export const formAPI = {
-  // Get all forms
+  // ดึงฟอร์มทั้งหมด
   async getAll() {
     return fetchAPI('/form')
   },
   
-  // Get single form by ID
+  // ดึงฟอร์มตาม ID
   async getById(id) {
     return fetchAPI(`/form/id?_id=${id}`)
   },
   
-  // Create new form
+  // สร้างฟอร์มใหม่
   async create(formData) {
     return fetchAPI('/form', {
       method: 'POST',
@@ -41,7 +59,7 @@ export const formAPI = {
     })
   },
   
-  // Update form
+  // อัพเดทฟอร์ม
   async update(formData) {
     return fetchAPI('/form', {
       method: 'PUT',
@@ -49,7 +67,7 @@ export const formAPI = {
     })
   },
   
-  // Delete form
+  // ลบฟอร์ม
   async delete(id) {
     return fetchAPI('/form', {
       method: 'DELETE',
@@ -57,7 +75,7 @@ export const formAPI = {
     })
   },
   
-  // Duplicate form
+  // ทำสำเนาฟอร์ม
   async duplicate(id) {
     return fetchAPI('/form/duplicate', {
       method: 'POST',
@@ -66,14 +84,17 @@ export const formAPI = {
   },
 }
 
-// Questions API
+
+/* ===================================
+   Questions API - จัดการคำถาม
+   =================================== */
 export const questionsAPI = {
-  // Get all questions for a form
+  // ดึงคำถามทั้งหมดของฟอร์ม
   async getByFormId(formId) {
     return fetchAPI(`/question?formId=${formId}`)
   },
   
-  // Create question
+  // สร้างคำถามใหม่
   async create(questionData) {
     return fetchAPI('/question', {
       method: 'POST',
@@ -81,7 +102,7 @@ export const questionsAPI = {
     })
   },
   
-  // Update question
+  // อัพเดทคำถาม
   async update(questionData) {
     return fetchAPI('/question', {
       method: 'PUT',
@@ -89,7 +110,7 @@ export const questionsAPI = {
     })
   },
   
-  // Delete question
+  // ลบคำถาม
   async delete(id) {
     return fetchAPI('/question', {
       method: 'DELETE',
@@ -98,14 +119,17 @@ export const questionsAPI = {
   },
 }
 
-// Response API
+
+/* ===================================
+   Response API - จัดการคำตอบ
+   =================================== */
 export const responseAPI = {
-  // Get all responses for a form
+  // ดึงคำตอบทั้งหมดของฟอร์ม
   async getByFormId(formId) {
     return fetchAPI(`/response?formId=${formId}`)
   },
   
-  // Submit response
+  // ส่งคำตอบ
   async submit(responseData) {
     return fetchAPI('/response', {
       method: 'POST',
@@ -114,6 +138,8 @@ export const responseAPI = {
   },
 }
 
+
+// Export ทั้งหมดเป็น object เดียว
 export default {
   form: formAPI,
   questions: questionsAPI,

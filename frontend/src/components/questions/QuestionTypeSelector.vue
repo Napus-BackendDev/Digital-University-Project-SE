@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * QuestionTypeSelector - Sidebar เลือกประเภทคำถาม
+ * แสดงรายการประเภทคำถามทั้งหมดที่สามารถเพิ่มได้
+ */
+
+// รายการประเภทคำถามทั้งหมด
 const questionTypes = [
   { id: 'short-answer', name: 'Short Answer', icon: 'short-text' },
   { id: 'paragraph', name: 'Paragraph', icon: 'paragraph' },
@@ -15,7 +21,8 @@ const questionTypes = [
 
 const emit = defineEmits(['add-question'])
 
-const addQuestion = (type) => {
+// เพิ่มคำถามใหม่ตามประเภทที่เลือก
+function addQuestion(type) {
   emit('add-question', type)
 }
 </script>

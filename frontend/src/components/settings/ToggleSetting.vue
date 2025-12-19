@@ -1,10 +1,14 @@
 <script setup>
+/**
+ * ToggleSetting - คอมโพเนนต์สำหรับตั้งค่าแบบ on/off
+ * ใช้ซ้ำในหลายที่ใน settings
+ */
 import { defineProps, defineEmits } from 'vue'
 
 const props = defineProps({
-  label: { type: String, required: true },
-  description: { type: String, default: '' },
-  modelValue: { type: Boolean, default: false }
+  label: { type: String, required: true },       // หัวข้อ setting
+  description: { type: String, default: '' },   // คำอธิบาย
+  modelValue: { type: Boolean, default: false } // ค่า on/off
 })
 
 const emit = defineEmits(['update:modelValue'])

@@ -1,18 +1,25 @@
 <script setup>
+/**
+ * MultipleChoiceQuestion - คำถามแบบเลือกตอบ (Radio)
+ * ผู้ตอบเลือกได้เพียง 1 ตัวเลือก
+ * รองรับ follow-up question สำหรับแต่ละตัวเลือก
+ */
 const props = defineProps({
   options: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['update:options', 'add-option', 'remove-option', 'add-followup'])
 
-const updateOptionText = (optionId, text) => {
+// อัพเดทข้อความของตัวเลือก
+function updateOptionText(optionId, text) {
   const updated = props.options.map(o => 
     o.id === optionId ? { ...o, text } : o
   )
   emit('update:options', updated)
 }
 
-const addFollowUp = (optionId) => {
+// เพิ่ม follow-up question สำหรับตัวเลือกนี้
+function addFollowUp(optionId) {
   const updated = props.options.map(o => 
     o.id === optionId ? { ...o, hasFollowUp: true } : o
   )

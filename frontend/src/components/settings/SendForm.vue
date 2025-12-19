@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * SendForm - แชร์ฟอร์มให้ผู้ตอบ
+ * - Copy link ไปยัง clipboard
+ * - ส่งผ่านอีเมล
+ */
 import { defineProps, defineEmits } from 'vue'
 
 const props = defineProps({
@@ -7,12 +12,14 @@ const props = defineProps({
 
 const emit = defineEmits(['copy-link', 'send-email', 'save-settings'])
 
-const copyLink = () => {
+// Copy link ไปยัง clipboard
+function copyLink() {
   navigator.clipboard.writeText(props.formUrl)
   emit('copy-link')
 }
 
-const sendViaEmail = () => {
+// เปิด mail client เพื่อส่งฟอร์ม
+function sendViaEmail() {
   window.location.href = `mailto:?subject=Form Invitation&body=Please fill out this form: ${props.formUrl}`
   emit('send-email')
 }

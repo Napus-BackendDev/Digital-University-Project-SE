@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * NotificationSettings - ตั้งค่าการแจ้งเตือน
+ * ส่งอีเมลเมื่อมีคนตอบฟอร์มใหม่
+ */
 import { defineProps, defineEmits } from 'vue'
 import ToggleSetting from './ToggleSetting.vue'
 

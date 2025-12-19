@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * ConfirmationMessage - ตั้งค่าข้อความหลังส่งฟอร์ม
+ * แสดงเมื่อผู้ตอบกด submit สำเร็จ
+ */
 import { defineProps, defineEmits } from 'vue'
 import ToggleSetting from './ToggleSetting.vue'
 

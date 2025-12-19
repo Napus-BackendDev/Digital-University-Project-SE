@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * ParagraphQuestion - แสดง preview คำถามแบบตอบยาว
+ * เป็น textarea สำหรับให้ผู้ตอบพิมพ์คำตอบยาวๆ
+ */
 defineProps({
   placeholder: { type: String, default: 'Long answer text' }
 })

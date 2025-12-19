@@ -1,14 +1,16 @@
 <script setup>
+/**
+ * Navbar - แถบนาวิเกชันด้านบน
+ * แสดง logo, ชื่อผู้ใช้, และปุ่ม logout
+ */
 defineProps({
-  userEmail: {
-    type: String,
-    default: 'user@example.com'
-  }
+  userEmail: { type: String, default: 'user@example.com' }
 })
 
 const emit = defineEmits(['logout'])
 
-const handleLogout = () => {
+// จัดการ logout
+function handleLogout() {
   emit('logout')
 }
 </script>

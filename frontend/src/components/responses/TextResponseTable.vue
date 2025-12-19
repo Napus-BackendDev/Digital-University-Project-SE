@@ -28,22 +28,18 @@
 </template>
 
 <script setup>
+/**
+ * TextResponseTable - ตารางแสดงคำตอบแบบข้อความ
+ * ใช้สำหรับ Short Answer และ Paragraph
+ */
 const props = defineProps({
-  responses: {
-    type: Array,
-    default: () => []
-  },
-  currentPage: {
-    type: Number,
-    default: 1
-  },
-  perPage: {
-    type: Number,
-    default: 6
-  }
+  responses: { type: Array, default: () => [] }, // รายการคำตอบ
+  currentPage: { type: Number, default: 1 },
+  perPage: { type: Number, default: 6 }          // จำนวนต่อหน้า
 })
 
-const getRowNumber = (index) => {
+// คำนวณเลขแถวตาม page ปัจจุบัน
+function getRowNumber(index) {
   return (props.currentPage - 1) * props.perPage + index + 1
 }
 </script>

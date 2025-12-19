@@ -1,9 +1,17 @@
 <script setup>
+/**
+ * FormBuilderView - หน้าสร้างและแก้ไขฟอร์ม
+ * แบ่งเป็น 3 tabs: Questions, Responses, Settings
+ */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFormStore } from '@/stores/form'
+import draggable from 'vuedraggable'
+
+// Question Components
 import QuestionTypeSelector from '@/components/questions/QuestionTypeSelector.vue'
 import QuestionCard from '@/components/questions/QuestionCard.vue'
+
 // Settings Components
 import FormStatus from '@/components/settings/FormStatus.vue'
 import AccessControl from '@/components/settings/AccessControl.vue'
@@ -11,6 +19,7 @@ import ResponseSettings from '@/components/settings/ResponseSettings.vue'
 import NotificationSettings from '@/components/settings/NotificationSettings.vue'
 import ConfirmationMessage from '@/components/settings/ConfirmationMessage.vue'
 import SendForm from '@/components/settings/SendForm.vue'
+
 // Response Components
 import ResponsesView from '@/components/responses/ResponsesView.vue'
 import ResponseSummaryCard from '@/components/responses/ResponseSummaryCard.vue'
@@ -20,40 +29,56 @@ import BarChartSummary from '@/components/responses/BarChartSummary.vue'
 import DateTimeResponseList from '@/components/responses/DateTimeResponseList.vue'
 import FileUploadSummary from '@/components/responses/FileUploadSummary.vue'
 
+
+/* 
+   Setup & State
+   =================================== */
 const route = useRoute()
 const router = useRouter()
 const formStore = useFormStore()
 
+// ดึง form ID จาก URL
 const formId = computed(() => route.params.id)
 const loading = computed(() => formStore.loading)
 const saving = ref(false)
 
+// Tab navigation
 const activeTab = ref('questions')
+
+// ข้อมูลฟอร์ม
 const formTitle = ref('Untitled Form')
 const formDescription = ref('')
+
+// สร้าง URL สำหรับแชร์ฟอร์ม
 const formUrl = computed(() => {
   const baseUrl = window.location.origin
   return formId.value ? `${baseUrl}/form/${formId.value}` : ''
 })
+
+// เก็บ ID คำถามที่กำลังเปิดดู
 const expandedQuestionId = ref(null)
 
-// Load form data on mount
+
+/* ===================================
+   Lifecycle - โหลดข้อมูลเมื่อเปิดหน้า
+   =================================== */
 onMounted(async () => {
   if (formId.value) {
     const form = await formStore.fetchFormById(formId.value)
     if (form) {
       formTitle.value = form.title?.[0]?.value || 'Untitled Form'
-      // Load questions if exists
-      if (form.questions && form.questions.length > 0) {
-        // Convert backend questions to frontend format
-        // This will be implemented when we have real question data
-      }
+      // TODO: โหลด questions จาก API
     }
   }
 })
 
-// Auto-save form title when it changes
+
+/* ===================================
+   Auto-save - บันทึกอัตโนมัติ
+   =================================== */
 let saveTimeout = null
+
+// เมื่อเปลี่ยนชื่อฟอร์ม รอ 1 วินาทีแล้วบันทึก
 watch(formTitle, (newTitle) => {
   if (saveTimeout) clearTimeout(saveTimeout)
   saveTimeout = setTimeout(() => {
@@ -61,7 +86,7 @@ watch(formTitle, (newTitle) => {
   }, 1000)
 })
 
-const saveForm = async () => {
+async function saveForm() {
   if (!formId.value) return
   
   saving.value = true
@@ -71,20 +96,16 @@ const saveForm = async () => {
       title: [{ key: 'en', value: formTitle.value }]
     })
   } catch (err) {
-    console.error('Failed to save form:', err)
+    console.error('บันทึกฟอร์มไม่สำเร็จ:', err)
   } finally {
     saving.value = false
   }
 }
 
-const toggleQuestion = (questionId) => {
-  if (expandedQuestionId.value === questionId) {
-    expandedQuestionId.value = null
-  } else {
-    expandedQuestionId.value = questionId
-  }
-}
 
+/* ===================================
+   Tab Configuration
+   =================================== */
 const responseCount = computed(() => responsesData.value.totalResponses || 0)
 
 const tabs = computed(() => [
@@ -93,23 +114,26 @@ const tabs = computed(() => [
   { id: 'settings', label: 'Settings', icon: 'settings' }
 ])
 
-// Settings State
+
+/* ===================================
+   Settings State - ค่าตั้งค่าทั้งหมด
+   =================================== */
 const settings = ref({
-  // Form Status
+  // สถานะฟอร์ม
   formStatus: 'draft',
   startDate: '',
   startTime: '',
   endDate: '',
   endTime: '',
   
-  // Access Control
+  // การเข้าถึง
   whoCanRespond: 'anyone',
   collaborators: [
     { id: 1, email: 'tanakrit.a@mfu.ac.th', role: 'Editor' },
     { id: 2, email: 'somchai.w@mfu.ac.th', role: 'Viewer' }
   ],
   
-  // Response Settings
+  // ตั้งค่าการตอบกลับ
   collectEmails: false,
   limitResponses: false,
   maxResponses: 100,
@@ -119,54 +143,45 @@ const settings = ref({
   exportFormat: 'xlsx',
   exportUrl: false,
   
-  // Notifications
+  // แจ้งเตือน
   emailNotifications: true,
   notificationEmail: 'admin@mfu.ac.th',
   
-  // Confirmation Message
+  // ข้อความยืนยัน
   confirmationMessage: 'Thank you for completing this survey. Your response has been recorded.',
   showAnotherResponseLink: true
 })
 
-// Response Data - empty until users submit responses
-const responseViewMode = ref('summary')
 
+/* ===================================
+   Response Data - ข้อมูลคำตอบ
+   =================================== */
+const responseViewMode = ref('summary')
 const responsesData = ref({
   totalResponses: 0
 })
 
-const handleExport = (format) => {
-  console.log('Exporting as:', format)
-  alert(`Exporting responses as ${format.toUpperCase()}`)
-}
 
-const addCollaborator = () => {
-  const newId = settings.value.collaborators.length + 1
-  settings.value.collaborators.push({ id: newId, email: '', role: 'Viewer' })
-}
-
-const removeCollaborator = (id) => {
-  settings.value.collaborators = settings.value.collaborators.filter(c => c.id !== id)
-}
-
-const saveSettings = () => {
-  console.log('Saving settings:', settings.value)
-  alert('Settings saved successfully!')
-}
-
-// Questions - start empty for new forms
+/* ===================================
+   Question Management - จัดการคำถาม
+   =================================== */
 const questions = ref([])
 
-const copyFormUrl = () => {
-  navigator.clipboard.writeText(formUrl.value)
-  alert('URL copied to clipboard!')
+/**
+ * สลับการแสดง/ซ่อนรายละเอียดคำถาม
+ */
+function toggleQuestion(questionId) {
+  if (expandedQuestionId.value === questionId) {
+    expandedQuestionId.value = null
+  } else {
+    expandedQuestionId.value = questionId
+  }
 }
 
-const testForm = () => {
-  window.open(formUrl.value, '_blank')
-}
-
-const addQuestion = (type) => {
+/**
+ * เพิ่มคำถามใหม่
+ */
+function addQuestion(type) {
   const newQuestion = {
     id: questions.value.length + 1,
     type: type.id,
@@ -174,10 +189,12 @@ const addQuestion = (type) => {
     required: false
   }
   
+  // เพิ่ม options สำหรับคำถามแบบเลือก
   if (['multiple-choice', 'checkbox', 'dropdown'].includes(type.id)) {
     newQuestion.options = [{ id: 1, text: 'Option 1' }]
   }
   
+  // เพิ่ม maxRating สำหรับ rating
   if (type.id === 'rating') {
     newQuestion.maxRating = 5
   }
@@ -185,27 +202,50 @@ const addQuestion = (type) => {
   questions.value.push(newQuestion)
 }
 
-const deleteQuestion = (questionId) => {
+/**
+ * ลบคำถาม
+ */
+function deleteQuestion(questionId) {
   questions.value = questions.value.filter(q => q.id !== questionId)
 }
 
-const updateQuestion = (updatedQuestion) => {
+/**
+ * อัพเดทคำถาม
+ */
+function updateQuestion(updatedQuestion) {
   const index = questions.value.findIndex(q => q.id === updatedQuestion.id)
   if (index !== -1) {
     questions.value[index] = updatedQuestion
   }
 }
 
-const addOption = (question) => {
+/**
+ * เพิ่มตัวเลือกในคำถาม
+ */
+function addOption(question) {
   const newOptionId = question.options.length + 1
   question.options.push({ id: newOptionId, text: `Option ${newOptionId}` })
 }
 
-const removeOption = (question, optionId) => {
+/**
+ * ลบตัวเลือกในคำถาม
+ */
+function removeOption(question, optionId) {
   question.options = question.options.filter(o => o.id !== optionId)
 }
 
-const getQuestionTypeLabel = (type) => {
+/**
+ * เมื่อ drag & drop คำถามเสร็จ - บันทึกลำดับใหม่
+ */
+function onQuestionReorder() {
+  console.log('คำถามถูกจัดลำดับใหม่:', questions.value.map(q => q.id))
+  // TODO: save to backend if needed
+}
+
+/**
+ * แปลง type เป็นชื่อที่อ่านง่าย
+ */
+function getQuestionTypeLabel(type) {
   const labels = {
     'short-answer': 'Short Answer',
     'paragraph': 'Paragraph',
@@ -220,6 +260,57 @@ const getQuestionTypeLabel = (type) => {
     'video': 'Video'
   }
   return labels[type] || type
+}
+
+
+/* ===================================
+   Actions - ฟังก์ชันอื่นๆ
+   =================================== */
+
+/**
+ * Copy URL ไปที่ clipboard
+ */
+function copyFormUrl() {
+  navigator.clipboard.writeText(formUrl.value)
+  alert('URL copied to clipboard!')
+}
+
+/**
+ * เปิดฟอร์มในหน้าใหม่เพื่อทดสอบ
+ */
+function testForm() {
+  window.open(formUrl.value, '_blank')
+}
+
+/**
+ * Export คำตอบ
+ */
+function handleExport(format) {
+  console.log('Exporting as:', format)
+  alert(`Exporting responses as ${format.toUpperCase()}`)
+}
+
+/**
+ * เพิ่ม collaborator
+ */
+function addCollaborator() {
+  const newId = settings.value.collaborators.length + 1
+  settings.value.collaborators.push({ id: newId, email: '', role: 'Viewer' })
+}
+
+/**
+ * ลบ collaborator
+ */
+function removeCollaborator(id) {
+  settings.value.collaborators = settings.value.collaborators.filter(c => c.id !== id)
+}
+
+/**
+ * บันทึก settings
+ */
+function saveSettings() {
+  console.log('Saving settings:', settings.value)
+  alert('Settings saved successfully!')
 }
 </script>
 
@@ -335,18 +426,28 @@ const getQuestionTypeLabel = (type) => {
               <p>Add your first question from the sidebar</p>
             </div>
 
-            <!-- Question Cards -->
-            <QuestionCard
-              v-for="question in questions"
-              :key="question.id"
-              :question="question"
-              :isExpanded="expandedQuestionId === question.id"
-              @update:question="updateQuestion"
-              @delete="deleteQuestion"
-              @add-option="addOption"
-              @remove-option="removeOption"
-              @toggle="toggleQuestion(question.id)"
-            />
+            <!-- Question Cards with Drag & Drop -->
+            <draggable
+              v-model="questions"
+              item-key="id"
+              handle=".drag-handle"
+              ghost-class="ghost-card"
+              animation="200"
+              class="draggable-list"
+              @end="onQuestionReorder"
+            >
+              <template #item="{ element: question }">
+                <QuestionCard
+                  :question="question"
+                  :isExpanded="expandedQuestionId === question.id"
+                  @update:question="updateQuestion"
+                  @delete="deleteQuestion"
+                  @add-option="addOption"
+                  @remove-option="removeOption"
+                  @toggle="toggleQuestion(question.id)"
+                />
+              </template>
+            </draggable>
           </div>
 
           <!-- Question Type Selector (Sidebar) -->
@@ -709,7 +810,14 @@ const getQuestionTypeLabel = (type) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+}
+
+/* Draggable list - ให้มีระยะห่างระหว่าง Question Cards */
+.draggable-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .sidebar {
@@ -747,6 +855,10 @@ const getQuestionTypeLabel = (type) => {
   padding: 0;
 }
 
+.drag-handle:active {
+  cursor: grabbing;
+}
+
 .drag-handle:hover {
   color: #999;
 }
@@ -754,6 +866,13 @@ const getQuestionTypeLabel = (type) => {
 .drag-handle svg {
   width: 20px;
   height: 20px;
+}
+
+/* Ghost card style - เมื่อกำลังลากคำถาม */
+.ghost-card {
+  opacity: 0.5;
+  background: #f0f4ff;
+  border: 2px dashed #4285f4;
 }
 
 .question-body {

@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * ShortAnswerQuestion - แสดง preview คำถามแบบตอบสั้น
+ * ใช้ในหน้า form builder เพื่อแสดงรูปแบบคำถาม
+ */
 defineProps({
   placeholder: { type: String, default: 'Short answer text' }
 })

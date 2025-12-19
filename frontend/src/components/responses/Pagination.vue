@@ -45,25 +45,21 @@
 </template>
 
 <script setup>
+/**
+ * Pagination - คอมโพเนนต์แบ่งหน้า
+ * ใช้ซ้ำในตารางและ list ต่างๆ
+ */
 import { computed } from 'vue'
 
 const props = defineProps({
-  currentPage: {
-    type: Number,
-    default: 1
-  },
-  totalPages: {
-    type: Number,
-    default: 1
-  },
-  maxVisiblePages: {
-    type: Number,
-    default: 3
-  }
+  currentPage: { type: Number, default: 1 },
+  totalPages: { type: Number, default: 1 },
+  maxVisiblePages: { type: Number, default: 3 } // จำนวนเลขหน้าที่แสดง
 })
 
 defineEmits(['page-change'])
 
+// คำนวณเลขหน้าที่จะแสดง (แสดงหน้าปัจจุบันอยู่ตรงกลาง)
 const visiblePages = computed(() => {
   const pages = []
   let start = Math.max(1, props.currentPage - Math.floor(props.maxVisiblePages / 2))

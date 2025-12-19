@@ -1,6 +1,14 @@
 <script setup>
+/**
+ * FormStatus - ตั้งค่าสถานะของฟอร์ม
+ * มี 4 สถานะ: Draft, Open, Closed, Auto (Scheduled)
+ */
 import { defineProps, defineEmits, computed } from 'vue'
 
+
+/* ===================================
+   Props & Emits
+   =================================== */
 const props = defineProps({
   status: { type: String, default: 'draft' },
   startDate: { type: String, default: '' },
@@ -17,6 +25,12 @@ const emit = defineEmits([
   'update:endTime'
 ])
 
+
+/* ===================================
+   Computed Properties
+   =================================== */
+
+// คำอธิบายสถานะแต่ละแบบ
 const statusDescription = computed(() => {
   switch (props.status) {
     case 'draft':
@@ -32,6 +46,7 @@ const statusDescription = computed(() => {
   }
 })
 
+// แสดง schedule fields เฉพาะเมื่อเลือก scheduled
 const showScheduleFields = computed(() => props.status === 'scheduled')
 </script>
 

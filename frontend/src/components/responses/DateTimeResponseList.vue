@@ -11,11 +11,12 @@
 </template>
 
 <script setup>
+/**
+ * DateTimeResponseList - แสดงคำตอบประเภทวันที่/เวลา
+ * แสดงเป็น list ของคำตอบ
+ */
 defineProps({
-  responses: {
-    type: Array,
-    default: () => []
-  }
+  responses: { type: Array, default: () => [] }
 })
 </script>
 

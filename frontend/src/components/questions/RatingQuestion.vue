@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * RatingQuestion - คำถามแบบให้คะแนน
+ * กำหนดคะแนนสูงสุดได้ (1-10)
+ */
 defineProps({
   maxRating: { type: Number, default: 5 }
 })

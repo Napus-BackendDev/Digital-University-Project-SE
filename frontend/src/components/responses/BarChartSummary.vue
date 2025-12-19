@@ -56,25 +56,25 @@
 </template>
 
 <script setup>
+/**
+ * BarChartSummary - แสดงข้อมูลเป็น Bar Chart
+ * ใช้สำหรับ Rating และข้อมูลตัวเลข
+ */
 import { computed } from 'vue'
 
 const props = defineProps({
-  chartData: {
-    type: Array,
-    default: () => []
-  },
-  maxValue: {
-    type: Number,
-    default: 0
-  }
+  chartData: { type: Array, default: () => [] }, // ข้อมูล [{ label, value }]
+  maxValue: { type: Number, default: 0 }         // ค่าสูงสุด (0 = คำนวณอัตโนมัติ)
 })
 
+// คำนวณค่าสูงสุดสำหรับแกน Y
 const calculatedMax = computed(() => {
   if (props.maxValue > 0) return props.maxValue
   const max = Math.max(...props.chartData.map(d => d.value))
   return Math.ceil(max * 1.2) || 5
 })
 
+// สร้าง label สำหรับแกน Y (5 ขีด)
 const yLabels = computed(() => {
   const labels = []
   const step = calculatedMax.value / 4
@@ -84,7 +84,8 @@ const yLabels = computed(() => {
   return labels
 })
 
-const getBarHeight = (value) => {
+// คำนวณความสูงของ bar เป็นเปอร์เซ็นต์
+function getBarHeight(value) {
   if (calculatedMax.value === 0) return 0
   return (value / calculatedMax.value) * 100
 }

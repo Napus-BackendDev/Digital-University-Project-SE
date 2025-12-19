@@ -3,15 +3,13 @@
 </template>
 
 <script setup>
+/**
+ * FileUploadSummary - สรุปจำนวนไฟล์ที่อัพโหลด
+ * แสดงจำนวนและประเภทไฟล์
+ */
 defineProps({
-  count: {
-    type: Number,
-    default: 0
-  },
-  fileType: {
-    type: String,
-    default: 'file'
-  }
+  count: { type: Number, default: 0 },     // จำนวนไฟล์
+  fileType: { type: String, default: 'file' } // ประเภทไฟล์
 })
 </script>
 

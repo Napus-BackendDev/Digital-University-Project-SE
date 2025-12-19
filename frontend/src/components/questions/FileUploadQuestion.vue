@@ -1,7 +1,11 @@
 <script setup>
+/**
+ * FileUploadQuestion - คำถามแบบอัพโหลดไฟล์
+ * รองรับ drag & drop และ click to upload
+ */
 defineProps({
-  acceptedTypes: { type: Array, default: () => [] },
-  maxSize: { type: Number, default: 10 } // MB
+  acceptedTypes: { type: Array, default: () => [] }, // ประเภทไฟล์ที่รับ
+  maxSize: { type: Number, default: 10 } // ขนาดสูงสุด (MB)
 })
 
 const emit = defineEmits(['file-selected'])

@@ -65,8 +65,16 @@
 </template>
 
 <script setup>
+/**
+ * PieChartSummary - แสดงผลคำตอบเป็น Donut Chart
+ * มี tooltip แสดงเมื่อ hover และ legend ด้านข้าง
+ */
 import { computed, ref, reactive } from 'vue'
 
+
+/* ===================================
+   Props
+   =================================== */
 const props = defineProps({
   chartData: {
     type: Array,
@@ -74,11 +82,16 @@ const props = defineProps({
   }
 })
 
+
+/* ===================================
+   Tooltip State - จัดการ tooltip
+   =================================== */
 const chartWrapper = ref(null)
 const hoveredIndex = ref(null)
 const tooltipVisible = ref(false)
 const tooltipPos = reactive({ x: 0, y: 0 })
 
+// ข้อมูลใน tooltip
 const tooltipData = computed(() => {
   if (hoveredIndex.value === null || !props.chartData[hoveredIndex.value]) {
     return { label: '', count: 0 }
@@ -87,49 +100,68 @@ const tooltipData = computed(() => {
   return { label: item.label, count: item.count }
 })
 
+// ตำแหน่ง tooltip
 const tooltipStyle = computed(() => ({
   left: `${tooltipPos.x}px`,
   top: `${tooltipPos.y}px`
 }))
 
-const handleMouseEnter = (index, event) => {
+
+/* ===================================
+   Mouse Event Handlers
+   =================================== */
+
+function handleMouseEnter(index, event) {
   hoveredIndex.value = index
   tooltipVisible.value = true
   updateTooltipPos(event)
 }
 
-const handleMouseMove = (event) => {
+function handleMouseMove(event) {
   updateTooltipPos(event)
 }
 
-const handleMouseLeave = () => {
+function handleMouseLeave() {
   hoveredIndex.value = null
   tooltipVisible.value = false
 }
 
-const updateTooltipPos = (event) => {
+// อัพเดทตำแหน่ง tooltip ตาม mouse
+function updateTooltipPos(event) {
   if (!chartWrapper.value) return
   const rect = chartWrapper.value.getBoundingClientRect()
   tooltipPos.x = event.clientX - rect.left + 12
   tooltipPos.y = event.clientY - rect.top - 35
 }
 
+
+/* ===================================
+   Chart Calculations - คำนวณ chart
+   =================================== */
+
+// รวมจำนวนทั้งหมด
 const total = computed(() => {
   return props.chartData.reduce((sum, item) => sum + item.count, 0)
 })
 
+// หาค่ามากสุดสำหรับ legend bar
 const maxCount = computed(() => {
   return Math.max(...props.chartData.map(d => d.count))
 })
 
-const getBarWidth = (count) => {
+// คำนวณความกว้าง bar ใน legend
+function getBarWidth(count) {
   if (maxCount.value === 0) return 0
   return (count / maxCount.value) * 100
 }
 
+/**
+ * คำนวณ path สำหรับ donut slices
+ * ใช้ SVG arc เพื่อวาดแต่ละส่วน
+ */
 const slices = computed(() => {
   const result = []
-  let currentAngle = -90 // Start from top
+  let currentAngle = -90 // เริ่มจากด้านบน
   
   const outerRadius = 85
   const innerRadius = 50
@@ -138,21 +170,22 @@ const slices = computed(() => {
     const percentage = item.count / total.value
     const angle = percentage * 360
     
-    // Add small gap between slices
+    // เพิ่ม gap เล็กๆ ระหว่าง slices
     const gapAngle = 2
     const startAngle = currentAngle + gapAngle / 2
     const endAngle = currentAngle + angle - gapAngle / 2
     
+    // แปลงเป็น radians
     const startRad = (startAngle * Math.PI) / 180
     const endRad = (endAngle * Math.PI) / 180
     
-    // Outer arc points
+    // จุดบน arc ด้านนอก
     const x1 = Math.cos(startRad) * outerRadius
     const y1 = Math.sin(startRad) * outerRadius
     const x2 = Math.cos(endRad) * outerRadius
     const y2 = Math.sin(endRad) * outerRadius
     
-    // Inner arc points
+    // จุดบน arc ด้านใน
     const x3 = Math.cos(endRad) * innerRadius
     const y3 = Math.sin(endRad) * innerRadius
     const x4 = Math.cos(startRad) * innerRadius
@@ -160,7 +193,7 @@ const slices = computed(() => {
     
     const largeArc = angle > 180 ? 1 : 0
     
-    // Create donut slice path
+    // สร้าง SVG path สำหรับ donut slice
     const path = `
       M ${x1} ${y1}
       A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}

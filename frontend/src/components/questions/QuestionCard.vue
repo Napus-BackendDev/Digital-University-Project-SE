@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * QuestionCard - แสดงคำถามแต่ละข้อในฟอร์ม
+ * สามารถแก้ไขหัวข้อ, เปลี่ยนประเภท, ลบคำถามได้
+ */
+
+// Import question type components
 import ShortAnswerQuestion from './ShortAnswerQuestion.vue'
 import ParagraphQuestion from './ParagraphQuestion.vue'
 import MultipleChoiceQuestion from './MultipleChoiceQuestion.vue'
@@ -11,6 +17,10 @@ import FileUploadQuestion from './FileUploadQuestion.vue'
 import ImageQuestion from './ImageQuestion.vue'
 import VideoQuestion from './VideoQuestion.vue'
 
+
+/* ===================================
+   Props & Emits
+   =================================== */
 const props = defineProps({
   question: { type: Object, required: true },
   showFooter: { type: Boolean, default: false },
@@ -25,6 +35,10 @@ const emit = defineEmits([
   'toggle'
 ])
 
+
+/* ===================================
+   Question Type Labels - ชื่อประเภทคำถาม
+   =================================== */
 const questionTypeLabels = {
   'short-answer': 'Short Answer',
   'paragraph': 'Paragraph',
@@ -39,48 +53,64 @@ const questionTypeLabels = {
   'video': 'Video'
 }
 
-const getQuestionTypeLabel = (type) => {
+function getQuestionTypeLabel(type) {
   return questionTypeLabels[type] || type
 }
 
-const updateTitle = (title) => {
+
+/* ===================================
+   Update Functions - ฟังก์ชันอัพเดทข้อมูล
+   =================================== */
+
+// อัพเดทหัวข้อคำถาม
+function updateTitle(title) {
   emit('update:question', { ...props.question, title })
 }
 
-const updateType = (type) => {
+// เปลี่ยนประเภทคำถาม
+function updateType(type) {
   const updated = { ...props.question, type }
-  // Add default options for choice types if not exists
+  
+  // เพิ่ม options ถ้าเปลี่ยนเป็นแบบเลือก
   if (['multiple-choice', 'checkbox', 'dropdown'].includes(type) && !updated.options) {
     updated.options = [{ id: 1, text: 'Option 1' }]
   }
-  // Add default rating if switching to rating
+  
+  // เพิ่ม maxRating ถ้าเปลี่ยนเป็น rating
   if (type === 'rating' && !updated.maxRating) {
     updated.maxRating = 5
   }
+  
   emit('update:question', updated)
 }
 
-const updateRequired = (required) => {
+// อัพเดทว่าจำเป็นต้องตอบหรือไม่
+function updateRequired(required) {
   emit('update:question', { ...props.question, required })
 }
 
-const updateOptions = (options) => {
+// อัพเดทตัวเลือก
+function updateOptions(options) {
   emit('update:question', { ...props.question, options })
 }
 
-const updateMaxRating = (maxRating) => {
+// อัพเดท max rating
+function updateMaxRating(maxRating) {
   emit('update:question', { ...props.question, maxRating })
 }
 
-const updateImageUrl = (imageUrl) => {
+// อัพเดท URL รูปภาพ
+function updateImageUrl(imageUrl) {
   emit('update:question', { ...props.question, imageUrl })
 }
 
-const updateVideoUrl = (videoUrl) => {
+// อัพเดท URL วิดีโอ
+function updateVideoUrl(videoUrl) {
   emit('update:question', { ...props.question, videoUrl })
 }
 
-const updateCaption = (caption) => {
+// อัพเดท caption
+function updateCaption(caption) {
   emit('update:question', { ...props.question, caption })
 }
 </script>

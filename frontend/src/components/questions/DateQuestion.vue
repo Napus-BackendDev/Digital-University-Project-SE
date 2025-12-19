@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * DateQuestion - คำถามแบบเลือกวันที่
+ * แสดง date picker ให้ผู้ตอบเลือกวันที่
+ */
 defineProps({
   value: { type: String, default: '' }
 })

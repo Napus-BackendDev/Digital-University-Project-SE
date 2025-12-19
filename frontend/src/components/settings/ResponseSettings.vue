@@ -1,7 +1,13 @@
 <script setup>
+/**
+ * ResponseSettings - ตั้งค่าการรับ response
+ * รวมถึงการ export, limit responses, shuffle questions
+ */
 import { defineProps, defineEmits } from 'vue'
 import ToggleSetting from './ToggleSetting.vue'
 
+
+/* Props & Emits */
 const props = defineProps({
   collectEmails: { type: Boolean, default: false },
   limitResponses: { type: Boolean, default: false },
@@ -23,7 +29,10 @@ const emit = defineEmits([
   'export'
 ])
 
-const handleExport = () => {
+
+/* Functions */
+// ส่ง event export ข้อมูล
+function handleExport() {
   emit('export', props.exportFormat)
 }
 </script>

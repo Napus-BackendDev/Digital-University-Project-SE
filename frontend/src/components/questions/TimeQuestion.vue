@@ -1,4 +1,8 @@
 <script setup>
+/**
+ * TimeQuestion - คำถามแบบเลือกเวลา
+ * แสดง time picker ให้ผู้ตอบเลือกเวลา
+ */
 defineProps({
   value: { type: String, default: '' }
 })

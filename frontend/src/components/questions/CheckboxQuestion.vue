@@ -1,11 +1,16 @@
 <script setup>
+/**
+ * CheckboxQuestion - คำถามแบบ checkbox
+ * ผู้ตอบเลือกได้หลายตัวเลือก
+ */
 const props = defineProps({
   options: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['update:options', 'add-option', 'remove-option'])
 
-const updateOptionText = (optionId, text) => {
+// อัพเดทข้อความของตัวเลือก
+function updateOptionText(optionId, text) {
   const updated = props.options.map(o => 
     o.id === optionId ? { ...o, text } : o
   )
