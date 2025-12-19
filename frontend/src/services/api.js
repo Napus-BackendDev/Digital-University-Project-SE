@@ -94,11 +94,19 @@ export const questionsAPI = {
     return fetchAPI(`/question?formId=${formId}`)
   },
   
-  // สร้างคำถามใหม่
+  // สร้างคำถามใหม่ (รองรับทั้ง single และ array)
   async create(questionData) {
     return fetchAPI('/question', {
       method: 'POST',
       body: JSON.stringify(questionData),
+    })
+  },
+  
+  // สร้างคำถามหลายอันพร้อมกัน
+  async createMany(questionsArray) {
+    return fetchAPI('/question', {
+      method: 'POST',
+      body: JSON.stringify(questionsArray),
     })
   },
   
@@ -115,6 +123,14 @@ export const questionsAPI = {
     return fetchAPI('/question', {
       method: 'DELETE',
       body: JSON.stringify({ _id: id }),
+    })
+  },
+  
+  // ลบคำถามทั้งหมดของ form
+  async deleteByFormId(formId) {
+    return fetchAPI(`/question/byForm`, {
+      method: 'DELETE',
+      body: JSON.stringify({ formId: formId }),
     })
   },
 }

@@ -66,8 +66,33 @@ onMounted(async () => {
   if (formId.value) {
     const form = await formStore.fetchFormById(formId.value)
     if (form) {
+      // โหลด title
       formTitle.value = form.title?.[0]?.value || 'Untitled Form'
-      // TODO: โหลด questions จาก API
+      formDescription.value = form.description || ''
+      
+      // โหลด questions
+      if (form.questions && form.questions.length > 0) {
+        questions.value = form.questions
+      }
+      
+      // โหลด status
+      if (form.status) {
+        settings.formStatus = form.status
+      }
+      
+      // โหลด schedule
+      if (form.schedule) {
+        if (form.schedule.startAt) {
+          const startDate = new Date(form.schedule.startAt)
+          settings.startDate = startDate.toISOString().split('T')[0]
+          settings.startTime = startDate.toTimeString().slice(0, 5)
+        }
+        if (form.schedule.endAt) {
+          const endDate = new Date(form.schedule.endAt)
+          settings.endDate = endDate.toISOString().split('T')[0]
+          settings.endTime = endDate.toTimeString().slice(0, 5)
+        }
+      }
     }
   }
 })
@@ -91,10 +116,28 @@ async function saveForm() {
   
   saving.value = true
   try {
+    // สร้าง schedule object
+    let schedule = { startAt: null, endAt: null }
+    if (settings.formStatus === 'scheduled') {
+      if (settings.startDate && settings.startTime) {
+        schedule.startAt = new Date(`${settings.startDate}T${settings.startTime}`).toISOString()
+      }
+      if (settings.endDate && settings.endTime) {
+        schedule.endAt = new Date(`${settings.endDate}T${settings.endTime}`).toISOString()
+      }
+    }
+    
+    // บันทึกทั้ง title, questions, status, schedule
     await formStore.updateForm({
       _id: formId.value,
-      title: [{ key: 'en', value: formTitle.value }]
+      title: [{ key: 'en', value: formTitle.value }],
+      description: formDescription.value,
+      questions: questions.value,
+      status: settings.formStatus,
+      schedule: schedule
     })
+    
+    console.log('บันทึกสำเร็จ:', questions.value.length, 'คำถาม')
   } catch (err) {
     console.error('บันทึกฟอร์มไม่สำเร็จ:', err)
   } finally {
@@ -324,13 +367,24 @@ function saveSettings() {
         </svg>
         Back to Forms
       </router-link>
-      <button class="action-link">
-        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8z"></path>
-          <path d="M8 4v4l3 3"></path>
-        </svg>
-        Preview
-      </button>
+      <div class="top-actions-right">
+        <button class="action-link">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8z"></path>
+            <path d="M8 4v4l3 3"></path>
+          </svg>
+          Preview
+        </button>
+        <button class="save-btn" :disabled="saving" @click="saveForm">
+          <svg v-if="!saving" class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12.5 2H3.5C2.67157 2 2 2.67157 2 3.5V12.5C2 13.3284 2.67157 14 3.5 14H12.5C13.3284 14 14 13.3284 14 12.5V5L11 2Z"></path>
+            <path d="M11 2V5H14"></path>
+            <path d="M5 10H11M5 7H8"></path>
+          </svg>
+          <span v-if="saving" class="saving-spinner"></span>
+          {{ saving ? 'Saving...' : 'Save' }}
+        </button>
+      </div>
     </div>
 
     <!-- Main Content -->
@@ -364,8 +418,8 @@ function saveSettings() {
 
       <!-- Tab Panel -->
       <div class="tab-panel" v-if="activeTab === 'questions'">
-        <!-- Status Banner -->
-        <div class="status-banner success">
+        <!-- Status Banner - แสดงเฉพาะเมื่อ form เปิดรับ responses -->
+        <div v-if="settings.formStatus === 'open'" class="status-banner success">
           <div class="status-icon">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="10" cy="10" r="8"></circle>
@@ -375,6 +429,64 @@ function saveSettings() {
           <div class="status-content">
             <h3>Form is Live & Public</h3>
             <p>Your form is published and accepting responses. Anyone with the link can submit.</p>
+            <div class="status-actions">
+              <input type="text" :value="formUrl" readonly class="url-input" />
+              <button class="btn btn-secondary" @click="copyFormUrl">
+                <svg class="btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="5" y="5" width="8" height="9" rx="1"></rect>
+                  <path d="M11 5V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2"></path>
+                </svg>
+                Copy
+              </button>
+              <button class="btn btn-secondary" @click="testForm">
+                <svg class="btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 8A6 6 0 1 1 2 8a6 6 0 0 1 12 0z"></path>
+                  <path d="M8 4v4l3 2"></path>
+                </svg>
+                Test
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Banner - แสดงเมื่อ form ปิดรับ responses -->
+        <div v-else-if="settings.formStatus === 'closed'" class="status-banner warning">
+          <div class="status-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="10" cy="10" r="8"></circle>
+              <path d="M7 7l6 6M13 7l-6 6"></path>
+            </svg>
+          </div>
+          <div class="status-content">
+            <h3>Form is Closed</h3>
+            <p>This form is no longer accepting responses.</p>
+          </div>
+        </div>
+
+        <!-- Status Banner - แสดงเมื่อ form เป็น draft -->
+        <div v-else-if="settings.formStatus === 'draft'" class="status-banner draft">
+          <div class="status-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5-3.5 1 1-3.5 8.5-8.5z"></path>
+            </svg>
+          </div>
+          <div class="status-content">
+            <h3>Draft Mode</h3>
+            <p>This form is not published yet. Change status to "Open" to start collecting responses.</p>
+          </div>
+        </div>
+
+        <!-- Status Banner - แสดงเมื่อ form เป็น scheduled -->
+        <div v-else-if="settings.formStatus === 'scheduled'" class="status-banner scheduled">
+          <div class="status-icon">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="10" cy="10" r="8"></circle>
+              <path d="M10 6v4l3 2"></path>
+            </svg>
+          </div>
+          <div class="status-content">
+            <h3>Scheduled</h3>
+            <p>This form will automatically open and close based on the schedule in settings.</p>
             <div class="status-actions">
               <input type="text" :value="formUrl" readonly class="url-input" />
               <button class="btn btn-secondary" @click="copyFormUrl">
@@ -614,6 +726,56 @@ function saveSettings() {
   height: 16px;
 }
 
+.top-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Save Button */
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: #6366f1;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-btn:hover {
+  background: #4f46e5;
+}
+
+.save-btn:disabled {
+  background: #a5a6f6;
+  cursor: not-allowed;
+}
+
+.save-btn .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.saving-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .form-content {
   max-width: 960px;
   margin: 0 auto;
@@ -674,6 +836,41 @@ function saveSettings() {
 
 .status-banner.success {
   border-left: 4px solid #22c55e;
+}
+
+.status-banner.success .status-icon {
+  background: #dcfce7;
+  color: #22c55e;
+}
+
+/* Status: Warning (Closed) */
+.status-banner.warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.status-banner.warning .status-icon {
+  background: #fef3c7;
+  color: #f59e0b;
+}
+
+/* Status: Draft */
+.status-banner.draft {
+  border-left: 4px solid #6b7280;
+}
+
+.status-banner.draft .status-icon {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Status: Scheduled */
+.status-banner.scheduled {
+  border-left: 4px solid #6366f1;
+}
+
+.status-banner.scheduled .status-icon {
+  background: #e0e7ff;
+  color: #6366f1;
 }
 
 .status-icon {
