@@ -1,0 +1,29 @@
+<script setup>
+defineProps({
+  placeholder: { type: String, default: 'Short answer text' }
+})
+</script>
+
+<template>
+  <div class="question-field">
+    <input type="text" :placeholder="placeholder" class="answer-preview" disabled />
+  </div>
+</template>
+
+<style scoped>
+.question-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.answer-preview {
+  padding: 8px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #999;
+  background: #fafafa;
+}
+</style>

@@ -17,6 +17,16 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
+    {
+      path: '/form-builder',
+      name: 'form-builder',
+      component: () => import('../views/FormBuilderView.vue'),
+    },
+    {
+      path: '/form-builder/:id',
+      name: 'form-builder-edit',
+      component: () => import('../views/FormBuilderView.vue'),
+    },
   ],
 })
 
