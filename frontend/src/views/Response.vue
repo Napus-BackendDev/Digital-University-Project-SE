@@ -24,65 +24,147 @@
         <!-- Questions -->
         <div class="questions-container">
           <div v-for="(question, index) in formData.questions" :key="question.id" class="question-block">
-            <div class="question-label">Question {{ index + 1 }}</div>
+            <!-- Skip numbering for non-input types -->
+            <div v-if="!['title', 'image', 'video', 'divider'].includes(question.type)" class="question-label">
+              Question {{ getQuestionNumber(index) }}
+            </div>
+            
             <div class="question-content">
-              <label class="question-title">
-                {{ question.label }}
-                <span v-if="question.required" class="required">*</span>
-              </label>
+              <!-- Title & Description -->
+              <div v-if="question.type === 'title'" class="title-section">
+                <h2 class="section-title">{{ question.label }}</h2>
+                <p v-if="question.description" class="section-description">{{ question.description }}</p>
+              </div>
 
-              <!-- Text Input -->
-              <input 
-                v-if="question.type === 'text'"
-                type="text" 
-                class="form-input" 
-                placeholder="Your answer"
-                v-model="responses[question.id]"
-              />
+              <!-- Image -->
+              <div v-else-if="question.type === 'image'" class="image-section">
+                <img :src="question.imageUrl" :alt="question.label" class="question-image" />
+                <p v-if="question.caption" class="image-caption">{{ question.caption }}</p>
+              </div>
 
-              <!-- Radio Options -->
-              <div v-else-if="question.type === 'radio'" class="radio-group">
-                <label v-for="option in question.options" :key="option" class="radio-option">
-                  <input 
-                    type="radio" 
-                    :name="`question-${question.id}`"
-                    :value="option"
-                    v-model="responses[question.id]"
-                  />
-                  <span>{{ option }}</span>
+              <!-- Video -->
+              <div v-else-if="question.type === 'video'" class="video-section">
+                <div class="video-wrapper">
+                  <iframe 
+                    :src="question.videoUrl" 
+                    frameborder="0" 
+                    allowfullscreen
+                    class="question-video"
+                  ></iframe>
+                </div>
+                <p v-if="question.caption" class="video-caption">{{ question.caption }}</p>
+              </div>
+
+              <!-- Section Divider -->
+              <div v-else-if="question.type === 'divider'" class="section-divider">
+                <div class="divider-line"></div>
+              </div>
+
+              <!-- Regular Questions -->
+              <template v-else>
+                <label class="question-title">
+                  {{ question.label }}
+                  <span v-if="question.required" class="required">*</span>
                 </label>
-              </div>
 
-              <!-- Star Rating -->
-              <div v-else-if="question.type === 'rating'" class="star-rating">
-                <button 
-                  class="star-btn" 
-                  v-for="i in 5" 
-                  :key="i"
-                  type="button"
-                  @click="setRating(question.id, i)"
-                  :class="{ active: responses[question.id] >= i }"
-                >
-                  <svg class="star-icon" viewBox="0 0 32 32" fill="none">
-                    <path 
-                      d="M16 4L19.5 13.5L29 16L19.5 18.5L16 28L12.5 18.5L3 16L12.5 13.5L16 4Z" 
-                      :stroke="responses[question.id] >= i ? '#FCD34D' : '#D4D4D4'" 
-                      :fill="responses[question.id] >= i ? '#FCD34D' : 'none'"
-                      stroke-width="2.66667" 
-                      stroke-linecap="round" 
-                      stroke-linejoin="round"
+                <!-- Short Answer -->
+                <input 
+                  v-if="question.type === 'text'"
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Your answer"
+                  v-model="responses[question.id]"
+                />
+
+                <!-- Paragraph -->
+                <textarea 
+                  v-else-if="question.type === 'textarea'"
+                  class="form-textarea" 
+                  placeholder="Your answer"
+                  rows="4"
+                  v-model="responses[question.id]"
+                ></textarea>
+
+                <!-- Multiple Choice (Radio) -->
+                <div v-else-if="question.type === 'radio'" class="radio-group">
+                  <label v-for="option in question.options" :key="option" class="radio-option">
+                    <input 
+                      type="radio" 
+                      :name="`question-${question.id}`"
+                      :value="option"
+                      v-model="responses[question.id]"
                     />
-                  </svg>
-                </button>
-              </div>
+                    <span>{{ option }}</span>
+                  </label>
+                </div>
 
-              <!-- Textarea -->
-              <textarea 
-                v-else-if="question.type === 'textarea'"
-                class="form-textarea" 
-                placeholder="Your answer"
-                v-model="responses[question.id]"
-              ></textarea>
+                <!-- Checkbox -->
+                <div v-else-if="question.type === 'checkbox'" class="checkbox-group">
+                  <label v-for="option in question.options" :key="option" class="checkbox-option">
+                    <input 
+                      type="checkbox" 
+                      :value="option"
+                      v-model="responses[question.id]"
+                    />
+                    <span>{{ option }}</span>
+                  </label>
+                </div>
+
+                <!-- Dropdown -->
+                <select 
+                  v-else-if="question.type === 'dropdown'" 
+                  class="form-select"
+                  v-model="responses[question.id]"
+                >
+                  <option value="" disabled selected>Select an option</option>
+                  <option v-for="option in question.options" :key="option" :value="option">
+                    {{ option }}
+                  </option>
+                </select>
+
+                <!-- Rating (Star) -->
+                <div v-else-if="question.type === 'rating'" class="star-rating">
+                  <button 
+                    class="star-btn" 
+                    v-for="i in (question.maxRating || 5)" 
+                    :key="i"
+                    type="button"
+                    @click="setRating(question.id, i)"
+                    :class="{ active: responses[question.id] >= i }"
+                  >
+                    <svg class="star-icon" viewBox="0 0 32 32" fill="none">
+                      <path 
+                        d="M16 4L19.5 13.5L29 16L19.5 18.5L16 28L12.5 18.5L3 16L12.5 13.5L16 4Z" 
+                        :stroke="responses[question.id] >= i ? '#FCD34D' : '#D4D4D4'" 
+                        :fill="responses[question.id] >= i ? '#FCD34D' : 'none'"
+                        stroke-width="2.66667" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- File Upload -->
+                <div v-else-if="question.type === 'file'" class="file-upload">
+                  <label class="file-upload-label">
+                    <input 
+                      type="file" 
+                      class="file-input"
+                      :accept="question.acceptedTypes || '*'"
+                      @change="handleFileUpload($event, question.id)"
+                    />
+                    <div class="file-upload-button">
+                      <svg class="icon-16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 10V4M8 4L5.5 6.5M8 4L10.5 6.5" stroke="#333333" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 10V12C2 13.1046 2.89543 14 4 14H12C13.1046 14 14 13.1046 14 12V10" stroke="#333333" stroke-width="1.33333" stroke-linecap="round"/>
+                      </svg>
+                      <span>{{ responses[question.id] ? responses[question.id].name : 'Choose file' }}</span>
+                    </div>
+                  </label>
+                  <p class="file-hint">{{ question.fileHint || 'Max file size: 10MB' }}</p>
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -126,15 +208,93 @@ import Navbar from '@/components/Navbar.vue';
 const router = useRouter();
 const route = useRoute();
 
-const userEmail = ref('user@example.com');
 const responses = reactive({});
 const isSubmitting = ref(false);
 const showSuccessModal = ref(false);
 
-// Mock data
+// Mock data with all 11 question types
 const formsData = [
   {
     id: 1,
+    title: "Comprehensive Survey - All Question Types",
+    description: "A demonstration survey showcasing all available question types in the system",
+    questions: [
+      {
+        id: 1,
+        type: "title",
+        label: "Personal Information",
+        description: "Please provide your basic information"
+      },
+      {
+        id: 2,
+        type: "text",
+        label: "What is your full name?",
+        required: true
+      },
+      {
+        id: 3,
+        type: "textarea",
+        label: "Tell us about your experience with our platform",
+        required: true
+      },
+      {
+        id: 4,
+        type: "divider"
+      },
+      {
+        id: 6,
+        type: "radio",
+        label: "How satisfied are you with our service?",
+        required: true,
+        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"]
+      },
+      {
+        id: 7,
+        type: "checkbox",
+        label: "Which features do you use most? (Select all that apply)",
+        required: true,
+        options: ["Dashboard", "Reports", "Analytics", "Settings", "Notifications"]
+      },
+      {
+        id: 8,
+        type: "dropdown",
+        label: "How did you hear about us?",
+        required: true,
+        options: ["Social Media", "Search Engine", "Friend Referral", "Advertisement", "Other"]
+      },
+      {
+        id: 9,
+        type: "rating",
+        label: "Rate your overall experience",
+        required: true,
+        maxRating: 5
+      },
+      {
+        id: 10,
+        type: "image",
+        label: "Product Showcase",
+        imageUrl: "https://via.placeholder.com/600x300",
+        caption: "Our latest product features"
+      },
+      {
+        id: 11,
+        type: "video",
+        label: "Tutorial Video",
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        caption: "Watch our quick tutorial"
+      },
+      {
+        id: 12,
+        type: "file",
+        label: "Upload your resume (optional)",
+        required: false,
+        acceptedTypes: ".pdf,.doc,.docx",
+        fileHint: "Accepted formats: PDF, DOC, DOCX (Max 10MB)"
+      }
+    ]
+  },
+  {
+    id: 2,
     title: "Customer Satisfaction Survey",
     description: "Help us improve our services by sharing your feedback",
     questions: [
@@ -164,63 +324,6 @@ const formsData = [
         required: false
       }
     ]
-  },
-  {
-    id: 2,
-    title: "Event Registration Form",
-    description: "Register for our upcoming event",
-    questions: [
-      {
-        id: 1,
-        label: "Full Name",
-        type: "text",
-        required: true
-      },
-      {
-        id: 2,
-        label: "Email Address",
-        type: "text",
-        required: true
-      },
-      {
-        id: 3,
-        label: "Will you attend the networking session?",
-        type: "radio",
-        required: true,
-        options: ["Yes", "No", "Maybe"]
-      },
-      {
-        id: 4,
-        label: "Additional comments",
-        type: "textarea",
-        required: false
-      }
-    ]
-  },
-  {
-    id: 3,
-    title: "Employee Feedback Q4 2024",
-    description: "Share your feedback about the workplace",
-    questions: [
-      {
-        id: 1,
-        label: "Employee ID",
-        type: "text",
-        required: true
-      },
-      {
-        id: 2,
-        label: "Rate your work-life balance",
-        type: "rating",
-        required: true
-      },
-      {
-        id: 3,
-        label: "What improvements would you suggest?",
-        type: "textarea",
-        required: false
-      }
-    ]
   }
 ];
 
@@ -229,25 +332,57 @@ const formData = computed(() => {
   return formsData.find(form => form.id === formId) || formsData[0];
 });
 
-const goBack = () => {
-  router.push('/');
+// Initialize checkbox arrays for the current form
+formsData.forEach(form => {
+  form.questions.forEach(question => {
+    if (question.type === 'checkbox' && !responses[question.id]) {
+      responses[question.id] = [];
+    }
+  });
+});
+
+const getQuestionNumber = (index) => {
+  // Count only questions that need numbering (exclude title, image, video, divider)
+  let count = 0;
+  for (let i = 0; i <= index; i++) {
+    const type = formData.value.questions[i].type;
+    if (!['title', 'image', 'video', 'divider'].includes(type)) {
+      count++;
+    }
+  }
+  return count;
 };
 
-const handleLogout = () => {
-  if (confirm('Are you sure you want to logout?')) {
-    router.push('/');
-  }
+const goBack = () => {
+  router.push('/');
 };
 
 const setRating = (questionId, rating) => {
   responses[questionId] = rating;
 };
 
+const handleFileUpload = (event, questionId) => {
+  const file = event.target.files[0];
+  if (file) {
+    // Check file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size exceeds 10MB limit');
+      event.target.value = '';
+      return;
+    }
+    responses[questionId] = file;
+  }
+};
+
 const validateForm = () => {
   const requiredQuestions = formData.value.questions.filter(q => q.required);
   
   for (const question of requiredQuestions) {
-    if (!responses[question.id] || responses[question.id] === '') {
+    const response = responses[question.id];
+    
+    if (!response || 
+        (Array.isArray(response) && response.length === 0) || 
+        response === '') {
       alert(`Please answer the required question: ${question.label}`);
       return false;
     }
@@ -432,6 +567,105 @@ const closeModal = () => {
   font-weight: 500;
 }
 
+/* ==================== TITLE & DESCRIPTION ==================== */
+.title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.section-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: -0.4px;
+  color: #333333;
+  margin: 0;
+}
+
+.section-description {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #737373;
+  margin: 0;
+}
+
+/* ==================== IMAGE ==================== */
+.image-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.question-image {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.image-caption {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #737373;
+  margin: 0;
+  text-align: center;
+}
+
+/* ==================== VIDEO ==================== */
+.video-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.question-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.video-caption {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #737373;
+  margin: 0;
+  text-align: center;
+}
+
+/* ==================== SECTION DIVIDER ==================== */
+.section-divider {
+  padding: 16px 0;
+}
+
+.divider-line {
+  width: 100%;
+  height: 1px;
+  background: #E5E5E5;
+}
+
 /* ==================== INPUT FIELDS ==================== */
 .form-input {
   width: 100%;
@@ -515,6 +749,60 @@ const closeModal = () => {
   accent-color: #333333;
 }
 
+/* ==================== CHECKBOX ==================== */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #333333;
+}
+
+.checkbox-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #333333;
+}
+
+/* ==================== DROPDOWN ==================== */
+.form-select {
+  width: fit-content;
+  min-width: 200px;
+  max-width: 100%;
+  height: 36px;
+  padding: 4px 32px 4px 12px;
+  background: rgba(229, 229, 229, 0.3);
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #333333;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #333333;
+  background: #FFFFFF;
+}
+
 /* ==================== STAR RATING ==================== */
 .star-rating {
   display: flex;
@@ -538,6 +826,52 @@ const closeModal = () => {
 .star-icon {
   width: 32px;
   height: 32px;
+}
+
+/* ==================== FILE UPLOAD ==================== */
+.file-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-upload-label {
+  cursor: pointer;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-upload-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(229, 229, 229, 0.3);
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #333333;
+  transition: all 0.2s;
+}
+
+.file-upload-button:hover {
+  background: rgba(229, 229, 229, 0.5);
+  border-color: #333333;
+}
+
+.file-hint {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #737373;
+  margin: 0;
 }
 
 /* ==================== FORM FOOTER ==================== */
@@ -673,6 +1007,11 @@ const closeModal = () => {
   .form-title {
     font-size: 28px;
     line-height: 36px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+    line-height: 28px;
   }
   
   .form-footer {
