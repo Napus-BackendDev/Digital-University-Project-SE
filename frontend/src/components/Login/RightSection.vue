@@ -47,6 +47,18 @@
           Google
         </CButton>
       </CForm>
+      <div>
+        <Transition name="slide-fade">
+        <CAlert 
+          v-if="errorMessage" 
+          color="danger" 
+          @close="errorMessage = ''"
+          class="toast-alert"
+        >
+          {{ errorMessage }}
+        </CAlert>
+      </Transition>
+      </div>
     </div>
   </div>
 </template>
@@ -54,16 +66,48 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { CForm, CFormInput, CButton } from '@coreui/vue'
+import { CForm, CFormInput, CButton, CAlert } from '@coreui/vue'
+import api from '@/service/api.js'
 
 const router = useRouter()
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
+const errorMessage = ref('')
 
 const handleLogin = async () => {
   isLoading.value = true
-
+  errorMessage.value = ''
+  
+  try {
+    const response = await api.auth('login', {
+      email: email.value,
+      password: password.value
+    })
+    
+    // เก็บ token ถ้าต้องการ
+    if (response.data.data) {
+      localStorage.setItem('token', response.data.data)
+    }
+    
+    // Navigate to dashboard
+    router.push('/forms')
+    
+  } catch (error) {
+    console.error('Login error:', error)
+    
+    // แสดง error message
+    if (error.response && error.response.data) {
+      errorMessage.value = error.response.data.message || 'Login failed'
+    } else {
+      errorMessage.value = 'Network error. Please try again.'
+    }
+    setTimeout(() => {
+      errorMessage.value = ''
+    }, 2500)
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const handleForgotPassword = () => {
@@ -74,6 +118,7 @@ const handleGoogleLogin = () => {
   
 }
 </script>
+
 
 <style scoped>
 .right-section {
@@ -245,6 +290,43 @@ const handleGoogleLogin = () => {
   background-color: #f9fafb;
   border-color: #9ca3af;
 }
+
+/* Toast Alert ลอยขึ้นมา */
+.toast-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  min-width: 300px;
+  max-width: 500px;
+  background-color: #f8d7da !important;
+  border-color: #f5c2c7 !important;
+  color: #842029 !important;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Animation เมื่อปรากฏและหายไป */
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.slide-fade-enter-from {
+  transform: translateX(100px);
+  opacity: 0;
+}
+
+.slide-fade-leave-to {
+  transform: translateX(100px);
+  opacity: 0;
+}
+
+
 
 /* Responsive Design */
 @media (max-width: 1024px) {
