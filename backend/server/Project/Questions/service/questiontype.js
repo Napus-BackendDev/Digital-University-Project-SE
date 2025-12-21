@@ -3,9 +3,7 @@ const QUESTION_TYPE = {
     PARAGRAPH: 'paragraph',
     CHOICES: 'choices',
     CHECKBOX: 'checkbox',
-    DROPDOWN: 'dropdown',
     RATING: 'rating',
-    TITLE: 'title',
     FILE: 'file',
 }
 
