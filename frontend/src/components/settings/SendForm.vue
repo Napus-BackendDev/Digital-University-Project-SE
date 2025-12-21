@@ -10,7 +10,7 @@ const props = defineProps({
   formUrl: { type: String, default: '' }
 })
 
-const emit = defineEmits(['copy-link', 'send-email', 'save-settings'])
+const emit = defineEmits(['copy-link', 'send-email'])
 
 // Copy link ไปยัง clipboard
 function copyLink() {
@@ -47,12 +47,6 @@ function sendViaEmail() {
           Send via Email
         </button>
       </div>
-    </div>
-    
-    <div class="settings-footer">
-      <button class="btn btn-primary btn-large" @click="emit('save-settings')">
-        Save Settings
-      </button>
     </div>
   </div>
 </template>
@@ -122,17 +116,6 @@ function sendViaEmail() {
 
 .btn-secondary:hover {
   background: #eee;
-}
-
-.btn-large {
-  padding: 12px 24px;
-  font-size: 15px;
-}
-
-.settings-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 16px 0;
 }
 
 @media (max-width: 640px) {

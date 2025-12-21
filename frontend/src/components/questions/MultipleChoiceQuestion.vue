@@ -2,13 +2,15 @@
 /**
  * MultipleChoiceQuestion - คำถามแบบเลือกตอบ (Radio)
  * ผู้ตอบเลือกได้เพียง 1 ตัวเลือก
- * รองรับ follow-up question สำหรับแต่ละตัวเลือก
+ * รองรับ nested follow-up question หลายชั้น (1.1, 1.1.1, 1.1.1.1, ...)
  */
+import NestedFollowUp from './NestedFollowUp.vue'
+
 const props = defineProps({
   options: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['update:options', 'add-option', 'remove-option', 'add-followup'])
+const emit = defineEmits(['update:options', 'add-option', 'remove-option'])
 
 // อัพเดทข้อความของตัวเลือก
 function updateOptionText(optionId, text) {
@@ -18,13 +20,41 @@ function updateOptionText(optionId, text) {
   emit('update:options', updated)
 }
 
-// เพิ่ม follow-up question สำหรับตัวเลือกนี้
+// เพิ่ม follow-up question สำหรับตัวเลือกนี้ (เป็น Multiple Choice เสมอ)
 function addFollowUp(optionId) {
   const updated = props.options.map(o => 
-    o.id === optionId ? { ...o, hasFollowUp: true } : o
+    o.id === optionId ? { 
+      ...o, 
+      hasFollowUp: true,
+      followUpQuestion: {
+        type: 'multiple-choice',
+        title: '',
+        required: false,
+        options: [{ id: 1, text: 'Option 1' }]
+      }
+    } : o
   )
   emit('update:options', updated)
-  emit('add-followup', optionId)
+}
+
+// ลบ follow-up question
+function removeFollowUp(optionId) {
+  const updated = props.options.map(o => 
+    o.id === optionId ? { 
+      ...o, 
+      hasFollowUp: false,
+      followUpQuestion: null
+    } : o
+  )
+  emit('update:options', updated)
+}
+
+// อัพเดท follow-up question
+function updateFollowUp(optionId, followUpQuestion) {
+  const updated = props.options.map(o => 
+    o.id === optionId ? { ...o, followUpQuestion } : o
+  )
+  emit('update:options', updated)
 }
 </script>
 
@@ -39,7 +69,6 @@ function addFollowUp(optionId) {
           type="text" 
           class="option-input" 
         />
-        <span v-if="option.hasFollowUp" class="badge">Has follow-up</span>
         <button class="option-delete-btn" @click="emit('remove-option', option.id)">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="4" y1="4" x2="12" y2="12"></line>
@@ -47,10 +76,20 @@ function addFollowUp(optionId) {
           </svg>
         </button>
       </div>
-      <button v-if="!option.hasFollowUp" class="add-followup-btn" @click="addFollowUp(option.id)">
+      
+      <!-- Nested Follow-up Question Component -->
+      <NestedFollowUp
+        v-if="option.hasFollowUp"
+        :followUp="option.followUpQuestion"
+        :depth="1"
+        @update="(updated) => updateFollowUp(option.id, updated)"
+        @remove="removeFollowUp(option.id)"
+      />
+      
+      <!-- Add follow-up button -->
+      <button v-else class="add-followup-btn" @click="addFollowUp(option.id)">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-          <line x1="8" y1="4" x2="8" y2="12"></line>
-          <line x1="4" y1="8" x2="12" y2="8"></line>
+          <polyline points="6 12 10 8 6 4"></polyline>
         </svg>
         Add follow-up question
       </button>
@@ -109,16 +148,6 @@ function addFollowUp(optionId) {
 .option-input:focus {
   outline: none;
   border-color: #6366f1;
-}
-
-.badge {
-  padding: 3px 9px;
-  background: #f0f9ff;
-  color: #0369a1;
-  border-radius: 12px;
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
 }
 
 .option-delete-btn {

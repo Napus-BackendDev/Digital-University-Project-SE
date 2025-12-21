@@ -1,10 +1,10 @@
 <script setup>
 /**
  * QuestionTypeSelector - Sidebar เลือกประเภทคำถาม
- * แสดงรายการประเภทคำถามทั้งหมดที่สามารถเพิ่มได้
+ * แบ่งเป็น 2 หมวด: Question Types และ Content Elements
  */
 
-// รายการประเภทคำถามทั้งหมด
+// รายการประเภทคำถาม
 const questionTypes = [
   { id: 'short-answer', name: 'Short Answer', icon: 'short-text' },
   { id: 'paragraph', name: 'Paragraph', icon: 'paragraph' },
@@ -12,7 +12,11 @@ const questionTypes = [
   { id: 'checkbox', name: 'Checkbox', icon: 'checkbox' },
   { id: 'dropdown', name: 'Dropdown', icon: 'dropdown' },
   { id: 'rating', name: 'Rating', icon: 'star' },
-  { id: 'file-upload', name: 'File Upload', icon: 'upload' },
+  { id: 'file-upload', name: 'File Upload', icon: 'upload' }
+]
+
+// รายการ Content Elements (ไม่ใช่คำถาม)
+const contentElements = [
   { id: 'title-description', name: 'Title & Description', icon: 'title' },
   { id: 'image', name: 'Image', icon: 'image' },
   { id: 'video', name: 'Video', icon: 'video' },
@@ -29,6 +33,7 @@ function addQuestion(type) {
 
 <template>
   <div class="question-type-selector">
+    <!-- Question Types Section -->
     <h4 class="selector-title">Question Types</h4>
     <div class="question-types-list">
       <button
@@ -101,6 +106,47 @@ function addQuestion(type) {
         <span class="type-name">{{ type.name }}</span>
       </button>
     </div>
+
+    <!-- Divider -->
+    <div class="section-divider"></div>
+
+    <!-- Content Elements Section -->
+    <h4 class="selector-title">Content Elements</h4>
+    <div class="question-types-list">
+      <button
+        v-for="element in contentElements"
+        :key="element.id"
+        class="question-type-btn"
+        @click="addQuestion(element)"
+      >
+        <span class="type-icon">
+          <!-- Title Icon -->
+          <svg v-if="element.icon === 'title'" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+            <text x="3" y="14" font-size="12" font-weight="bold" fill="currentColor">T</text>
+            <line x1="10" y1="8" x2="17" y2="8"></line>
+            <line x1="10" y1="12" x2="17" y2="12"></line>
+          </svg>
+          <!-- Image Icon -->
+          <svg v-else-if="element.icon === 'image'" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="3" width="16" height="14" rx="2"></rect>
+            <circle cx="7" cy="8" r="2"></circle>
+            <path d="M18 14l-4-4-6 6"></path>
+          </svg>
+          <!-- Video Icon -->
+          <svg v-else-if="element.icon === 'video'" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="4" width="12" height="12" rx="2"></rect>
+            <path d="M14 8l4-2v8l-4-2"></path>
+          </svg>
+          <!-- Divider Icon -->
+          <svg v-else-if="element.icon === 'divider'" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+            <line x1="2" y1="10" x2="8" y2="10"></line>
+            <line x1="12" y1="10" x2="18" y2="10"></line>
+            <rect x="8" y="7" width="4" height="6" rx="1" fill="currentColor" opacity="0.3"></rect>
+          </svg>
+        </span>
+        <span class="type-name">{{ element.name }}</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -111,6 +157,12 @@ function addQuestion(type) {
   border-radius: 16px;
   padding: 17px;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.section-divider {
+  height: 1px;
+  background: #e5e5e5;
+  margin: 16px 0;
 }
 
 .selector-title {

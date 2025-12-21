@@ -3,10 +3,27 @@
  * FormBuilderView - หน้าสร้างและแก้ไขฟอร์ม
  * แบ่งเป็น 3 tabs: Questions, Responses, Settings
  */
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useFormStore } from '@/stores/form'
 import draggable from 'vuedraggable'
+
+// Icon Components
+import {
+  ArrowLeftIcon,
+  SaveIcon,
+  QuestionsIcon,
+  ResponsesIcon,
+  SettingsIcon,
+  CheckCircleIcon,
+  CloseCircleIcon,
+  EditIcon,
+  ClockIcon,
+  CopyIcon,
+  PlayIcon,
+  EmptyFormIcon,
+  EmptyResponseIcon
+} from '@/components/icons'
 
 // Question Components
 import QuestionTypeSelector from '@/components/questions/QuestionTypeSelector.vue'
@@ -16,7 +33,6 @@ import QuestionCard from '@/components/questions/QuestionCard.vue'
 import FormStatus from '@/components/settings/FormStatus.vue'
 import AccessControl from '@/components/settings/AccessControl.vue'
 import ResponseSettings from '@/components/settings/ResponseSettings.vue'
-import NotificationSettings from '@/components/settings/NotificationSettings.vue'
 import ConfirmationMessage from '@/components/settings/ConfirmationMessage.vue'
 import SendForm from '@/components/settings/SendForm.vue'
 
@@ -28,6 +44,9 @@ import PieChartSummary from '@/components/responses/PieChartSummary.vue'
 import BarChartSummary from '@/components/responses/BarChartSummary.vue'
 import DateTimeResponseList from '@/components/responses/DateTimeResponseList.vue'
 import FileUploadSummary from '@/components/responses/FileUploadSummary.vue'
+
+// Modal Component
+import Modal from '@/components/Modal.vue'
 
 
 /* 
@@ -58,11 +77,30 @@ const formUrl = computed(() => {
 // เก็บ ID คำถามที่กำลังเปิดดู
 const expandedQuestionId = ref(null)
 
+// Modal state
+const modalVisible = ref(false)
+const modalType = ref('info')
+const modalTitle = ref('')
+const modalMessage = ref('')
+
+function showModal(type, title, message) {
+  modalType.value = type
+  modalTitle.value = title
+  modalMessage.value = message
+  modalVisible.value = true
+}
+
+function closeModal() {
+  modalVisible.value = false
+}
+
 
 /* ===================================
    Lifecycle - โหลดข้อมูลเมื่อเปิดหน้า
    =================================== */
 onMounted(async () => {
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  
   if (formId.value) {
     const form = await formStore.fetchFormById(formId.value)
     if (form) {
@@ -77,20 +115,45 @@ onMounted(async () => {
       
       // โหลด status
       if (form.status) {
-        settings.formStatus = form.status
+        settings.value.formStatus = form.status
       }
       
       // โหลด schedule
       if (form.schedule) {
         if (form.schedule.startAt) {
           const startDate = new Date(form.schedule.startAt)
-          settings.startDate = startDate.toISOString().split('T')[0]
-          settings.startTime = startDate.toTimeString().slice(0, 5)
+          settings.value.startDate = startDate.toISOString().split('T')[0]
+          settings.value.startTime = startDate.toTimeString().slice(0, 5)
         }
         if (form.schedule.endAt) {
           const endDate = new Date(form.schedule.endAt)
-          settings.endDate = endDate.toISOString().split('T')[0]
-          settings.endTime = endDate.toTimeString().slice(0, 5)
+          settings.value.endDate = endDate.toISOString().split('T')[0]
+          settings.value.endTime = endDate.toTimeString().slice(0, 5)
+        }
+      }
+      
+      // โหลด settings อื่นๆ
+      if (form.settings) {
+        if (form.settings.whoCanRespond !== undefined) {
+          settings.value.whoCanRespond = form.settings.whoCanRespond
+        }
+        if (form.settings.collectEmails !== undefined) {
+          settings.value.collectEmails = form.settings.collectEmails
+        }
+        if (form.settings.limitResponses !== undefined) {
+          settings.value.limitResponses = form.settings.limitResponses
+        }
+        if (form.settings.maxResponses !== undefined) {
+          settings.value.maxResponses = form.settings.maxResponses
+        }
+        if (form.settings.showProgressBar !== undefined) {
+          settings.value.showProgressBar = form.settings.showProgressBar
+        }
+        if (form.settings.confirmationMessage !== undefined) {
+          settings.value.confirmationMessage = form.settings.confirmationMessage
+        }
+        if (form.settings.showAnotherResponseLink !== undefined) {
+          settings.value.showAnotherResponseLink = form.settings.showAnotherResponseLink
         }
       }
     }
@@ -118,23 +181,33 @@ async function saveForm() {
   try {
     // สร้าง schedule object
     let schedule = { startAt: null, endAt: null }
-    if (settings.formStatus === 'scheduled') {
-      if (settings.startDate && settings.startTime) {
-        schedule.startAt = new Date(`${settings.startDate}T${settings.startTime}`).toISOString()
+    if (settings.value.formStatus === 'scheduled') {
+      if (settings.value.startDate && settings.value.startTime) {
+        schedule.startAt = new Date(`${settings.value.startDate}T${settings.value.startTime}`).toISOString()
       }
-      if (settings.endDate && settings.endTime) {
-        schedule.endAt = new Date(`${settings.endDate}T${settings.endTime}`).toISOString()
+      if (settings.value.endDate && settings.value.endTime) {
+        schedule.endAt = new Date(`${settings.value.endDate}T${settings.value.endTime}`).toISOString()
       }
     }
     
-    // บันทึกทั้ง title, questions, status, schedule
+    // บันทึกทั้ง title, questions, status, schedule และ settings ทั้งหมด
     await formStore.updateForm({
       _id: formId.value,
       title: [{ key: 'en', value: formTitle.value }],
       description: formDescription.value,
       questions: questions.value,
-      status: settings.formStatus,
-      schedule: schedule
+      status: settings.value.formStatus,
+      schedule: schedule,
+      // Settings เพิ่มเติม
+      settings: {
+        whoCanRespond: settings.value.whoCanRespond,
+        collectEmails: settings.value.collectEmails,
+        limitResponses: settings.value.limitResponses,
+        maxResponses: settings.value.maxResponses,
+        showProgressBar: settings.value.showProgressBar,
+        confirmationMessage: settings.value.confirmationMessage,
+        showAnotherResponseLink: settings.value.showAnotherResponseLink
+      }
     })
     
     console.log('บันทึกสำเร็จ:', questions.value.length, 'คำถาม')
@@ -180,15 +253,7 @@ const settings = ref({
   collectEmails: false,
   limitResponses: false,
   maxResponses: 100,
-  allowEditing: false,
   showProgressBar: true,
-  shuffleQuestions: false,
-  exportFormat: 'xlsx',
-  exportUrl: false,
-  
-  // แจ้งเตือน
-  emailNotifications: true,
-  notificationEmail: 'admin@mfu.ac.th',
   
   // ข้อความยืนยัน
   confirmationMessage: 'Thank you for completing this survey. Your response has been recorded.',
@@ -240,6 +305,14 @@ function addQuestion(type) {
   // เพิ่ม maxRating สำหรับ rating
   if (type.id === 'rating') {
     newQuestion.maxRating = 5
+  }
+  
+  // เพิ่ม file upload settings
+  if (type.id === 'file-upload') {
+    newQuestion.allowSpecificTypes = false
+    newQuestion.allowedFileTypes = []
+    newQuestion.maxFiles = 1
+    newQuestion.maxSize = 10
   }
   
   questions.value.push(newQuestion)
@@ -315,7 +388,7 @@ function getQuestionTypeLabel(type) {
  */
 function copyFormUrl() {
   navigator.clipboard.writeText(formUrl.value)
-  alert('URL copied to clipboard!')
+  showModal('success', 'Copied!', 'URL copied to clipboard!')
 }
 
 /**
@@ -330,7 +403,7 @@ function testForm() {
  */
 function handleExport(format) {
   console.log('Exporting as:', format)
-  alert(`Exporting responses as ${format.toUpperCase()}`)
+  showModal('success', 'Export Started', `Exporting responses as ${format.toUpperCase()}`)
 }
 
 /**
@@ -348,12 +421,45 @@ function removeCollaborator(id) {
   settings.value.collaborators = settings.value.collaborators.filter(c => c.id !== id)
 }
 
-/**
- * บันทึก settings
- */
-function saveSettings() {
-  console.log('Saving settings:', settings.value)
-  alert('Settings saved successfully!')
+// Auto-save settings - บันทึกอัตโนมัติเมื่อ settings เปลี่ยน
+watch(settings, () => {
+  if (saveTimeout) clearTimeout(saveTimeout)
+  saveTimeout = setTimeout(() => {
+    saveForm()
+  }, 1000)
+}, { deep: true })
+
+// บันทึกก่อนออกหน้า (route change)
+onBeforeRouteLeave(async () => {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+    await saveFormImmediately()
+  }
+  return true
+})
+
+// ลบ event listener เมื่อ unmount
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+  }
+})
+
+function handleBeforeUnload(e) {
+  if (saveTimeout) {
+    // บันทึกทันที (sync)
+    saveFormImmediately()
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
+// บันทึกทันทีไม่ต้องรอ
+async function saveFormImmediately() {
+  if (saveTimeout) clearTimeout(saveTimeout)
+  saveTimeout = null
+  await saveForm()
 }
 </script>
 
@@ -362,29 +468,10 @@ function saveSettings() {
     <!-- Top Actions -->
     <div class="top-actions">
       <router-link to="/" class="action-link">
-        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M10 12L6 8L10 4"></path>
-        </svg>
+        <ArrowLeftIcon />
         Back to Forms
       </router-link>
-      <div class="top-actions-right">
-        <button class="action-link">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8z"></path>
-            <path d="M8 4v4l3 3"></path>
-          </svg>
-          Preview
-        </button>
-        <button class="save-btn" :disabled="saving" @click="saveForm">
-          <svg v-if="!saving" class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12.5 2H3.5C2.67157 2 2 2.67157 2 3.5V12.5C2 13.3284 2.67157 14 3.5 14H12.5C13.3284 14 14 13.3284 14 12.5V5L11 2Z"></path>
-            <path d="M11 2V5H14"></path>
-            <path d="M5 10H11M5 7H8"></path>
-          </svg>
-          <span v-if="saving" class="saving-spinner"></span>
-          {{ saving ? 'Saving...' : 'Save' }}
-        </button>
-      </div>
+      <!-- Auto-save enabled - no manual save button needed -->
     </div>
 
     <!-- Main Content -->
@@ -397,21 +484,9 @@ function saveSettings() {
           :class="['tab-btn', { active: activeTab === tab.id }]"
           @click="activeTab = tab.id"
         >
-          <svg v-if="tab.icon === 'questions'" class="tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="2" y="2" width="12" height="12" rx="2"></rect>
-            <line x1="5" y1="5" x2="11" y2="5"></line>
-            <line x1="5" y1="8" x2="11" y2="8"></line>
-            <line x1="5" y1="11" x2="9" y2="11"></line>
-          </svg>
-          <svg v-else-if="tab.icon === 'responses'" class="tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M2 3h12v10H2z"></path>
-            <line x1="5" y1="6" x2="11" y2="6"></line>
-            <line x1="5" y1="9" x2="11" y2="9"></line>
-          </svg>
-          <svg v-else-if="tab.icon === 'settings'" class="tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="8" cy="8" r="2"></circle>
-            <path d="M8 1v2M8 13v2M15 8h-2M3 8H1M13 3l-1.5 1.5M4.5 11.5L3 13M13 13l-1.5-1.5M4.5 4.5L3 3"></path>
-          </svg>
+          <QuestionsIcon v-if="tab.icon === 'questions'" />
+          <ResponsesIcon v-else-if="tab.icon === 'responses'" />
+          <SettingsIcon v-else-if="tab.icon === 'settings'" />
           {{ tab.label }}
         </button>
       </div>
@@ -421,10 +496,7 @@ function saveSettings() {
         <!-- Status Banner - แสดงเฉพาะเมื่อ form เปิดรับ responses -->
         <div v-if="settings.formStatus === 'open'" class="status-banner success">
           <div class="status-icon">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="10" cy="10" r="8"></circle>
-              <path d="M6 10l3 3 5-6"></path>
-            </svg>
+            <CheckCircleIcon />
           </div>
           <div class="status-content">
             <h3>Form is Live & Public</h3>
@@ -432,18 +504,12 @@ function saveSettings() {
             <div class="status-actions">
               <input type="text" :value="formUrl" readonly class="url-input" />
               <button class="btn btn-secondary" @click="copyFormUrl">
-                <svg class="btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="5" y="5" width="8" height="9" rx="1"></rect>
-                  <path d="M11 5V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2"></path>
-                </svg>
+                <CopyIcon />
                 Copy
               </button>
               <button class="btn btn-secondary" @click="testForm">
-                <svg class="btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M14 8A6 6 0 1 1 2 8a6 6 0 0 1 12 0z"></path>
-                  <path d="M8 4v4l3 2"></path>
-                </svg>
-                Test
+                <PlayIcon />
+                Preview
               </button>
             </div>
           </div>
@@ -452,10 +518,7 @@ function saveSettings() {
         <!-- Status Banner - แสดงเมื่อ form ปิดรับ responses -->
         <div v-else-if="settings.formStatus === 'closed'" class="status-banner warning">
           <div class="status-icon">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="10" cy="10" r="8"></circle>
-              <path d="M7 7l6 6M13 7l-6 6"></path>
-            </svg>
+            <CloseCircleIcon />
           </div>
           <div class="status-content">
             <h3>Form is Closed</h3>
@@ -466,23 +529,24 @@ function saveSettings() {
         <!-- Status Banner - แสดงเมื่อ form เป็น draft -->
         <div v-else-if="settings.formStatus === 'draft'" class="status-banner draft">
           <div class="status-icon">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-8.5 8.5-3.5 1 1-3.5 8.5-8.5z"></path>
-            </svg>
+            <EditIcon />
           </div>
           <div class="status-content">
             <h3>Draft Mode</h3>
             <p>This form is not published yet. Change status to "Open" to start collecting responses.</p>
+            <div class="status-actions">
+              <button class="btn btn-secondary" @click="testForm">
+                <PlayIcon />
+                Preview
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Status Banner - แสดงเมื่อ form เป็น scheduled -->
         <div v-else-if="settings.formStatus === 'scheduled'" class="status-banner scheduled">
           <div class="status-icon">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="10" cy="10" r="8"></circle>
-              <path d="M10 6v4l3 2"></path>
-            </svg>
+            <ClockIcon />
           </div>
           <div class="status-content">
             <h3>Scheduled</h3>
@@ -490,18 +554,12 @@ function saveSettings() {
             <div class="status-actions">
               <input type="text" :value="formUrl" readonly class="url-input" />
               <button class="btn btn-secondary" @click="copyFormUrl">
-                <svg class="btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="5" y="5" width="8" height="9" rx="1"></rect>
-                  <path d="M11 5V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2"></path>
-                </svg>
+                <CopyIcon />
                 Copy
               </button>
               <button class="btn btn-secondary" @click="testForm">
-                <svg class="btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M14 8A6 6 0 1 1 2 8a6 6 0 0 1 12 0z"></path>
-                  <path d="M8 4v4l3 2"></path>
-                </svg>
-                Test
+                <PlayIcon />
+                Preview
               </button>
             </div>
           </div>
@@ -509,18 +567,24 @@ function saveSettings() {
 
         <!-- Form Title & Description -->
         <div class="form-header-section">
-          <input
-            v-model="formTitle"
-            type="text"
-            class="form-title-input"
-            placeholder="Form title"
-          />
-          <textarea
-            v-model="formDescription"
-            class="form-description-input"
-            placeholder="Form description"
-            rows="2"
-          ></textarea>
+          <div class="title-input-wrapper">
+            <input
+              v-model="formTitle"
+              type="text"
+              class="form-title-input"
+              placeholder="Form title"
+            />
+            <EditIcon class="edit-hint-icon" />
+          </div>
+          <div class="description-input-wrapper">
+            <textarea
+              v-model="formDescription"
+              class="form-description-input"
+              placeholder="Form description"
+              rows="2"
+            ></textarea>
+            <EditIcon class="edit-hint-icon description-edit" />
+          </div>
         </div>
 
         <!-- Questions Section -->
@@ -529,10 +593,7 @@ function saveSettings() {
             <!-- Empty State when no questions -->
             <div v-if="questions.length === 0" class="empty-questions">
               <div class="empty-icon">
-                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="8" y="8" width="48" height="48" rx="8" />
-                  <path d="M24 24h16M24 32h12M24 40h8" />
-                </svg>
+                <EmptyFormIcon />
               </div>
               <h3>No questions yet</h3>
               <p>Add your first question from the sidebar</p>
@@ -574,12 +635,7 @@ function saveSettings() {
         <!-- Empty State when no responses -->
         <div v-if="responsesData.totalResponses === 0" class="empty-responses">
           <div class="empty-icon">
-            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="8" y="8" width="48" height="48" rx="8" />
-              <path d="M20 28h24M20 36h16" />
-              <circle cx="44" cy="44" r="12" fill="white" stroke="currentColor" stroke-width="2" />
-              <path d="M41 44h6M44 41v6" stroke="currentColor" stroke-width="2" />
-            </svg>
+            <EmptyResponseIcon />
           </div>
           <h3>No responses yet</h3>
           <p>Share your form to start collecting responses. Responses will appear here once people submit the form.</p>
@@ -649,25 +705,10 @@ function saveSettings() {
           <ResponseSettings
             :collectEmails="settings.collectEmails"
             :limitResponses="settings.limitResponses"
-            :allowEditing="settings.allowEditing"
             :showProgressBar="settings.showProgressBar"
-            :shuffleQuestions="settings.shuffleQuestions"
-            :exportFormat="settings.exportFormat"
-            :exportUrl="settings.exportUrl"
             @update:collectEmails="settings.collectEmails = $event"
             @update:limitResponses="settings.limitResponses = $event"
-            @update:allowEditing="settings.allowEditing = $event"
             @update:showProgressBar="settings.showProgressBar = $event"
-            @update:shuffleQuestions="settings.shuffleQuestions = $event"
-            @update:exportFormat="settings.exportFormat = $event"
-            @update:exportUrl="settings.exportUrl = $event"
-          />
-
-          <NotificationSettings
-            :emailNotifications="settings.emailNotifications"
-            :notificationEmail="settings.notificationEmail"
-            @update:emailNotifications="settings.emailNotifications = $event"
-            @update:notificationEmail="settings.notificationEmail = $event"
           />
 
           <ConfirmationMessage
@@ -679,11 +720,19 @@ function saveSettings() {
 
           <SendForm
             :formUrl="formUrl"
-            @save-settings="saveSettings"
           />
         </div>
       </div>
     </div>
+
+    <!-- Modal -->
+    <Modal
+      :show="modalVisible"
+      :type="modalType"
+      :title="modalTitle"
+      :message="modalMessage"
+      @close="closeModal"
+    />
   </div>
 </template>
 
@@ -963,9 +1012,20 @@ function saveSettings() {
   margin-bottom: 24px;
 }
 
+.title-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.description-input-wrapper {
+  position: relative;
+}
+
 .form-title-input {
   width: 100%;
-  padding: 8px 0;
+  padding: 8px 32px 8px 0;
   border: none;
   border-bottom: 2px solid transparent;
   font-family: 'Inter', sans-serif;
@@ -973,7 +1033,6 @@ function saveSettings() {
   font-weight: 600;
   color: #333;
   background: transparent;
-  margin-bottom: 16px;
 }
 
 .form-title-input:focus {
@@ -981,9 +1040,13 @@ function saveSettings() {
   border-bottom-color: #6366f1;
 }
 
+.form-title-input:focus + .edit-hint-icon {
+  opacity: 0;
+}
+
 .form-description-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px 32px 8px 12px;
   border: 1px solid #e5e5e5;
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
@@ -995,6 +1058,29 @@ function saveSettings() {
 .form-description-input:focus {
   outline: none;
   border-color: #6366f1;
+}
+
+.form-description-input:focus + .edit-hint-icon {
+  opacity: 0;
+}
+
+.edit-hint-icon {
+  position: absolute;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  color: #ccc;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.edit-hint-icon.description-edit {
+  top: 10px;
+}
+
+.title-input-wrapper:hover .edit-hint-icon,
+.description-input-wrapper:hover .edit-hint-icon {
+  color: #999;
 }
 
 /* Questions Section */
