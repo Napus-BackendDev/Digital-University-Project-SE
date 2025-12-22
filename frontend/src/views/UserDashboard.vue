@@ -1,5 +1,5 @@
 <template>
-  <div class="user-view">
+  <div class="userdashboard">
     <!-- Navbar -->
     <Navbar />
 
@@ -231,7 +231,7 @@ onUnmounted(() => {
 
 <style scoped>
 /* ==================== MAIN CONTAINER ==================== */
-.user-view {
+.userdashboard {
   width: 1536px;
   min-height: 100vh;
   background: #F5F5F5;

@@ -170,16 +170,18 @@ const fetchFormData = async () => {
     
     const response = await formAPI.getFormById(formId);
     console.log('API Response:', response.data);
-    console.log('Questions from API:', response.data.questions);
-    console.log('Type of questions:', typeof response.data.questions);
+    
+    // Handle nested data structure
+    const formDataResponse = response.data.data || response.data;
+    console.log('Form data:', formDataResponse);
     
     // Extract title and description
-    const titleObj = response.data.title?.find(t => t.key === 'en');
-    const titleThObj = response.data.title?.find(t => t.key === 'th');
+    const titleObj = formDataResponse.title?.find(t => t.key === 'en');
+    const titleThObj = formDataResponse.title?.find(t => t.key === 'th');
     const title = titleObj?.value || titleThObj?.value || 'Untitled Form';
     
-    const descObj = response.data.description?.find(d => d.key === 'en');
-    const descThObj = response.data.description?.find(d => d.key === 'th');
+    const descObj = formDataResponse.description?.find(d => d.key === 'en');
+    const descThObj = formDataResponse.description?.find(d => d.key === 'th');
     const description = descObj?.value || descThObj?.value || '';
     
     console.log('Parsed title:', title);
@@ -188,10 +190,10 @@ const fetchFormData = async () => {
     // Check if questions exist and map them
     let questions = [];
     
-    if (response.data.questions && Array.isArray(response.data.questions)) {
-      console.log('Using questions array:', response.data.questions);
+    if (formDataResponse.questions && Array.isArray(formDataResponse.questions)) {
+      console.log('Using questions array:', formDataResponse.questions);
       
-      questions = response.data.questions.map(q => {
+      questions = formDataResponse.questions.map(q => {
         // Extract question title from multilingual array
         const titleObj = q.title?.find(t => t.key === 'en') || q.questionTitle?.find(t => t.key === 'en');
         const titleThObj = q.title?.find(t => t.key === 'th') || q.questionTitle?.find(t => t.key === 'th');
@@ -225,13 +227,13 @@ const fetchFormData = async () => {
         };
       });
     } else {
-      console.warn('No questions found in response. Available properties:', Object.keys(response.data));
+      console.warn('No questions found in response. Available properties:', Object.keys(formDataResponse));
     }
     
     console.log('Parsed questions:', questions);
     
     formData.value = {
-      id: response.data._id,
+      id: formDataResponse._id,
       title: title,
       description: description,
       questions: questions
@@ -295,13 +297,15 @@ const handleSubmit = async () => {
   isSubmitting.value = true;
 
   try {
-    // Prepare response data matching backend schema
+    // Prepare response data matching backend Response schema
     const responseData = {
-      form: formData.value.id,
-      answers: Object.keys(responses).map(questionId => ({
-        question: questionId,
-        response: responses[questionId]
-      }))
+      form: formData.value.id, // ObjectId of the form
+      answers: Object.keys(responses)
+        .filter(questionId => responses[questionId] !== undefined && responses[questionId] !== null)
+        .map(questionId => ({
+          question: questionId, // ObjectId of the question
+          response: responses[questionId] // Answer value (text, number, array, etc.)
+        }))
     };
     
     console.log('Submitting response data:', responseData);

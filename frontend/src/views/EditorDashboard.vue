@@ -1,5 +1,5 @@
 <template>
-  <div class="editor-list">
+  <div class="editordashboard">
     <!-- Navbar -->
     <Navbar />
 
@@ -368,7 +368,7 @@ onUnmounted(() => {
   padding: 0;
 }
 
-.editor-list {
+.editordashboard {
   width: 1536px;
   min-height: 100vh;
   background: #F5F5F5;
