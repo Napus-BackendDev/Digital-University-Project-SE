@@ -75,167 +75,54 @@
       </div>
 
       <!-- Table Container -->
-      <div class="table-wrapper">
-        <!-- Loading State -->
-        <div v-if="loading" class="loading-container">
-          <div class="loading-spinner">
-            <i class="pi pi-spinner pi-spin"></i>
-          </div>
-          <p class="loading-text">Loading forms...</p>
-        </div>
-
-        <!-- Error State -->
-        <div v-else-if="error" class="error-container">
-          <div class="error-icon">
-            <i class="pi pi-exclamation-circle"></i>
-          </div>
-          <p class="error-text">{{ error }}</p>
-          <button class="retry-button" @click="fetchForms">
-            <i class="pi pi-refresh"></i>
-            <span>Retry</span>
-          </button>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="filteredForms.length === 0" class="empty-container">
-          <div class="empty-icon">
-            <i class="pi pi-inbox"></i>
-          </div>
-          <p class="empty-text">No forms found</p>
-          <p class="empty-subtext">
-            {{ searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Create your first form to get started' }}
-          </p>
-        </div>
-
-        <!-- Table with Data -->
-        <div v-else class="table-container">
-          <div class="table">
-            <!-- Table Header -->
-            <div class="table-header">
-              <div class="table-row header-row">
-                <div class="table-head form-name-head">Form Name</div>
-                <div class="table-head status-head">Status</div>
-                <div class="table-head responses-head">Responses</div>
-                <div class="table-head modified-head">Last Modified</div>
-                <div class="table-head actions-head">Actions</div>
-              </div>
-            </div>
-
-            <!-- Table Body -->
-            <div class="table-body">
-              <div 
-                v-for="form in paginatedForms" 
-                :key="form.id" 
-                class="table-row data-row"
-                @click="handleFormClick(form.id)"
-              >
-                <!-- Form Name Cell -->
-                <div class="table-cell form-name-cell">
-                  <div class="form-info">
-                    <div class="form-title">{{ form.title }}</div>
-                    <div class="form-description">{{ form.description }}</div>
-                  </div>
-                </div>
-
-                <!-- Status Cell -->
-                <div class="table-cell status-cell">
-                  <div :class="['status-badge', `status-${form.status}`]">
-                    <div class="status-dot"></div>
-                    <div class="status-text">
-                      {{ form.status === 'open' ? 'Open' : form.status === 'draft' ? 'Draft' : 'Closed' }}
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Responses Cell -->
-                <div class="table-cell responses-cell">
-                  <div class="responses-info">
-                    <div class="responses-icon-wrapper">
-                      <i class="pi pi-comment"></i>
-                    </div>
-                    <div class="responses-content">
-                      <div class="responses-count">{{ form.responses }}</div>
-                      <div class="responses-label">responses</div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Last Modified Cell -->
-                <div class="table-cell modified-cell">
-                  <div class="modified-info">
-                    <i class="pi pi-calendar"></i>
-                    <div class="modified-text">{{ form.createdDate }}</div>
-                  </div>
-                </div>
-
-                <!-- Actions Cell -->
-                <div class="table-cell actions-cell">
-                  <div class="actions-buttons" ref="actionsRef">
-                    <div class="action-more-wrapper">
-                      <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
-                        <i class="pi pi-ellipsis-v"></i>
-                      </button>
-                      
-                      <div v-if="showActionsDropdown === form.id" class="actions-dropdown-menu">
-                        <button class="action-dropdown-item" @click.stop="handleEdit(form.id)">
-                          <i class="pi pi-file-edit"></i>
-                          <span>Edit Form</span>
-                        </button>
-                        <button class="action-dropdown-item" @click.stop="handlePreview(form.id)">
-                          <i class="pi pi-eye"></i>
-                          <span>Preview</span>
-                        </button>
-                        <button class="action-dropdown-item" @click.stop="handleDuplicate(form.id)">
-                          <i class="pi pi-copy"></i>
-                          <span>Duplicate</span>
-                        </button>
-                        <div class="dropdown-divider"></div>
-                        <button class="action-dropdown-item danger" @click.stop="handleDelete(form.id)">
-                          <i class="pi pi-trash"></i>
-                          <span>Delete</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+      <FormTable
+        :forms="paginatedForms"
+        :loading="loading"
+        :error="error"
+        :empty-message="searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Create your first form to get started'"
+        @form-click="() => {}"
+        @toggle-dropdown="toggleActionsDropdown"
+        @retry="fetchForms"
+      >
+        <template #actions="{ form }">
+          <div class="actions-buttons" ref="actionsRef">
+            <div class="action-more-wrapper">
+              <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
+                <i class="pi pi-ellipsis-v"></i>
+              </button>
+              
+              <div v-if="showActionsDropdown === form.id" class="actions-dropdown-menu">
+                <button class="action-dropdown-item" @click.stop="handleEdit(form.id)">
+                  <i class="pi pi-file-edit"></i>
+                  <span>Edit Form</span>
+                </button>
+                <button class="action-dropdown-item" @click.stop="handlePreview(form.id)">
+                  <i class="pi pi-eye"></i>
+                  <span>Preview</span>
+                </button>
+                <button class="action-dropdown-item" @click.stop="handleDuplicate(form.id)">
+                  <i class="pi pi-copy"></i>
+                  <span>Duplicate</span>
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="action-dropdown-item danger" @click.stop="handleDelete(form.id)">
+                  <i class="pi pi-trash"></i>
+                  <span>Delete</span>
+                </button>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </FormTable>
 
       <!-- Pagination -->
-      <div class="pagination-container" v-if="totalPages > 0">
-        <button 
-          class="pagination-button prev-button" 
-          :disabled="!hasPreviousPage"
-          @click="previousPage"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 12L6 8L10 4" stroke="#333333" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>Previous</span>
-        </button>
-        <button 
-          v-for="page in totalPages" 
-          :key="page"
-          class="pagination-number" 
-          :class="{ active: currentPage === page }"
-          @click="goToPage(page)"
-        >
-          {{ page }}
-        </button>
-        <button 
-          class="pagination-button next-button"
-          :disabled="!hasNextPage"
-          @click="nextPage"
-        >
-          <span>Next</span>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 4L10 8L6 12" stroke="#333333" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div>
+      <Pagination
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        @prev="previousPage"
+        @next="nextPage"
+        @goto="goToPage"
+      />
     </main>
   </div>
 </template>
@@ -245,6 +132,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { formAPI } from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
+import FormTable from '@/components/FormTable.vue'
+import Pagination from '@/components/Pagination.vue'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -269,26 +158,14 @@ const formatDate = (dateString) => {
 
 // Get title from multilingual array
 const getTitle = (titleArray) => {
-  if (!titleArray || !Array.isArray(titleArray) || titleArray.length === 0) {
-    return ''
-  }
+  if (!Array.isArray(titleArray) || titleArray.length === 0) return ''
   
-  // Try to find English title first
-  const enTitle = titleArray.find(t => 
-    (t.lang === 'en' || t.key === 'en') && (t.text || t.value)
-  )
+  // Try English first, then Thai, then first available
+  const enTitle = titleArray.find(t => t.key === 'en')?.value
+  const thTitle = titleArray.find(t => t.key === 'th')?.value
+  const firstTitle = titleArray[0]?.value || titleArray[0]?.text
   
-  if (enTitle) {
-    return enTitle.text || enTitle.value || ''
-  }
-  
-  // Return first available that has text or value
-  const firstValid = titleArray.find(t => t.text || t.value)
-  if (firstValid) {
-    return firstValid.text || firstValid.value || ''
-  }
-  
-  return ''
+  return enTitle || thTitle || firstTitle || ''
 }
 
 // Fetch forms from API
@@ -297,37 +174,29 @@ const fetchForms = async () => {
   error.value = null
   try {
     const response = await formAPI.getAllForms()
-    console.log('API Response:', response.data)
-    console.log('API Response Type:', typeof response.data)
-    console.log('API Response Keys:', Object.keys(response.data))
+    console.log('API Response:', response)
     
-    // Backend returns data in "data" key (not "datas")
-    const formData = response.data.data || response.data.datas || []
+    // Handle different API response structures
+    const formData = Array.isArray(response.data) 
+      ? response.data 
+      : (response.data.data || response.data.datas || [])
     
-    console.log('Form Data:', formData) // Debug log
+    console.log('Form Data:', formData)
     console.log('Form Data Length:', formData.length)
     
     // Transform API data to match component structure
-    forms.value = formData.map(form => {
-      console.log('Processing form:', form) // Debug each form
-      
-      const title = getTitle(form.title)
-      const description = getTitle(form.description)
-      
-      console.log('Extracted title:', title) // Debug extracted values
-      console.log('Extracted description:', description)
-      
-      return {
-        id: form._id,
-        title: title || 'Untitled Form',
-        description: description || 'No description',
-        status: form.status || 'draft',
-        responses: form.responseCount || 0,
-        createdDate: formatDate(form.updatedAt || form.createdAt)
-      }
-    })
+    forms.value = formData.map(form => ({
+      id: form._id,
+      title: getTitle(form.title) || 'Untitled Form',
+      description: getTitle(form.description) || 'No description',
+      status: form.status || 'draft',
+      responses: form.responseCount || 0,
+      createdDate: formatDate(form.updatedAt || form.createdAt)
+    }))
     
-    console.log('Final forms:', forms.value) // Debug final result
+    console.log('Forms Value:', forms.value)
+    console.log('Forms Length:', forms.value.length)
+    
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load forms'
     console.error('Error fetching forms:', err)
@@ -357,21 +226,15 @@ const filteredForms = computed(() => {
 })
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredForms.value.length / itemsPerPage.value)
+  const pages = Math.ceil(filteredForms.value.length / itemsPerPage.value)
+  console.log('Total Pages:', pages, 'Filtered Forms:', filteredForms.value.length, 'Items Per Page:', itemsPerPage.value)
+  return pages
 })
 
 const paginatedForms = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
   return filteredForms.value.slice(start, end)
-})
-
-const hasNextPage = computed(() => {
-  return currentPage.value < totalPages.value
-})
-
-const hasPreviousPage = computed(() => {
-  return currentPage.value > 1
 })
 
 const filterLabel = computed(() => {
@@ -399,47 +262,56 @@ const goToPage = (page) => {
 }
 
 const nextPage = () => {
-  if (hasNextPage.value) {
+  if (currentPage.value < totalPages.value) {
     currentPage.value++
   }
 }
 
 const previousPage = () => {
-  if (hasPreviousPage.value) {
+  if (currentPage.value > 1) {
     currentPage.value--
   }
 }
 
-const handleFormClick = (formId) => {
-  router.push(`/form/${formId}/preview`)
-}
-
 const handleCreateForm = () => {
-  console.log('Create new form')
-  // TODO: Navigate to form creation page
+  // Navigate to form creation page
+  router.push('/form/create')
 }
 
 const handleLogout = () => {
-  console.log('Logout')
-  // TODO: Implement logout functionality
+  if (confirm('Are you sure you want to logout?')) {
+    // TODO: Clear authentication tokens
+    router.push('/')
+  }
 }
 
 const handleEdit = (formId) => {
-  console.log('Edit form:', formId)
   showActionsDropdown.value = null
-  // TODO: Navigate to edit page
+  router.push(`/form/${formId}/edit`)
 }
 
 const handlePreview = (formId) => {
-  console.log('Preview form:', formId)
   showActionsDropdown.value = null
-  // TODO: Navigate to preview page
+  router.push(`/form/${formId}/preview`)
 }
 
-const handleDuplicate = (formId) => {
-  console.log('Duplicate form:', formId)
+const handleDuplicate = async (formId) => {
   showActionsDropdown.value = null
-  // TODO: Implement duplicate functionality
+  
+  try {
+    loading.value = true
+    const result = await formAPI.duplicateForm(formId)
+    console.log('Duplicate result:', result)
+    // Refresh the forms list to show the duplicated form
+    await fetchForms()
+    alert('Form duplicated successfully!')
+  } catch (err) {
+    console.error('Error duplicating form:', err)
+    const errorMsg = err.response?.data?.message || 'Failed to duplicate form. Please try again.'
+    alert(errorMsg)
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleMore = (formId) => {
@@ -750,10 +622,10 @@ onUnmounted(() => {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   padding: 1px;
   width: 1216px;
-  height: 653px;
+  min-height: 653px;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
@@ -840,6 +712,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 80px 20px;
+  min-height: 400px;
 }
 
 .empty-icon i {
@@ -1245,87 +1118,5 @@ onUnmounted(() => {
   .table-cell:not(.form-name-cell) {
     display: none;
   }
-}
-
-/* Pagination */
-.pagination-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0px;
-  gap: 4px;
-  width: 299.66px;
-  height: 36px;
-  flex: none;
-  order: 3;
-  flex-grow: 0;
-}
-
-.pagination-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  height: 36px;
-  padding: 0px 12px;
-  background: none;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: -0.150391px;
-  color: #333333;
-  transition: background 0.2s;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-button.prev-button {
-  width: 100.97px;
-}
-
-.pagination-button.next-button {
-  width: 74.69px;
-}
-
-.pagination-number {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: none;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: -0.150391px;
-  color: #333333;
-  transition: background 0.2s;
-}
-
-.pagination-number:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.pagination-number.active {
-  box-sizing: border-box;
-  background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
-  color: #0A0A0A;
 }
 </style>

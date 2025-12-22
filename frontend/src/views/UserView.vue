@@ -26,150 +26,46 @@
       </div>
 
       <!-- Table Container -->
-      <div class="table-wrapper">
-        <!-- Loading State -->
-        <div v-if="loading" class="loading-container">
-          <div class="loading-spinner"></div>
-          <p class="loading-text">Loading forms...</p>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="filteredForms.length === 0" class="empty-container">
-          <div class="empty-icon">📋</div>
-          <p class="empty-text">No forms found</p>
-          <p class="empty-subtext">
-            {{ searchQuery ? 'Try adjusting your search' : 'No forms available at the moment' }}
-          </p>
-        </div>
-
-        <!-- Table with Data -->
-        <div v-else class="table-container">
-          <!-- Table Header -->
-          <div class="table-header">
-            <div class="table-row header-row">
-              <div class="table-head form-name-head">Form Name</div>
-              <div class="table-head status-head">Status</div>
-              <div class="table-head responses-head">Responses</div>
-              <div class="table-head modified-head">Last Modified</div>
-              <div class="table-head actions-head">Actions</div>
+      <FormTable
+        :forms="paginatedForms"
+        :loading="loading"
+        :error="null"
+        :empty-message="searchQuery ? 'Try adjusting your search' : 'No forms available at the moment'"
+        @form-click="() => {}"
+        @toggle-dropdown="toggleActionsDropdown"
+      >
+        <template #actions="{ form }">
+          <div class="actions-buttons">
+            <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
+              <svg viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="3" r="1" fill="#333333"/>
+                <circle cx="8" cy="8" r="1" fill="#333333"/>
+                <circle cx="8" cy="13" r="1" fill="#333333"/>
+              </svg>
+            </button>
+            
+            <!-- Actions Dropdown -->
+            <div v-if="activeDropdown === form.id" class="actions-dropdown">
+              <button class="dropdown-item" @click.stop="handleFillForm(form.id)">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.33333"/>
+                  <path d="M5 6H11M5 9H11" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round"/>
+                </svg>
+                <span>Fill Form</span>
+              </button>
             </div>
           </div>
-
-          <!-- Table Body -->
-          <div class="table-body">
-            <div 
-              v-for="form in paginatedForms" 
-              :key="form.id" 
-              class="table-row data-row"
-            >
-              <!-- Form Name Cell -->
-              <div class="table-cell form-name-cell">
-                <div class="form-info">
-                  <div class="form-title">{{ form.title }}</div>
-                  <div class="form-description">{{ form.description }}</div>
-                </div>
-              </div>
-
-              <!-- Status Cell -->
-              <div class="table-cell status-cell">
-                <div :class="['status-badge', `status-${form.status}`]">
-                  <div class="status-dot"></div>
-                  <div class="status-text">
-                    {{ form.status === 'open' ? 'Open' : form.status === 'draft' ? 'Draft' : 'Closed' }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Responses Cell -->
-              <div class="table-cell responses-cell">
-                <div class="responses-info">
-                  <div class="responses-icon-wrapper">
-                    <svg class="responses-icon" viewBox="0 0 16 16" fill="none">
-                      <path d="M2 12.5L3.5 11L2 9.5M2 2.5L13 2.5C13.8284 2.5 14.5 3.17157 14.5 4V9C14.5 9.82843 13.8284 10.5 13 10.5H5.5L2 14V2.5Z" stroke="#BA0C2F" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-                  <div class="responses-content">
-                    <div class="responses-count">{{ form.responses }}</div>
-                    <div class="responses-label">responses</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Last Modified Cell -->
-              <div class="table-cell modified-cell">
-                <div class="modified-info">
-                  <svg class="calendar-icon" viewBox="0 0 16 16" fill="none">
-                    <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#A3A3A3" stroke-width="1.33333"/>
-                    <path d="M5 1.5V3M11 1.5V3M2 6H14M2 7H14" stroke="#A3A3A3" stroke-width="1.33333" stroke-linecap="round"/>
-                  </svg>
-                  <div class="modified-text">{{ form.createdDate }}</div>
-                </div>
-              </div>
-
-              <!-- Actions Cell -->
-              <div class="table-cell actions-cell">
-                <div class="actions-buttons">
-                  <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
-                    <svg viewBox="0 0 16 16" fill="none">
-                      <circle cx="8" cy="3" r="1" fill="#333333"/>
-                      <circle cx="8" cy="8" r="1" fill="#333333"/>
-                      <circle cx="8" cy="13" r="1" fill="#333333"/>
-                    </svg>
-                  </button>
-                  
-                  <!-- Actions Dropdown -->
-                  <div v-if="activeDropdown === form.id" class="actions-dropdown">
-                    <button class="dropdown-item" @click="handleFillForm(form.id)">
-                      <svg viewBox="0 0 16 16" fill="none">
-                        <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.33333"/>
-                        <path d="M5 6H11M5 9H11" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round"/>
-                      </svg>
-                      <span>Fill Form</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+      </FormTable>
 
       <!-- Pagination -->
-      <div class="pagination-container">
-        <button 
-          class="pagination-button prev-button" 
-          @click="previousPage" 
-          :disabled="currentPage === 1"
-          :class="{ disabled: currentPage === 1 }"
-        >
-          <svg viewBox="0 0 16 16" fill="none">
-            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>Previous</span>
-        </button>
-        
-        <button 
-          v-for="page in visiblePages" 
-          :key="page"
-          class="pagination-button page-button"
-          :class="{ active: page === currentPage }"
-          @click="goToPage(page)"
-        >
-          {{ page }}
-        </button>
-        
-        <button 
-          class="pagination-button next-button" 
-          @click="nextPage" 
-          :disabled="currentPage === totalPages"
-          :class="{ disabled: currentPage === totalPages }"
-        >
-          <span>Next</span>
-          <svg viewBox="0 0 16 16" fill="none">
-            <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div>
+      <Pagination
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        @prev="previousPage"
+        @next="nextPage"
+        @goto="goToPage"
+      />
     </main>
   </div>
 </template>
@@ -178,6 +74,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Navbar from '@/components/Navbar.vue';
+import FormTable from '@/components/FormTable.vue';
+import Pagination from '@/components/Pagination.vue';
+import { formAPI } from '@/services/api';
 
 const router = useRouter();
 
@@ -187,25 +86,68 @@ const activeDropdown = ref(null);
 const currentPage = ref(1);
 const itemsPerPage = 6;
 
-// Mock data
-const formsData = ref([
-  {
-    id: 1,
-    title: "Comprehensive Survey - All Question Types",
-    description: "A demonstration survey showcasing all available question types in the system",
-    status: "open",
-    responses: 6,
-    createdDate: "Dec 8, 2024"
-  },
-  {
-    id: 2,
-    title: "Customer Satisfaction Survey",
-    description: "Help us improve our services by sharing your feedback",
-    status: "open",
-    responses: 156,
-    createdDate: "Nov 20, 2024"
+// Forms data from API
+const formsData = ref([]);
+
+// Fetch forms from API
+const fetchForms = async () => {
+  loading.value = true;
+  try {
+    const response = await formAPI.getAllForms();
+    console.log('API Response:', response.data);
+    
+    // Check if response.data is array or has data property
+    const formsArray = Array.isArray(response.data) 
+      ? response.data 
+      : response.data.data || [];
+    
+    console.log('Forms Array:', formsArray);
+    console.log('Total Forms:', formsArray.length);
+    
+    // Filter forms with status 'open' or 'closed'
+    formsData.value = formsArray
+      .filter(form => form.status === 'open' || form.status === 'closed')
+      .map(form => {
+        // Extract title from array
+        const titleObj = form.title?.find(t => t.key === 'en');
+        const titleThObj = form.title?.find(t => t.key === 'th');
+        const title = titleObj?.value || titleThObj?.value || 'Untitled Form';
+        
+        // Extract description from array
+        const descObj = form.description?.find(d => d.key === 'en');
+        const descThObj = form.description?.find(d => d.key === 'th');
+        const description = descObj?.value || descThObj?.value || 'No description provided';
+        
+        return {
+          id: form._id,
+          title: title,
+          description: description,
+          status: form.status || 'open',
+          responses: form.responseCount || 0,
+          createdDate: formatDate(form.createdAt || form.updatedAt)
+        };
+      });
+    
+    console.log('Filtered Forms (open/closed only):', formsData.value);
+    console.log('Filtered Forms Count:', formsData.value.length);
+    
+  } catch (error) {
+    console.error('Error fetching forms:', error);
+    console.error('Error details:', error.response?.data || error.message);
+    // Keep empty array on error
+    formsData.value = [];
+  } finally {
+    loading.value = false;
   }
-]);
+};
+
+// Format date to readable format
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  const options = { month: 'short', day: 'numeric', year: 'numeric' };
+  return date.toLocaleDateString('en-US', options);
+};
 
 const filteredForms = computed(() => {
   let forms = formsData.value;
@@ -229,28 +171,6 @@ const paginatedForms = computed(() => {
   return filteredForms.value.slice(start, end);
 });
 
-const visiblePages = computed(() => {
-  const pages = [];
-  const total = totalPages.value;
-  const current = currentPage.value;
-  
-  if (total <= 5) {
-    for (let i = 1; i <= total; i++) {
-      pages.push(i);
-    }
-  } else {
-    if (current <= 3) {
-      pages.push(1, 2, 3);
-    } else if (current >= total - 2) {
-      pages.push(total - 2, total - 1, total);
-    } else {
-      pages.push(current - 1, current, current + 1);
-    }
-  }
-  
-  return pages;
-});
-
 const handleLogout = () => {
   if (confirm('Are you sure you want to logout?')) {
     router.push('/');
@@ -268,7 +188,13 @@ const handleFillForm = (formId) => {
 };
 
 const toggleActionsDropdown = (formId) => {
+  console.log('Toggle dropdown for form:', formId);
+  console.log('Type of formId:', typeof formId);
+  console.log('Current activeDropdown:', activeDropdown.value);
+  console.log('Type of activeDropdown:', typeof activeDropdown.value);
+  console.log('Are they equal?', activeDropdown.value === formId);
   activeDropdown.value = activeDropdown.value === formId ? null : formId;
+  console.log('New activeDropdown:', activeDropdown.value);
 };
 
 const previousPage = () => {
@@ -294,6 +220,7 @@ const handleClickOutside = (event) => {
 };
 
 onMounted(() => {
+  fetchForms();
   document.addEventListener('click', handleClickOutside);
 });
 
@@ -305,26 +232,32 @@ onUnmounted(() => {
 <style scoped>
 /* ==================== MAIN CONTAINER ==================== */
 .user-view {
+  width: 1536px;
   min-height: 100vh;
   background: #F5F5F5;
   font-family: 'Inter', sans-serif;
+  margin: 0 auto;
   padding-top: 65px;
 }
 
 .form-list-page {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 160px 40px;
+  padding: 40px 160px;
   gap: 32px;
+  width: 1536px;
   min-height: calc(100vh - 65px);
   background: #FAFAFA;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
 }
 
 /* ==================== PAGE HEADER ==================== */
 .page-header {
-  width: 100%;
-  max-width: 1216px;
+  width: 1216px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -352,8 +285,7 @@ onUnmounted(() => {
 
 /* ==================== SEARCH ==================== */
 .search-container {
-  width: 100%;
-  max-width: 1216px;
+  width: 1216px;
   position: relative;
 }
 
@@ -395,17 +327,26 @@ onUnmounted(() => {
 
 /* ==================== TABLE WRAPPER ==================== */
 .table-wrapper {
-  width: 100%;
-  max-width: 1216px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 1px;
+  width: 1216px;
+  min-height: 653px;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
-  overflow: hidden;
+  flex: none;
+  order: 2;
+  flex-grow: 0;
 }
 
 .table-container {
   width: 100%;
+  overflow: hidden;
+  border-radius: 16px;
 }
 
 /* ==================== TABLE HEADER ==================== */
@@ -439,6 +380,7 @@ onUnmounted(() => {
 /* ==================== TABLE BODY ==================== */
 .table-body {
   width: 100%;
+  overflow: visible;
 }
 
 .data-row {
@@ -450,6 +392,7 @@ onUnmounted(() => {
   border-bottom: 1px solid #F5F5F5;
   cursor: pointer;
   transition: background-color 0.2s;
+  position: relative;
 }
 
 .data-row:hover {
@@ -627,12 +570,15 @@ onUnmounted(() => {
 /* ==================== ACTIONS ==================== */
 .actions-cell {
   justify-content: flex-end;
+  position: relative;
+  z-index: 100;
 }
 
 .actions-buttons {
   position: relative;
   display: flex;
   gap: 4px;
+  z-index: 100;
 }
 
 .action-button {
@@ -671,7 +617,7 @@ onUnmounted(() => {
   border: 1px solid #E5E5E5;
   border-radius: 12px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  z-index: 10000;
   overflow: hidden;
 }
 
@@ -738,7 +684,7 @@ onUnmounted(() => {
 
 .empty-icon {
   font-size: 48px;
-  margin-bottom: 16px;
+  color: #A3A3A3;
 }
 
 .empty-text {
@@ -756,61 +702,6 @@ onUnmounted(() => {
   line-height: 20px;
   color: #737373;
   margin-top: 8px;
-}
-
-/* ==================== PAGINATION ==================== */
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  margin-top: auto;
-}
-
-.pagination-button {
-  height: 36px;
-  min-width: 36px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  background: transparent;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: -0.15px;
-  color: #333333;
-  transition: all 0.2s;
-}
-
-.pagination-button svg {
-  width: 16px;
-  height: 16px;
-}
-
-.pagination-button:hover:not(.disabled) {
-  background: rgba(229, 229, 229, 0.3);
-}
-
-.pagination-button.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-button {
-  width: 36px;
-  padding: 8px;
-}
-
-.page-button.active {
-  background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
-  color: #0A0A0A;
 }
 
 /* ==================== RESPONSIVE ==================== */

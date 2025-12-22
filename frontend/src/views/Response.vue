@@ -14,7 +14,18 @@
       </button>
 
       <!-- Form Container -->
-      <div class="form-container">
+      <div v-if="loading" class="form-container">
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <p class="loading-text">Loading form...</p>
+        </div>
+      </div>
+
+      <div v-else-if="!formData" class="form-container">
+        <p class="error-text">Form not found</p>
+      </div>
+
+      <div v-else class="form-container">
         <!-- Form Header -->
         <div class="form-header">
           <h1 class="form-title">{{ formData.title }}</h1>
@@ -24,147 +35,82 @@
         <!-- Questions -->
         <div class="questions-container">
           <div v-for="(question, index) in formData.questions" :key="question.id" class="question-block">
-            <!-- Skip numbering for non-input types -->
-            <div v-if="!['title', 'image', 'video', 'divider'].includes(question.type)" class="question-label">
-              Question {{ getQuestionNumber(index) }}
+            <div class="question-label">
+              Question {{ index + 1 }}
             </div>
             
             <div class="question-content">
-              <!-- Title & Description -->
-              <div v-if="question.type === 'title'" class="title-section">
-                <h2 class="section-title">{{ question.label }}</h2>
-                <p v-if="question.description" class="section-description">{{ question.description }}</p>
-              </div>
+              <label class="question-title">
+                {{ question.label }}
+                <span v-if="question.required" class="required">*</span>
+              </label>
 
-              <!-- Image -->
-              <div v-else-if="question.type === 'image'" class="image-section">
-                <img :src="question.imageUrl" :alt="question.label" class="question-image" />
-                <p v-if="question.caption" class="image-caption">{{ question.caption }}</p>
-              </div>
+              <!-- Text Type (short_answer or paragraph) -->
+              <input 
+                v-if="question.type === 'text' && question.textType === 'short_answer'"
+                type="text" 
+                class="form-input" 
+                placeholder="Your answer"
+                :maxlength="question.maxLength"
+                v-model="responses[question.id]"
+              />
 
-              <!-- Video -->
-              <div v-else-if="question.type === 'video'" class="video-section">
-                <div class="video-wrapper">
-                  <iframe 
-                    :src="question.videoUrl" 
-                    frameborder="0" 
-                    allowfullscreen
-                    class="question-video"
-                  ></iframe>
-                </div>
-                <p v-if="question.caption" class="video-caption">{{ question.caption }}</p>
-              </div>
+              <textarea 
+                v-else-if="question.type === 'text' && question.textType === 'paragraph'"
+                class="form-textarea" 
+                placeholder="Your answer"
+                rows="4"
+                :maxlength="question.maxLength"
+                v-model="responses[question.id]"
+              ></textarea>
 
-              <!-- Section Divider -->
-              <div v-else-if="question.type === 'divider'" class="section-divider">
-                <div class="divider-line"></div>
-              </div>
-
-              <!-- Regular Questions -->
-              <template v-else>
-                <label class="question-title">
-                  {{ question.label }}
-                  <span v-if="question.required" class="required">*</span>
+              <!-- Choices Type (Radio buttons) -->
+              <div v-else-if="question.type === 'choices'" class="radio-group">
+                <label v-for="option in question.options" :key="option" class="radio-option">
+                  <input 
+                    type="radio" 
+                    :name="`question-${question.id}`"
+                    :value="option"
+                    v-model="responses[question.id]"
+                  />
+                  <span>{{ option }}</span>
                 </label>
+              </div>
 
-                <!-- Short Answer -->
-                <input 
-                  v-if="question.type === 'text'"
-                  type="text" 
-                  class="form-input" 
-                  placeholder="Your answer"
-                  v-model="responses[question.id]"
-                />
+              <!-- Checkbox Type -->
+              <div v-else-if="question.type === 'checkbox'" class="checkbox-group">
+                <label v-for="option in question.options" :key="option" class="checkbox-option">
+                  <input 
+                    type="checkbox" 
+                    :value="option"
+                    v-model="responses[question.id]"
+                  />
+                  <span>{{ option }}</span>
+                </label>
+              </div>
 
-                <!-- Paragraph -->
-                <textarea 
-                  v-else-if="question.type === 'textarea'"
-                  class="form-textarea" 
-                  placeholder="Your answer"
-                  rows="4"
-                  v-model="responses[question.id]"
-                ></textarea>
-
-                <!-- Multiple Choice (Radio) -->
-                <div v-else-if="question.type === 'radio'" class="radio-group">
-                  <label v-for="option in question.options" :key="option" class="radio-option">
-                    <input 
-                      type="radio" 
-                      :name="`question-${question.id}`"
-                      :value="option"
-                      v-model="responses[question.id]"
-                    />
-                    <span>{{ option }}</span>
-                  </label>
-                </div>
-
-                <!-- Checkbox -->
-                <div v-else-if="question.type === 'checkbox'" class="checkbox-group">
-                  <label v-for="option in question.options" :key="option" class="checkbox-option">
-                    <input 
-                      type="checkbox" 
-                      :value="option"
-                      v-model="responses[question.id]"
-                    />
-                    <span>{{ option }}</span>
-                  </label>
-                </div>
-
-                <!-- Dropdown -->
-                <select 
-                  v-else-if="question.type === 'dropdown'" 
-                  class="form-select"
-                  v-model="responses[question.id]"
+              <!-- Rating Type (Star rating) -->
+              <div v-else-if="question.type === 'rating'" class="star-rating">
+                <button 
+                  class="star-btn" 
+                  v-for="i in question.max" 
+                  :key="i"
+                  type="button"
+                  @click="setRating(question.id, i)"
+                  :class="{ active: responses[question.id] >= i }"
                 >
-                  <option value="" disabled selected>Select an option</option>
-                  <option v-for="option in question.options" :key="option" :value="option">
-                    {{ option }}
-                  </option>
-                </select>
-
-                <!-- Rating (Star) -->
-                <div v-else-if="question.type === 'rating'" class="star-rating">
-                  <button 
-                    class="star-btn" 
-                    v-for="i in (question.maxRating || 5)" 
-                    :key="i"
-                    type="button"
-                    @click="setRating(question.id, i)"
-                    :class="{ active: responses[question.id] >= i }"
-                  >
-                    <svg class="star-icon" viewBox="0 0 32 32" fill="none">
-                      <path 
-                        d="M16 4L19.5 13.5L29 16L19.5 18.5L16 28L12.5 18.5L3 16L12.5 13.5L16 4Z" 
-                        :stroke="responses[question.id] >= i ? '#FCD34D' : '#D4D4D4'" 
-                        :fill="responses[question.id] >= i ? '#FCD34D' : 'none'"
-                        stroke-width="2.66667" 
-                        stroke-linecap="round" 
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <!-- File Upload -->
-                <div v-else-if="question.type === 'file'" class="file-upload">
-                  <label class="file-upload-label">
-                    <input 
-                      type="file" 
-                      class="file-input"
-                      :accept="question.acceptedTypes || '*'"
-                      @change="handleFileUpload($event, question.id)"
+                  <svg class="star-icon" viewBox="0 0 32 32" fill="none">
+                    <path 
+                      d="M16 4L19.5 13.5L29 16L19.5 18.5L16 28L12.5 18.5L3 16L12.5 13.5L16 4Z" 
+                      :stroke="responses[question.id] >= i ? '#FCD34D' : '#D4D4D4'" 
+                      :fill="responses[question.id] >= i ? '#FCD34D' : 'none'"
+                      stroke-width="2.66667" 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round"
                     />
-                    <div class="file-upload-button">
-                      <svg class="icon-16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 10V4M8 4L5.5 6.5M8 4L10.5 6.5" stroke="#333333" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M2 10V12C2 13.1046 2.89543 14 4 14H12C13.1046 14 14 13.1046 14 12V10" stroke="#333333" stroke-width="1.33333" stroke-linecap="round"/>
-                      </svg>
-                      <span>{{ responses[question.id] ? responses[question.id].name : 'Choose file' }}</span>
-                    </div>
-                  </label>
-                  <p class="file-hint">{{ question.fileHint || 'Max file size: 10MB' }}</p>
-                </div>
-              </template>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -201,9 +147,10 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import Navbar from '@/components/Navbar.vue';
+import { formAPI, responseAPI } from '@/services/api';
 
 const router = useRouter();
 const route = useRoute();
@@ -211,147 +158,107 @@ const route = useRoute();
 const responses = reactive({});
 const isSubmitting = ref(false);
 const showSuccessModal = ref(false);
+const loading = ref(true);
+const formData = ref(null);
 
-// Mock data with all 11 question types
-const formsData = [
-  {
-    id: 1,
-    title: "Comprehensive Survey - All Question Types",
-    description: "A demonstration survey showcasing all available question types in the system",
-    questions: [
-      {
-        id: 1,
-        type: "title",
-        label: "Personal Information",
-        description: "Please provide your basic information"
-      },
-      {
-        id: 2,
-        type: "text",
-        label: "What is your full name?",
-        required: true
-      },
-      {
-        id: 3,
-        type: "textarea",
-        label: "Tell us about your experience with our platform",
-        required: true
-      },
-      {
-        id: 4,
-        type: "divider"
-      },
-      {
-        id: 6,
-        type: "radio",
-        label: "How satisfied are you with our service?",
-        required: true,
-        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"]
-      },
-      {
-        id: 7,
-        type: "checkbox",
-        label: "Which features do you use most? (Select all that apply)",
-        required: true,
-        options: ["Dashboard", "Reports", "Analytics", "Settings", "Notifications"]
-      },
-      {
-        id: 8,
-        type: "dropdown",
-        label: "How did you hear about us?",
-        required: true,
-        options: ["Social Media", "Search Engine", "Friend Referral", "Advertisement", "Other"]
-      },
-      {
-        id: 9,
-        type: "rating",
-        label: "Rate your overall experience",
-        required: true,
-        maxRating: 5
-      },
-      {
-        id: 10,
-        type: "image",
-        label: "Product Showcase",
-        imageUrl: "https://via.placeholder.com/600x300",
-        caption: "Our latest product features"
-      },
-      {
-        id: 11,
-        type: "video",
-        label: "Tutorial Video",
-        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-        caption: "Watch our quick tutorial"
-      },
-      {
-        id: 12,
-        type: "file",
-        label: "Upload your resume (optional)",
-        required: false,
-        acceptedTypes: ".pdf,.doc,.docx",
-        fileHint: "Accepted formats: PDF, DOC, DOCX (Max 10MB)"
-      }
-    ]
-  },
-  {
-    id: 2,
-    title: "Customer Satisfaction Survey",
-    description: "Help us improve our services by sharing your feedback",
-    questions: [
-      {
-        id: 1,
-        label: "What is your name?",
-        type: "text",
-        required: true
-      },
-      {
-        id: 2,
-        label: "How satisfied are you with our service?",
-        type: "radio",
-        required: true,
-        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"]
-      },
-      {
-        id: 3,
-        label: "Rate your overall experience",
-        type: "rating",
-        required: true
-      },
-      {
-        id: 4,
-        label: "What can we do to improve?",
-        type: "textarea",
-        required: false
-      }
-    ]
-  }
-];
-
-const formData = computed(() => {
-  const formId = parseInt(route.params.id);
-  return formsData.find(form => form.id === formId) || formsData[0];
-});
-
-// Initialize checkbox arrays for the current form
-formsData.forEach(form => {
-  form.questions.forEach(question => {
-    if (question.type === 'checkbox' && !responses[question.id]) {
-      responses[question.id] = [];
+// Fetch form data from API
+const fetchFormData = async () => {
+  loading.value = true;
+  try {
+    const formId = route.params.id;
+    console.log('Fetching form ID:', formId);
+    
+    const response = await formAPI.getFormById(formId);
+    console.log('API Response:', response.data);
+    console.log('Questions from API:', response.data.questions);
+    console.log('Type of questions:', typeof response.data.questions);
+    
+    // Extract title and description
+    const titleObj = response.data.title?.find(t => t.key === 'en');
+    const titleThObj = response.data.title?.find(t => t.key === 'th');
+    const title = titleObj?.value || titleThObj?.value || 'Untitled Form';
+    
+    const descObj = response.data.description?.find(d => d.key === 'en');
+    const descThObj = response.data.description?.find(d => d.key === 'th');
+    const description = descObj?.value || descThObj?.value || '';
+    
+    console.log('Parsed title:', title);
+    console.log('Parsed description:', description);
+    
+    // Check if questions exist and map them
+    let questions = [];
+    
+    if (response.data.questions && Array.isArray(response.data.questions)) {
+      console.log('Using questions array:', response.data.questions);
+      
+      questions = response.data.questions.map(q => {
+        // Extract question title from multilingual array
+        const titleObj = q.title?.find(t => t.key === 'en') || q.questionTitle?.find(t => t.key === 'en');
+        const titleThObj = q.title?.find(t => t.key === 'th') || q.questionTitle?.find(t => t.key === 'th');
+        const label = titleObj?.value || titleThObj?.value || '';
+        
+        // Parse options for checkbox and choices types
+        let options = [];
+        if (q.options && Array.isArray(q.options)) {
+          options = q.options.map(opt => {
+            if (typeof opt === 'string') return opt;
+            // Multilingual option
+            const optEn = opt.value || (opt.key === 'en' ? opt.value : null);
+            const optTh = opt.key === 'th' ? opt.value : null;
+            return optEn || optTh || '';
+          });
+        }
+        
+        return {
+          id: q._id,
+          type: q.type,
+          label: label,
+          required: q.required || false,
+          options: options,
+          // Rating specific
+          min: q.min || 1,
+          max: q.max || 5,
+          step: q.step || 1,
+          // Text specific
+          textType: q.textType || 'short_answer',
+          maxLength: q.maxLength || 500
+        };
+      });
+    } else {
+      console.warn('No questions found in response. Available properties:', Object.keys(response.data));
     }
-  });
-});
-
-const getQuestionNumber = (index) => {
-  // Count only questions that need numbering (exclude title, image, video, divider)
-  let count = 0;
-  for (let i = 0; i <= index; i++) {
-    const type = formData.value.questions[i].type;
-    if (!['title', 'image', 'video', 'divider'].includes(type)) {
-      count++;
-    }
+    
+    console.log('Parsed questions:', questions);
+    
+    formData.value = {
+      id: response.data._id,
+      title: title,
+      description: description,
+      questions: questions
+    };
+    
+    console.log('Final formData:', formData.value);
+    
+    // Initialize checkbox arrays
+    questions.forEach(question => {
+      if (question.type === 'checkbox' && !responses[question.id]) {
+        responses[question.id] = [];
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching form:', error);
+    console.error('Error details:', error.response?.data || error.message);
+    alert('Failed to load form. Please try again.');
+    router.push('/');
+  } finally {
+    loading.value = false;
   }
-  return count;
 };
+
+onMounted(() => {
+  fetchFormData();
+});
 
 const goBack = () => {
   router.push('/');
@@ -361,20 +268,9 @@ const setRating = (questionId, rating) => {
   responses[questionId] = rating;
 };
 
-const handleFileUpload = (event, questionId) => {
-  const file = event.target.files[0];
-  if (file) {
-    // Check file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File size exceeds 10MB limit');
-      event.target.value = '';
-      return;
-    }
-    responses[questionId] = file;
-  }
-};
-
 const validateForm = () => {
+  if (!formData.value || !formData.value.questions) return false;
+  
   const requiredQuestions = formData.value.questions.filter(q => q.required);
   
   for (const question of requiredQuestions) {
@@ -399,16 +295,29 @@ const handleSubmit = async () => {
   isSubmitting.value = true;
 
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Prepare response data matching backend schema
+    const responseData = {
+      form: formData.value.id,
+      answers: Object.keys(responses).map(questionId => ({
+        question: questionId,
+        response: responses[questionId]
+      }))
+    };
     
-    console.log('Form submitted with responses:', responses);
+    console.log('Submitting response data:', responseData);
+    
+    // Submit to API
+    const result = await responseAPI.createResponse(responseData);
+    
+    console.log('Form submitted successfully:', result);
     
     // Show success modal
     showSuccessModal.value = true;
   } catch (error) {
     console.error('Error submitting form:', error);
-    alert('Failed to submit form. Please try again.');
+    console.error('Error response:', error.response?.data);
+    const errorMsg = error.response?.data?.message || 'Failed to submit form. Please try again.';
+    alert(errorMsg);
   } finally {
     isSubmitting.value = false;
   }
@@ -485,6 +394,46 @@ const closeModal = () => {
   border-radius: 16px;
   box-sizing: border-box;
   align-self: center;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  min-height: 300px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #E5E5E5;
+  border-top-color: #333333;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #333333;
+  margin-top: 16px;
+}
+
+.error-text {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #DC2626;
+  text-align: center;
 }
 
 .form-header {
