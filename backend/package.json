@@ -6,6 +6,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon -r dotenv/config server.js",
     "dev": "nodemon -r dotenv/config server.js dotenv_config_path=.env.dev",
+<<<<<<< HEAD
+=======
+    "seed": "node -r dotenv/config seed.js dotenv_config_path=.env.dev",
+>>>>>>> ft/response-dev
     "serve:test": "node -r dotenv/config server.js dotenv_config_path=.env.test",
     "serve:prod": "node -r dotenv/config server.js dotenv_config_path=.env.prod"
   },
