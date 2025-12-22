@@ -6,7 +6,6 @@ const responseRoutes = require("../Project/Response/response.routes");
 
 module.exports = function (app) {
 
-  app.use(path + '/question', questionRoutes);
   app.use(path + "/form", formRoutes);
   app.use(path + '/question', questionRoutes);
   app.use(path + '/response', responseRoutes);
