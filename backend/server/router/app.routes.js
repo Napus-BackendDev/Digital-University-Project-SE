@@ -1,9 +1,11 @@
 // Import routes
 const questionRoutes = require('../Project/Questions/questions.routes');
+const formRoutes = require("../Project/Form/form.routes");
+
 module.exports = function (app) {
-  var path = "/api/v1";
 
   app.use(path + '/question', questionRoutes);
+  app.use(path + "/form", formRoutes);
 
   // 404 handler
   app.use((req, res) => {
