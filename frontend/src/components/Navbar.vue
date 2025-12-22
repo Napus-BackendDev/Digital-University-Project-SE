@@ -24,8 +24,8 @@ function handleLogout() {
           <img src="/MFU-Logo.png" alt="Logo" class="logo-image" />
         </div>
         <div class="brand-text">
-          <span class="brand-name">FormBuilder</span>
-          <span class="brand-subtitle">มหาวิทยาลัย</span>
+          <span class="brand-name">MFU FormBuilder</span>
+          <span class="brand-subtitle">มหาวิทยาลัยแม่ฟ้าหลวง</span>
         </div>
       </router-link>
 
