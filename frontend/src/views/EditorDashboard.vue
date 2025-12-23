@@ -114,7 +114,8 @@ const filterOptions = [
   { value: 'all', label: 'All Status' },
   { value: 'open', label: 'Open' },
   { value: 'draft', label: 'Draft' },
-  { value: 'closed', label: 'Closed' }
+  { value: 'closed', label: 'Closed' },
+  { value: 'auto', label: 'Auto' }
 ]
 
 // Format date helper
@@ -159,6 +160,7 @@ const fetchForms = async () => {
       title: getTitle(form.title) || 'Untitled Form',
       description: getTitle(form.description) || 'No description',
       status: form.status || 'draft',
+      scheduleMode: form.schedule?.mode || 'manual',
       responses: form.responseCount || 0,
       createdDate: formatDate(form.updatedAt || form.createdAt)
     }))
@@ -177,8 +179,12 @@ const fetchForms = async () => {
 const filteredForms = computed(() => {
   let filtered = forms.value
 
-  // Filter by status
-  if (statusFilter.value !== 'all') {
+  // Filter by status or schedule mode
+  if (statusFilter.value === 'auto') {
+    // Filter forms with schedule.mode === 'auto'
+    filtered = filtered.filter(form => form.scheduleMode === 'auto')
+  } else if (statusFilter.value !== 'all') {
+    // Filter by status
     filtered = filtered.filter(form => form.status === statusFilter.value)
   }
 
