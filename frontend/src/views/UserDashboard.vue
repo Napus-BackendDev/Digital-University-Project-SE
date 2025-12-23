@@ -6,24 +6,16 @@
     <!-- Form List Page -->
     <main class="form-list-page">
       <!-- Page Header -->
-      <div class="page-header">
-        <h1 class="page-heading">My Forms</h1>
-        <p class="page-description">Create and manage your forms</p>
-      </div>
+      <PageHeader 
+        title="Available Forms" 
+        subtitle="Fill out forms and submit responses" 
+      />
 
       <!-- Search Bar -->
-      <div class="search-container">
-        <svg class="search-icon" viewBox="0 0 16 16" fill="none">
-          <circle cx="7.5" cy="7.5" r="5.5" stroke="#A3A3A3" stroke-width="1.33333"/>
-          <path d="M11.5 11.5L14 14" stroke="#A3A3A3" stroke-width="1.33333" stroke-linecap="round"/>
-        </svg>
-        <input
-          type="text"
-          v-model="searchQuery"
-          placeholder="Search forms..."
-          class="search-input"
-        />
-      </div>
+      <SearchBar 
+        v-model="searchQuery"
+        placeholder="Search forms..."
+      />
 
       <!-- Table Container -->
       <FormTable
@@ -71,11 +63,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Navbar from '@/components/Navbar.vue';
 import FormTable from '@/components/FormTable.vue';
 import Pagination from '@/components/Pagination.vue';
+import SearchBar from '@/components/SearchBar.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import { formAPI } from '@/services/api';
 
 const router = useRouter();
@@ -188,13 +182,7 @@ const handleFillForm = (formId) => {
 };
 
 const toggleActionsDropdown = (formId) => {
-  console.log('Toggle dropdown for form:', formId);
-  console.log('Type of formId:', typeof formId);
-  console.log('Current activeDropdown:', activeDropdown.value);
-  console.log('Type of activeDropdown:', typeof activeDropdown.value);
-  console.log('Are they equal?', activeDropdown.value === formId);
   activeDropdown.value = activeDropdown.value === formId ? null : formId;
-  console.log('New activeDropdown:', activeDropdown.value);
 };
 
 const previousPage = () => {
@@ -213,19 +201,8 @@ const goToPage = (page) => {
   currentPage.value = page;
 };
 
-const handleClickOutside = (event) => {
-  if (!event.target.closest('.actions-buttons')) {
-    activeDropdown.value = null;
-  }
-};
-
 onMounted(() => {
   fetchForms();
-  document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -253,76 +230,6 @@ onUnmounted(() => {
   flex: none;
   order: 1;
   flex-grow: 0;
-}
-
-/* ==================== PAGE HEADER ==================== */
-.page-header {
-  width: 1216px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.page-heading {
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 36px;
-  line-height: 40px;
-  letter-spacing: -0.53px;
-  color: #333333;
-  margin: 0;
-}
-
-.page-description {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: -0.31px;
-  color: #525252;
-  margin: 0;
-}
-
-/* ==================== SEARCH ==================== */
-.search-container {
-  width: 1216px;
-  position: relative;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.search-input {
-  width: 100%;
-  height: 36px;
-  padding: 4px 12px 4px 40px;
-  background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
-  border-radius: 12px;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: -0.15px;
-  color: #333333;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
-}
-
-.search-input::placeholder {
-  color: #A3A3A3;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #333333;
 }
 
 /* ==================== TABLE WRAPPER ==================== */

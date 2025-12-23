@@ -6,65 +6,26 @@
     <!-- Form List Page -->
     <main class="form-list-page-main">
       <!-- Page Header -->
-      <div class="page-container">
-        <h1 class="page-heading">My Forms</h1>
-        <p class="page-paragraph">Create and manage your forms</p>
-      </div>
+      <PageHeader 
+        title="My Forms" 
+        subtitle="Create and manage your forms" 
+      />
 
       <!-- Toolbar -->
       <div class="toolbar-container">
         <!-- Search Input -->
-        <div class="search-wrapper">
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Search forms..."
-            class="search-input"
-          />
-          <i class="pi pi-search search-icon"></i>
-        </div>
+        <SearchBar 
+          v-model="searchQuery"
+          placeholder="Search forms..."
+        />
 
         <!-- Right Actions -->
         <div class="toolbar-right">
           <!-- Filter Dropdown -->
-          <div class="filter-wrapper" ref="filterRef">
-            <button class="filter-button" @click="toggleFilterDropdown">
-              <i class="pi pi-filter"></i>
-              <span class="filter-span">{{ filterLabel }}</span>
-              <i class="pi pi-chevron-down chevron-icon"></i>
-            </button>
-            
-            <div v-if="showFilterDropdown" class="filter-dropdown-menu">
-              <button 
-                class="filter-option" 
-                :class="{ active: statusFilter === 'all' }"
-                @click="selectFilter('all')"
-              >
-                All Status
-              </button>
-              <button 
-                class="filter-option" 
-                :class="{ active: statusFilter === 'open' }"
-                @click="selectFilter('open')"
-              >
-                Open
-              </button>
-              <button 
-                class="filter-option" 
-                :class="{ active: statusFilter === 'draft' }"
-                @click="selectFilter('draft')"
-              >
-                Draft
-              </button>
-              <button 
-                class="filter-option" 
-                :class="{ active: statusFilter === 'closed' }"
-                @click="selectFilter('closed')"
-              >
-                Closed
-              </button>
-            </div>
-          </div>
+          <FilterDropdown 
+            v-model="statusFilter"
+            :options="filterOptions"
+          />
 
           <!-- Create Form Button -->
           <div class="create-link" @click="handleCreateForm">
@@ -134,12 +95,13 @@ import { formAPI } from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
 import FormTable from '@/components/FormTable.vue'
 import Pagination from '@/components/Pagination.vue'
+import SearchBar from '@/components/SearchBar.vue'
+import FilterDropdown from '@/components/FilterDropdown.vue'
+import PageHeader from '@/components/PageHeader.vue'
 
 const router = useRouter()
 const searchQuery = ref('')
 const statusFilter = ref('all')
-const showFilterDropdown = ref(false)
-const filterRef = ref(null)
 const showActionsDropdown = ref(null)
 const actionsRef = ref(null)
 const forms = ref([])
@@ -147,6 +109,13 @@ const loading = ref(false)
 const error = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(7)
+
+const filterOptions = [
+  { value: 'all', label: 'All Status' },
+  { value: 'open', label: 'Open' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'closed', label: 'Closed' }
+]
 
 // Format date helper
 const formatDate = (dateString) => {
@@ -237,24 +206,6 @@ const paginatedForms = computed(() => {
   return filteredForms.value.slice(start, end)
 })
 
-const filterLabel = computed(() => {
-  if (statusFilter.value === 'all') return 'All Status'
-  if (statusFilter.value === 'open') return 'Open'
-  if (statusFilter.value === 'draft') return 'Draft'
-  if (statusFilter.value === 'closed') return 'Closed'
-  return 'All Status'
-})
-
-const toggleFilterDropdown = () => {
-  showFilterDropdown.value = !showFilterDropdown.value
-}
-
-const selectFilter = (filter) => {
-  statusFilter.value = filter
-  showFilterDropdown.value = false
-  currentPage.value = 1 // Reset to first page when filter changes
-}
-
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
@@ -339,23 +290,9 @@ const handleDelete = async (formId) => {
   }
 }
 
-const handleClickOutside = (event) => {
-  if (filterRef.value && !filterRef.value.contains(event.target)) {
-    showFilterDropdown.value = false
-  }
-  if (actionsRef.value && !actionsRef.value.contains(event.target)) {
-    showActionsDropdown.value = null
-  }
-}
-
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
   // Fetch forms when component is mounted
   fetchForms()
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -390,91 +327,11 @@ onUnmounted(() => {
   background: #FAFAFA;
 }
 
-/* Page Header */
-.page-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0px;
-  gap: 8px;
-  width: 1216px;
-  height: 72px;
-}
-
-.page-heading {
-  width: 1216px;
-  height: 40px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 36px;
-  line-height: 40px;
-  letter-spacing: -0.530859px;
-  color: #333333;
-  margin: 0;
-}
-
-.page-paragraph {
-  width: 1216px;
-  height: 24px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: -0.3125px;
-  color: #525252;
-  margin: 0;
-}
-
 /* Toolbar */
 .toolbar-container {
   position: relative;
   width: 1216px;
   height: 36px;
-}
-
-.search-wrapper {
-  position: absolute;
-  width: 914.17px;
-  height: 36px;
-  left: 0px;
-  top: 0px;
-}
-
-.search-input {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 4px 12px 4px 40px;
-  position: absolute;
-  width: 914.17px;
-  height: 36px;
-  left: 0px;
-  top: 0px;
-  background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
-  border-radius: 12px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: -0.150391px;
-  color: #333333;
-  outline: none;
-}
-
-.search-input::placeholder {
-  color: #333333;
-}
-
-.search-icon {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  left: 12px;
-  top: 10px;
-  color: #A3A3A3;
-  pointer-events: none;
 }
 
 .toolbar-right {
@@ -488,96 +345,6 @@ onUnmounted(() => {
   height: 36px;
   left: 930.17px;
   top: 0px;
-}
-
-.filter-wrapper {
-  position: relative;
-  width: 140px;
-  height: 36px;
-}
-
-.filter-button {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0px 12px;
-  gap: 16px;
-  width: 140px;
-  height: 36px;
-  background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
-  border-radius: 12px;
-  cursor: pointer;
-  flex: none;
-  order: 0;
-  flex-grow: 1;
-}
-
-.filter-button i {
-  width: 16px;
-  height: 16px;
-  font-size: 16px;
-  color: #737373;
-}
-
-.filter-span {
-  height: 20px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 20px;
-  text-align: center;
-  letter-spacing: -0.150391px;
-  color: #333333;
-  white-space: nowrap;
-  flex: 1;
-}
-
-.chevron-icon {
-  width: 16px;
-  height: 16px;
-  opacity: 0.5;
-}
-
-.filter-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  min-width: 140px;
-  background: #FFFFFF;
-  border: 1px solid #E5E5E5;
-  border-radius: 12px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  z-index: 10;
-}
-
-.filter-option {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: -0.150391px;
-  color: #333333;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.filter-option:hover {
-  background: #F5F5F5;
-}
-
-.filter-option.active {
-  background: #BA0C2F;
-  color: #FFFFFF;
 }
 
 .create-link {
