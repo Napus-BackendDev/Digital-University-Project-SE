@@ -102,7 +102,7 @@ const fetchForms = async () => {
     
     // Filter forms with status 'open' or 'closed'
     formsData.value = formsArray
-      .filter(form => form.status === 'open' || form.status === 'closed')
+      .filter(form => form.status === 'open' || form.status === 'close' || form.status === 'closed')
       .map(form => {
         // Extract title from array
         const titleObj = form.title?.find(t => t.key === 'en');
@@ -415,7 +415,7 @@ onMounted(() => {
 }
 
 .status-closed .status-text {
-  color: #991B1B;
+  color: #DC2626;
 }
 
 /* ==================== RESPONSES ==================== */

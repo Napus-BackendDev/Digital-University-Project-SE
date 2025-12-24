@@ -181,7 +181,13 @@ const filteredForms = computed(() => {
 
   // Filter by status
   if (statusFilter.value !== 'all') {
-    filtered = filtered.filter(form => form.status === statusFilter.value)
+    filtered = filtered.filter(form => {
+      // Handle 'closed' filter matching 'close' status from API
+      if (statusFilter.value === 'closed') {
+        return form.status === 'close' || form.status === 'closed'
+      }
+      return form.status === statusFilter.value
+    })
   }
 
   // Filter by search query
@@ -625,8 +631,8 @@ onMounted(() => {
 }
 
 .status-closed {
-  background: #FEF2F2;
-  border: 1px solid #FFC9C9;
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
 }
 
 .status-dot {
@@ -644,7 +650,7 @@ onMounted(() => {
 }
 
 .status-closed .status-dot {
-  background: #FB2C36;
+  background: #EF4444;
 }
 
 .status-text {
@@ -662,7 +668,7 @@ onMounted(() => {
 }
 
 .status-closed .status-text {
-  color: #C10007;
+  color: #DC2626;
 }
 
 /* Responses Cell */

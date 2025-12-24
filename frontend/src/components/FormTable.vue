@@ -61,10 +61,10 @@
 
             <!-- Status Cell -->
             <div class="table-cell status-cell">
-              <div :class="['status-badge', `status-${form.status}`]">
+              <div :class="['status-badge', `status-${form.status === 'close' ? 'closed' : form.status}`]">
                 <div class="status-dot"></div>
                 <div class="status-text">
-                  {{ form.status === 'open' ? 'Open' : form.status === 'draft' ? 'Draft' : 'Closed' }}
+                  {{ form.status === 'open' ? 'Open' : (form.status === 'draft' ? 'Draft' : 'Closed') }}
                 </div>
               </div>
             </div>
@@ -360,8 +360,8 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 }
 
 .status-closed {
-  background: #FEF2F2;
-  border: 1px solid #FFC9C9;
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
 }
 
 .status-dot {
@@ -379,7 +379,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 }
 
 .status-closed .status-dot {
-  background: #FB2C36;
+  background: #EF4444;
 }
 
 .status-text {
@@ -397,7 +397,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 }
 
 .status-closed .status-text {
-  color: #C10007;
+  color: #DC2626;
 }
 
 /* Responses Cell */
