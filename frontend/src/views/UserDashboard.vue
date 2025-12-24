@@ -12,10 +12,12 @@
       />
 
       <!-- Search Bar -->
-      <SearchBar 
-        v-model="searchQuery"
-        placeholder="Search forms..."
-      />
+      <div class="search-container">
+        <SearchBar 
+          v-model="searchQuery"
+          placeholder="Search forms..."
+        />
+      </div>
 
       <!-- Table Container -->
       <FormTable
@@ -209,8 +211,9 @@ onMounted(() => {
 <style scoped>
 /* ==================== MAIN CONTAINER ==================== */
 .userdashboard {
+  position: relative;
   width: 1536px;
-  min-height: 100vh;
+  min-height: 1000px;
   background: #F5F5F5;
   font-family: 'Inter', sans-serif;
   margin: 0 auto;
@@ -222,7 +225,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 160px;
+  padding: 32px 160px 0px;
   gap: 32px;
   width: 1536px;
   min-height: calc(100vh - 65px);
@@ -230,6 +233,12 @@ onMounted(() => {
   flex: none;
   order: 1;
   flex-grow: 0;
+}
+
+/* ==================== SEARCH ==================== */
+.search-container {
+  width: 1216px;
+  position: relative;
 }
 
 /* ==================== TABLE WRAPPER ==================== */

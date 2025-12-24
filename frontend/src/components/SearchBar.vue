@@ -28,11 +28,9 @@ defineEmits(['update:modelValue'])
 
 <style scoped>
 .search-wrapper {
-  position: absolute;
-  width: 914.17px;
+  position: relative;
+  width: 100%;
   height: 36px;
-  left: 0px;
-  top: 0px;
 }
 
 .search-input {
@@ -41,11 +39,8 @@ defineEmits(['update:modelValue'])
   flex-direction: row;
   align-items: center;
   padding: 4px 12px 4px 40px;
-  position: absolute;
-  width: 914.17px;
+  width: 100%;
   height: 36px;
-  left: 0px;
-  top: 0px;
   background: rgba(229, 229, 229, 0.3);
   border: 1px solid #E5E5E5;
   border-radius: 12px;

@@ -14,10 +14,12 @@
       <!-- Toolbar -->
       <div class="toolbar-container">
         <!-- Search Input -->
-        <SearchBar 
-          v-model="searchQuery"
-          placeholder="Search forms..."
-        />
+        <div class="editor-search-wrapper">
+          <SearchBar 
+            v-model="searchQuery"
+            placeholder="Search forms..."
+          />
+        </div>
 
         <!-- Right Actions -->
         <div class="toolbar-right">
@@ -114,8 +116,7 @@ const filterOptions = [
   { value: 'all', label: 'All Status' },
   { value: 'open', label: 'Open' },
   { value: 'draft', label: 'Draft' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'auto', label: 'Auto' }
+  { value: 'closed', label: 'Closed' }
 ]
 
 // Format date helper
@@ -160,7 +161,6 @@ const fetchForms = async () => {
       title: getTitle(form.title) || 'Untitled Form',
       description: getTitle(form.description) || 'No description',
       status: form.status || 'draft',
-      scheduleMode: form.schedule?.mode || 'manual',
       responses: form.responseCount || 0,
       createdDate: formatDate(form.updatedAt || form.createdAt)
     }))
@@ -179,12 +179,8 @@ const fetchForms = async () => {
 const filteredForms = computed(() => {
   let filtered = forms.value
 
-  // Filter by status or schedule mode
-  if (statusFilter.value === 'auto') {
-    // Filter forms with schedule.mode === 'auto'
-    filtered = filtered.filter(form => form.scheduleMode === 'auto')
-  } else if (statusFilter.value !== 'all') {
-    // Filter by status
+  // Filter by status
+  if (statusFilter.value !== 'all') {
     filtered = filtered.filter(form => form.status === statusFilter.value)
   }
 
@@ -338,6 +334,14 @@ onMounted(() => {
   position: relative;
   width: 1216px;
   height: 36px;
+}
+
+.editor-search-wrapper {
+  position: absolute;
+  width: 914.17px;
+  height: 36px;
+  left: 0px;
+  top: 0px;
 }
 
 .toolbar-right {
