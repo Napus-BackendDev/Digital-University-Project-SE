@@ -1,9 +1,9 @@
-var mongo=require("mongoose");
-var objSchema=require("../models/user.model");
+var mongo = require("mongoose");
+var objSchema = require("../model/response.model");
 const createBaseService = require("../../../../helpers/base.service")
 
 const defaultPopulate = [
-    
+    { path: 'answers.question', select: 'title type' }
 ]
 
 module.exports = createBaseService(objSchema, defaultPopulate);
