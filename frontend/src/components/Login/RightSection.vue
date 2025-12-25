@@ -85,7 +85,7 @@ const handleLogin = async () => {
     localStorage.setItem('token', result.data.token)
     localStorage.setItem('user', JSON.stringify(result.data.user))
     
-    router.push('/forms')
+    router.push('')
     
   } catch (error) {
     errorMessage.value = error.message
@@ -109,7 +109,7 @@ const handleGoogleLogin = () => {
     const result = await mockGoogleLogin()
     localStorage.setItem('token', result.data.token)
     localStorage.setItem('user', JSON.stringify(result.data.user))
-    router.push('/forms')
+    router.push('/home')
   } catch (error) {
     errorMessage.value = error.message || 'Google login failed'
     setTimeout(() => {
