@@ -67,7 +67,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CForm, CFormInput, CButton, CAlert } from '@coreui/vue'
-import api from '@/service/api.js'
+import { mockLogin } from '@/mock/users'
 
 const router = useRouter()
 const email = ref('')
@@ -80,31 +80,18 @@ const handleLogin = async () => {
   errorMessage.value = ''
   
   try {
-    const response = await api.auth('login', {
-      email: email.value,
-      password: password.value
-    })
+    const result = await mockLogin(email.value, password.value)
     
-    // เก็บ token ถ้าต้องการ
-    if (response.data.data) {
-      localStorage.setItem('token', response.data.data)
-    }
+    localStorage.setItem('token', result.data.token)
+    localStorage.setItem('user', JSON.stringify(result.data.user))
     
-    // Navigate to dashboard
     router.push('/forms')
     
   } catch (error) {
-    console.error('Login error:', error)
-    
-    // แสดง error message
-    if (error.response && error.response.data) {
-      errorMessage.value = error.response.data.message || 'Login failed'
-    } else {
-      errorMessage.value = 'Network error. Please try again.'
-    }
+    errorMessage.value = error.message
     setTimeout(() => {
       errorMessage.value = ''
-    }, 2500)
+    }, 3000)
   } finally {
     isLoading.value = false
   }
