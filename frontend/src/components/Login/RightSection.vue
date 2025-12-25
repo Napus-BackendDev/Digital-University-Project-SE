@@ -67,7 +67,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CForm, CFormInput, CButton, CAlert } from '@coreui/vue'
-import { mockLogin } from '@/mock/users'
+import { mockLogin, mockGoogleLogin } from '@/mock/users'
 
 const router = useRouter()
 const email = ref('')
@@ -102,7 +102,22 @@ const handleForgotPassword = () => {
 }
 
 const handleGoogleLogin = () => {
-  
+  async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const result = await mockGoogleLogin()
+    localStorage.setItem('token', result.data.token)
+    localStorage.setItem('user', JSON.stringify(result.data.user))
+    router.push('/forms')
+  } catch (error) {
+    errorMessage.value = error.message || 'Google login failed'
+    setTimeout(() => {
+      errorMessage.value = ''
+    }, 3000)
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
