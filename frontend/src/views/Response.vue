@@ -1,7 +1,5 @@
 <template>
   <div class="response">
-    <!-- Navbar -->
-    <Navbar />
 
     <!-- Main Content -->
     <main class="main-content">
@@ -149,7 +147,6 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import Navbar from '@/components/Navbar.vue';
 import { formAPI, responseAPI } from '@/services/api';
 
 const router = useRouter();
@@ -168,7 +165,7 @@ const fetchFormData = async () => {
     const formId = route.params.id;
     console.log('Fetching form ID:', formId);
     
-    const response = await formAPI.getFormById(formId);
+    const response = await formAPI.getById(formId);
     console.log('API Response:', response.data);
     
     // Handle nested data structure

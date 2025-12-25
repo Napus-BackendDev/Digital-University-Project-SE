@@ -1,5 +1,5 @@
 const mongo = require('mongodb');
-const Form = require("../controller/form"); 
+const Form = require("../controller/form");
 const ResMessage = require("../../Settings/service/message");
 const { canTransition } = require('../service/formStatus');
 
@@ -38,12 +38,20 @@ exports.onDuplicate = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await Form.onQuery(query);
-        
+
         delete doc._id;
         doc.originalFormId = request.body._id;
 
+        // Add " - Duplicate" to the title for all languages
+        if (doc.title && Array.isArray(doc.title)) {
+            doc.title = doc.title.map(t => ({
+                ...t,
+                value: t.value + ' - Duplicate'
+            }));
+        }
+
         const duplicate = await Form.onCreate(doc);
-        return ResMessage.sendResponse(response, 0 , 20000, duplicate);
+        return ResMessage.sendResponse(response, 0, 20000, duplicate);
     } catch (err) {
         return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
@@ -58,7 +66,7 @@ exports.onUpdate = async function (request, response) {
             return ResMessage.sendResponse(response, 0, 40000, `Cannot transition form status from ${doc.status} to ${request.body.status}`);
         }
         const docUpdate = await Form.onUpdate(query, request.body);
-        return ResMessage.sendResponse(response, 0 , 20000, docUpdate);
+        return ResMessage.sendResponse(response, 0, 20000, docUpdate);
     } catch (err) {
         return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
@@ -69,7 +77,7 @@ exports.onDelete = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await Form.onDelete(query);
-        return ResMessage.sendResponse(response, 0 , 20000, doc);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         return ResMessage.sendResponse(response, 0, 40400, err.message);
     }

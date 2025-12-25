@@ -1,8 +1,5 @@
 <template>
   <div class="editordashboard">
-    <!-- Navbar -->
-    <Navbar />
-
     <!-- Form List Page -->
     <main class="form-list-page-main">
       <!-- Page Header -->
@@ -94,7 +91,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { formAPI } from '@/services/api'
-import Navbar from '@/components/Navbar.vue'
 import FormTable from '@/components/FormTable.vue'
 import Pagination from '@/components/Pagination.vue'
 import SearchBar from '@/components/SearchBar.vue'
@@ -144,7 +140,7 @@ const fetchForms = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await formAPI.getAllForms()
+    const response = await formAPI.getAll()
     console.log('API Response:', response)
     
     // Handle different API response structures
@@ -232,9 +228,21 @@ const previousPage = () => {
   }
 }
 
-const handleCreateForm = () => {
-  // Navigate to form creation page
-  router.push('/form/create')
+const handleCreateForm = async () => {
+  // สร้างฟอร์มใหม่ แล้วไปหน้าแก้ไขฟอร์ม
+  try {
+    const newForm = await formAPI.create({})
+    console.log('Create form response:', newForm)
+    // รองรับกรณี backend ส่ง data: {...}
+    const formId = newForm?.data?._id || newForm?.data?.id
+    if (formId) {
+      router.push(`/form-builder/${formId}`)
+    } else {
+      alert('Create form failed: No ID returned. Response: ' + JSON.stringify(newForm))
+    }
+  } catch (err) {
+    alert('Create form failed: ' + (err.message || err))
+  }
 }
 
 const handleLogout = () => {
@@ -246,7 +254,7 @@ const handleLogout = () => {
 
 const handleEdit = (formId) => {
   showActionsDropdown.value = null
-  router.push(`/form/${formId}/edit`)
+  router.push(`/form-builder/${formId}`)
 }
 
 const handlePreview = (formId) => {
@@ -259,11 +267,10 @@ const handleDuplicate = async (formId) => {
   
   try {
     loading.value = true
-    const result = await formAPI.duplicateForm(formId)
+    const result = await formAPI.duplicate(formId)
     console.log('Duplicate result:', result)
     // Refresh the forms list to show the duplicated form
     await fetchForms()
-    alert('Form duplicated successfully!')
   } catch (err) {
     console.error('Error duplicating form:', err)
     const errorMsg = err.response?.data?.message || 'Failed to duplicate form. Please try again.'
@@ -283,18 +290,16 @@ const toggleActionsDropdown = (formId) => {
 
 const handleDelete = async (formId) => {
   showActionsDropdown.value = null
-  
   if (!confirm('Are you sure you want to delete this form?')) {
     return
   }
-  
   try {
-    await formAPI.deleteForm(formId)
-    // Refresh the forms list
+    await formAPI.delete(formId)
     await fetchForms()
   } catch (err) {
     console.error('Error deleting form:', err)
-    alert('Failed to delete form. Please try again.')
+    const errorMsg = err.response?.data?.message || err.message || 'Failed to delete form. Please try again.'
+    alert(errorMsg)
   }
 }
 
@@ -320,7 +325,6 @@ onMounted(() => {
   font-family: 'Inter', sans-serif;
   overflow-x: auto;
   margin: 0 auto;
-  padding-top: 65px;
 }
 
 /* Form List Page */

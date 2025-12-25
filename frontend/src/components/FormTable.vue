@@ -61,10 +61,10 @@
 
             <!-- Status Cell -->
             <div class="table-cell status-cell">
-              <div :class="['status-badge', `status-${form.status === 'close' ? 'closed' : form.status}`]">
+              <div :class="['status-badge', `status-${form.status}`]">
                 <div class="status-dot"></div>
                 <div class="status-text">
-                  {{ form.status === 'open' ? 'Open' : (form.status === 'draft' ? 'Draft' : 'Closed') }}
+                  {{ form.status === 'open' ? 'Open' : form.status === 'draft' ? 'Draft' : 'Closed' }}
                 </div>
               </div>
             </div>
@@ -359,9 +359,10 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   border: 1px solid #E5E5E5;
 }
 
-.status-closed {
-  background: #FEE2E2;
-  border: 1px solid #FECACA;
+.status-closed,
+.status-close {
+  background: #FEF2F2;
+  border: 1px solid #FFC9C9;
 }
 
 .status-dot {
@@ -378,8 +379,9 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   background: #A3A3A3;
 }
 
-.status-closed .status-dot {
-  background: #EF4444;
+.status-closed .status-dot,
+.status-close .status-dot {
+  background: #FB2C36;
 }
 
 .status-text {
@@ -396,8 +398,9 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   color: #404040;
 }
 
-.status-closed .status-text {
-  color: #DC2626;
+.status-closed .status-text,
+.status-close .status-text {
+  color: #C10007;
 }
 
 /* Responses Cell */

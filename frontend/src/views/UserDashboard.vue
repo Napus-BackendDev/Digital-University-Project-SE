@@ -1,8 +1,5 @@
 <template>
   <div class="userdashboard">
-    <!-- Navbar -->
-    <Navbar />
-
     <!-- Form List Page -->
     <main class="form-list-page">
       <!-- Page Header -->
@@ -23,28 +20,22 @@
       <FormTable
         :forms="paginatedForms"
         :loading="loading"
-        :error="null"
+        :error="error"
         :empty-message="searchQuery ? 'Try adjusting your search' : 'No forms available at the moment'"
         @form-click="() => {}"
         @toggle-dropdown="toggleActionsDropdown"
+        @retry="fetchForms"
       >
         <template #actions="{ form }">
           <div class="actions-buttons">
             <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
-              <svg viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="3" r="1" fill="#333333"/>
-                <circle cx="8" cy="8" r="1" fill="#333333"/>
-                <circle cx="8" cy="13" r="1" fill="#333333"/>
-              </svg>
+              <i class="pi pi-ellipsis-v"></i>
             </button>
             
             <!-- Actions Dropdown -->
             <div v-if="activeDropdown === form.id" class="actions-dropdown">
               <button class="dropdown-item" @click.stop="handleFillForm(form.id)">
-                <svg viewBox="0 0 16 16" fill="none">
-                  <path d="M2 4C2 3.44772 2.44772 3 3 3H13C13.5523 3 14 3.44772 14 4V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.33333"/>
-                  <path d="M5 6H11M5 9H11" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round"/>
-                </svg>
+                <i class="pi pi-file-edit"></i>
                 <span>Fill Form</span>
               </button>
             </div>
@@ -67,7 +58,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import Navbar from '@/components/Navbar.vue';
 import FormTable from '@/components/FormTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import SearchBar from '@/components/SearchBar.vue';
@@ -78,6 +68,7 @@ const router = useRouter();
 
 const searchQuery = ref('');
 const loading = ref(false);
+const error = ref(null);
 const activeDropdown = ref(null);
 const currentPage = ref(1);
 const itemsPerPage = 6;
@@ -85,57 +76,19 @@ const itemsPerPage = 6;
 // Forms data from API
 const formsData = ref([]);
 
-// Fetch forms from API
-const fetchForms = async () => {
-  loading.value = true;
-  try {
-    const response = await formAPI.getAllForms();
-    console.log('API Response:', response.data);
-    
-    // Check if response.data is array or has data property
-    const formsArray = Array.isArray(response.data) 
-      ? response.data 
-      : response.data.data || [];
-    
-    console.log('Forms Array:', formsArray);
-    console.log('Total Forms:', formsArray.length);
-    
-    // Filter forms with status 'open' or 'closed'
-    formsData.value = formsArray
-      .filter(form => form.status === 'open' || form.status === 'close' || form.status === 'closed')
-      .map(form => {
-        // Extract title from array
-        const titleObj = form.title?.find(t => t.key === 'en');
-        const titleThObj = form.title?.find(t => t.key === 'th');
-        const title = titleObj?.value || titleThObj?.value || 'Untitled Form';
-        
-        // Extract description from array
-        const descObj = form.description?.find(d => d.key === 'en');
-        const descThObj = form.description?.find(d => d.key === 'th');
-        const description = descObj?.value || descThObj?.value || 'No description provided';
-        
-        return {
-          id: form._id,
-          title: title,
-          description: description,
-          status: form.status || 'open',
-          responses: form.responseCount || 0,
-          createdDate: formatDate(form.createdAt || form.updatedAt)
-        };
-      });
-    
-    console.log('Filtered Forms (open/closed only):', formsData.value);
-    console.log('Filtered Forms Count:', formsData.value.length);
-    
-  } catch (error) {
-    console.error('Error fetching forms:', error);
-    console.error('Error details:', error.response?.data || error.message);
-    // Keep empty array on error
-    formsData.value = [];
-  } finally {
-    loading.value = false;
-  }
-};
+// Helper function to extract title from array structure
+const getTitle = (titleArray) => {
+  if (!titleArray) return ''
+  if (typeof titleArray === 'string') return titleArray
+  if (!Array.isArray(titleArray)) return ''
+  
+  // Try English first, then Thai, then first available
+  const enTitle = titleArray.find(t => t.key === 'en')?.value
+  const thTitle = titleArray.find(t => t.key === 'th')?.value
+  const firstTitle = titleArray[0]?.value || titleArray[0]?.text
+  
+  return enTitle || thTitle || firstTitle || ''
+}
 
 // Format date to readable format
 const formatDate = (dateString) => {
@@ -143,6 +96,47 @@ const formatDate = (dateString) => {
   const date = new Date(dateString);
   const options = { month: 'short', day: 'numeric', year: 'numeric' };
   return date.toLocaleDateString('en-US', options);
+};
+
+// Fetch forms from API
+const fetchForms = async () => {
+  loading.value = true;
+  error.value = null;
+  try {
+    const response = await formAPI.getAll();
+    console.log('API Response:', response);
+    
+    // Handle different API response structures
+    const formData = Array.isArray(response.data) 
+      ? response.data 
+      : (response.data.data || response.data.datas || []);
+    
+    console.log('Form Data:', formData);
+    console.log('Form Data Length:', formData.length);
+    
+    // Transform API data to match component structure
+    // Filter forms with status 'open' or 'closed' for user dashboard
+    formsData.value = formData
+      .filter(form => form.status === 'open' || form.status === 'close' || form.status === 'closed')
+      .map(form => ({
+        id: form._id,
+        title: getTitle(form.title) || 'Untitled Form',
+        description: getTitle(form.description) || 'No description',
+        status: form.status || 'open',
+        responses: form.responseCount || 0,
+        createdDate: formatDate(form.updatedAt || form.createdAt)
+      }));
+    
+    console.log('Filtered Forms (open/closed only):', formsData.value);
+    console.log('Filtered Forms Count:', formsData.value.length);
+    
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to load forms';
+    console.error('Error fetching forms:', err);
+    formsData.value = [];
+  } finally {
+    loading.value = false;
+  }
 };
 
 const filteredForms = computed(() => {
@@ -217,7 +211,6 @@ onMounted(() => {
   background: #F5F5F5;
   font-family: 'Inter', sans-serif;
   margin: 0 auto;
-  padding-top: 65px;
 }
 
 .form-list-page {
