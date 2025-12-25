@@ -1,8 +1,7 @@
 // Import routes
 const formRoutes = require("../Project/Form/form.routes");
+const questionRoutes = require("../Project/Questions/questions.routes");
 const responseRoutes = require("../Project/Response/response.routes");
-
-const path = '/api/v1';
 
 module.exports = function (app) {
   path = "/api/v1";
