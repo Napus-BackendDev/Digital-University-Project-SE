@@ -62,7 +62,7 @@ export const formAPI = {
   
   // อัพเดทฟอร์ม
   async update(formData) {
-    return fetchAPI(`/form/id?_id=${_id}`, {
+    return fetchAPI('/form', {
       method: 'PUT',
       body: JSON.stringify(formData),
     })
