@@ -143,7 +143,7 @@ function copyFormUrl() {
 }
 
 function testForm() {
-  window.open(formUrl.value, '_blank')
+  window.open(formUrl.value, '_self')
 }
 
 function handleExport(format) {

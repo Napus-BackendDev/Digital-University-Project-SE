@@ -14,8 +14,8 @@ const router = createRouter({
       name: 'home',
       component: UserDashboard,
     },
-
-    // Editor Dashboard - จัดการฟอร์ม
+    
+    // หน้า About
     {
       path: '/editor',
       name: 'editor',
@@ -34,13 +34,6 @@ const router = createRouter({
       path: '/form-builder/:id',
       name: 'form-builder-edit',
       component: () => import('../views/FormBuilderView.vue'),
-    },
-
-    // หน้ากรอกฟอร์ม (Response)
-    {
-      path: '/form/:id/response',
-      name: 'response',
-      component: () => import('../views/Response.vue'),
     },
   ],
 })

@@ -10,9 +10,17 @@ var objSchema = new Schema({
             value: { type: String, default: null }
         }
     ],
-    questions: { type: [{ type: Schema.Types.ObjectId, ref: 'Questions' }], default: [] },
+    description: { type: String, default: '' },
+    questions: { type: [QuestionSchema], default: [] },
     can_duplicate: { type: Boolean, default: false },
-    status: { type: String, default: 'draft' }, // ['draft', 'open', 'close']
+    status: { type: String, default: 'draft' }, // ['draft', 'open', 'closed', 'scheduled']
+=========
+    title : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
+    description : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
+    questions: { type : [{ type: Schema.Types.ObjectId, ref: 'Questions' }] , default: [] },
+    can_duplicate: { type: Boolean, default: false },
+    status: { type: String, default: STATUS.DRAFT, validate: { validator: v => ALLOW_STATUS.includes(v), message: 'invalid status'} },
+>>>>>>>>> Temporary merge branch 2
     schedule: {
         startAt: { type: Date, default: null },
         endAt: { type: Date, default: null }
