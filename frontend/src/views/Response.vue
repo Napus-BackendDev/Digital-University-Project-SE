@@ -32,12 +32,76 @@
 
         <!-- Questions -->
         <div class="questions-container">
-          <div v-for="(question, index) in formData.questions" :key="question.id" class="question-block">
+          <div v-for="(question, index) in formData.questions" :key="question._id" class="question-block">
             <div class="question-label">
               Question {{ index + 1 }}
             </div>
             
             <div class="question-content">
+                            <!-- Date Type -->
+                            <input
+                              v-if="question.type === 'date'"
+                              type="date"
+                              class="form-input"
+                              v-model="responses[question._id]"
+                            />
+
+                            <!-- Dropdown Type -->
+                            <select
+                              v-else-if="question.type === 'dropdown'"
+                              class="form-select"
+                              v-model="responses[question._id]"
+                            >
+                              <option value="" disabled selected>Select an option</option>
+                              <option v-for="option in question.options" :key="option" :value="option">{{ option }}</option>
+                            </select>
+
+                            <!-- File Upload Type -->
+                            <div v-else-if="question.type === 'file'" class="file-upload">
+                              <input
+                                class="file-input"
+                                type="file"
+                                :id="'file-' + question._id"
+                                @change="e => handleFileChange(e, question._id)"
+                              />
+                              <label class="file-upload-label" :for="'file-' + question._id">
+                                <span class="file-upload-button">Choose file</span>
+                              </label>
+                              <div v-if="responses[question._id]">
+                                <span>Selected: {{ responses[question._id].name }}</span>
+                              </div>
+                            </div>
+
+                            <!-- Image Type (editor ใส่มาให้ user ดูเท่านั้น) -->
+                            <div v-else-if="question.type === 'image'">
+                              <img v-if="question.url" :src="question.url" alt="Image" class="question-image" style="max-width:200px;max-height:200px;" />
+                              <div v-else style="color:#aaa">No image provided.</div>
+                            </div>
+
+                            <!-- Time Type -->
+                            <input
+                              v-else-if="question.type === 'time'"
+                              type="time"
+                              class="form-input"
+                              v-model="responses[question._id]"
+                            />
+
+                            <!-- Video Type (editor ใส่มาให้ user ดูเท่านั้น) -->
+                            <div v-else-if="question.type === 'video'">
+                              <video v-if="question.url" :src="question.url" controls style="max-width:300px;max-height:200px;"></video>
+                              <div v-else style="color:#aaa">No video provided.</div>
+                            </div>
+
+                            <!-- Title & Description (Content Block) -->
+                            <div v-else-if="question.type === 'title'">
+                              <h2 class="section-title">{{ question.label }}</h2>
+                              <p class="section-description">{{ question.description }}</p>
+                            </div>
+
+                            <!-- Section Divider (Content Block) -->
+                            <div v-else-if="question.type === 'section-divider'" class="section-divider">
+                              <div class="divider-line"></div>
+                            </div>
               <label class="question-title">
                 {{ question.label }}
                 <span v-if="question.required" class="required">*</span>
@@ -50,7 +114,7 @@
                 class="form-input" 
                 placeholder="Your answer"
                 :maxlength="question.maxLength"
-                v-model="responses[question.id]"
+                v-model="responses[question._id]"
               />
 
               <textarea 
@@ -59,7 +123,7 @@
                 placeholder="Your answer"
                 rows="4"
                 :maxlength="question.maxLength"
-                v-model="responses[question.id]"
+                v-model="responses[question._id]"
               ></textarea>
 
               <!-- Choices Type (Radio buttons) -->
@@ -67,9 +131,9 @@
                 <label v-for="option in question.options" :key="option" class="radio-option">
                   <input 
                     type="radio" 
-                    :name="`question-${question.id}`"
+                    :name="`question-${question._id}`"
                     :value="option"
-                    v-model="responses[question.id]"
+                    v-model="responses[question._id]"
                   />
                   <span>{{ option }}</span>
                 </label>
@@ -81,7 +145,7 @@
                   <input 
                     type="checkbox" 
                     :value="option"
-                    v-model="responses[question.id]"
+                    v-model="responses[question._id]"
                   />
                   <span>{{ option }}</span>
                 </label>
@@ -94,8 +158,8 @@
                   v-for="i in question.max" 
                   :key="i"
                   type="button"
-                  @click="setRating(question.id, i)"
-                  :class="{ active: responses[question.id] >= i }"
+                  @click="setRating(question._id, i)"
+                  :class="{ active: responses[question._id] >= i }"
                 >
                   <svg class="star-icon" viewBox="0 0 32 32" fill="none">
                     <path 
@@ -145,6 +209,36 @@
 </template>
 
 <script setup>
+// Handle file upload (generic)
+function handleFileChange(e, qid) {
+  const file = e.target.files[0];
+  responses[qid] = file;
+}
+
+// Handle image upload with preview
+function handleImageChange(e, qid) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      responses[qid] = { file, preview: ev.target.result };
+    };
+    reader.readAsDataURL(file);
+  } else {
+    responses[qid] = null;
+  }
+}
+
+// Handle video upload with preview
+function handleVideoChange(e, qid) {
+  const file = e.target.files[0];
+  if (file) {
+    const url = URL.createObjectURL(file);
+    responses[qid] = { file, preview: url };
+  } else {
+    responses[qid] = null;
+  }
+}
 import { ref, computed, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { formAPI, responseAPI } from '@/services/api';
@@ -189,13 +283,11 @@ const fetchFormData = async () => {
     
     if (formDataResponse.questions && Array.isArray(formDataResponse.questions)) {
       console.log('Using questions array:', formDataResponse.questions);
-      
       questions = formDataResponse.questions.map(q => {
         // Extract question title from multilingual array
         const titleObj = q.title?.find(t => t.key === 'en') || q.questionTitle?.find(t => t.key === 'en');
         const titleThObj = q.title?.find(t => t.key === 'th') || q.questionTitle?.find(t => t.key === 'th');
         const label = titleObj?.value || titleThObj?.value || '';
-        
         // Parse options for checkbox and choices types
         let options = [];
         if (q.options && Array.isArray(q.options)) {
@@ -207,18 +299,15 @@ const fetchFormData = async () => {
             return optEn || optTh || '';
           });
         }
-        
         return {
-          id: q._id,
+          _id: q._id,
           type: q.type,
           label: label,
           required: q.required || false,
           options: options,
-          // Rating specific
           min: q.min || 1,
           max: q.max || 5,
           step: q.step || 1,
-          // Text specific
           textType: q.textType || 'short_answer',
           maxLength: q.maxLength || 500
         };
@@ -240,8 +329,8 @@ const fetchFormData = async () => {
     
     // Initialize checkbox arrays
     questions.forEach(question => {
-      if (question.type === 'checkbox' && !responses[question.id]) {
-        responses[question.id] = [];
+      if (question.type === 'checkbox' && !responses[question._id]) {
+        responses[question._id] = [];
       }
     });
     
@@ -269,12 +358,9 @@ const setRating = (questionId, rating) => {
 
 const validateForm = () => {
   if (!formData.value || !formData.value.questions) return false;
-  
   const requiredQuestions = formData.value.questions.filter(q => q.required);
-  
   for (const question of requiredQuestions) {
-    const response = responses[question.id];
-    
+    const response = responses[question._id];
     if (!response || 
         (Array.isArray(response) && response.length === 0) || 
         response === '') {
@@ -282,7 +368,6 @@ const validateForm = () => {
       return false;
     }
   }
-  
   return true;
 };
 
@@ -290,28 +375,21 @@ const handleSubmit = async () => {
   if (!validateForm()) {
     return;
   }
-
   isSubmitting.value = true;
-
   try {
     // Prepare response data matching backend Response schema
+    const answers = formData.value.questions.map(q => ({
+      question: q._id,
+      response: responses[q._id]
+    }));
     const responseData = {
       form: formData.value.id, // ObjectId of the form
-      answers: Object.keys(responses)
-        .filter(questionId => responses[questionId] !== undefined && responses[questionId] !== null)
-        .map(questionId => ({
-          question: questionId, // ObjectId of the question
-          response: responses[questionId] // Answer value (text, number, array, etc.)
-        }))
+      answers
     };
-    
     console.log('Submitting response data:', responseData);
-    
     // Submit to API
     const result = await responseAPI.submit(responseData);
-    
     console.log('Form submitted successfully:', result);
-    
     // Show success modal
     showSuccessModal.value = true;
   } catch (error) {

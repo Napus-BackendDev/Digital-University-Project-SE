@@ -14,7 +14,7 @@ const router = createRouter({
       name: 'home',
       component: UserDashboard,
     },
-    
+
     // หน้า About
     {
       path: '/editor',
@@ -33,9 +33,15 @@ const router = createRouter({
     {
       path: '/form-builder/:id',
       name: 'form-builder-edit',
-      component: () => import('../views/FormBuilderView.vue'),
+      component: () => import('../views/FormBuilderView.vue')
     },
-  ],
+    // หน้าแสดงฟอร์มสำหรับตอบ (Response)
+    {
+      path: '/form/:id/response',
+      name: 'form-response',
+      component: () => import('../views/Response.vue'),
+    }
+  ]
 })
 
 export default router
