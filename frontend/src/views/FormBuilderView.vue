@@ -159,7 +159,7 @@ function handleUpdateSettings(newSettings) {
   <div class="form-builder">
     <!-- Top Actions -->
     <div class="top-actions">
-      <router-link to="/" class="action-link">
+      <router-link to="/editor" class="action-link">
         <ArrowLeftIcon />
         Back to Forms
       </router-link>

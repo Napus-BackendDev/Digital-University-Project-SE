@@ -308,7 +308,7 @@ const handleSubmit = async () => {
     console.log('Submitting response data:', responseData);
     
     // Submit to API
-    const result = await responseAPI.createResponse(responseData);
+    const result = await responseAPI.submit(responseData);
     
     console.log('Form submitted successfully:', result);
     

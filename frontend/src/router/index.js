@@ -3,38 +3,44 @@
  * กำหนดเส้นทาง URL ของแอป
  */
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import UserDashboard from '../views/UserDashboard.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // หน้าแรก - แสดงรายการฟอร์มทั้งหมด
+    // หน้าแรก - User Dashboard
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: UserDashboard,
     },
-    
-    // หน้า About
+
+    // Editor Dashboard - จัดการฟอร์ม
     {
-      path: '/about',
-      name: 'about',
-      // lazy load - โหลดเมื่อเข้าหน้านี้
-      component: () => import('../views/AboutView.vue'),
+      path: '/editor',
+      name: 'editor',
+      component: () => import('../views/EditorDashboard.vue'),
     },
-    
+
     // หน้าสร้างฟอร์มใหม่
     {
       path: '/form-builder',
       name: 'form-builder',
       component: () => import('../views/FormBuilderView.vue'),
     },
-    
+
     // หน้าแก้ไขฟอร์ม (รับ ID จาก URL)
     {
       path: '/form-builder/:id',
       name: 'form-builder-edit',
       component: () => import('../views/FormBuilderView.vue'),
+    },
+
+    // หน้ากรอกฟอร์ม (Response)
+    {
+      path: '/form/:id/response',
+      name: 'response',
+      component: () => import('../views/Response.vue'),
     },
   ],
 })

@@ -5,6 +5,7 @@
 
 // Import global styles
 import './assets/main.css'
+import 'primeicons/primeicons.css'
 
 // Vue และ plugins
 import { createApp } from 'vue'

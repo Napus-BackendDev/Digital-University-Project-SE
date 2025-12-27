@@ -4,7 +4,8 @@
  */
 
 // ดึง API URL จาก environment variable หรือใช้ค่า default
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+// Backend ใช้ port 8081 (ตาม .env)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api/v1'
 
 /**
  * ฟังก์ชันหลักสำหรับเรียก API
@@ -142,14 +143,66 @@ export const questionsAPI = {
 export const responseAPI = {
   // ดึงคำตอบทั้งหมดของฟอร์ม
   async getByFormId(formId) {
-    return fetchAPI(`/response?formId=${formId}`)
+    return fetchAPI(`/response/getByFormId?formId=${formId}`)
+  },
+  
+  // ดึงคำตอบตาม User ID
+  async getByUserId(userId) {
+    return fetchAPI(`/response/getByUserId?userId=${userId}`)
+  },
+  
+  // ดึงคำตอบตาม ID
+  async getById(id) {
+    return fetchAPI(`/response/getById?_id=${id}`)
   },
   
   // ส่งคำตอบ
   async submit(responseData) {
-    return fetchAPI('/response', {
+    return fetchAPI('/response/submit', {
       method: 'POST',
       body: JSON.stringify(responseData),
+    })
+  },
+  
+  // อัพเดทคำตอบ
+  async update(responseData) {
+    return fetchAPI('/response/update', {
+      method: 'PATCH',
+      body: JSON.stringify(responseData),
+    })
+  },
+  
+  // ลบคำตอบ
+  async delete(id) {
+    return fetchAPI('/response/delete', {
+      method: 'DELETE',
+      body: JSON.stringify({ _id: id }),
+    })
+  },
+  
+  // ลบคำตอบทั้งหมดของฟอร์ม
+  async deleteByFormId(formId) {
+    return fetchAPI('/response/deleteByFormId', {
+      method: 'DELETE',
+      body: JSON.stringify({ formId: formId }),
+    })
+  },
+  
+  // ดาวน์โหลด JSON ของ user
+  async downloadUserJSON(formId, userId) {
+    return fetchAPI(`/response/download/${formId}/user/${userId}`)
+  },
+  
+  // ดาวน์โหลด JSON ทั้งหมดของฟอร์ม
+  async downloadFormJSON(formId) {
+    return fetchAPI(`/response/download/${formId}`)
+  },
+  
+  // สร้าง export link
+  async generateExportLink(formId) {
+    return fetchAPI('/response/export/link', {
+      method: 'POST',
+      body: JSON.stringify({ formId: formId }),
     })
   },
 }
