@@ -36,6 +36,14 @@ const router = createRouter({
       name: 'form-builder-edit',
       component: () => import('../views/FormBuilderView.vue'),
     },
+
+    {
+      path: '/form/:id',
+      name: 'form-preview',
+      component: () => import('../components/preview/index.vue'),
+    },
+
+
   ],
 })
 

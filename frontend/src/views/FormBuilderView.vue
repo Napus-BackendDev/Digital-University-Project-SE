@@ -42,26 +42,26 @@ const formUrl = computed(() => {
    =================================== */
 const { modalVisible, modalType, modalTitle, modalMessage, showModal, closeModal } = useModal()
 
-const { 
-  questions, 
-  expandedQuestionId, 
-  toggleQuestion, 
-  addQuestion, 
-  deleteQuestion, 
-  updateQuestion, 
-  addOption, 
-  removeOption, 
+const {
+  questions,
+  expandedQuestionId,
+  toggleQuestion,
+  addQuestion,
+  deleteQuestion,
+  updateQuestion,
+  addOption,
+  removeOption,
   onQuestionReorder,
-  setQuestions 
+  setQuestions
 } = useQuestionManager()
 
-const { 
-  settings, 
-  addCollaborator, 
-  removeCollaborator, 
+const {
+  settings,
+  addCollaborator,
+  removeCollaborator,
   loadSettings,
   buildSchedule,
-  buildSettingsPayload 
+  buildSettingsPayload
 } = useFormSettings()
 
 
@@ -70,16 +70,18 @@ const {
    =================================== */
 async function saveForm() {
   if (!formId.value) return
-  
+
   await formStore.updateForm({
-    _id: formId.value,
-    title: [{ key: 'en', value: formTitle.value }],
-    description: formDescription.value,
-    questions: questions.value,
-    status: settings.value.formStatus,
-    schedule: buildSchedule(),
-    settings: buildSettingsPayload()
-  })
+  _id: formId.value,
+  title: [{ key: 'en', value: formTitle.value }], // <-- ต้องเป็น array
+  description: typeof formDescription.value === 'string'
+    ? formDescription.value
+    : (Array.isArray(formDescription.value) ? (formDescription.value[0]?.value || '') : ''),
+  questions: questions.value,
+  status: settings.value.formStatus,
+  schedule: buildSchedule(),
+  settings: buildSettingsPayload()
+})
   console.log('บันทึกสำเร็จ')
 }
 
@@ -103,17 +105,19 @@ onBeforeRouteLeave(async () => {
    =================================== */
 onMounted(async () => {
   initAutoSave()
-  
+
   if (formId.value) {
     const form = await formStore.fetchFormById(formId.value)
     if (form) {
       formTitle.value = form.title?.[0]?.value || 'Untitled Form'
-      formDescription.value = form.description || ''
-      
+      formDescription.value = Array.isArray(form.description)
+        ? (form.description[0]?.value || '')
+        : (form.description || '')
+
       if (form.questions?.length > 0) {
         setQuestions(form.questions)
       }
-      
+
       loadSettings(form)
     }
   }
@@ -143,7 +147,7 @@ function copyFormUrl() {
 }
 
 function testForm() {
-  window.open(formUrl.value, '_blank')
+  window.open(`/form/${formId.value}`, '_self')
 }
 
 function handleExport(format) {
@@ -169,12 +173,8 @@ function handleUpdateSettings(newSettings) {
     <div class="form-content">
       <!-- Tabs -->
       <div class="tabs">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          :class="['tab-btn', { active: activeTab === tab.id }]"
-          @click="activeTab = tab.id"
-        >
+        <button v-for="tab in tabs" :key="tab.id" :class="['tab-btn', { active: activeTab === tab.id }]"
+          @click="activeTab = tab.id">
           <QuestionsIcon v-if="tab.icon === 'questions'" />
           <ResponsesIcon v-else-if="tab.icon === 'responses'" />
           <SettingsIcon v-else-if="tab.icon === 'settings'" />
@@ -183,57 +183,27 @@ function handleUpdateSettings(newSettings) {
       </div>
 
       <!-- Questions Tab -->
-      <QuestionsTab
-        v-if="activeTab === 'questions'"
-        :questions="questions"
-        :formTitle="formTitle"
-        :formDescription="formDescription"
-        :formUrl="formUrl"
-        :formStatus="settings.formStatus"
-        :expandedQuestionId="expandedQuestionId"
-        @update:questions="questions = $event"
-        @update:formTitle="formTitle = $event"
-        @update:formDescription="formDescription = $event"
-        @copy-url="copyFormUrl"
-        @test-form="testForm"
-        @add-question="addQuestion"
-        @update-question="updateQuestion"
-        @delete-question="deleteQuestion"
-        @add-option="addOption"
-        @remove-option="removeOption"
-        @toggle-question="toggleQuestion"
-        @reorder-questions="onQuestionReorder"
-      />
+      <QuestionsTab v-if="activeTab === 'questions'" :questions="questions" :formTitle="formTitle"
+        :formDescription="formDescription" :formUrl="formUrl" :formStatus="settings.formStatus"
+        :expandedQuestionId="expandedQuestionId" @update:questions="questions = $event"
+        @update:formTitle="formTitle = $event" @update:formDescription="formDescription = $event"
+        @copy-url="copyFormUrl" @test-form="testForm" @add-question="addQuestion" @update-question="updateQuestion"
+        @delete-question="deleteQuestion" @add-option="addOption" @remove-option="removeOption"
+        @toggle-question="toggleQuestion" @reorder-questions="onQuestionReorder" />
 
       <!-- Responses Tab -->
-      <ResponsesTab
-        v-else-if="activeTab === 'responses'"
-        :questions="questions"
-        :totalResponses="responsesData.totalResponses"
-        :viewMode="responseViewMode"
-        @update:viewMode="responseViewMode = $event"
-        @export="handleExport"
-      />
+      <ResponsesTab v-else-if="activeTab === 'responses'" :questions="questions"
+        :totalResponses="responsesData.totalResponses" :viewMode="responseViewMode"
+        @update:viewMode="responseViewMode = $event" @export="handleExport" />
 
       <!-- Settings Tab -->
-      <SettingsTab
-        v-else-if="activeTab === 'settings'"
-        :settings="settings"
-        :formUrl="formUrl"
-        @update:settings="handleUpdateSettings"
-        @add-collaborator="addCollaborator"
-        @remove-collaborator="removeCollaborator"
-      />
+      <SettingsTab v-else-if="activeTab === 'settings'" :settings="settings" :formUrl="formUrl"
+        @update:settings="handleUpdateSettings" @add-collaborator="addCollaborator"
+        @remove-collaborator="removeCollaborator" />
     </div>
 
     <!-- Modal -->
-    <Modal
-      :show="modalVisible"
-      :type="modalType"
-      :title="modalTitle"
-      :message="modalMessage"
-      @close="closeModal"
-    />
+    <Modal :show="modalVisible" :type="modalType" :title="modalTitle" :message="modalMessage" @close="closeModal" />
   </div>
 </template>
 
