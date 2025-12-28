@@ -63,6 +63,7 @@
             <div class="table-cell status-cell">
               <div :class="['status-badge', `status-${form.status}`]">
                 <div class="status-dot"></div>
+        
                 <div class="status-text">
                   {{ form.status === 'open' ? 'Open' : form.status === 'draft' ? 'Draft' : 'Closed' }}
                 </div>
@@ -125,6 +126,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 </script>
 
 <style scoped>
+  
 /* Table Wrapper */
 .table-wrapper {
   box-sizing: border-box;
@@ -255,9 +257,10 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   width: 100%;
 }
 
+
 .header-row {
   display: grid;
-  grid-template-columns: 604.36px 134.75px 161.61px 176.41px 136.91px;
+  grid-template-columns: minmax(120px,2fr) minmax(80px,1fr) minmax(80px,1fr) minmax(100px,1.2fr) minmax(60px,0.8fr);
   background: #FAFAFA;
   border-bottom: 1px solid #E5E5E5;
   height: 52px;
@@ -288,13 +291,52 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   width: 100%;
 }
 
+
 .data-row {
   display: grid;
-  grid-template-columns: 604.36px 134.75px 161.61px 176.41px 136.91px;
+  grid-template-columns: minmax(120px,2fr) minmax(80px,1fr) minmax(80px,1fr) minmax(100px,1.2fr) minmax(60px,0.8fr);
   border-bottom: 1px solid #F5F5F5;
   min-height: 87px;
   cursor: pointer;
   transition: background 0.2s;
+}
+
+@media (max-width: 900px) {
+  .table-wrapper {
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+    overflow-x: auto;
+  }
+  .table-container {
+    min-width: 600px;
+  }
+  .header-row, .data-row {
+    grid-template-columns: minmax(80px,2fr) minmax(60px,1fr) minmax(60px,1fr) minmax(80px,1fr) minmax(40px,0.7fr);
+    font-size: 12px;
+  }
+  .table-cell {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .table-wrapper {
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+    overflow-x: auto;
+  }
+  .table-container {
+    min-width: 400px;
+  }
+  .header-row, .data-row {
+    grid-template-columns: minmax(60px,2fr) minmax(40px,1fr) minmax(40px,1fr) minmax(60px,1fr) minmax(30px,0.7fr);
+    font-size: 10px;
+  }
+  .table-cell {
+    padding: 8px 4px;
+  }
 }
 
 .data-row:hover {

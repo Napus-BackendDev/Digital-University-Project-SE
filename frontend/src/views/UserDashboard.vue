@@ -116,9 +116,7 @@ const fetchForms = async () => {
     
     // Transform API data to match component structure
     // Filter forms with status 'open' or 'closed' for user dashboard
-    formsData.value = formData
-      .filter(form => form.status === 'open' || form.status === 'close' || form.status === 'closed')
-      .map(form => ({
+    formsData.value = formsData.value = formData.map (form => ({
         id: form._id,
         title: getTitle(form.title) || 'Untitled Form',
         description: getTitle(form.description) || 'No description',
@@ -203,10 +201,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* ==================== MAIN CONTAINER ==================== */
 .userdashboard {
   position: relative;
-  width: 1536px;
+  width: 100%;
   min-height: 1000px;
   background: #F5F5F5;
   font-family: 'Inter', sans-serif;
@@ -218,9 +215,9 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 160px 0px;
+  padding: 32px 16px 0px;
   gap: 32px;
-  width: 1536px;
+  width: 100%;
   min-height: calc(100vh - 65px);
   background: #FAFAFA;
   flex: none;
@@ -228,12 +225,77 @@ onMounted(() => {
   flex-grow: 0;
 }
 
+/* ==================== PAGE HEADER ==================== */
+/* ==================== PAGE HEADER ==================== */
+/* ==================== PAGE HEADER ==================== */
+.page-header {
+  width: 100%;
+  max-width: 1216px;
+  min-width: 0;
+  min-height: 60px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  overflow: visible;
+  flex-shrink: 0;
+  background: inherit;
+  z-index: 2;
+}
+.page-header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a1a;
+  word-break: break-word;
+}
+.page-header p {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .page-header {
+    max-width: 100%;
+    padding: 0 8px;
+    min-width: 0;
+    min-height: 48px;
+  }
+  .page-header h1 {
+    font-size: 1.4rem;
+  }
+  .page-header p {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .page-header {
+    padding: 0 2px;
+    gap: 4px;
+    min-width: 0;
+    min-height: 36px;
+    margin-bottom: 12px;
+  }
+  .page-header h1 {
+    font-size: 1.1rem;
+  }
+  .page-header p {
+    font-size: 0.8rem;
+  }
+}
+
 /* ==================== SEARCH ==================== */
 .search-container {
-  width: 1216px;
+  width: 100%;
+  max-width: 1216px;
   position: relative;
 }
 
+/* ==================== TABLE WRAPPER ==================== */
 /* ==================== TABLE WRAPPER ==================== */
 .table-wrapper {
   box-sizing: border-box;
@@ -241,7 +303,8 @@ onMounted(() => {
   flex-direction: column;
   align-items: stretch;
   padding: 1px;
-  width: 1216px;
+  width: 100%;
+  max-width: 1216px;
   min-height: 653px;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
@@ -250,11 +313,13 @@ onMounted(() => {
   flex: none;
   order: 2;
   flex-grow: 0;
+  overflow-x: auto;
 }
 
 .table-container {
   width: 100%;
-  overflow: hidden;
+  min-width: 700px;
+  overflow-x: auto;
   border-radius: 16px;
 }
 
@@ -616,7 +681,77 @@ onMounted(() => {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 1600px) {
   .form-list-page {
-    padding: 32px 40px 40px;
+    padding: 32px 24px 40px;
+    width: 100%;
+  }
+  .search-container,
+  .table-wrapper {
+    max-width: 1000px;
+  }
+  .table-container {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .form-list-page {
+    padding: 24px 8px 24px;
+  }
+  .search-container,
+  .table-wrapper {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .table-container {
+    min-width: 500px;
+  }
+  .table-header, .data-row {
+    grid-template-columns: 1fr 100px 100px 120px 100px;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 900px) {
+  .form-list-page {
+    padding: 12px 0 12px;
+  }
+  .search-container,
+  .table-wrapper {
+    max-width: 100%;
+    min-width: 0;
+    padding: 0;
+  }
+  .table-container {
+    min-width: 400px;
+  }
+  .table-header, .data-row {
+    grid-template-columns: 1fr 60px 80px 80px 60px;
+    font-size: 12px;
+    padding: 0 2px;
+  }
+}
+
+@media (max-width: 600px) {
+  .form-list-page {
+    padding: 4px 0 4px;
+  }
+  .search-container,
+  .table-wrapper {
+    max-width: 100vw;
+    min-width: 0;
+    padding: 0;
+  }
+  .table-container {
+    min-width: 320px;
+  }
+  .table-header, .data-row {
+    grid-template-columns: 1fr 40px 60px 60px 40px;
+    font-size: 10px;
+    padding: 0 1px;
+  }
+  .table-wrapper {
+    min-width: 0;
+    min-height: 0;
   }
 }
 </style>
