@@ -18,6 +18,7 @@ const STATUS_TRANSITIONS = Object.freeze({
 
 // ฟังก์ชันเช็กว่า current → next เปลี่ยนได้ไหม
 function canTransition(currentStatus, nextStatus) {
+  if (currentStatus === nextStatus) return true;
   const allowedNext = STATUS_TRANSITIONS[currentStatus] || [];
   return allowedNext.includes(nextStatus);
 }
