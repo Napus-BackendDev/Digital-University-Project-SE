@@ -63,7 +63,7 @@ const localQuestions = computed({
       </div>
     </div>
 
-    <div v-else-if="formStatus === 'closed'" class="status-banner warning">
+    <div v-else-if="formStatus === 'close'" class="status-banner warning">
       <div class="status-icon"><CloseCircleIcon /></div>
       <div class="status-content">
         <h3>Form is Closed</h3>
@@ -82,7 +82,7 @@ const localQuestions = computed({
       </div>
     </div>
 
-    <div v-else-if="formStatus === 'scheduled'" class="status-banner scheduled">
+    <div v-else-if="formStatus === 'auto'" class="status-banner scheduled">
       <div class="status-icon"><ClockIcon /></div>
       <div class="status-content">
         <h3>Scheduled</h3>

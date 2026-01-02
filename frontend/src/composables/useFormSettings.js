@@ -85,7 +85,7 @@ export function useFormSettings() {
    */
   function buildSchedule() {
     const schedule = { startAt: null, endAt: null }
-    if (settings.value.formStatus === 'scheduled') {
+    if (settings.value.formStatus === 'auto') {
       if (settings.value.startDate && settings.value.startTime) {
         schedule.startAt = new Date(`${settings.value.startDate}T${settings.value.startTime}`).toISOString()
       }

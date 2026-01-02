@@ -43,7 +43,8 @@ function getStatusLabel(status) {
   const labels = {
     'draft': 'Draft',
     'open': 'Active',
-    'close': 'Closed'
+    'close': 'Closed',
+    'auto': 'Scheduled'
   }
   return labels[status] || status
 }
@@ -365,6 +366,11 @@ async function deleteForm(event, formId) {
 .status-badge.close {
   background: #fee2e2;
   color: #dc2626;
+}
+
+.status-badge.auto {
+  background: #fef3c7;
+  color: #d97706;
 }
 
 .responses {
