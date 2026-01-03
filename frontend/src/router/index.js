@@ -9,26 +9,18 @@ import LoginView from '../views/LoginView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // หน้า Login
+    // หน้า Login - หน้าแรก
     {
-      path: '/login',
+      path: '/',
       name: 'login',
       component: LoginView,
     },
     
-    // หน้าแรก - แสดงรายการฟอร์มทั้งหมด
+    // หน้า Home - แสดงรายการฟอร์มทั้งหมด
     {
-      path: '/',
+      path: '/home',
       name: 'home',
       component: HomeView,
-    },
-    
-    // หน้า About
-    {
-      path: '/about',
-      name: 'about',
-      // lazy load - โหลดเมื่อเข้าหน้านี้
-      component: () => import('../views/AboutView.vue'),
     },
     
     // หน้าสร้างฟอร์มใหม่
