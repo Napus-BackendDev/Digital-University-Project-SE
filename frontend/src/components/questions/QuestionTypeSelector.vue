@@ -10,7 +10,6 @@ const questionTypes = [
   { id: 'paragraph', name: 'Paragraph', icon: 'paragraph' },
   { id: 'multiple-choice', name: 'Multiple Choice', icon: 'radio' },
   { id: 'checkbox', name: 'Checkbox', icon: 'checkbox' },
-  { id: 'dropdown', name: 'Dropdown', icon: 'dropdown' },
   { id: 'rating', name: 'Rating', icon: 'star' },
   { id: 'file-upload', name: 'File Upload', icon: 'upload' }
 ]
@@ -19,7 +18,6 @@ const questionTypes = [
 const contentElements = [
   { id: 'title-description', name: 'Title & Description', icon: 'title' },
   { id: 'image', name: 'Image', icon: 'image' },
-  { id: 'video', name: 'Video', icon: 'video' },
   { id: 'section-divider', name: 'Section Divider', icon: 'divider' }
 ]
 

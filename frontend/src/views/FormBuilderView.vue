@@ -6,6 +6,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useFormStore } from '@/stores/form'
+import { questionsAPI } from '@/services/api'
 
 // Composables
 import { useModal, useQuestionManager, useFormSettings, useAutoSave } from '@/composables'
@@ -30,6 +31,7 @@ const formId = computed(() => route.params.id)
 const activeTab = ref('questions')
 const formTitle = ref('Untitled Form')
 const formDescription = ref('')
+const currentFormStatus = ref('draft') // เก็บ status ปัจจุบันจาก database
 
 const formUrl = computed(() => {
   const baseUrl = window.location.origin
@@ -68,19 +70,91 @@ const {
 /* ===================================
    Auto-save
    =================================== */
+
+// แปลง frontend question type เป็น backend type
+function mapQuestionType(frontendType) {
+  const typeMap = {
+    'short-answer': 'short',
+    'paragraph': 'paragraph',
+    'multiple-choice': 'choices',
+    'checkbox': 'checkbox',
+    'rating': 'rating',
+    'file-upload': 'file',
+    'title-description': 'title',
+    'image': 'image',
+    'section-divider': 'divider'
+  }
+  return typeMap[frontendType] || frontendType
+}
+
 async function saveForm() {
   if (!formId.value) return
   
-  await formStore.updateForm({
-    _id: formId.value,
-    title: [{ key: 'en', value: formTitle.value }],
-    description: [{ key: 'en', value: formDescription.value }],
-    questions: questions.value.filter(q => q && q._id).map(q => q._id),
-    status: settings.value.formStatus,
-    schedule: buildSchedule(),
-    settings: buildSettingsPayload()
-  })
-  console.log('บันทึกสำเร็จ')
+  try {
+    // แยก questions ที่มี _id (existing) และไม่มี _id (new)
+    const existingQuestions = questions.value.filter(q => q && q._id)
+    const newQuestions = questions.value.filter(q => q && !q._id)
+    
+    // สร้าง questions ใหม่ใน database
+    const createdQuestionIds = []
+    for (const q of newQuestions) {
+      const questionData = {
+        form: formId.value,
+        title: [{ key: 'en', value: q.title || '' }],
+        type: mapQuestionType(q.type),
+        required: q.required || false,
+        order: questions.value.indexOf(q) + 1,
+        config: {
+          options: q.options || [],
+          maxRating: q.maxRating || 5,
+          allowSpecificTypes: q.allowSpecificTypes || false,
+          allowedFileTypes: q.allowedFileTypes || [],
+          maxFiles: q.maxFiles || 1,
+          maxSize: q.maxSize || 10
+        }
+      }
+      
+      const result = await questionsAPI.create(questionData)
+      if (result.data && result.data._id) {
+        // อัพเดท question ใน local state ด้วย _id ใหม่
+        q._id = result.data._id
+        createdQuestionIds.push(result.data._id)
+      }
+    }
+    
+    // รวม question IDs ทั้งหมด
+    const allQuestionIds = [
+      ...existingQuestions.map(q => q._id),
+      ...createdQuestionIds
+    ]
+    
+    // ใช้ status ใหม่ถ้ามีการเปลี่ยน หรือใช้ status ปัจจุบัน
+    const statusToSave = settings.value.formStatus || currentFormStatus.value || 'draft'
+    
+    console.log('Saving form with:', {
+      formId: formId.value,
+      questionIds: allQuestionIds,
+      status: statusToSave
+    })
+    
+    const result = await formStore.updateForm({
+      _id: formId.value,
+      title: [{ key: 'en', value: formTitle.value }],
+      description: [{ key: 'en', value: formDescription.value }],
+      questions: allQuestionIds,
+      status: statusToSave,
+      schedule: buildSchedule(),
+      settings: buildSettingsPayload()
+    })
+    
+    // อัพเดท currentFormStatus หลังจาก save สำเร็จ
+    if (result) {
+      currentFormStatus.value = result.status
+    }
+    console.log('บันทึกสำเร็จ')
+  } catch (error) {
+    console.error('เกิดข้อผิดพลาดในการบันทึก:', error)
+  }
 }
 
 const { saving, debounceSave, executeSave, hasPendingSave, initAutoSave } = useAutoSave(saveForm)
@@ -101,6 +175,40 @@ onBeforeRouteLeave(async () => {
 /* ===================================
    Lifecycle
    =================================== */
+
+// แปลง backend question type เป็น frontend type
+function mapQuestionTypeFromBackend(backendType) {
+  const typeMap = {
+    'short': 'short-answer',
+    'paragraph': 'paragraph',
+    'choices': 'multiple-choice',
+    'checkbox': 'checkbox',
+    'rating': 'rating',
+    'file': 'file-upload',
+    'title': 'title-description',
+    'image': 'image',
+    'divider': 'section-divider'
+  }
+  return typeMap[backendType] || backendType
+}
+
+// แปลง questions จาก API เป็น format ที่ frontend ใช้
+function transformQuestionsFromAPI(apiQuestions) {
+  return apiQuestions.map(q => ({
+    _id: q._id,
+    id: q._id,
+    type: mapQuestionTypeFromBackend(q.type),
+    title: q.title?.[0]?.value || '',
+    required: q.required || false,
+    options: q.config?.options || [],
+    maxRating: q.config?.maxRating || 5,
+    allowSpecificTypes: q.config?.allowSpecificTypes || false,
+    allowedFileTypes: q.config?.allowedFileTypes || [],
+    maxFiles: q.config?.maxFiles || 1,
+    maxSize: q.config?.maxSize || 10
+  }))
+}
+
 onMounted(async () => {
   initAutoSave()
   
@@ -109,9 +217,12 @@ onMounted(async () => {
     if (form) {
       formTitle.value = form.title?.[0]?.value || 'Untitled Form'
       formDescription.value = form.description?.[0]?.value || ''
+      currentFormStatus.value = form.status || 'draft' // เก็บ status ปัจจุบัน
       
       if (form.questions?.length > 0) {
-        setQuestions(form.questions)
+        // แปลง questions จาก API format เป็น frontend format
+        const transformedQuestions = transformQuestionsFromAPI(form.questions)
+        setQuestions(transformedQuestions)
       }
       
       loadSettings(form)

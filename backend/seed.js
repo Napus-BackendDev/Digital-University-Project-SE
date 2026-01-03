@@ -3,9 +3,9 @@
 require('dotenv').config({ path: '.env.dev' });
 const mongoose = require('mongoose');
 const Form = require('./server/Project/Form/models/form.model');
-const Response = require('./server/Project/Response/models/response.model');
-const Role = require('./server/Project/Role/models/role.model');
-const User = require('./server/Project/User/models/user.model');
+const Response = require('./server/Project/Response/model/response.model');
+// const Role = require('./server/Project/Role/models/role.model');
+// const User = require('./server/Project/User/models/user.model');
 const { Questions, TextQuestion, RatingQuestion, CheckboxQuestion, ChoicesQuestion } = require('./server/Project/Questions/models/questions.model');
 
 // MongoDB connection
@@ -24,79 +24,79 @@ async function seedDatabase() {
         await Form.deleteMany({});
         await Response.deleteMany({});
         await Questions.deleteMany({});
-        await Role.deleteMany({});
-        await User.deleteMany({});
+        // await Role.deleteMany({});
+        // await User.deleteMany({});
         console.log('🗑️  Cleared existing data');
 
         // ============================================
-        // 0. CREATE ROLES
+        // 0. CREATE ROLES (SKIPPED - No Role model)
         // ============================================
         
-        const roles = await Role.create([
-            {
-                name: 'ADMIN',
-                description: 'Administrator with full system access',
-                permissions: [
-                    // User Management
-                    'VIEW_USERS',
-                    'DELETE_USER',
-                    // Form Management
-                    'VIEW_FORMS',
-                    'CREATE_FORM',
-                    'UPDATE_FORM',
-                    'DELETE_FORM',
-                    'DUPLICATE_FORM',
-                    // Question Management
-                    'VIEW_QUESTIONS',
-                    'CREATE_QUESTION',
-                    'UPDATE_QUESTION',
-                    'DELETE_QUESTION',
-                    // Response Management
-                    'VIEW_RESPONSES',
-                    'VIEW_OWN_RESPONSES',
-                    'SUBMIT_RESPONSES',
-                    'EDIT_RESPONSES',
-                    'DELETE_RESPONSES',
-                    'EXPORT_RESPONSES'
-                ]
-            },
-            {
-                name: 'STAFF',
-                description: 'Staff member with form and response management',
-                permissions: [
-                    // Form Management
-                    'VIEW_FORMS',
-                    'CREATE_FORM',
-                    'UPDATE_FORM',
-                    'DELETE_FORM',
-                    'DUPLICATE_FORM',
-                    // Question Management
-                    'VIEW_QUESTIONS',
-                    'CREATE_QUESTION',
-                    'UPDATE_QUESTION',
-                    'DELETE_QUESTION',
-                    // Response Management
-                    'VIEW_RESPONSES',
-                    'VIEW_OWN_RESPONSES',
-                    'SUBMIT_RESPONSES',
-                    'EXPORT_RESPONSES'
-                ]
-            },
-            {
-                name: 'USER',
-                description: 'Regular user with basic access',
-                permissions: [
-                    // Form Viewing
-                    'VIEW_FORMS',
-                    // Response Submission
-                    'SUBMIT_RESPONSES', 
-                    'VIEW_OWN_RESPONSES',
-                    
-                ]
-            }
-        ]);
+        // const roles = await Role.create([
+        //     {
+        //         name: 'ADMIN',
+        //         description: 'Administrator with full system access',
+        //         permissions: [
+        //             // User Management
+        //             'VIEW_USERS',
+        //             'DELETE_USER',
+        //             // Form Management
+        //             'VIEW_FORMS',
+        //             'CREATE_FORM',
+        //             'UPDATE_FORM',
+        //             'DELETE_FORM',
+        //             'DUPLICATE_FORM',
+        //             // Question Management
+        //             'VIEW_QUESTIONS',
+        //             'CREATE_QUESTION',
+        //             'UPDATE_QUESTION',
+        //             'DELETE_QUESTION',
+        //             // Response Management
+        //             'VIEW_RESPONSES',
+        //             'VIEW_OWN_RESPONSES',
+        //             'SUBMIT_RESPONSES',
+        //             'EDIT_RESPONSES',
+        //             'DELETE_RESPONSES',
+        //             'EXPORT_RESPONSES'
+        //         ]
+        //     },
+        //     {
+        //         name: 'STAFF',
+        //         description: 'Staff member with form and response management',
+        //         permissions: [
+        //             // Form Management
+        //             'VIEW_FORMS',
+        //             'CREATE_FORM',
+        //             'UPDATE_FORM',
+        //             'DELETE_FORM',
+        //             'DUPLICATE_FORM',
+        //             // Question Management
+        //             'VIEW_QUESTIONS',
+        //             'CREATE_QUESTION',
+        //             'UPDATE_QUESTION',
+        //             'DELETE_QUESTION',
+        //             // Response Management
+        //             'VIEW_RESPONSES',
+        //             'VIEW_OWN_RESPONSES',
+        //             'SUBMIT_RESPONSES',
+        //             'EXPORT_RESPONSES'
+        //         ]
+        //     },
+        //     {
+        //         name: 'USER',
+        //         description: 'Regular user with basic access',
+        //         permissions: [
+        //             // Form Viewing
+        //             'VIEW_FORMS',
+        //             // Response Submission
+        //             'SUBMIT_RESPONSES', 
+        //             'VIEW_OWN_RESPONSES',
+        //             
+        //         ]
+        //     }
+        // ]);
 
-        console.log(`✅ Created ${roles.length} roles`);
+        // console.log(`✅ Created ${roles.length} roles`);
 
         // ============================================
         // 0.1 CREATE USERS

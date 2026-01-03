@@ -22,7 +22,7 @@
         :loading="loading"
         :error="error"
         :empty-message="searchQuery ? 'Try adjusting your search' : 'No forms available at the moment'"
-        @form-click="() => {}"
+        @form-click="handleFillForm"
         @toggle-dropdown="toggleActionsDropdown"
         @retry="fetchForms"
       >

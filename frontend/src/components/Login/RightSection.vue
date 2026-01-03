@@ -85,7 +85,12 @@ const handleLogin = async () => {
     localStorage.setItem('token', result.data.token)
     localStorage.setItem('user', JSON.stringify(result.data.user))
     
-    router.push('/home')
+    // Redirect based on role
+    if (result.data.user.role === 'editor' || result.data.user.role === 'staff') {
+      router.push('/editor')
+    } else {
+      router.push('/home')
+    }
     
   } catch (error) {
     errorMessage.value = error.message

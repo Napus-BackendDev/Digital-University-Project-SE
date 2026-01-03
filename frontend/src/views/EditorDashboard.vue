@@ -40,7 +40,7 @@
         :loading="loading"
         :error="error"
         :empty-message="searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Create your first form to get started'"
-        @form-click="() => {}"
+        @form-click="handleEdit"
         @toggle-dropdown="toggleActionsDropdown"
         @retry="fetchForms"
       >
