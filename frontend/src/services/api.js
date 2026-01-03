@@ -17,7 +17,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api/
  */
 async function fetchAPI(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`
-  
+  console.log(url);
   // กำหนด headers เริ่มต้น
   const defaultOptions = {
     headers: {
@@ -92,12 +92,12 @@ export const formAPI = {
 export const questionsAPI = {
   // ดึงคำถามทั้งหมดของฟอร์ม
   async getByFormId(formId) {
-    return fetchAPI(`/question?formId=${formId}`)
+    return fetchAPI(`/questions?formId=${formId}`)
   },
   
   // สร้างคำถามใหม่ (รองรับทั้ง single และ array)
-  async create(questionData) {
-    return fetchAPI('/question', {
+  async create(questionsData) {
+    return fetchAPI('/questions', {
       method: 'POST',
       body: JSON.stringify(questionData),
     })
@@ -105,15 +105,15 @@ export const questionsAPI = {
   
   // สร้างคำถามหลายอันพร้อมกัน
   async createMany(questionsArray) {
-    return fetchAPI('/question', {
+    return fetchAPI('/questions', {
       method: 'POST',
       body: JSON.stringify(questionsArray),
     })
   },
   
   // อัพเดทคำถาม
-  async update(questionData) {
-    return fetchAPI('/question', {
+  async update(questionsData) {
+    return fetchAPI('/questions', {
       method: 'PUT',
       body: JSON.stringify(questionData),
     })
@@ -121,7 +121,7 @@ export const questionsAPI = {
   
   // ลบคำถาม
   async delete(id) {
-    return fetchAPI('/question', {
+    return fetchAPI('/questions', {
       method: 'DELETE',
       body: JSON.stringify({ _id: id }),
     })
@@ -129,7 +129,7 @@ export const questionsAPI = {
   
   // ลบคำถามทั้งหมดของ form
   async deleteByFormId(formId) {
-    return fetchAPI(`/question/byForm`, {
+    return fetchAPI(`/questions/byForm`, {
       method: 'DELETE',
       body: JSON.stringify({ formId: formId }),
     })

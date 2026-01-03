@@ -74,8 +74,8 @@ async function saveForm() {
   await formStore.updateForm({
     _id: formId.value,
     title: [{ key: 'en', value: formTitle.value }],
-    description: formDescription.value,
-    questions: questions.value,
+    description: [{ key: 'en', value: formDescription.value }],
+    questions: questions.value.filter(q => q && q._id).map(q => q._id),
     status: settings.value.formStatus,
     schedule: buildSchedule(),
     settings: buildSettingsPayload()
@@ -108,7 +108,7 @@ onMounted(async () => {
     const form = await formStore.fetchFormById(formId.value)
     if (form) {
       formTitle.value = form.title?.[0]?.value || 'Untitled Form'
-      formDescription.value = form.description || ''
+      formDescription.value = form.description?.[0]?.value || ''
       
       if (form.questions?.length > 0) {
         setQuestions(form.questions)
@@ -143,7 +143,7 @@ function copyFormUrl() {
 }
 
 function testForm() {
-  window.open(formUrl.value, '_blank')
+  window.open(formUrl.value, '_self')
 }
 
 function handleExport(format) {
@@ -159,7 +159,7 @@ function handleUpdateSettings(newSettings) {
   <div class="form-builder">
     <!-- Top Actions -->
     <div class="top-actions">
-      <router-link to="/" class="action-link">
+      <router-link to="/editor" class="action-link">
         <ArrowLeftIcon />
         Back to Forms
       </router-link>
@@ -205,6 +205,7 @@ function handleUpdateSettings(newSettings) {
         @reorder-questions="onQuestionReorder"
       />
 
+      
       <!-- Responses Tab -->
       <ResponsesTab
         v-else-if="activeTab === 'responses'"

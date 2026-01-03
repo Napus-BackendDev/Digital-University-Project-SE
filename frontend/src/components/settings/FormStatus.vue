@@ -1,7 +1,7 @@
 <script setup>
 /**
  * FormStatus - ตั้งค่าสถานะของฟอร์ม
- * มี 4 สถานะ: Draft, Open, Closed, Auto (Scheduled)
+ * มี 4 สถานะ: Draft, Open, Close, Auto
  */
 import { defineProps, defineEmits, computed } from 'vue'
 

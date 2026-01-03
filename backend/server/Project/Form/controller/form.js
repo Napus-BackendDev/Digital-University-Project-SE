@@ -3,7 +3,8 @@ var objSchema = require("../models/form.model");
 const createBaseService = require("../../../../helpers/base.service")
 
 const defaultPopulate = [
-    // questions เป็น embedded document แล้ว ไม่ต้อง populate
+    { path: 'questions' },
+
     { path: 'responses' },
 ]
 

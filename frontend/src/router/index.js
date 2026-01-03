@@ -3,7 +3,7 @@
  * กำหนดเส้นทาง URL ของแอป
  */
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import UserDashboard from '../views/UserDashboard.vue'
 import LoginView from '../views/LoginView.vue'
 
 const router = createRouter({
@@ -16,27 +16,40 @@ const router = createRouter({
       component: LoginView,
     },
     
-    // หน้า Home - แสดงรายการฟอร์มทั้งหมด
+    // หน้า Home - User Dashboard
     {
       path: '/home',
       name: 'home',
-      component: HomeView,
+      component: UserDashboard,
     },
-    
+
+    // หน้า Editor Dashboard
+    {
+      path: '/editor',
+      name: 'editor',
+      component: () => import('../views/EditorDashboard.vue'),
+    },
+
     // หน้าสร้างฟอร์มใหม่
     {
       path: '/form-builder',
       name: 'form-builder',
       component: () => import('../views/FormBuilderView.vue'),
     },
-    
+
     // หน้าแก้ไขฟอร์ม (รับ ID จาก URL)
     {
       path: '/form-builder/:id',
       name: 'form-builder-edit',
-      component: () => import('../views/FormBuilderView.vue'),
+      component: () => import('../views/FormBuilderView.vue')
     },
-  ],
+    // หน้าแสดงฟอร์มสำหรับตอบ (Response)
+    {
+      path: '/form/:id/response',
+      name: 'form-response',
+      component: () => import('../views/Response.vue'),
+    }
+  ]
 })
 
 export default router
