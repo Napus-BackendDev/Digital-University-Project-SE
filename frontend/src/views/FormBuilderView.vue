@@ -198,7 +198,7 @@ function transformQuestionsFromAPI(apiQuestions) {
     _id: q._id,
     id: q._id,
     type: mapQuestionTypeFromBackend(q.type),
-    title: q.title?.[0]?.value || '',
+    title: q.title?.[0]?.value || 'Untitled Question',
     required: q.required || false,
     options: q.config?.options || [],
     maxRating: q.config?.maxRating || 5,
