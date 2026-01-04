@@ -14,6 +14,7 @@ const STATUS_TRANSITIONS = Object.freeze({
   [STATUS.DRAFT]: [STATUS.OPEN, STATUS.CLOSE, STATUS.AUTO],
   [STATUS.OPEN]: [STATUS.CLOSE, STATUS.AUTO],
   [STATUS.CLOSE]: [STATUS.OPEN, STATUS.AUTO],
+  [STATUS.AUTO]: [STATUS.CLOSE, STATUS.OPEN],
 });
 
 // ฟังก์ชันเช็กว่า current → next เปลี่ยนได้ไหม
