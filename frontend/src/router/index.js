@@ -55,7 +55,7 @@ const router = createRouter({
     {
       path: '/form/:id/response',
       name: 'form-response',
-      component: () => import('../views/FormfillView.vue'),
+      component: () => import('../views/Response.vue'),
     }
   ]
 })
