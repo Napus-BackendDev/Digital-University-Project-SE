@@ -61,9 +61,7 @@ function updateSetting(key, value) {
 
       <ConfirmationMessage
         :confirmationMessage="settings.confirmationMessage"
-        :showAnotherResponseLink="settings.showAnotherResponseLink"
         @update:confirmationMessage="updateSetting('confirmationMessage', $event)"
-        @update:showAnotherResponseLink="updateSetting('showAnotherResponseLink', $event)"
       />
 
       <SendForm :formUrl="formUrl" />

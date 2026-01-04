@@ -95,35 +95,28 @@ async function saveForm() {
     const existingQuestions = questions.value.filter(q => q && q._id)
     const newQuestions = questions.value.filter(q => q && !q._id)
     
-    // อัปเดต existing questions
+    // อัพเดท existing questions ใน database
     for (const q of existingQuestions) {
-      if (!q.title || q.title.trim() === '') continue
-      
-      const questionData = {
+      const updateData = {
         _id: q._id,
-        form: formId.value,
-        title: [{ key: 'en', value: q.title }],
+        title: [{ key: 'en', value: q.title || '' }],
         type: mapQuestionType(q.type),
         required: q.required || false,
         order: questions.value.indexOf(q) + 1,
         config: {
-          options: q.options?.map(opt => ({
-            id: opt.id,
-            text: opt.text,
-            hasFollowUp: opt.hasFollowUp || false,
-            followUpQuestion: opt.followUpQuestion || null
-          })) || [],
+          options: q.options || [],
           maxRating: q.maxRating || 5,
           allowSpecificTypes: q.allowSpecificTypes || false,
           allowedFileTypes: q.allowedFileTypes || [],
           maxFiles: q.maxFiles || 1,
           maxSize: q.maxSize || 10,
+          // Image & Video fields
           imageUrl: q.imageUrl || '',
+          videoUrl: q.videoUrl || '',
           caption: q.caption || ''
         }
       }
-      
-      await questionsAPI.update(questionData)
+      await questionsAPI.update(updateData)
     }
     
     // สร้าง questions ใหม่ใน database
@@ -153,7 +146,9 @@ async function saveForm() {
           allowedFileTypes: q.allowedFileTypes || [],
           maxFiles: q.maxFiles || 1,
           maxSize: q.maxSize || 10,
+          // Image & Video fields
           imageUrl: q.imageUrl || '',
+          videoUrl: q.videoUrl || '',
           caption: q.caption || ''
         }
       }
@@ -240,7 +235,7 @@ function transformQuestionsFromAPI(apiQuestions) {
     _id: q._id,
     id: q._id,
     type: mapQuestionTypeFromBackend(q.type),
-    title: q.title?.[0]?.value || '',
+    title: q.title?.[0]?.value || 'Untitled Question',
     required: q.required || false,
     options: q.config?.options || [],
     maxRating: q.config?.maxRating || 5,
@@ -248,7 +243,9 @@ function transformQuestionsFromAPI(apiQuestions) {
     allowedFileTypes: q.config?.allowedFileTypes || [],
     maxFiles: q.config?.maxFiles || 1,
     maxSize: q.config?.maxSize || 10,
+    // Image & Video fields
     imageUrl: q.config?.imageUrl || '',
+    videoUrl: q.config?.videoUrl || '',
     caption: q.config?.caption || ''
   }))
 }

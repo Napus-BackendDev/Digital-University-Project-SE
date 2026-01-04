@@ -21,7 +21,7 @@ export function useQuestionManager() {
     const newQuestion = {
       id: questions.value.length + 1,
       type: type.id,
-      title: '',
+      title: 'Untitled Question',
       required: false
     }
 

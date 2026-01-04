@@ -4,14 +4,12 @@
  * แสดงเมื่อผู้ตอบกด submit สำเร็จ
  */
 import { defineProps, defineEmits } from 'vue'
-import ToggleSetting from './ToggleSetting.vue'
 
 const props = defineProps({
-  confirmationMessage: { type: String, default: '' },
-  showAnotherResponseLink: { type: Boolean, default: true }
+  confirmationMessage: { type: String, default: '' }
 })
 
-const emit = defineEmits(['update:confirmationMessage', 'update:showAnotherResponseLink'])
+const emit = defineEmits(['update:confirmationMessage'])
 </script>
 
 <template>
@@ -29,13 +27,6 @@ const emit = defineEmits(['update:confirmationMessage', 'update:showAnotherRespo
         placeholder="Enter confirmation message"
       ></textarea>
     </div>
-    
-    <ToggleSetting
-      label='Show "Submit another response" link'
-      description="Allow respondents to submit multiple responses"
-      :modelValue="showAnotherResponseLink"
-      @update:modelValue="emit('update:showAnotherResponseLink', $event)"
-    />
   </div>
 </template>
 

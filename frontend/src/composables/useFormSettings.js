@@ -26,8 +26,7 @@ export function useFormSettings() {
     showProgressBar: true,
 
     // ข้อความยืนยัน
-    confirmationMessage: 'Thank you for completing this survey. Your response has been recorded.',
-    showAnotherResponseLink: true
+    confirmationMessage: 'Thank you for completing this survey. Your response has been recorded.'
   })
 
   /**
@@ -76,7 +75,6 @@ export function useFormSettings() {
       if (s.maxResponses !== undefined) settings.value.maxResponses = s.maxResponses
       if (s.showProgressBar !== undefined) settings.value.showProgressBar = s.showProgressBar
       if (s.confirmationMessage !== undefined) settings.value.confirmationMessage = s.confirmationMessage
-      if (s.showAnotherResponseLink !== undefined) settings.value.showAnotherResponseLink = s.showAnotherResponseLink
     }
   }
 
@@ -106,8 +104,7 @@ export function useFormSettings() {
       limitResponses: settings.value.limitResponses,
       maxResponses: settings.value.maxResponses,
       showProgressBar: settings.value.showProgressBar,
-      confirmationMessage: settings.value.confirmationMessage,
-      showAnotherResponseLink: settings.value.showAnotherResponseLink
+      confirmationMessage: settings.value.confirmationMessage
     }
   }
 

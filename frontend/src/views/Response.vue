@@ -23,18 +23,88 @@
         <p class="error-text">Form not found</p>
       </div>
 
+      <!-- Form Closed Message -->
+      <div v-else-if="formStatus === 'close'" class="form-container">
+        <div class="form-closed-message">
+          <svg class="closed-icon" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" fill="#FEE2E2"/>
+            <path d="M24 24L40 40M40 24L24 40" stroke="#EF4444" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <h2>Form Closed</h2>
+          <p>This form is no longer accepting responses.</p>
+        </div>
+      </div>
+
+      <!-- Form Draft Message -->
+      <div v-else-if="formStatus === 'draft'" class="form-container">
+        <div class="form-closed-message">
+          <svg class="closed-icon" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" fill="#FEF3C7"/>
+            <path d="M32 20V36M32 44H32.01" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <h2>Form Not Available</h2>
+          <p>This form is not published yet.</p>
+        </div>
+      </div>
+
+      <!-- Already Submitted Message (Limit to one response) -->
+      <div v-else-if="hasAlreadySubmitted" class="form-container">
+        <div class="form-closed-message">
+          <svg class="closed-icon" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" fill="#DBEAFE"/>
+            <path d="M20 32L28 40L44 24" stroke="#3B82F6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h2>Already Submitted</h2>
+          <p>You have already submitted a response to this form.</p>
+        </div>
+      </div>
+
       <div v-else class="form-container">
-        <!-- Form Header -->
-        <div class="form-header">
+        <!-- Progress Bar -->
+        <div v-if="formSettings?.showProgressBar" class="progress-bar-container">
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
+          </div>
+          <span class="progress-text">
+            <template v-if="totalSections > 1">
+              Section {{ currentSection + 1 }} of {{ totalSections }}
+            </template>
+            <template v-else>
+              {{ progressPercent }}% completed
+            </template>
+          </span>
+        </div>
+
+        <!-- Section Indicator (always show if multi-page) -->
+        <div v-if="totalSections > 1 && !formSettings?.showProgressBar" class="section-indicator">
+          Section {{ currentSection + 1 }} of {{ totalSections }}
+        </div>
+
+        <!-- Form Header (show on first section only or single section) -->
+        <div v-if="isFirstSection" class="form-header">
           <h1 class="form-title">{{ formData.title }}</h1>
           <p class="form-description">{{ formData.description }}</p>
         </div>
 
-        <!-- Questions -->
+        <!-- Email Collection (show on first section only) -->
+        <div v-if="formSettings?.collectEmails && isFirstSection" class="email-section">
+          <label class="email-label">
+            Email Address <span class="required">*</span>
+          </label>
+          <input 
+            type="email" 
+            v-model="respondentEmail"
+            class="form-input"
+            placeholder="your@email.com"
+            required
+          />
+        </div>
+
+        <!-- Questions (show current section only) -->
         <div class="questions-container">
-          <div v-for="(question, index) in formData.questions" :key="question._id" class="question-block">
+          <div v-for="question in currentSectionQuestions" :key="question._id" class="question-block">
             <div class="question-label">
-              Question {{ index + 1 }}
+              Question {{ getGlobalQuestionIndex(question) }}
             </div>
             
             <div class="question-content">
@@ -183,9 +253,48 @@
             <span class="required">*</span>
             <span>Required field</span>
           </div>
-          <button class="submit-btn" @click="handleSubmit" :disabled="isSubmitting">
-            {{ isSubmitting ? 'Submitting...' : 'Submit' }}
-          </button>
+          
+          <!-- Navigation Buttons for Multi-section Forms -->
+          <div class="navigation-buttons">
+            <!-- Previous Button (hidden on first section) -->
+            <button 
+              v-if="!isFirstSection" 
+              class="nav-btn prev-btn" 
+              @click="prevSection"
+              type="button"
+            >
+              <svg class="icon-16" viewBox="0 0 16 16" fill="none">
+                <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Previous
+            </button>
+            
+            <!-- Spacer when no previous button -->
+            <div v-else></div>
+            
+            <!-- Next Button (for non-last sections) -->
+            <button 
+              v-if="!isLastSection" 
+              class="nav-btn next-btn" 
+              @click="nextSection"
+              type="button"
+            >
+              Next
+              <svg class="icon-16" viewBox="0 0 16 16" fill="none">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            
+            <!-- Submit Button (only on last section) -->
+            <button 
+              v-else 
+              class="submit-btn" 
+              @click="handleSubmit" 
+              :disabled="isSubmitting"
+            >
+              {{ isSubmitting ? 'Submitting...' : 'Submit' }}
+            </button>
+          </div>
         </div>
       </div>
     </main>
@@ -201,8 +310,10 @@
           </svg>
         </div>
         <h2 class="modal-title">Response Submitted!</h2>
-        <p class="modal-message">Thank you for your response. Your answers have been recorded successfully.</p>
-        <button class="modal-button" @click="closeModal">Back to Forms</button>
+        <p class="modal-message">{{ confirmationMessage }}</p>
+        <div class="modal-actions">
+          <button class="modal-button" @click="closeModal">Back to Forms</button>
+        </div>
       </div>
     </div>
   </div>
@@ -251,6 +362,132 @@ const isSubmitting = ref(false);
 const showSuccessModal = ref(false);
 const loading = ref(true);
 const formData = ref(null);
+const formSettings = ref(null);
+const formStatus = ref(null);
+const respondentEmail = ref('');
+const confirmationMessage = ref('Thank you for your response!');
+const hasAlreadySubmitted = ref(false);
+
+// ===== Section Navigation (Multi-page forms like Google Forms) =====
+const currentSection = ref(0);
+
+// แบ่ง questions เป็น sections โดยใช้ divider เป็นจุดแบ่ง
+const sections = computed(() => {
+  if (!formData.value?.questions?.length) return [[]];
+  
+  const result = [];
+  let currentSectionQuestions = [];
+  
+  for (const question of formData.value.questions) {
+    if (question.type === 'divider') {
+      // เจอ divider = จบ section ปัจจุบัน เริ่ม section ใหม่
+      if (currentSectionQuestions.length > 0) {
+        result.push(currentSectionQuestions);
+      }
+      currentSectionQuestions = [];
+    } else {
+      currentSectionQuestions.push(question);
+    }
+  }
+  
+  // อย่าลืม section สุดท้าย
+  if (currentSectionQuestions.length > 0) {
+    result.push(currentSectionQuestions);
+  }
+  
+  return result.length > 0 ? result : [[]];
+});
+
+// จำนวน sections ทั้งหมด
+const totalSections = computed(() => sections.value.length);
+
+// Questions ที่ต้องแสดงใน section ปัจจุบัน
+const currentSectionQuestions = computed(() => sections.value[currentSection.value] || []);
+
+// เช็คว่าเป็น section แรกหรือไม่
+const isFirstSection = computed(() => currentSection.value === 0);
+
+// เช็คว่าเป็น section สุดท้ายหรือไม่
+const isLastSection = computed(() => currentSection.value === totalSections.value - 1);
+
+// Validate เฉพาะ section ปัจจุบัน
+const validateCurrentSection = () => {
+  const requiredQuestions = currentSectionQuestions.value.filter(q => q.required);
+  for (const question of requiredQuestions) {
+    const response = responses[question._id];
+    if (!response || 
+        (Array.isArray(response) && response.length === 0) || 
+        response === '') {
+      alert(`Please answer the required question: ${question.label}`);
+      return false;
+    }
+  }
+  return true;
+};
+
+// ไปหน้าถัดไป
+const nextSection = () => {
+  if (!validateCurrentSection()) return;
+  
+  if (currentSection.value < totalSections.value - 1) {
+    currentSection.value++;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
+// กลับหน้าก่อนหน้า
+const prevSection = () => {
+  if (currentSection.value > 0) {
+    currentSection.value--;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
+// Get global question index (across all sections, excluding dividers)
+const getGlobalQuestionIndex = (question) => {
+  if (!formData.value?.questions) return 1;
+  const nonDividerQuestions = formData.value.questions.filter(q => q.type !== 'divider');
+  const index = nonDividerQuestions.findIndex(q => q._id === question._id);
+  return index >= 0 ? index + 1 : 1;
+};
+
+// เช็คว่า user เคย submit form นี้แล้วหรือยัง (ใช้ localStorage)
+const checkIfAlreadySubmitted = (formId) => {
+  const submittedForms = JSON.parse(localStorage.getItem('submittedForms') || '[]');
+  return submittedForms.includes(formId);
+};
+
+// บันทึกว่า user submit form นี้แล้ว
+const markAsSubmitted = (formId) => {
+  const submittedForms = JSON.parse(localStorage.getItem('submittedForms') || '[]');
+  if (!submittedForms.includes(formId)) {
+    submittedForms.push(formId);
+    localStorage.setItem('submittedForms', JSON.stringify(submittedForms));
+  }
+};
+
+// คำนวณ progress percent (based on sections if multi-page, otherwise based on answers)
+const progressPercent = computed(() => {
+  // ถ้ามีหลาย section ใช้ section-based progress
+  if (totalSections.value > 1) {
+    return Math.round((currentSection.value / totalSections.value) * 100);
+  }
+  
+  // ถ้ามี section เดียว ใช้ answer-based progress
+  if (!formData.value?.questions?.length) return 0;
+  const totalQuestions = formData.value.questions.filter(q => 
+    !['title', 'divider', 'image'].includes(q.type)
+  ).length;
+  if (totalQuestions === 0) return 100;
+  
+  const answeredQuestions = Object.keys(responses).filter(key => {
+    const value = responses[key];
+    if (Array.isArray(value)) return value.length > 0;
+    return value !== null && value !== undefined && value !== '';
+  }).length;
+  
+  return Math.round((answeredQuestions / totalQuestions) * 100);
+});
 
 // Fetch form data from API
 const fetchFormData = async () => {
@@ -325,6 +562,19 @@ const fetchFormData = async () => {
       questions: questions
     };
     
+    // เก็บ settings และ status
+    formStatus.value = formDataResponse.status || 'draft';
+    formSettings.value = formDataResponse.settings || {};
+    confirmationMessage.value = formSettings.value.confirmationMessage || 'Thank you for your response!';
+    
+    // เช็คว่าเคย submit แล้วหรือยัง (ถ้าเปิด limitResponses)
+    if (formSettings.value.limitResponses) {
+      hasAlreadySubmitted.value = checkIfAlreadySubmitted(formDataResponse._id);
+    }
+    
+    console.log('Form status:', formStatus.value);
+    console.log('Form settings:', formSettings.value);
+    console.log('Has already submitted:', hasAlreadySubmitted.value);
     console.log('Final formData:', formData.value);
     
     // Initialize checkbox arrays
@@ -390,6 +640,12 @@ const handleSubmit = async () => {
     // Submit to API
     const result = await responseAPI.submit(responseData);
     console.log('Form submitted successfully:', result);
+    
+    // บันทึกว่า user submit แล้ว (สำหรับ limitResponses)
+    if (formSettings.value?.limitResponses) {
+      markAsSubmitted(formData.value.id);
+    }
+    
     // Show success modal
     showSuccessModal.value = true;
   } catch (error) {
@@ -405,6 +661,23 @@ const handleSubmit = async () => {
 const closeModal = () => {
   showSuccessModal.value = false;
   router.push('/');
+};
+
+// Submit another response - reset form and close modal
+const submitAnotherResponse = () => {
+  // Clear all responses
+  Object.keys(responses).forEach(key => {
+    if (Array.isArray(responses[key])) {
+      responses[key] = [];
+    } else {
+      responses[key] = null;
+    }
+  });
+  respondentEmail.value = '';
+  currentSection.value = 0; // Reset to first section
+  showSuccessModal.value = false;
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 </script>
 
@@ -905,8 +1178,8 @@ const closeModal = () => {
 /* ==================== FORM FOOTER ==================== */
 .form-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
   padding-top: 24px;
   border-top: 1px solid #E5E5E5;
 }
@@ -921,6 +1194,55 @@ const closeModal = () => {
   line-height: 20px;
   letter-spacing: -0.15px;
   color: #737373;
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  background: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background: #F5F5F5;
+  border-color: #D4D4D4;
+}
+
+.prev-btn svg {
+  color: #737373;
+}
+
+.next-btn {
+  background: #6366F1;
+  border-color: #6366F1;
+  color: #FFFFFF;
+}
+
+.next-btn:hover {
+  background: #4F46E5;
+  border-color: #4F46E5;
+}
+
+.next-btn svg {
+  color: #FFFFFF;
 }
 
 .submit-btn {
@@ -950,6 +1272,20 @@ const closeModal = () => {
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ==================== SECTION INDICATOR ==================== */
+.section-indicator {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #6366F1;
+  text-align: center;
+  padding: 12px;
+  background: #EEF2FF;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 /* ==================== SUCCESS MODAL ==================== */
@@ -1004,6 +1340,13 @@ const closeModal = () => {
   margin: 0;
 }
 
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
 .modal-button {
   padding: 12px 32px;
   background: #171717;
@@ -1016,10 +1359,96 @@ const closeModal = () => {
   color: #FAFAFA;
   cursor: pointer;
   transition: background-color 0.2s;
+  width: 100%;
 }
 
 .modal-button:hover {
   background: #404040;
+}
+
+.modal-button.secondary {
+  background: transparent;
+  color: #6366F1;
+  border: 1px solid #6366F1;
+}
+
+.modal-button.secondary:hover {
+  background: #EEF2FF;
+}
+
+/* ==================== PROGRESS BAR ==================== */
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: #E5E5E5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22C55E, #16A34A);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* ==================== FORM CLOSED MESSAGE ==================== */
+.form-closed-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.closed-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 24px;
+}
+
+.form-closed-message h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+.form-closed-message p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+/* ==================== EMAIL SECTION ==================== */
+.email-section {
+  background: #F9FAFB;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.email-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
 }
 
 /* ==================== RESPONSIVE ==================== */
@@ -1050,6 +1479,16 @@ const closeModal = () => {
   
   .submit-btn {
     width: 100%;
+  }
+  
+  .progress-bar-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .progress-text {
+    text-align: center;
   }
 }
 </style>
