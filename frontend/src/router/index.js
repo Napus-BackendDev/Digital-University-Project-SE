@@ -43,6 +43,14 @@ const router = createRouter({
       name: 'form-builder-edit',
       component: () => import('../views/FormBuilderView.vue')
     },
+    
+    // หน้า Preview ฟอร์ม
+    {
+      path: '/form/:id/preview',
+      name: 'form-preview',
+      component: () => import('../views/PreviewView.vue'),
+    },
+    
     // หน้าแสดงฟอร์มสำหรับตอบ (Response)
     {
       path: '/form/:id/response',

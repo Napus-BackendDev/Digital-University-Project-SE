@@ -35,7 +35,7 @@ const currentFormStatus = ref('draft') // เก็บ status ปัจจุบ
 
 const formUrl = computed(() => {
   const baseUrl = window.location.origin
-  return formId.value ? `${baseUrl}/form/${formId.value}` : ''
+  return formId.value ? `${baseUrl}/form/${formId.value}/response` : ''
 })
 
 
@@ -95,22 +95,66 @@ async function saveForm() {
     const existingQuestions = questions.value.filter(q => q && q._id)
     const newQuestions = questions.value.filter(q => q && !q._id)
     
-    // สร้าง questions ใหม่ใน database
-    const createdQuestionIds = []
-    for (const q of newQuestions) {
+    // อัปเดต existing questions
+    for (const q of existingQuestions) {
+      if (!q.title || q.title.trim() === '') continue
+      
       const questionData = {
+        _id: q._id,
         form: formId.value,
-        title: [{ key: 'en', value: q.title || '' }],
+        title: [{ key: 'en', value: q.title }],
         type: mapQuestionType(q.type),
         required: q.required || false,
         order: questions.value.indexOf(q) + 1,
         config: {
-          options: q.options || [],
+          options: q.options?.map(opt => ({
+            id: opt.id,
+            text: opt.text,
+            hasFollowUp: opt.hasFollowUp || false,
+            followUpQuestion: opt.followUpQuestion || null
+          })) || [],
           maxRating: q.maxRating || 5,
           allowSpecificTypes: q.allowSpecificTypes || false,
           allowedFileTypes: q.allowedFileTypes || [],
           maxFiles: q.maxFiles || 1,
-          maxSize: q.maxSize || 10
+          maxSize: q.maxSize || 10,
+          imageUrl: q.imageUrl || '',
+          caption: q.caption || ''
+        }
+      }
+      
+      await questionsAPI.update(questionData)
+    }
+    
+    // สร้าง questions ใหม่ใน database
+    const createdQuestionIds = []
+    for (const q of newQuestions) {
+      // ข้าม question ที่ไม่มี title (validation จะ fail)
+      if (!q.title || q.title.trim() === '') {
+        console.log('Skipping question without title')
+        continue
+      }
+      
+      const questionData = {
+        form: formId.value,
+        title: [{ key: 'en', value: q.title }],
+        type: mapQuestionType(q.type),
+        required: q.required || false,
+        order: questions.value.indexOf(q) + 1,
+        config: {
+          options: q.options?.map(opt => ({
+            id: opt.id,
+            text: opt.text,
+            hasFollowUp: opt.hasFollowUp || false,
+            followUpQuestion: opt.followUpQuestion || null
+          })) || [],
+          maxRating: q.maxRating || 5,
+          allowSpecificTypes: q.allowSpecificTypes || false,
+          allowedFileTypes: q.allowedFileTypes || [],
+          maxFiles: q.maxFiles || 1,
+          maxSize: q.maxSize || 10,
+          imageUrl: q.imageUrl || '',
+          caption: q.caption || ''
         }
       }
       
@@ -131,13 +175,7 @@ async function saveForm() {
     // ใช้ status ใหม่ถ้ามีการเปลี่ยน หรือใช้ status ปัจจุบัน
     const statusToSave = settings.value.formStatus || currentFormStatus.value || 'draft'
     
-    console.log('Saving form with:', {
-      formId: formId.value,
-      questionIds: allQuestionIds,
-      status: statusToSave
-    })
-    
-    const result = await formStore.updateForm({
+    const formData = {
       _id: formId.value,
       title: [{ key: 'en', value: formTitle.value }],
       description: [{ key: 'en', value: formDescription.value }],
@@ -145,7 +183,11 @@ async function saveForm() {
       status: statusToSave,
       schedule: buildSchedule(),
       settings: buildSettingsPayload()
-    })
+    }
+    
+    console.log('Saving form with:', formData)
+    
+    const result = await formStore.updateForm(formData)
     
     // อัพเดท currentFormStatus หลังจาก save สำเร็จ
     if (result) {
@@ -205,7 +247,9 @@ function transformQuestionsFromAPI(apiQuestions) {
     allowSpecificTypes: q.config?.allowSpecificTypes || false,
     allowedFileTypes: q.config?.allowedFileTypes || [],
     maxFiles: q.config?.maxFiles || 1,
-    maxSize: q.config?.maxSize || 10
+    maxSize: q.config?.maxSize || 10,
+    imageUrl: q.config?.imageUrl || '',
+    caption: q.config?.caption || ''
   }))
 }
 
