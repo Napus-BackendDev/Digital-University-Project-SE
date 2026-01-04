@@ -95,6 +95,30 @@ async function saveForm() {
     const existingQuestions = questions.value.filter(q => q && q._id)
     const newQuestions = questions.value.filter(q => q && !q._id)
     
+    // อัพเดท existing questions ใน database
+    for (const q of existingQuestions) {
+      const updateData = {
+        _id: q._id,
+        title: [{ key: 'en', value: q.title || '' }],
+        type: mapQuestionType(q.type),
+        required: q.required || false,
+        order: questions.value.indexOf(q) + 1,
+        config: {
+          options: q.options || [],
+          maxRating: q.maxRating || 5,
+          allowSpecificTypes: q.allowSpecificTypes || false,
+          allowedFileTypes: q.allowedFileTypes || [],
+          maxFiles: q.maxFiles || 1,
+          maxSize: q.maxSize || 10,
+          // Image & Video fields
+          imageUrl: q.imageUrl || '',
+          videoUrl: q.videoUrl || '',
+          caption: q.caption || ''
+        }
+      }
+      await questionsAPI.update(updateData)
+    }
+    
     // สร้าง questions ใหม่ใน database
     const createdQuestionIds = []
     for (const q of newQuestions) {
@@ -110,7 +134,11 @@ async function saveForm() {
           allowSpecificTypes: q.allowSpecificTypes || false,
           allowedFileTypes: q.allowedFileTypes || [],
           maxFiles: q.maxFiles || 1,
-          maxSize: q.maxSize || 10
+          maxSize: q.maxSize || 10,
+          // Image & Video fields
+          imageUrl: q.imageUrl || '',
+          videoUrl: q.videoUrl || '',
+          caption: q.caption || ''
         }
       }
       
@@ -205,7 +233,11 @@ function transformQuestionsFromAPI(apiQuestions) {
     allowSpecificTypes: q.config?.allowSpecificTypes || false,
     allowedFileTypes: q.config?.allowedFileTypes || [],
     maxFiles: q.config?.maxFiles || 1,
-    maxSize: q.config?.maxSize || 10
+    maxSize: q.config?.maxSize || 10,
+    // Image & Video fields
+    imageUrl: q.config?.imageUrl || '',
+    videoUrl: q.config?.videoUrl || '',
+    caption: q.config?.caption || ''
   }))
 }
 

@@ -134,16 +134,19 @@ const handleGoogleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px;
+  padding: clamp(20px, 5vw, 60px);
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .login-form-wrapper {
   width: 100%;
-  max-width: 440px;
+  max-width: min(440px, 100%);
+  padding: 0 8px;
 }
 
 .welcome-title {
-  font-size: 32px;
+  font-size: clamp(24px, 4vw, 32px);
   font-weight: 700;
   margin: 0 0 8px 0;
   color: #1a1a1a;
@@ -158,7 +161,7 @@ const handleGoogleLogin = async () => {
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(16px, 3vw, 24px);
 }
 
 .password-wrapper {
@@ -338,17 +341,53 @@ const handleGoogleLogin = async () => {
 /* Responsive Design */
 @media (max-width: 1024px) {
   .right-section {
-    padding: 40px;
+    flex: 1 1 auto;
+    min-height: 60vh;
   }
 }
 
 @media (max-width: 768px) {
   .right-section {
-    padding: 30px;
+    padding: 24px;
+    min-height: 70vh;
   }
   
-  .welcome-title {
-    font-size: 28px;
+  .welcome-subtitle {
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .right-section {
+    padding: 20px 16px;
+  }
+  
+  .login-form-wrapper {
+    padding: 0;
+  }
+  
+  :deep(.google-button) {
+    width: 100%;
+  }
+  
+  .divider::before,
+  .divider::after {
+    width: 30%;
+  }
+}
+
+@media (max-height: 600px) {
+  .right-section {
+    align-items: flex-start;
+    padding-top: 20px;
+  }
+  
+  .welcome-subtitle {
+    margin-bottom: 20px;
+  }
+  
+  .login-form {
+    gap: 12px;
   }
 }
 </style>

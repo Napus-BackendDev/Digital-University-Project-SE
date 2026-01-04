@@ -43,7 +43,15 @@ const router = createRouter({
       name: 'form-builder-edit',
       component: () => import('../views/FormBuilderView.vue')
     },
-    // หน้าแสดงฟอร์มสำหรับตอบ (Response)
+    
+    // หน้า Public Form สำหรับกรอกแบบฟอร์ม (URL ที่แชร์ให้ผู้ใช้)
+    {
+      path: '/form/:id',
+      name: 'public-form',
+      component: () => import('../views/Response.vue'),
+    },
+    
+    // หน้าแสดงฟอร์มสำหรับตอบ (Response) - internal
     {
       path: '/form/:id/response',
       name: 'form-response',

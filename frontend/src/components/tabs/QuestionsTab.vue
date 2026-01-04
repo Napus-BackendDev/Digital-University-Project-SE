@@ -344,7 +344,64 @@ const localQuestions = computed({
 .empty-questions p { font-size: 14px; color: #999; margin: 0; }
 
 @media (max-width: 1024px) {
-  .questions-section { flex-direction: column-reverse; }
-  .sidebar { width: 100%; position: static; }
+  .questions-tab {
+    padding-bottom: 80px; /* Space for fixed toolbar */
+  }
+
+  .questions-section { 
+    flex-direction: column; 
+  }
+  
+  .sidebar { 
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%; 
+    z-index: 100;
+  }
+
+  .status-banner {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .status-actions {
+    flex-direction: column;
+  }
+
+  .url-input {
+    width: 100%;
+  }
+}
+
+/* Mobile: smaller padding */
+@media (max-width: 768px) {
+  .form-header-section {
+    padding: 20px;
+  }
+
+  .form-title-input {
+    font-size: 16px;
+  }
+
+  .empty-questions {
+    padding: 40px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .status-content h3 {
+    font-size: 16px;
+  }
+
+  .status-content p {
+    font-size: 13px;
+  }
+
+  .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
 }
 </style>

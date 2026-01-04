@@ -14,10 +14,19 @@ import RightSection from '@/components/Login/RightSection.vue'
 .login-container {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
   width: 100%;
+  overflow-x: hidden;
 }
 
-/* Responsive Design */
+/* Tablet - stack vertically */
+@media (max-width: 1024px) {
+  .login-container {
+    flex-direction: column;
+  }
+}
+
+/* Mobile - login form first */
 @media (max-width: 768px) {
   .login-container {
     flex-direction: column;
@@ -25,6 +34,13 @@ import RightSection from '@/components/Login/RightSection.vue'
 
   .login-container > :nth-child(2) {
     order: -1;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .login-container {
+    min-height: 100svh; /* Small viewport height */
   }
 }
 </style>

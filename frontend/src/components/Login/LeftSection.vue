@@ -37,16 +37,18 @@
   flex: 1;
   background: linear-gradient(135deg, #c41e3a 0%, #a01729 100%);
   color: white;
-  padding: 60px;
+  padding: clamp(20px, 5vw, 60px);
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Allow shrinking */
+  overflow: hidden;
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 80px;
+  margin-bottom: clamp(20px, 5vw, 80px);
 }
 
 .brand-name {
@@ -62,17 +64,17 @@
 }
 
 .title {
-  font-size: 48px;
+  font-size: clamp(24px, 5vw, 48px);
   font-weight: 700;
   line-height: 1.2;
-  margin: 0 0 24px 0;
+  margin: 0 0 clamp(12px, 2vw, 24px) 0;
   max-width: 500px;
 }
 
 .description {
-  font-size: 18px;
+  font-size: clamp(14px, 2vw, 18px);
   line-height: 1.6;
-  margin: 0 0 60px 0;
+  margin: 0 0 clamp(20px, 4vw, 60px) 0;
   max-width: 500px;
   opacity: 0.95;
 }
@@ -128,33 +130,51 @@
 /* Responsive Design */
 @media (max-width: 1024px) {
   .left-section {
-    padding: 40px;
+    flex: 0 0 auto;
+    min-height: 40vh;
   }
   
-  .title {
-    font-size: 36px;
+  .university-container {
+    max-height: 200px;
+  }
+  
+  .university-image {
+    max-height: 180px;
+    width: auto;
   }
 }
 
 @media (max-width: 768px) {
   .left-section {
-    min-height: 300px;
-    padding: 30px;
+    min-height: 30vh;
+    padding: 24px;
+  }
+  
+  .university-container {
+    display: none;
+  }
+  
+  .content {
+    flex: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-section {
+    min-height: auto;
+    padding: 20px;
   }
   
   .header {
-    margin-bottom: 40px;
+    margin-bottom: 16px;
   }
   
-  .title {
-    font-size: 28px;
+  .brand-name {
+    font-size: 20px;
   }
   
   .description {
-    font-size: 16px;
-    margin-bottom: 30px;
+    display: none;
   }
-  
- 
 }
 </style>

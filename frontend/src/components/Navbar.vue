@@ -3,11 +3,26 @@
  * Navbar - แถบนาวิเกชันด้านบน
  * แสดง logo, ชื่อผู้ใช้, และปุ่ม logout
  */
+import { computed } from 'vue'
+
 defineProps({
   userEmail: { type: String, default: 'user@example.com' }
 })
 
 const emit = defineEmits(['logout'])
+
+// คำนวณ home path ตาม role ของ user
+const homePath = computed(() => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    if (user.role === 'editor' || user.role === 'staff') {
+      return '/editor'
+    }
+    return '/home'
+  } catch {
+    return '/home'
+  }
+})
 
 // จัดการ logout
 function handleLogout() {
@@ -19,7 +34,7 @@ function handleLogout() {
   <nav class="navbar">
     <div class="navbar-container">
       <!-- Logo Section -->
-      <router-link to="/" class="navbar-brand">
+      <router-link :to="homePath" class="navbar-brand">
         <div class="logo-icon">
           <img src="/MFU-Logo.png" alt="Logo" class="logo-image" />
         </div>
