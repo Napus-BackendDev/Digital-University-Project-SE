@@ -46,11 +46,7 @@ const statusDescription = computed(() => {
   }
 })
 
-<<<<<<< HEAD
-// แสดง schedule fields เฉพาะเมื่อเลือก scheduled
-=======
 // แสดง schedule fields เฉพาะเมื่อเลือก auto
->>>>>>> 3b61180d03418ad7737977b0a2c7aef444ec3d76
 const showScheduleFields = computed(() => props.status === 'auto')
 </script>
 
