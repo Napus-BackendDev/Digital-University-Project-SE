@@ -69,10 +69,10 @@ function handleInput(idx, value, type) {
                     <span class="question-title">{{ q.title || 'Untitled Question' }}</span>
                     <span v-if="q.required" class="required-dot" title="Required">*</span>
                 </div>
-                <!-- --- Question Body (by type) --- -->
+        
                 <!-- Question body: render by type -->
                 <div class="question-preview-body">
-                    <!-- Short Answer -->
+                   
                     <!-- Short Answer -->
                     <template v-if="q.type === 'short-answer'">
                         <!-- Single-line text input -->
@@ -81,14 +81,13 @@ function handleInput(idx, value, type) {
                     </template>
 
                     <!-- Paragraph -->
-                    <!-- Paragraph -->
                     <template v-else-if="q.type === 'paragraph'">
                         <!-- Multi-line textarea -->
                         <textarea class="custom-input textarea" :placeholder="q.placeholder || 'Your answer'"
                             v-model="answers[idx]" @input="handleInput(idx, $event.target.value)"></textarea>
                     </template>
 
-                    <!-- Multiple Choice (with follow-up support) -->
+                
                     <!-- Multiple Choice (with follow-up support) -->
                     <template v-else-if="q.type === 'multiple-choice'">
                         <div class="preview-mc-list">
@@ -97,7 +96,6 @@ function handleInput(idx, value, type) {
                         </div>
                     </template>
 
-                    <!-- Checkbox (interactive preview) -->
                     <!-- Checkbox (interactive preview) -->
                     <template v-else-if="q.type === 'checkbox'">
                         <div class="preview-checkbox-list">
@@ -123,10 +121,11 @@ function handleInput(idx, value, type) {
                     <template v-else-if="q.type === 'dropdown'">
                         <!-- Dropdown display and menu with overlay alignment -->
                         <div class="preview-dropdown-wrapper">
-                            <div class="preview-dropdown" tabindex="0" @click="q._dropdownOpen = !q._dropdownOpen" @blur="q._dropdownOpen = false">
+                            <div class="preview-dropdown" tabindex="0" @click="q._dropdownOpen = !q._dropdownOpen"
+                                @blur="q._dropdownOpen = false">
                                 <div class="preview-dropdown-selected">
                                     <span v-if="!answers[idx]" class="dropdown-placeholder">Select an option</span>
-                                    <span v-else>{{ (q.options || []).find(o => o.id === answers[idx])?.text }}</span>
+                                    <span v-else>{{(q.options || []).find(o => o.id === answers[idx])?.text}}</span>
                                 </div>
                                 <div class="preview-dropdown-arrow">
                                     <ArrowLeftIcon class="dropdown-arrow-icon" />
@@ -161,8 +160,7 @@ function handleInput(idx, value, type) {
                     <template v-else-if="q.type === 'rating'">
                         <div class="custom-rating">
                             <span v-for="star in q.maxRating || 5" :key="star" class="star"
-                                :class="{ filled: answers[idx] >= star }"
-                                @click="handleInput(idx, star, 'rating')">
+                                :class="{ filled: answers[idx] >= star }" @click="handleInput(idx, star, 'rating')">
                                 &#9733;
                             </span>
                         </div>
@@ -173,7 +171,8 @@ function handleInput(idx, value, type) {
                     <template v-else-if="q.type === 'file-upload'">
                         <div class="preview-file-upload">
                             <label class="file-upload-area" style="cursor:pointer;">
-                                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="17 8 12 3 7 8"></polyline>
                                     <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -231,7 +230,6 @@ function handleInput(idx, value, type) {
 </template>
 
 <style scoped>
-
 /* =============================
    Dropdown Menu (Preview)
 ============================= */
@@ -242,6 +240,7 @@ function handleInput(idx, value, type) {
     max-width: 600px;
     margin-bottom: 8px;
 }
+
 .preview-dropdown-menu {
     position: absolute;
     left: 0;
@@ -250,12 +249,13 @@ function handleInput(idx, value, type) {
     background: #fff;
     border: 1.5px solid #e5e5e5;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
     margin-top: 2px;
     z-index: 10;
     min-width: 0;
     max-width: 600px;
 }
+
 .preview-dropdown-option {
     padding: 8px 16px;
     cursor: pointer;
@@ -264,9 +264,11 @@ function handleInput(idx, value, type) {
     font-family: 'Inter', sans-serif;
     transition: background 0.15s;
 }
+
 .preview-dropdown-option:hover {
     background: #f5f7ff;
 }
+
 .preview-dropdown-option.selected {
     background: #e0e7ff;
     color: #6366f1;
@@ -281,6 +283,7 @@ function handleInput(idx, value, type) {
     flex-direction: column;
     gap: 4px;
 }
+
 .preview-file-item {
     font-size: 0.97rem;
     color: #444;
@@ -291,6 +294,7 @@ function handleInput(idx, value, type) {
     align-items: center;
     gap: 6px;
 }
+
 .preview-file-name {
     font-family: 'Inter', sans-serif;
     font-size: 0.97rem;
@@ -317,10 +321,12 @@ function handleInput(idx, value, type) {
     box-sizing: border-box;
     text-align: center;
 }
+
 .file-upload-area:hover {
     border-color: #6366f1;
     background: #fafaff;
 }
+
 .upload-icon {
     width: 48px;
     max-width: 100%;
@@ -329,6 +335,7 @@ function handleInput(idx, value, type) {
     display: block;
     margin: 0 auto;
 }
+
 .upload-hint {
     font-size: 12px;
     color: #bbb;
@@ -343,6 +350,7 @@ function handleInput(idx, value, type) {
     gap: 8px;
     margin-bottom: 8px;
 }
+
 .preview-checkbox-row {
     display: flex;
     align-items: center;
@@ -365,16 +373,19 @@ function handleInput(idx, value, type) {
     align-items: center;
     justify-content: center;
 }
+
 .preview-checkbox-row.checked .preview-checkbox-box {
     border-color: #6366f1;
     background: #f5f7ff;
 }
+
 .preview-checkbox-tick {
     width: 12px;
     height: 12px;
     background: #6366f1;
     border-radius: 2px;
 }
+
 .preview-checkbox-text {
     font-size: 1rem;
     color: #222;
@@ -401,9 +412,11 @@ function handleInput(idx, value, type) {
     max-width: 600px;
     box-sizing: border-box;
 }
+
 .preview-dropdown-selected {
     flex: 1;
 }
+
 .dropdown-placeholder {
     color: #bbb;
 }
@@ -414,6 +427,7 @@ function handleInput(idx, value, type) {
     display: flex;
     align-items: center;
 }
+
 .dropdown-arrow-icon {
     transform: rotate(-90deg);
     width: 1.2em;
@@ -433,6 +447,7 @@ function handleInput(idx, value, type) {
     gap: 4px;
     margin-bottom: 8px;
 }
+
 .preview-file-box {
     display: flex;
     align-items: center;
@@ -445,12 +460,15 @@ function handleInput(idx, value, type) {
     color: #222;
     font-family: 'Inter', sans-serif;
 }
+
 .preview-file-icon {
     font-size: 1.2em;
 }
+
 .preview-file-label {
     font-size: 1rem;
 }
+
 .preview-file-note {
     color: #888;
     font-size: 0.95em;
@@ -472,7 +490,8 @@ function handleInput(idx, value, type) {
     background: #fafafa;
     margin-bottom: 8px;
     font-family: 'Inter', sans-serif;
-    min-height: 40px; /* Shorter height for single-line input */
+    min-height: 40px;
+    /* Shorter height for single-line input */
 }
 
 /* Paragraph (multi-line textarea) */
@@ -488,6 +507,7 @@ function handleInput(idx, value, type) {
     gap: 8px;
     margin-bottom: 8px;
 }
+
 .custom-option-row {
     display: flex;
     align-items: center;
@@ -506,11 +526,13 @@ function handleInput(idx, value, type) {
     padding-left: 8px;
     border-left: 2px solid #e5e5e5;
 }
+
 .followup-label {
     font-size: 0.98rem;
     color: #888;
     margin-bottom: 2px;
 }
+
 .followup-list {
     margin-bottom: 0;
 }
@@ -524,6 +546,7 @@ function handleInput(idx, value, type) {
     gap: 6px;
     margin-bottom: 8px;
 }
+
 .followup-row {
     font-size: 0.97rem;
     color: #555;
@@ -538,11 +561,13 @@ function handleInput(idx, value, type) {
     font-size: 2.5rem;
     margin-bottom: 8px;
 }
+
 .custom-rating .star {
     cursor: pointer;
     color: #e5e5e5;
     transition: color 0.2s;
 }
+
 .custom-rating .star.filled {
     color: #fbbf24;
 }
@@ -555,6 +580,7 @@ function handleInput(idx, value, type) {
     font-size: 0.95em;
     margin-top: 4px;
 }
+
 .media-center {
     display: flex;
     flex-direction: column;
@@ -562,6 +588,7 @@ function handleInput(idx, value, type) {
     justify-content: center;
     margin: 12px 0;
 }
+
 .media-image {
     max-width: 100%;
     max-height: 200px;
@@ -569,6 +596,7 @@ function handleInput(idx, value, type) {
     display: block;
     margin: 0 auto;
 }
+
 .media-video {
     max-width: 100%;
     max-height: 200px;
@@ -588,26 +616,31 @@ function handleInput(idx, value, type) {
     max-width: 650px;
     margin: 40px auto;
 }
+
 .preview-header {
     margin-bottom: 32px;
     text-align: left;
 }
+
 .preview-title {
     font-size: 2rem;
     font-weight: 600;
     margin-bottom: 8px;
     color: #333;
 }
+
 .preview-description {
     color: #666;
     margin-bottom: 0;
     font-size: 1.1rem;
 }
+
 .preview-questions-list {
     display: flex;
     flex-direction: column;
     gap: 0;
 }
+
 .preview-question-card {
     background: transparent;
     border: none;
@@ -616,6 +649,7 @@ function handleInput(idx, value, type) {
     margin-bottom: 0;
     box-shadow: none;
 }
+
 .question-section-header {
     font-size: 1.05rem;
     color: #b0b0b0;
@@ -623,10 +657,12 @@ function handleInput(idx, value, type) {
     margin-bottom: 2px;
     margin-top: 16px;
 }
+
 .question-section-label {
     font-family: 'Inter', sans-serif;
     letter-spacing: 0.01em;
 }
+
 .question-title-row {
     display: flex;
     align-items: center;
@@ -637,6 +673,7 @@ function handleInput(idx, value, type) {
     margin-bottom: 10px;
     margin-top: 2px;
 }
+
 .question-title {
     flex: 1;
     font-family: 'Inter', sans-serif;
@@ -644,6 +681,7 @@ function handleInput(idx, value, type) {
     font-weight: 200;
     color: #222;
 }
+
 .required-dot {
     color: #d93025;
     font-size: 1.2em;
@@ -652,15 +690,18 @@ function handleInput(idx, value, type) {
     vertical-align: middle;
     font-weight: bold;
 }
+
 .question-preview-body {
     margin-left: 0;
     margin-bottom: 8px;
 }
+
 .question-divider {
     border: none;
     border-top: 1.5px solid #f0f0f0;
     margin: 32px 0 0 0;
 }
+
 .preview-footer-row {
     display: flex;
     align-items: center;
@@ -669,6 +710,7 @@ function handleInput(idx, value, type) {
     padding-top: 16px;
     border-top: 1.5px solid #f0f0f0;
 }
+
 .required-note {
     color: #737373;
     font-size: 1rem;
@@ -676,10 +718,12 @@ function handleInput(idx, value, type) {
     font-weight: 400;
     margin-left: 2px;
 }
+
 .required-note .star {
     color: #d93025;
     margin-right: 2px;
 }
+
 .submit-btn {
     background: #737373;
     color: #fff;

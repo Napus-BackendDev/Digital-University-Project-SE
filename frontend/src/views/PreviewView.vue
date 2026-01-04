@@ -3,7 +3,7 @@
 // --- Import dependencies ---
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import QuestionsPreview from './QuestionsPreview.vue'
+import QuestionsPreview from '@/components/preview/QuestionsPreview.vue'
 import { ArrowLeftIcon } from '@/components/icons'
 
 // --- Define component props ---
