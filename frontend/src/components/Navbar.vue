@@ -5,11 +5,17 @@
  */
 import { computed } from 'vue'
 
-defineProps({
-  userEmail: { type: String, default: 'user@example.com' }
-})
-
 const emit = defineEmits(['logout'])
+
+// ดึง email ของ user ที่ login จาก localStorage
+const userEmail = computed(() => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    return user.email || 'Guest'
+  } catch {
+    return 'Guest'
+  }
+})
 
 // คำนวณ home path ตาม role ของ user
 const homePath = computed(() => {
