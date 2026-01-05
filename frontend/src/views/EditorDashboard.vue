@@ -157,7 +157,7 @@ const fetchForms = async () => {
       title: getTitle(form.title) || 'Untitled Form',
       description: getTitle(form.description) || 'No description',
       status: form.status || 'draft',
-      responses: form.responseCount || 0,
+      responses: Array.isArray(form.responses) ? form.responses.length : 0,
       createdDate: formatDate(form.updatedAt || form.createdAt)
     }))
     
@@ -319,11 +319,11 @@ onMounted(() => {
 }
 
 .editordashboard {
-  width: 1536px;
+  max-width: 1536px;
+  width: 100%;
   min-height: 100vh;
   background: #F5F5F5;
   font-family: 'Inter', sans-serif;
-  overflow-x: auto;
   margin: 0 auto;
 }
 
@@ -332,39 +332,36 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 160px 40px;
+  padding: 40px 160px;
   gap: 32px;
-  width: 1536px;
+  width: 100%;
+  max-width: 1536px;
   min-height: 1020px;
   background: #FAFAFA;
+  margin: 0 auto;
 }
 
 /* Toolbar */
 .toolbar-container {
-  position: relative;
-  width: 1216px;
-  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  max-width: 1216px;
 }
 
 .editor-search-wrapper {
-  position: absolute;
-  width: 914.17px;
-  height: 36px;
-  left: 0px;
-  top: 0px;
+  flex: 1;
+  max-width: 914px;
 }
 
 .toolbar-right {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  padding: 0px;
+  align-items: center;
   gap: 8px;
-  position: absolute;
-  width: 285.83px;
-  height: 36px;
-  left: 930.17px;
-  top: 0px;
+  flex-shrink: 0;
 }
 
 .create-link {
@@ -411,16 +408,13 @@ onMounted(() => {
   flex-direction: column;
   align-items: stretch;
   padding: 1px;
-  width: 1216px;
+  width: 100%;
+  max-width: 1216px;
   min-height: 653px;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
-  flex: none;
-  order: 2;
-  align-self: stretch;
-  flex-grow: 0;
 }
 
 /* Loading State */
@@ -856,54 +850,117 @@ onMounted(() => {
 }
 
 /* Responsive */
+@media (max-width: 1400px) {
+  .form-list-page-main {
+    padding: 40px 80px;
+  }
+}
+
 @media (max-width: 1200px) {
   .form-list-page-main {
-    padding: 97px 16px 0px;
-  }
-
-  .navbar {
-    padding: 0 16px;
-  }
-
-  .search-wrapper {
-    width: auto;
-    flex: 1;
+    padding: 32px 40px;
   }
 
   .header-row,
   .data-row {
-    grid-template-columns: 2fr 1fr 1fr 1fr 100px;
+    grid-template-columns: 2fr 120px 140px 150px 120px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .form-list-page-main {
+    padding: 24px 24px;
+  }
+
+  .header-row,
+  .data-row {
+    grid-template-columns: 2fr 100px 120px 80px;
+  }
+
+  .table-head:nth-child(4),
+  .table-cell:nth-child(4) {
+    display: none;
   }
 }
 
 @media (max-width: 768px) {
+  .form-list-page-main {
+    padding: 20px 16px;
+  }
+
   .toolbar-container {
     flex-direction: column;
-    height: auto;
     gap: 12px;
     align-items: stretch;
   }
 
-  .search-wrapper {
+  .editor-search-wrapper {
     width: 100%;
+    max-width: 100%;
   }
 
   .toolbar-right {
+    width: 100%;
     justify-content: space-between;
   }
 
-  .filter-button {
+  .create-link {
     flex: 1;
+    max-width: 200px;
   }
 
   .header-row,
   .data-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 80px;
   }
 
-  .table-head:not(.form-name-head),
-  .table-cell:not(.form-name-cell) {
+  .table-head:nth-child(2),
+  .table-head:nth-child(3),
+  .table-cell:nth-child(2),
+  .table-cell:nth-child(3) {
     display: none;
+  }
+
+  .form-description {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-list-page-main {
+    padding: 16px 12px;
+    gap: 20px;
+  }
+
+  .create-link {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .toolbar-right {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .header-row {
+    display: none;
+  }
+
+  .data-row {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .table-cell {
+    width: 100%;
+    padding: 0;
+  }
+
+  .actions-cell {
+    justify-content: flex-start;
   }
 }
 </style>

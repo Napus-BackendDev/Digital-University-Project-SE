@@ -157,9 +157,7 @@ function handleExport() {
     responseId: selectedResponse.value._id,
     submittedAt: selectedResponse.value.submittedAt,
     email: selectedResponse.value.responder?.email || 'Anonymous',
-    answers: props.questions
-      .filter(q => !['title-description', 'image', 'video', 'section-divider'].includes(q.type))
-      .map((q, index) => {
+    answers: props.questions.map((q, index) => {
         const answer = getAnswer(q._id || q.id)
         return {
           questionNumber: index + 1,
@@ -201,7 +199,6 @@ const currentResponseIndex = computed(() => {
 
 const currentResponseNumber = computed(() => currentResponseIndex.value + 1)
 const totalResponsesCount = computed(() => props.responses.length)
-
 
 // ฟังก์ชันประมวลผล responses สำหรับแต่ละ question
 function getQuestionResponses(questionId) {
@@ -313,12 +310,11 @@ function getRatingChartData(questionId, maxRating = 5) {
       @export="emit('export', $event)"
     >
       <!-- Summary View: Question-based cards -->
-      <div v-if="viewMode === 'summary'">
-        <div v-for="(question, index) in questions" :key="question.id">
-          <!-- ไม่แสดง question ที่เป็น title, image, video, divider -->
-          <ResponseSummaryCard
-            v-if="!['title-description', 'image', 'video', 'section-divider'].includes(question.type)"
-            :questionNumber="index + 1"
+      <div v-if="viewMode === 'summary'" class="summary-cards-container">
+        <ResponseSummaryCard
+          v-for="(question, index) in questions"
+          :key="question.id || question._id"
+          :questionNumber="index + 1"
             :title="question.title"
             :responseCount="totalResponses"
           >
@@ -347,7 +343,6 @@ function getRatingChartData(questionId, maxRating = 5) {
               />
             </template>
           </ResponseSummaryCard>
-        </div>
       </div>
 
       <!-- Individual View: Person-based table or detail -->
@@ -430,28 +425,26 @@ function getRatingChartData(questionId, maxRating = 5) {
                   v-for="(question, index) in questions" 
                   :key="question._id || question.id"
                 >
-                  <template v-if="!['title-description', 'image', 'video', 'section-divider'].includes(question.type)">
-                    <td class="col-number">{{ index + 1 }}</td>
-                    <td class="col-question">
-                      <div class="question-text">{{ question.title }}</div>
-                      <div class="question-type">{{ question.type }}</div>
-                    </td>
-                    <td class="col-response">
-                      <div class="response-text">
-                        <template v-if="question.type === 'file-upload'">
-                          <span 
-                            class="file-link" 
-                            @click="openFile(getAnswer(question._id || question.id)?.response)"
-                          >
-                            {{ formatResponse(getAnswer(question._id || question.id), question) }}
-                          </span>
-                        </template>
-                        <template v-else>
+                  <td class="col-number">{{ index + 1 }}</td>
+                  <td class="col-question">
+                    <div class="question-text">{{ question.title }}</div>
+                    <div class="question-type">{{ question.type }}</div>
+                  </td>
+                  <td class="col-response">
+                    <div class="response-text">
+                      <template v-if="question.type === 'file-upload'">
+                        <span 
+                          class="file-link" 
+                          @click="openFile(getAnswer(question._id || question.id)?.response)"
+                        >
                           {{ formatResponse(getAnswer(question._id || question.id), question) }}
-                        </template>
-                      </div>
-                    </td>
-                  </template>
+                        </span>
+                      </template>
+                      <template v-else>
+                        {{ formatResponse(getAnswer(question._id || question.id), question) }}
+                      </template>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -596,6 +589,12 @@ function getRatingChartData(questionId, maxRating = 5) {
   margin: 0 auto;
 }
 
+.summary-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .empty-responses {
   display: flex;
   flex-direction: column;
@@ -630,6 +629,7 @@ function getRatingChartData(questionId, maxRating = 5) {
 .search-container {
   position: relative;
   max-width: 100%;
+  margin-bottom: 20px;
 }
 
 .search-icon {

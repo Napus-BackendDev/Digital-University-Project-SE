@@ -132,15 +132,13 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   flex-direction: column;
   align-items: stretch;
   padding: 1px;
-  width: 1216px;
+  width: 100%;
+  max-width: 1216px;
   min-height: 653px;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
-  flex: none;
-  order: 2;
-  flex-grow: 0;
 }
 
 /* Loading State */
@@ -257,7 +255,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 
 .header-row {
   display: grid;
-  grid-template-columns: 604.36px 134.75px 161.61px 176.41px 136.91px;
+  grid-template-columns: 3fr 1fr 1.2fr 1.3fr 1fr;
   background: #FAFAFA;
   border-bottom: 1px solid #E5E5E5;
   height: 52px;
@@ -290,7 +288,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 
 .data-row {
   display: grid;
-  grid-template-columns: 604.36px 134.75px 161.61px 176.41px 136.91px;
+  grid-template-columns: 3fr 1fr 1.2fr 1.3fr 1fr;
   border-bottom: 1px solid #F5F5F5;
   min-height: 87px;
   cursor: pointer;
@@ -468,5 +466,117 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 /* Actions Cell */
 .actions-cell {
   justify-content: flex-end;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .header-row,
+  .data-row {
+    grid-template-columns: 2fr 120px 140px 150px 120px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .header-row,
+  .data-row {
+    grid-template-columns: 2fr 100px 120px 80px;
+  }
+
+  .modified-head,
+  .modified-cell {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-row,
+  .data-row {
+    grid-template-columns: 1fr 80px;
+  }
+
+  .status-head,
+  .status-cell,
+  .responses-head,
+  .responses-cell {
+    display: none;
+  }
+
+  .form-description {
+    max-width: 100%;
+  }
+
+  .table-cell {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-wrapper {
+    min-height: auto;
+    border-radius: 12px;
+  }
+
+  .header-row {
+    display: none;
+  }
+
+  .data-row {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .table-cell {
+    width: 100%;
+    padding: 0;
+  }
+
+  .actions-cell {
+    justify-content: flex-start;
+    padding-top: 8px;
+    border-top: 1px solid #F5F5F5;
+  }
+
+  .form-info {
+    gap: 6px;
+  }
+
+  .form-title {
+    font-size: 15px;
+  }
+
+  .form-description {
+    font-size: 13px;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    overflow: hidden;
+  }
+
+  .loading-container,
+  .error-container,
+  .empty-container {
+    padding: 60px 20px;
+    min-height: 300px;
+  }
+
+  .loading-spinner i,
+  .error-icon i,
+  .empty-icon i {
+    font-size: 36px;
+  }
+
+  .loading-text,
+  .error-text,
+  .empty-text {
+    font-size: 14px;
+  }
+
+  .empty-subtext {
+    font-size: 13px;
+  }
 }
 </style>

@@ -494,7 +494,7 @@ onMounted(() => {
 });
 
 const goBack = () => {
-  router.push('/');
+  router.push('/home');
 };
 
 const handleSubmit = async () => {
@@ -522,8 +522,8 @@ const handleSubmit = async () => {
     
     const answers = formData.value.questions
       .filter(q => {
-        // Skip non-answerable question types (title, image, video, divider)
-        return !['title', 'image', 'video', 'divider'].includes(q.type);
+        // Skip non-answerable question types (title, image, video, divider, section-divider, title-description)
+        return !['title', 'image', 'video', 'divider', 'section-divider', 'title-description', 'section'].includes(q.type);
       })
       .map(q => {
         let response = responses[q._id];

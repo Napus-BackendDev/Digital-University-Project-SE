@@ -206,7 +206,8 @@ onMounted(() => {
 /* ==================== MAIN CONTAINER ==================== */
 .userdashboard {
   position: relative;
-  width: 1536px;
+  max-width: 1536px;
+  width: 100%;
   min-height: 1000px;
   background: #F5F5F5;
   font-family: 'Inter', sans-serif;
@@ -218,19 +219,19 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 160px 0px;
+  padding: 32px 160px;
   gap: 32px;
-  width: 1536px;
+  width: 100%;
+  max-width: 1536px;
   min-height: calc(100vh - 65px);
   background: #FAFAFA;
-  flex: none;
-  order: 1;
-  flex-grow: 0;
+  margin: 0 auto;
 }
 
 /* ==================== SEARCH ==================== */
 .search-container {
-  width: 1216px;
+  width: 100%;
+  max-width: 1216px;
   position: relative;
 }
 
@@ -241,15 +242,13 @@ onMounted(() => {
   flex-direction: column;
   align-items: stretch;
   padding: 1px;
-  width: 1216px;
+  width: 100%;
+  max-width: 1216px;
   min-height: 653px;
   background: #FFFFFF;
   border: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
-  flex: none;
-  order: 2;
-  flex-grow: 0;
 }
 
 .table-container {
@@ -614,9 +613,91 @@ onMounted(() => {
 }
 
 /* ==================== RESPONSIVE ==================== */
-@media (max-width: 1600px) {
+@media (max-width: 1400px) {
   .form-list-page {
-    padding: 32px 40px 40px;
+    padding: 32px 80px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .form-list-page {
+    padding: 32px 40px;
+  }
+
+  .header-row,
+  .data-row {
+    grid-template-columns: 2fr 110px 130px 140px 110px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .form-list-page {
+    padding: 24px 24px;
+  }
+
+  .header-row,
+  .data-row {
+    grid-template-columns: 2fr 100px 120px 80px;
+  }
+
+  .table-head:nth-child(4),
+  .table-cell:nth-child(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-list-page {
+    padding: 20px 16px;
+  }
+
+  .header-row,
+  .data-row {
+    grid-template-columns: 1fr 80px;
+  }
+
+  .table-head:nth-child(2),
+  .table-head:nth-child(3),
+  .table-cell:nth-child(2),
+  .table-cell:nth-child(3) {
+    display: none;
+  }
+
+  .form-description {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-list-page {
+    padding: 16px 12px;
+    gap: 20px;
+  }
+
+  .header-row {
+    display: none;
+  }
+
+  .data-row {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .table-cell {
+    width: 100%;
+    padding: 0;
+  }
+
+  .actions-cell {
+    justify-content: flex-start;
+  }
+
+  .responses-info,
+  .modified-info {
+    width: 100%;
   }
 }
 </style>

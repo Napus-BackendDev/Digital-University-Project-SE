@@ -28,7 +28,8 @@ const route = useRoute()
 const formStore = useFormStore()
 
 const formId = computed(() => route.params.id)
-const activeTab = ref('questions')
+// เก็บ active tab ใน localStorage และ sync กับ URL query
+const activeTab = ref(route.query.tab || localStorage.getItem(`formBuilder_${route.params.id}_activeTab`) || 'questions')
 const formTitle = ref('Untitled Form')
 const formDescription = ref('')
 const currentFormStatus = ref('draft') // เก็บ status ปัจจุบันจาก database
@@ -279,6 +280,13 @@ onMounted(async () => {
   }
 })
 
+// Watch activeTab เพื่อบันทึกลง localStorage และ update URL
+watch(activeTab, (newTab) => {
+  if (formId.value) {
+    localStorage.setItem(`formBuilder_${formId.value}_activeTab`, newTab)
+  }
+})
+
 
 /* ===================================
    Tab Configuration
@@ -289,6 +297,12 @@ const responsesData = ref({
 })
 const responseViewMode = ref('summary')
 const responseCount = computed(() => responsesData.value.totalResponses || 0)
+
+// กรอง questions สำหรับแสดงใน Responses tab (ตัดประเภทที่ไม่ต้องแสดง)
+const questionsForResponses = computed(() => {
+  const excludedTypes = ['title-description', 'image', 'video', 'section-divider']
+  return questions.value.filter(q => !excludedTypes.includes(q.type))
+})
 
 // ฟังก์ชันดึงข้อมูล responses
 async function fetchResponses() {
@@ -389,7 +403,7 @@ function handleUpdateSettings(newSettings) {
       <!-- Responses Tab -->
       <ResponsesTab
         v-else-if="activeTab === 'responses'"
-        :questions="questions"
+        :questions="questionsForResponses"
         :totalResponses="responsesData.totalResponses"
         :responses="responsesData.responses"
         :viewMode="responseViewMode"
