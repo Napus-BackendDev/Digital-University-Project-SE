@@ -141,15 +141,11 @@ const fetchForms = async () => {
   error.value = null
   try {
     const response = await formAPI.getAll()
-    console.log('API Response:', response)
     
     // Handle different API response structures
     const formData = Array.isArray(response.data) 
       ? response.data 
       : (response.data.data || response.data.datas || [])
-    
-    console.log('Form Data:', formData)
-    console.log('Form Data Length:', formData.length)
     
     // Transform API data to match component structure
     forms.value = formData.map(form => ({
@@ -160,9 +156,6 @@ const fetchForms = async () => {
       responses: Array.isArray(form.responses) ? form.responses.length : 0,
       createdDate: formatDate(form.updatedAt || form.createdAt)
     }))
-    
-    console.log('Forms Value:', forms.value)
-    console.log('Forms Length:', forms.value.length)
     
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load forms'
@@ -200,7 +193,6 @@ const filteredForms = computed(() => {
 
 const totalPages = computed(() => {
   const pages = Math.ceil(filteredForms.value.length / itemsPerPage.value)
-  console.log('Total Pages:', pages, 'Filtered Forms:', filteredForms.value.length, 'Items Per Page:', itemsPerPage.value)
   return pages
 })
 
@@ -232,16 +224,15 @@ const handleCreateForm = async () => {
   // สร้างฟอร์มใหม่ แล้วไปหน้าแก้ไขฟอร์ม
   try {
     const newForm = await formAPI.create({})
-    console.log('Create form response:', newForm)
     // รองรับกรณี backend ส่ง data: {...}
     const formId = newForm?.data?._id || newForm?.data?.id
     if (formId) {
       router.push(`/form-builder/${formId}`)
     } else {
-      alert('Create form failed: No ID returned. Response: ' + JSON.stringify(newForm))
+      error.value = 'Create form failed: No ID returned'
     }
   } catch (err) {
-    alert('Create form failed: ' + (err.message || err))
+    error.value = 'Create form failed: ' + (err.message || err)
   }
 }
 
@@ -268,20 +259,18 @@ const handleDuplicate = async (formId) => {
   try {
     loading.value = true
     const result = await formAPI.duplicate(formId)
-    console.log('Duplicate result:', result)
     // Refresh the forms list to show the duplicated form
     await fetchForms()
   } catch (err) {
     console.error('Error duplicating form:', err)
-    const errorMsg = err.response?.data?.message || 'Failed to duplicate form. Please try again.'
-    alert(errorMsg)
+    error.value = err.response?.data?.message || 'Failed to duplicate form. Please try again.'
   } finally {
     loading.value = false
   }
 }
 
 const handleMore = (formId) => {
-  console.log('More options for form:', formId)
+  // More options handler
 }
 
 const toggleActionsDropdown = (formId) => {
@@ -298,8 +287,7 @@ const handleDelete = async (formId) => {
     await fetchForms()
   } catch (err) {
     console.error('Error deleting form:', err)
-    const errorMsg = err.response?.data?.message || err.message || 'Failed to delete form. Please try again.'
-    alert(errorMsg)
+    error.value = err.response?.data?.message || err.message || 'Failed to delete form. Please try again.'
   }
 }
 

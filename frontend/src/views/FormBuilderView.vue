@@ -130,7 +130,6 @@ async function saveForm() {
     for (const q of newQuestions) {
       // ข้าม question ที่ไม่มี title (validation จะ fail)
       if (!q.title || q.title.trim() === '') {
-        console.log('Skipping question without title')
         continue
       }
       
@@ -186,15 +185,12 @@ async function saveForm() {
       settings: buildSettingsPayload()
     }
     
-    console.log('Saving form with:', formData)
-    
     const result = await formStore.updateForm(formData)
     
     // อัพเดท currentFormStatus หลังจาก save สำเร็จ
     if (result) {
       currentFormStatus.value = result.status
     }
-    console.log('บันทึกสำเร็จ')
   } catch (error) {
     console.error('เกิดข้อผิดพลาดในการบันทึก:', error)
   }
