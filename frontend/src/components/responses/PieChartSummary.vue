@@ -160,6 +160,11 @@ function getBarWidth(count) {
  * ใช้ SVG arc เพื่อวาดแต่ละส่วน
  */
 const slices = computed(() => {
+  // ป้องกันการคำนวณถ้า total เป็น 0 หรือไม่มีข้อมูล
+  if (!total.value || total.value === 0 || !props.chartData.length) {
+    return []
+  }
+  
   const result = []
   let currentAngle = -90 // เริ่มจากด้านบน
   
@@ -167,6 +172,11 @@ const slices = computed(() => {
   const innerRadius = 50
   
   props.chartData.forEach((item) => {
+    // ข้ามถ้า count เป็น 0 (ไม่วาด slice)
+    if (item.count === 0) {
+      return
+    }
+    
     const percentage = item.count / total.value
     const angle = percentage * 360
     

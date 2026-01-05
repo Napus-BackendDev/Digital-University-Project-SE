@@ -39,15 +39,20 @@ function handleInput(questionId, value, type) {
 
 // Handle checkbox toggle
 function handleCheckbox(questionId, optionId) {
-    if (!Array.isArray(props.responses[questionId])) {
-        props.responses[questionId] = [];
-    }
-    const index = props.responses[questionId].indexOf(optionId);
+    // สร้าง array ใหม่แทนการแก้ไขโดยตรง เพื่อ trigger reactivity
+    const current = Array.isArray(props.responses[questionId]) 
+        ? [...props.responses[questionId]] 
+        : [];
+    
+    const index = current.indexOf(optionId);
     if (index === -1) {
-        props.responses[questionId].push(optionId);
+        current.push(optionId);
     } else {
-        props.responses[questionId].splice(index, 1);
+        current.splice(index, 1);
     }
+    
+    // Assign array ใหม่เพื่อ trigger reactivity
+    props.responses[questionId] = current;
 }
 
 // Handle dropdown toggle
@@ -100,11 +105,6 @@ function handleSubmit() {
     <form class="preview-questions-list" @submit.prevent>
             <!-- Render each question card -->
             <div v-for="(q, idx) in questions" :key="q.id || idx" class="preview-question-card">
-                <!-- --- Section Header --- -->
-                <!-- Section header (question number) -->
-                <div class="question-section-header">
-                    <span class="question-section-label">Question {{ idx + 1 }}</span>
-                </div>
                 <!-- --- Question Title Row --- -->
                 <!-- Question title and required marker -->
                 <div class="question-title-row">
@@ -817,9 +817,10 @@ function handleSubmit() {
 .question-title {
     flex: 1;
     font-family: 'Inter', sans-serif;
-    font-size: 1.0rem;
-    font-weight: 200;
+    font-size: 1.4rem;
+    font-weight: 500;
     color: #222;
+    margin-bottom: 4px;
 }
 
 .required-dot {

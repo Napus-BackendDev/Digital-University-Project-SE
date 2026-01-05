@@ -494,7 +494,7 @@ onMounted(() => {
 });
 
 const goBack = () => {
-  router.push('/');
+  router.push('/home');
 };
 
 const handleSubmit = async () => {
@@ -528,8 +528,8 @@ const handleSubmit = async () => {
       .map(q => {
         let response = responses[q._id];
         
-        // Filter out empty objects from file uploads - only keep valid File objects
-        if (Array.isArray(response)) {
+        // Filter out empty objects from file uploads - only for file-upload questions
+        if (q.type === 'file' && Array.isArray(response)) {
           response = response.filter(item => item instanceof File);
           // If array becomes empty after filtering, set to undefined
           if (response.length === 0) {
@@ -579,7 +579,7 @@ const handleSubmit = async () => {
 
 const closeModal = () => {
   showSuccessModal.value = false;
-  router.push('/');
+  router.push('/home');
 };
 
 // Submit another response - reset form and close modal
