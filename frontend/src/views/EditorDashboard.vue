@@ -84,6 +84,20 @@
         @goto="goToPage"
       />
     </main>
+
+    <!-- Delete Confirmation Modal -->
+    <Modal
+      :show="showDeleteModal"
+      type="warning"
+      title="Delete Form"
+      message="Are you sure you want to delete this form?"
+      :show-cancel="true"
+      confirm-text="OK"
+      cancel-text="Cancel"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+      @close="cancelDelete"
+    />
   </div>
 </template>
 
@@ -96,6 +110,7 @@ import Pagination from '@/components/Pagination.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import FilterDropdown from '@/components/FilterDropdown.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import Modal from '@/components/Modal.vue'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -107,6 +122,8 @@ const loading = ref(false)
 const error = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(7)
+const showDeleteModal = ref(false)
+const formToDelete = ref(null)
 
 const filterOptions = [
   { value: 'all', label: 'All Status' },
@@ -152,14 +169,18 @@ const fetchForms = async () => {
     console.log('Form Data Length:', formData.length)
     
     // Transform API data to match component structure
-    forms.value = formData.map(form => ({
-      id: form._id,
-      title: getTitle(form.title) || 'Untitled Form',
-      description: getTitle(form.description) || 'No description',
-      status: form.status || 'draft',
-      responses: form.responseCount || 0,
-      createdDate: formatDate(form.updatedAt || form.createdAt)
-    }))
+    forms.value = formData.map(form => {
+      console.log('Processing form:', form.title?.[0]?.value || 'Untitled', 'Schedule:', form.schedule)
+      return {
+        id: form._id,
+        title: getTitle(form.title) || 'Untitled Form',
+        description: getTitle(form.description) || 'No description',
+        status: form.status || 'draft',
+        schedule: form.schedule || { startAt: null, endAt: null }, // ←← เพิ่ม schedule data
+        responses: form.responseCount || 0,
+        createdDate: formatDate(form.updatedAt || form.createdAt)
+      }
+    })
     
     console.log('Forms Value:', forms.value)
     console.log('Forms Length:', forms.value.length)
@@ -288,19 +309,31 @@ const toggleActionsDropdown = (formId) => {
   showActionsDropdown.value = showActionsDropdown.value === formId ? null : formId
 }
 
-const handleDelete = async (formId) => {
+const handleDelete = (formId) => {
   showActionsDropdown.value = null
-  if (!confirm('Are you sure you want to delete this form?')) {
-    return
-  }
+  formToDelete.value = formId
+  showDeleteModal.value = true
+}
+
+const confirmDelete = async () => {
+  if (!formToDelete.value) return
+  
   try {
-    await formAPI.delete(formId)
+    await formAPI.delete(formToDelete.value)
     await fetchForms()
   } catch (err) {
     console.error('Error deleting form:', err)
     const errorMsg = err.response?.data?.message || err.message || 'Failed to delete form. Please try again.'
     alert(errorMsg)
+  } finally {
+    formToDelete.value = null
+    showDeleteModal.value = false
   }
+}
+
+const cancelDelete = () => {
+  formToDelete.value = null
+  showDeleteModal.value = false
 }
 
 onMounted(() => {

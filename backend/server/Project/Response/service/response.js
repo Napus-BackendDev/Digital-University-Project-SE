@@ -1,7 +1,7 @@
 const mongo = require("mongodb");
 const responseService = require("../controllers/response");
 const ResMessage = require("../../Settings/service/message");
-const {Parser} = require('json2csv');
+const { Parser } = require('json2csv');
 
 const responseModel = require("../model/response.model");
 const formModel = require("../../Form/models/form.model");
@@ -60,7 +60,7 @@ exports.onGetById = async function (request, response) {
         let query = {};
         query._id = new mongo.ObjectId(request.query._id);
         const doc = await responseService.onQuery(query);
-        if(!doc){
+        if (!doc) {
             return response.status(404).json({
                 success: false,
                 message: "Response not found"
@@ -87,7 +87,7 @@ exports.onGetById = async function (request, response) {
 //                 message: "Invalid form ID"
 //             });
 //         }
-        
+
 //         // Get form
 //         const form = await formModel.findById(form_id).lean();
 //         if(!form){
@@ -97,7 +97,7 @@ exports.onGetById = async function (request, response) {
 //                 message: "Form not found"
 //             });
 //         }
-        
+
 //         // Get responses with populated questions and sub-questions
 //         const responses = await responseModel.find({ form: form_id })
 //             .populate({
@@ -107,7 +107,7 @@ exports.onGetById = async function (request, response) {
 //                 }
 //             })
 //             .lean();
-            
+
 //         if(!responses || responses.length === 0){
 //             console.log("No responses found for the form");
 //             return response.status(404).json({
@@ -125,7 +125,7 @@ exports.onGetById = async function (request, response) {
 //                     if (!questionMap.has(qId)) {
 //                         questionMap.set(qId, answer.question);
 //                     }
-                    
+
 //                     // Add sub-questions if they exist
 //                     if (answer.question.subQuestion && Array.isArray(answer.question.subQuestion)) {
 //                         answer.question.subQuestion.forEach(subQ => {
@@ -142,7 +142,7 @@ exports.onGetById = async function (request, response) {
 //         });
 
 //         const questions = Array.from(questionMap.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
-        
+
 //         if(questions.length === 0){
 //             console.log("No questions found in responses");
 //             return response.status(404).json({
@@ -163,13 +163,13 @@ exports.onGetById = async function (request, response) {
 //                     answerMap[a.question._id.toString()] = a.response;
 //                 }
 //             });
-            
+
 //             const row = {
 //                 'Response ID': resp._id.toString(),
 //                 'Responder ID': resp.responder_id ? resp.responder_id.toString() : 'N/A',
 //                 'Submitted At': resp.submittedAt || 'N/A'
 //             };
-            
+
 //             questions.forEach(q => {
 //                 const raw = answerMap[q._id.toString()];
 //                 let value = null;
@@ -184,22 +184,22 @@ exports.onGetById = async function (request, response) {
 //                 }
 //                 row[q.questionText || 'Question'] = value;
 //             });
-            
+
 //             return row;
 //         });
-        
+
 //         const parser = new Parser({ fields });
 //         const csv = parser.parse(rows);
-        
+
 //         const formTitle = Array.isArray(form.title) && form.title.length > 0 
 //             ? (form.title.find(t => t.key === 'en')?.value || form.title[0].value || 'form')
 //             : 'form';
 //         const safeTitle = formTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        
+
 //         response.header('Content-Type', 'text/csv; charset=UTF-8');
 //         response.setHeader('Content-Disposition', `attachment; filename="${safeTitle}_responses.csv"`);
 //         response.status(200).send(csv);
-        
+
 //     } catch (error) {
 //         console.error('Export responses error:', error);
 //         return response.status(500).json({ message: 'Error exporting responses', error: error.message });
@@ -210,12 +210,13 @@ exports.onCreate = async function (request, response) {
     try {
         const responseData = {
             ...request.body,
-            responder_id: request.user.id
+            responder: request.user?.id || null // เปลี่ยนเป็น responder ให้ตรงกับ model
         };
+        console.log('Creating response with data:', responseData); // Debug log
         const doc = await responseService.onCreate(responseData);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        console.log(err);
+        console.log('Error in onCreate:', err);
         return response.status(500).json({
             success: false,
             message: "Failed to create response",
@@ -229,13 +230,13 @@ exports.onUpdate = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await responseService.onUpdate(query, request.body);
-        if(!doc){
+        if (!doc) {
             return response.status(404).json({
                 success: false,
                 message: "Response not found"
             });
         }
-        return ResMessage.sendResponse(response, 0 , 20000, doc);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
         return response.status(500).json({
@@ -251,7 +252,7 @@ exports.onDelete = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await responseService.onDelete(query);
-        return ResMessage.sendResponse(response, 0 , 20000, doc);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
         return response.status(500).json({
@@ -266,7 +267,7 @@ exports.onDeleteByFormId = async function (request, response) {
         let query = {}
         query.form = request.body.form_id;
         const doc = await responseService.onDelete(query);
-        return ResMessage.sendResponse(response, 0 , 20000, doc);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
         return response.status(500).json({
@@ -322,7 +323,7 @@ exports.generateExportLinkFormId = async function (request, response) {
                 message: "Invalid form ID"
             });
         }
-        
+
         const exportLink = `${request.protocol}://${request.get('host')}/api/v1/response/download/${form_id}`;
 
         return response.status(200).json({
@@ -345,7 +346,7 @@ exports.generateExportLinkFormId = async function (request, response) {
 exports.downloadUserJSON = async function (request, response) {
     try {
         const { form_id, user_id } = request.params;
-        
+
         if (!form_id || !mongo.ObjectId.isValid(form_id)) {
             return response.status(400).json({
                 success: false,
@@ -411,7 +412,7 @@ exports.downloadUserJSON = async function (request, response) {
 exports.publicDownloadUsersJSON = async function (request, response) {
     try {
         const { form_id } = request.params;
-        
+
         if (!form_id || !mongo.ObjectId.isValid(form_id)) {
             return response.status(400).json({
                 success: false,
@@ -470,13 +471,13 @@ exports.onUpdate = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await responseService.onUpdate(query, request.body);
-        if(!doc){
+        if (!doc) {
             return response.status(404).json({
                 success: false,
                 message: "Response not found"
             });
         }
-        return ResMessage.sendResponse(response, 0 , 20000, doc);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
         return response.status(500).json({
@@ -492,7 +493,7 @@ exports.onDelete = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await responseService.onDelete(query);
-        return ResMessage.sendResponse(response, 0 , 20000, doc);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
         return response.status(500).json({
@@ -507,7 +508,7 @@ exports.onDeleteByFormId = async function (request, response) {
         let query = {}
         query.form = request.body.form_id;
         const doc = await responseService.onDelete(query);
-        return ResMessage.sendResponse(response, 0 , 20000, doc);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
         return response.status(500).json({

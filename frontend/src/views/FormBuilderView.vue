@@ -38,6 +38,19 @@ const formUrl = computed(() => {
   return formId.value ? `${baseUrl}/form/${formId.value}` : ''
 })
 
+// สร้าง form object สำหรับการคำนวณ dynamic status
+const currentFormData = computed(() => ({
+  status: settings.value.formStatus || currentFormStatus.value,
+  schedule: {
+    startAt: settings.value.startDate && settings.value.startTime 
+      ? `${settings.value.startDate}T${settings.value.startTime}:00.000Z`
+      : null,
+    endAt: settings.value.endDate && settings.value.endTime 
+      ? `${settings.value.endDate}T${settings.value.endTime}:00.000Z`
+      : null
+  }
+}))
+
 
 /* ===================================
    Composables
@@ -158,11 +171,14 @@ async function saveForm() {
     
     // ใช้ status ใหม่ถ้ามีการเปลี่ยน หรือใช้ status ปัจจุบัน
     const statusToSave = settings.value.formStatus || currentFormStatus.value || 'draft'
+    const scheduleToSave = buildSchedule()
     
     console.log('Saving form with:', {
       formId: formId.value,
       questionIds: allQuestionIds,
-      status: statusToSave
+      status: statusToSave,
+      schedule: scheduleToSave,
+      settings: settings.value
     })
     
     const result = await formStore.updateForm({
@@ -171,7 +187,7 @@ async function saveForm() {
       description: [{ key: 'en', value: formDescription.value }],
       questions: allQuestionIds,
       status: statusToSave,
-      schedule: buildSchedule(),
+      schedule: scheduleToSave,
       settings: buildSettingsPayload()
     })
     
@@ -333,6 +349,7 @@ function handleUpdateSettings(newSettings) {
         :formDescription="formDescription"
         :formUrl="formUrl"
         :formStatus="settings.formStatus"
+        :formData="currentFormData"
         :expandedQuestionId="expandedQuestionId"
         @update:questions="questions = $event"
         @update:formTitle="formTitle = $event"
