@@ -104,15 +104,11 @@ const fetchForms = async () => {
   error.value = null;
   try {
     const response = await formAPI.getAll();
-    console.log('API Response:', response);
     
     // Handle different API response structures
     const formData = Array.isArray(response.data) 
       ? response.data 
       : (response.data.data || response.data.datas || []);
-    
-    console.log('Form Data:', formData);
-    console.log('Form Data Length:', formData.length);
     
     // Transform API data to match component structure
     // Filter forms with status 'open' or 'closed' for user dashboard
@@ -126,9 +122,6 @@ const fetchForms = async () => {
         responses: form.responseCount || 0,
         createdDate: formatDate(form.updatedAt || form.createdAt)
       }));
-    
-    console.log('Filtered Forms (open/closed only):', formsData.value);
-    console.log('Filtered Forms Count:', formsData.value.length);
     
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load forms';

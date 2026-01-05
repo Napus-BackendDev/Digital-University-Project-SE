@@ -132,6 +132,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast Notification -->
+    <Toast 
+      v-model="toastVisible" 
+      :message="toastMessage" 
+      :type="toastType" 
+    />
   </div>
 </template>
 
@@ -140,6 +147,7 @@ import { ref, computed, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { formAPI, responseAPI } from '@/services/api';
 import Questionsfill from '@/components/formfill/Questionsfill.vue';
+import Toast from '@/components/Toast.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -148,6 +156,18 @@ const responses = reactive({});
 const isSubmitting = ref(false);
 const showSuccessModal = ref(false);
 const loading = ref(true);
+
+// Toast state
+const toastVisible = ref(false);
+const toastMessage = ref('');
+const toastType = ref('info');
+
+// Show toast function
+const showToast = (message, type = 'info') => {
+  toastMessage.value = message;
+  toastType.value = type;
+  toastVisible.value = true;
+};
 const formData = ref(null);
 const formSettings = ref(null);
 const formStatus = ref(null);
@@ -297,7 +317,7 @@ const validateCurrentSection = () => {
     if (!response ||
       (Array.isArray(response) && response.length === 0) ||
       response === '') {
-      alert(`Please answer the required question: ${question.label}`);
+      showToast(`Please answer the required question: ${question.label}`, 'warning');
       return false;
     }
   }
@@ -373,14 +393,11 @@ const fetchFormData = async () => {
   loading.value = true;
   try {
     const formId = route.params.id;
-    console.log('Fetching form ID:', formId);
 
     const response = await formAPI.getById(formId);
-    console.log('API Response:', response.data);
 
     // Handle nested data structure
     const formDataResponse = response.data.data || response.data;
-    console.log('Form data:', formDataResponse);
 
     // Extract title and description
     const titleObj = formDataResponse.title?.find(t => t.key === 'en');
@@ -395,7 +412,6 @@ const fetchFormData = async () => {
     let questions = [];
 
     if (formDataResponse.questions && Array.isArray(formDataResponse.questions)) {
-      console.log('Using questions array:', formDataResponse.questions);
       questions = formDataResponse.questions.map(q => {
         // Extract question title from multilingual array
         const titleObj = q.title?.find(t => t.key === 'en') || q.questionTitle?.find(t => t.key === 'en');
@@ -449,11 +465,7 @@ const fetchFormData = async () => {
           caption: q.config?.caption || q.caption || ''
         };
       });
-    } else {
-      console.warn('No questions found in response. Available properties:', Object.keys(formDataResponse));
     }
-
-    console.log('Parsed questions:', questions);
 
     formData.value = {
       id: formDataResponse._id,
@@ -480,9 +492,7 @@ const fetchFormData = async () => {
     });
 
   } catch (error) {
-    console.error('Error fetching form:', error);
-    console.error('Error details:', error.response?.data || error.message);
-    alert('Failed to load form. Please try again.');
+    showToast('Failed to load form. Please try again.', 'error');
     router.push('/');
   } finally {
     loading.value = false;
@@ -510,7 +520,7 @@ const handleSubmit = async () => {
     if (!response ||
       (Array.isArray(response) && response.length === 0) ||
       response === '') {
-      alert(`Please answer all required questions before submitting.`);
+      showToast('Please answer all required questions before submitting.', 'warning');
       return;
     }
   }
@@ -552,13 +562,12 @@ const handleSubmit = async () => {
     
     const responseData = {
       form: formData.value.id, // ObjectId of the form
-      answers,
-      responder: '507f1f77bcf86cd799439011' // Mock user ID for testing
+      answers
+      // responder will be set by backend from auth token
     };
     
     // Submit to API
     const result = await responseAPI.submit(responseData);
-    console.log('Form submitted successfully:', result);
 
     // บันทึกว่า user submit แล้ว (สำหรับ limitResponses)
     if (formSettings.value?.limitResponses) {
@@ -568,10 +577,8 @@ const handleSubmit = async () => {
     // Show success modal
     showSuccessModal.value = true;
   } catch (error) {
-    console.error('Error submitting form:', error);
-    console.error('Error response:', error.response?.data);
     const errorMsg = error.response?.data?.message || 'Failed to submit form. Please try again.';
-    alert(errorMsg);
+    showToast(errorMsg, 'error');
   } finally {
     isSubmitting.value = false;
   }

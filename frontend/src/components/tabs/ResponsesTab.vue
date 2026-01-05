@@ -182,7 +182,7 @@ function handleExport() {
 // Delete response
 function handleDelete() {
   if (!confirm('Are you sure you want to delete this response?')) return
-  console.log('Delete response:', selectedResponse.value._id)
+  // TODO: Implement API call to delete response
   backToList()
 }
 
