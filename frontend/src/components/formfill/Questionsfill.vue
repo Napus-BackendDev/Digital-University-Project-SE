@@ -11,51 +11,93 @@ const props = defineProps({
     formTitle: { type: String, required: true },
     formDescription: { type: String, default: '' },
     formStatus: { type: String, default: 'draft' },
-    questions: { type: Array, required: true }
+    questions: { type: Array, required: true },
+    responses: { type: Object, required: true },
+    isResponseMode: { type: Boolean, default: false },
+    currentSection: { type: Number, default: 0 },
+    totalSections: { type: Number, default: 1 },
+    isSubmitting: { type: Boolean, default: false }
 })
 
-// --- Local state: answers for each question ---
-// answers: stores preview answers for each question
-const answers = ref([])
-// Reset answers when questions change
-// Watch for questions prop changes to reset answers
-watch(() => props.questions, (newQ) => {
-    answers.value = newQ.map(() => null)
-}, { immediate: true })
+// --- Define emits ---
+const emit = defineEmits(['submit', 'next', 'prev'])
 
 // --- Handle input for text, paragraph, date, time, rating ---
-// handleInput: updates answers, supports rating deselect
-function handleInput(idx, value, type) {
+// handleInput: updates responses, supports rating deselect
+function handleInput(questionId, value, type) {
     // For rating: allow deselecting by clicking the same star
     if (type === 'rating') {
-        if (answers.value[idx] === value) {
-            answers.value[idx] = 0;
+        if (props.responses[questionId] === value) {
+            props.responses[questionId] = 0;
         } else {
-            answers.value[idx] = value;
+            props.responses[questionId] = value;
         }
     } else {
-        answers.value[idx] = value;
+        props.responses[questionId] = value;
     }
+}
+
+// Handle checkbox toggle
+function handleCheckbox(questionId, optionId) {
+    if (!Array.isArray(props.responses[questionId])) {
+        props.responses[questionId] = [];
+    }
+    const index = props.responses[questionId].indexOf(optionId);
+    if (index === -1) {
+        props.responses[questionId].push(optionId);
+    } else {
+        props.responses[questionId].splice(index, 1);
+    }
+}
+
+// Handle dropdown toggle
+function handleDropdownToggle(question) {
+    question._dropdownOpen = !question._dropdownOpen;
+}
+
+// Handle dropdown select
+function handleDropdownSelect(questionId, optionId, question) {
+    props.responses[questionId] = optionId;
+    question._dropdownOpen = false;
+}
+
+// Handle file upload
+function handleFileUpload(questionId, event) {
+    const newFiles = Array.from(event.target.files);
+    const existingFiles = props.responses[questionId] || [];
+    props.responses[questionId] = [...existingFiles, ...newFiles];
+    event.target.value = ''; // Reset input to allow re-uploading same file
+}
+
+// Handle file removal
+function handleFileRemove(questionId, fileIndex) {
+    if (Array.isArray(props.responses[questionId])) {
+        props.responses[questionId].splice(fileIndex, 1);
+    }
+}
+
+// --- Computed properties for section navigation ---
+import { computed } from 'vue'
+const isFirstSection = computed(() => props.currentSection === 0)
+const isLastSection = computed(() => props.currentSection === props.totalSections - 1)
+
+// --- Navigation handlers ---
+function handleNext() {
+    emit('next')
+}
+
+function handlePrev() {
+    emit('prev')
+}
+
+function handleSubmit() {
+    emit('submit')
 }
 </script>
 
 <template>
-    <!-- Main preview container -->
-    <div class="questions-preview-googleform">
-        <!-- =====================
-            Form Header Section
-        ====================== -->
-        <!-- Form header: title & description -->
-        <div class="form-header-section preview-header">
-            <h2 class="preview-title">{{ formTitle }}</h2>
-            <p class="preview-description" v-if="formDescription">{{ formDescription }}</p>
-        </div>
-
-        <!-- =====================
-            Questions List
-        ====================== -->
-        <!-- Questions list -->
-        <form class="preview-questions-list" @submit.prevent>
+    <!-- Questions list -->
+    <form class="preview-questions-list" @submit.prevent>
             <!-- Render each question card -->
             <div v-for="(q, idx) in questions" :key="q.id || idx" class="preview-question-card">
                 <!-- --- Section Header --- -->
@@ -77,22 +119,29 @@ function handleInput(idx, value, type) {
                     <template v-if="q.type === 'short-answer'">
                         <!-- Single-line text input -->
                         <input class="custom-input" type="text" :placeholder="q.placeholder || 'Your answer'"
-                            v-model="answers[idx]" @input="handleInput(idx, $event.target.value)" />
+                            v-model="responses[q._id]" @input="handleInput(q._id, $event.target.value)" />
                     </template>
 
                     <!-- Paragraph -->
                     <template v-else-if="q.type === 'paragraph'">
                         <!-- Multi-line textarea -->
                         <textarea class="custom-input textarea" :placeholder="q.placeholder || 'Your answer'"
-                            v-model="answers[idx]" @input="handleInput(idx, $event.target.value)"></textarea>
+                            v-model="responses[q._id]" @input="handleInput(q._id, $event.target.value)"></textarea>
                     </template>
 
                 
-                    <!-- Multiple Choice (with follow-up support) -->
+                    <!-- Multiple Choice -->
                     <template v-else-if="q.type === 'multiple-choice'">
                         <div class="preview-mc-list">
-                            <FollowupOption v-for="opt in q.options || []" :key="opt.id" :option="opt" :idx="idx"
-                                v-model:answers="answers" />
+                            <!-- Use Followup component for options with follow-up support -->
+                            <FollowupOption
+                                v-for="opt in q.options || []"
+                                :key="opt.id"
+                                :option="opt"
+                                :idx="q._id"
+                                :answers="responses"
+                                @update:answers="(val) => handleInput(q._id, val[q._id])"
+                            />
                         </div>
                     </template>
 
@@ -100,15 +149,10 @@ function handleInput(idx, value, type) {
                     <template v-else-if="q.type === 'checkbox'">
                         <div class="preview-checkbox-list">
                             <div v-for="opt in q.options || []" :key="opt.id" class="preview-checkbox-row"
-                                :class="{ checked: Array.isArray(answers[idx]) && answers[idx].includes(opt.id) }"
-                                @click="() => {
-                                    if (!Array.isArray(answers[idx])) answers[idx] = [];
-                                    const i = answers[idx].indexOf(opt.id);
-                                    if (i === -1) answers[idx].push(opt.id);
-                                    else answers[idx].splice(i, 1);
-                                }">
+                                :class="{ checked: Array.isArray(responses[q._id]) && responses[q._id].includes(opt.text) }"
+                                @click="handleCheckbox(q._id, opt.text)">
                                 <div class="preview-checkbox-box">
-                                    <div v-if="Array.isArray(answers[idx]) && answers[idx].includes(opt.id)"
+                                    <div v-if="Array.isArray(responses[q._id]) && responses[q._id].includes(opt.text)"
                                         class="preview-checkbox-tick"></div>
                                 </div>
                                 <span class="preview-checkbox-text">{{ opt.text }}</span>
@@ -117,15 +161,14 @@ function handleInput(idx, value, type) {
                     </template>
 
                     <!-- Dropdown (interactive preview) -->
-                    <!-- Dropdown (interactive preview) -->
                     <template v-else-if="q.type === 'dropdown'">
                         <!-- Dropdown display and menu with overlay alignment -->
                         <div class="preview-dropdown-wrapper">
-                            <div class="preview-dropdown" tabindex="0" @click="q._dropdownOpen = !q._dropdownOpen"
+                            <div class="preview-dropdown" tabindex="0" @click="handleDropdownToggle(q)"
                                 @blur="q._dropdownOpen = false">
                                 <div class="preview-dropdown-selected">
-                                    <span v-if="!answers[idx]" class="dropdown-placeholder">Select an option</span>
-                                    <span v-else>{{(q.options || []).find(o => o.id === answers[idx])?.text}}</span>
+                                    <span v-if="!responses[q._id]" class="dropdown-placeholder">Select an option</span>
+                                    <span v-else>{{(q.options || []).find(o => o.text === responses[q._id])?.text}}</span>
                                 </div>
                                 <div class="preview-dropdown-arrow">
                                     <ArrowLeftIcon class="dropdown-arrow-icon" />
@@ -133,8 +176,8 @@ function handleInput(idx, value, type) {
                             </div>
                             <div v-if="q._dropdownOpen" class="preview-dropdown-menu">
                                 <div v-for="opt in q.options || []" :key="opt.id" class="preview-dropdown-option"
-                                    :class="{ selected: answers[idx] === opt.id }"
-                                    @mousedown.prevent="() => { answers[idx] = opt.id; q._dropdownOpen = false; }">
+                                    :class="{ selected: responses[q._id] === opt.text }"
+                                    @mousedown.prevent="handleDropdownSelect(q._id, opt.text, q)">
                                     {{ opt.text }}
                                 </div>
                             </div>
@@ -142,31 +185,27 @@ function handleInput(idx, value, type) {
                     </template>
 
                     <!-- Date -->
-                    <!-- Date -->
                     <template v-else-if="q.type === 'date'">
-                        <input class="custom-input" type="date" v-model="answers[idx]"
-                            @input="handleInput(idx, $event.target.value)" />
+                        <input class="custom-input" type="date" v-model="responses[q._id]"
+                            @input="handleInput(q._id, $event.target.value)" />
                     </template>
 
-                    <!-- Time -->
                     <!-- Time -->
                     <template v-else-if="q.type === 'time'">
-                        <input class="custom-input" type="time" v-model="answers[idx]"
-                            @input="handleInput(idx, $event.target.value)" />
+                        <input class="custom-input" type="time" v-model="responses[q._id]"
+                            @input="handleInput(q._id, $event.target.value)" />
                     </template>
 
-                    <!-- Rating (star selection) -->
                     <!-- Rating (star selection) -->
                     <template v-else-if="q.type === 'rating'">
                         <div class="custom-rating">
                             <span v-for="star in q.maxRating || 5" :key="star" class="star"
-                                :class="{ filled: answers[idx] >= star }" @click="handleInput(idx, star, 'rating')">
+                                :class="{ filled: responses[q._id] >= star }" @click="handleInput(q._id, star, 'rating')">
                                 &#9733;
                             </span>
                         </div>
                     </template>
 
-                    <!-- File Upload (interactive preview, builder-style UI) -->
                     <!-- File Upload (interactive preview, builder-style UI) -->
                     <template v-else-if="q.type === 'file-upload'">
                         <div class="preview-file-upload">
@@ -179,13 +218,29 @@ function handleInput(idx, value, type) {
                                 </svg>
                                 <span>File upload area</span>
                                 <span class="upload-hint">Drag & drop or click to upload</span>
-                                <input type="file" :multiple="q.maxFiles > 1" style="display:none" @change="e => {
-                                    answers[idx] = Array.from(e.target.files);
-                                }" />
+                                <input type="file" :multiple="q.maxFiles > 1" style="display:none" 
+                                    @change="handleFileUpload(q._id, $event)" />
                             </label>
-                            <div v-if="Array.isArray(answers[idx]) && answers[idx].length" class="preview-file-list">
-                                <div v-for="file in answers[idx]" :key="file.name" class="preview-file-item">
+                            <div v-if="Array.isArray(responses[q._id]) && responses[q._id].length" class="preview-file-list">
+                                <div v-for="(file, index) in responses[q._id]" :key="index" class="preview-file-item">
+                                    <div class="file-icon-wrapper">
+                                        <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                            <polyline points="13 2 13 9 20 9"></polyline>
+                                        </svg>
+                                        <button 
+                                            type="button"
+                                            class="file-remove-btn" 
+                                            @click="handleFileRemove(q._id, index)"
+                                            title="Remove file"
+                                        >
+                                            <svg viewBox="0 0 16 16" fill="none">
+                                                <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                     <span class="preview-file-name">{{ file.name }}</span>
+                                    <span class="preview-file-size">({{ (file.size / 1024).toFixed(1) }} KB)</span>
                                 </div>
                             </div>
                         </div>
@@ -193,19 +248,9 @@ function handleInput(idx, value, type) {
 
 
                     <!-- Image (display only) -->
-                    <!-- Image (display only) -->
                     <template v-else-if="q.type === 'image'">
                         <div v-if="q.imageUrl" class="media-center">
                             <img :src="q.imageUrl" alt="Image" class="media-image" />
-                            <div v-if="q.caption" class="custom-caption">{{ q.caption }}</div>
-                        </div>
-                    </template>
-
-                    <!-- Video (display only) -->
-                    <!-- Video (display only) -->
-                    <template v-else-if="q.type === 'video'">
-                        <div v-if="q.videoUrl" class="media-center">
-                            <video :src="q.videoUrl" controls class="media-video"></video>
                             <div v-if="q.caption" class="custom-caption">{{ q.caption }}</div>
                         </div>
                     </template>
@@ -220,13 +265,54 @@ function handleInput(idx, value, type) {
             <!-- =====================
                 Footer Section
             ====================== -->
-            <!-- Footer: required note and submit button -->
+            <!-- Footer: required note and navigation buttons -->
             <div class="preview-footer-row">
                 <span class="required-note"><span class="star">*</span>Required field</span>
-                <button class="submit-btn" type="button" disabled>Submit (Preview Mode)</button>
+                
+                <!-- Navigation Buttons for Multi-section Forms or Single Submit -->
+                <div class="navigation-buttons">
+                    <!-- Previous Button (show if not first section and response mode) -->
+                    <button 
+                        v-if="isResponseMode && totalSections > 1 && !isFirstSection"
+                        class="nav-btn prev-btn" 
+                        type="button"
+                        @click="handlePrev"
+                    >
+                        <svg class="icon-16" viewBox="0 0 16 16" fill="none">
+                            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Previous
+                    </button>
+                    
+                    <!-- Spacer for alignment when no prev button -->
+                    <div v-else-if="isResponseMode && totalSections > 1"></div>
+                    
+                    <!-- Next Button (show if not last section and response mode) -->
+                    <button 
+                        v-if="isResponseMode && totalSections > 1 && !isLastSection"
+                        class="nav-btn next-btn" 
+                        type="button"
+                        @click="handleNext"
+                    >
+                        Next
+                        <svg class="icon-16" viewBox="0 0 16 16" fill="none">
+                            <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- Submit Button (show if last section or single section, and response mode) -->
+                    <button 
+                        v-if="isResponseMode && (totalSections === 1 || isLastSection)"
+                        class="submit-btn" 
+                        type="button"
+                        :disabled="isSubmitting"
+                        @click="handleSubmit"
+                    >
+                        {{ isSubmitting ? 'Submitting...' : 'Submit' }}
+                    </button>
+                </div>
             </div>
         </form>
-    </div>
 </template>
 
 <style scoped>
@@ -289,15 +375,69 @@ function handleInput(idx, value, type) {
     color: #444;
     background: #f5f7ff;
     border-radius: 6px;
-    padding: 4px 10px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+}
+
+.file-icon-wrapper {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-icon {
+    width: 24px;
+    height: 24px;
+    color: #6366f1;
 }
 
 .preview-file-name {
     font-family: 'Inter', sans-serif;
     font-size: 0.97rem;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.preview-file-size {
+    font-size: 0.85rem;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.file-remove-btn {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: #dc2626;
+    color: #fff;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.file-remove-btn:hover {
+    background: #b91c1c;
+    transform: scale(1.15);
+}
+
+.file-remove-btn svg {
+    width: 10px;
+    height: 10px;
 }
 
 .file-upload-area {
@@ -724,18 +864,84 @@ function handleInput(idx, value, type) {
     margin-right: 2px;
 }
 
+/* Navigation Buttons Container */
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Navigation Button Base */
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid #E5E5E5;
+    border-radius: 12px;
+    background: #FFFFFF;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: -0.15px;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    background: #F5F5F5;
+    border-color: #D4D4D4;
+}
+
+.icon-16 {
+    width: 16px;
+    height: 16px;
+}
+
+.prev-btn svg {
+    color: #737373;
+}
+
+.next-btn {
+    background: #6366F1;
+    border-color: #6366F1;
+    color: #FFFFFF;
+}
+
+.next-btn:hover {
+    background: #4F46E5;
+    border-color: #4F46E5;
+}
+
+.next-btn svg {
+    color: #FFFFFF;
+}
+
+/* Submit Button */
 .submit-btn {
-    background: #737373;
+    background: #171717;
     color: #fff;
     font-family: 'Inter', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 300;
+    font-size: 0.95rem;
+    font-weight: 500;
     border: none;
     border-radius: 8px;
     padding: 10px 32px;
-    cursor: not-allowed;
-    opacity: 0.7;
+    cursor: pointer;
     transition: background 0.2s;
     margin-left: auto;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: #404040;
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: #737373;
 }
 </style>

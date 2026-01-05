@@ -6,7 +6,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useFormStore } from '@/stores/form'
-import { questionsAPI } from '@/services/api'
+import { questionsAPI, responseAPI } from '@/services/api'
 
 // Composables
 import { useModal, useQuestionManager, useFormSettings, useAutoSave } from '@/composables'
@@ -35,21 +35,13 @@ const currentFormStatus = ref('draft') // เก็บ status ปัจจุบ
 
 const formUrl = computed(() => {
   const baseUrl = window.location.origin
-  return formId.value ? `${baseUrl}/form/${formId.value}` : ''
+  return formId.value ? `${baseUrl}/form/${formId.value}/response` : ''
 })
 
-// สร้าง form object สำหรับการคำนวณ dynamic status
-const currentFormData = computed(() => ({
-  status: settings.value.formStatus || currentFormStatus.value,
-  schedule: {
-    startAt: settings.value.startDate && settings.value.startTime 
-      ? `${settings.value.startDate}T${settings.value.startTime}:00.000Z`
-      : null,
-    endAt: settings.value.endDate && settings.value.endTime 
-      ? `${settings.value.endDate}T${settings.value.endTime}:00.000Z`
-      : null
-  }
-}))
+const previewUrl = computed(() => {
+  const baseUrl = window.location.origin
+  return formId.value ? `${baseUrl}/form/${formId.value}/preview` : ''
+})
 
 
 /* ===================================
@@ -135,14 +127,25 @@ async function saveForm() {
     // สร้าง questions ใหม่ใน database
     const createdQuestionIds = []
     for (const q of newQuestions) {
+      // ข้าม question ที่ไม่มี title (validation จะ fail)
+      if (!q.title || q.title.trim() === '') {
+        console.log('Skipping question without title')
+        continue
+      }
+      
       const questionData = {
         form: formId.value,
-        title: [{ key: 'en', value: q.title || '' }],
+        title: [{ key: 'en', value: q.title }],
         type: mapQuestionType(q.type),
         required: q.required || false,
         order: questions.value.indexOf(q) + 1,
         config: {
-          options: q.options || [],
+          options: q.options?.map(opt => ({
+            id: opt.id,
+            text: opt.text,
+            hasFollowUp: opt.hasFollowUp || false,
+            followUpQuestion: opt.followUpQuestion || null
+          })) || [],
           maxRating: q.maxRating || 5,
           allowSpecificTypes: q.allowSpecificTypes || false,
           allowedFileTypes: q.allowedFileTypes || [],
@@ -171,25 +174,20 @@ async function saveForm() {
     
     // ใช้ status ใหม่ถ้ามีการเปลี่ยน หรือใช้ status ปัจจุบัน
     const statusToSave = settings.value.formStatus || currentFormStatus.value || 'draft'
-    const scheduleToSave = buildSchedule()
     
-    console.log('Saving form with:', {
-      formId: formId.value,
-      questionIds: allQuestionIds,
-      status: statusToSave,
-      schedule: scheduleToSave,
-      settings: settings.value
-    })
-    
-    const result = await formStore.updateForm({
+    const formData = {
       _id: formId.value,
       title: [{ key: 'en', value: formTitle.value }],
       description: [{ key: 'en', value: formDescription.value }],
       questions: allQuestionIds,
       status: statusToSave,
-      schedule: scheduleToSave,
+      schedule: buildSchedule(),
       settings: buildSettingsPayload()
-    })
+    }
+    
+    console.log('Saving form with:', formData)
+    
+    const result = await formStore.updateForm(formData)
     
     // อัพเดท currentFormStatus หลังจาก save สำเร็จ
     if (result) {
@@ -275,6 +273,9 @@ onMounted(async () => {
       
       loadSettings(form)
     }
+    
+    // ดึงข้อมูล responses
+    await fetchResponses()
   }
 })
 
@@ -282,9 +283,29 @@ onMounted(async () => {
 /* ===================================
    Tab Configuration
    =================================== */
-const responsesData = ref({ totalResponses: 0 })
+const responsesData = ref({ 
+  totalResponses: 0,
+  responses: []
+})
 const responseViewMode = ref('summary')
 const responseCount = computed(() => responsesData.value.totalResponses || 0)
+
+// ฟังก์ชันดึงข้อมูล responses
+async function fetchResponses() {
+  if (!formId.value) return
+  
+  try {
+    const result = await responseAPI.getByFormId(formId.value)
+    if (result && result.data) {
+      responsesData.value = {
+        totalResponses: result.data.length || 0,
+        responses: result.data
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching responses:', error)
+  }
+}
 
 const tabs = computed(() => [
   { id: 'questions', label: 'Questions', icon: 'questions' },
@@ -302,7 +323,7 @@ function copyFormUrl() {
 }
 
 function testForm() {
-  window.open(formUrl.value, '_self')
+  window.open(previewUrl.value, '_self')
 }
 
 function handleExport(format) {
@@ -349,7 +370,11 @@ function handleUpdateSettings(newSettings) {
         :formDescription="formDescription"
         :formUrl="formUrl"
         :formStatus="settings.formStatus"
-        :formData="currentFormData"
+        :formData="{ 
+          status: settings.formStatus || currentFormStatus || 'draft',
+          schedule: buildSchedule(),
+          title: [{ value: formTitle }]
+        }"
         :expandedQuestionId="expandedQuestionId"
         @update:questions="questions = $event"
         @update:formTitle="formTitle = $event"
@@ -371,6 +396,7 @@ function handleUpdateSettings(newSettings) {
         v-else-if="activeTab === 'responses'"
         :questions="questions"
         :totalResponses="responsesData.totalResponses"
+        :responses="responsesData.responses"
         :viewMode="responseViewMode"
         @update:viewMode="responseViewMode = $event"
         @export="handleExport"

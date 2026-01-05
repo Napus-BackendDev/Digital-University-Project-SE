@@ -21,13 +21,25 @@
               Forgot password?
             </a>
           </div>
-          <CFormInput
-            type="password"
-            id="password"
-            v-model="password"
-            placeholder="Enter your password"
-            required
-          />
+          <div class="password-input-wrapper">
+            <CFormInput
+              :type="showPassword ? 'text' : 'password'"
+              id="password"
+              v-model="password"
+              placeholder="Enter your password"
+              required
+              class="password-input"
+            />
+            <button 
+              type="button" 
+              class="password-toggle-btn" 
+              @click="togglePasswordVisibility"
+              tabindex="-1"
+            >
+              <EyeIcon v-if="showPassword" />
+              <EyeOffIcon v-else />
+            </button>
+          </div>
         </div>
 
         <CButton type="submit" color="dark" class="sign-in-button" :disabled="isLoading">
@@ -68,12 +80,18 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CForm, CFormInput, CButton, CAlert } from '@coreui/vue'
 import { mockLogin, mockGoogleLogin } from '@/mock/users'
+import { EyeIcon, EyeOffIcon } from '@/components/icons'
 
 const router = useRouter()
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
+const showPassword = ref(false)
+
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value
+}
 
 const handleLogin = async () => {
   isLoading.value = true
@@ -336,7 +354,45 @@ const handleGoogleLogin = async () => {
   opacity: 0;
 }
 
+/* Password Input with Toggle */
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
 
+.password-input-wrapper .password-input {
+  padding-right: 45px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  transition: color 0.2s;
+}
+
+.password-toggle-btn:hover {
+  color: #212529;
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+}
+
+.password-toggle-btn :deep(.icon) {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
 
 /* Responsive Design */
 @media (max-width: 1024px) {

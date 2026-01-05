@@ -104,7 +104,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { formAPI } from '@/services/api'
+import { formAPI, responseAPI } from '@/services/api'
 import FormTable from '@/components/FormTable.vue'
 import Pagination from '@/components/Pagination.vue'
 import SearchBar from '@/components/SearchBar.vue'
@@ -152,6 +152,17 @@ const getTitle = (titleArray) => {
   return enTitle || thTitle || firstTitle || ''
 }
 
+// Get actual response count for a form
+const getResponseCount = async (formId) => {
+  try {
+    const result = await responseAPI.getByFormId(formId)
+    return result.data?.length || 0
+  } catch (err) {
+    console.error('Error fetching responses for form:', formId, err)
+    return 0
+  }
+}
+
 // Fetch forms from API
 const fetchForms = async () => {
   loading.value = true
@@ -168,19 +179,23 @@ const fetchForms = async () => {
     console.log('Form Data:', formData)
     console.log('Form Data Length:', formData.length)
     
-    // Transform API data to match component structure
-    forms.value = formData.map(form => {
-      console.log('Processing form:', form.title?.[0]?.value || 'Untitled', 'Schedule:', form.schedule)
+    // Transform API data to match component structure and get actual response counts
+    const formsWithResponses = await Promise.all(formData.map(async form => {
+      const responseCount = await getResponseCount(form._id)
+      console.log('Processing form:', form.title?.[0]?.value || 'Untitled', 'Responses:', responseCount)
+      
       return {
         id: form._id,
         title: getTitle(form.title) || 'Untitled Form',
         description: getTitle(form.description) || 'No description',
         status: form.status || 'draft',
-        schedule: form.schedule || { startAt: null, endAt: null }, // ←← เพิ่ม schedule data
-        responses: form.responseCount || 0,
+        schedule: form.schedule || { startAt: null, endAt: null },
+        responses: responseCount,
         createdDate: formatDate(form.updatedAt || form.createdAt)
       }
-    })
+    }))
+    
+    forms.value = formsWithResponses
     
     console.log('Forms Value:', forms.value)
     console.log('Forms Length:', forms.value.length)
