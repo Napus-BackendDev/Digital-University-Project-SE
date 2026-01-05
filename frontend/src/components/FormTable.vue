@@ -550,9 +550,10 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   .form-description {
     font-size: 13px;
     white-space: normal;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
     display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
   }
 
