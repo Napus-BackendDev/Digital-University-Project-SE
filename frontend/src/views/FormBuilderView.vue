@@ -38,6 +38,11 @@ const formUrl = computed(() => {
   return formId.value ? `${baseUrl}/form/${formId.value}/response` : ''
 })
 
+const previewUrl = computed(() => {
+  const baseUrl = window.location.origin
+  return formId.value ? `${baseUrl}/form/${formId.value}/preview` : ''
+})
+
 
 /* ===================================
    Composables
@@ -295,7 +300,7 @@ function copyFormUrl() {
 }
 
 function testForm() {
-  window.open(formUrl.value, '_self')
+  window.open(previewUrl.value, '_self')
 }
 
 function handleExport(format) {
