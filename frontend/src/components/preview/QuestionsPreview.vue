@@ -58,11 +58,6 @@ function handleInput(idx, value, type) {
         <form class="preview-questions-list" @submit.prevent>
             <!-- Render each question card -->
             <div v-for="(q, idx) in questions" :key="q.id || idx" class="preview-question-card">
-                <!-- --- Section Header --- -->
-                <!-- Section header (question number) -->
-                <div class="question-section-header">
-                    <span class="question-section-label">Question {{ idx + 1 }}</span>
-                </div>
                 <!-- --- Question Title Row --- -->
                 <!-- Question title and required marker -->
                 <div class="question-title-row">
@@ -609,12 +604,12 @@ function handleInput(idx, value, type) {
    Main Container & Layout
 ============================= */
 .questions-preview-googleform {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    padding: 32px;
-    max-width: 650px;
-    margin: 40px auto;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    max-width: none;
+    margin: 0;
 }
 
 .preview-header {
@@ -677,9 +672,10 @@ function handleInput(idx, value, type) {
 .question-title {
     flex: 1;
     font-family: 'Inter', sans-serif;
-    font-size: 1.0rem;
-    font-weight: 200;
+    font-size: 1.2rem;
+    font-weight: 500;
     color: #222;
+    margin-bottom: 4px;
 }
 
 .required-dot {

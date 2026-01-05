@@ -817,7 +817,7 @@ function handleSubmit() {
 .question-title {
     flex: 1;
     font-family: 'Inter', sans-serif;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 500;
     color: #222;
     margin-bottom: 4px;

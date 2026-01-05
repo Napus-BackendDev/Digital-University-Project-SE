@@ -86,75 +86,108 @@ async function fetchForm() {
 onMounted(fetchForm)
 </script>
 <template>
-	<!-- Top actions: back to builder -->
-	<div>
-		<div class="top-actions">
-			<router-link :to="`/form-builder/${formId}`" class="action-link">
+	<div class="response">
+		<!-- Main Content -->
+		<main class="main-content">
+			<!-- Back Button -->
+			<router-link :to="`/form-builder/${formId}`" class="back-btn">
 				<ArrowLeftIcon />
-				Back to Forms
+				<span>Back to Forms</span>
 			</router-link>
-		</div>
-		<!-- Main preview component -->
-		<QuestionsPreview
-			:formTitle="formTitle"
-			:formDescription="formDescription"
-			:formStatus="formStatus"
-			:questions="questions"
-		/>
+
+			<!-- Form Container -->
+			<div class="form-container">
+				<!-- Main preview component -->
+				<QuestionsPreview
+					:formTitle="formTitle"
+					:formDescription="formDescription"
+					:formStatus="formStatus"
+					:questions="questions"
+				/>
+			</div>
+		</main>
 	</div>
 </template>
 
 <style scoped>
-
-
-/* Top actions bar and preview-footer styles remain for navigation and submit button */
-.top-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 24px;
-}
-
-.action-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: #333;
+/* ==================== MAIN CONTAINER ==================== */
+.response {
+  min-height: 100vh;
+  background: #F5F5F5;
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background-color 0.2s;
+  padding-top: 65px;
 }
 
+/* ==================== MAIN CONTENT ==================== */
+.main-content {
+  width: 100%;
+  min-height: calc(100vh - 65px);
+  max-width: 1216px;
+  margin: 0 auto;
+  padding: 32px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-.action-link svg {
+/* ==================== ICON SIZING ==================== */
+.back-btn svg {
   width: 16px;
   height: 16px;
 }
 
-.form-content {
-  max-width: 960px;
-  margin: 0 auto;
+/* ==================== BACK BUTTON ==================== */
+.back-btn {
+  width: 151px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #333333;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
 }
-.preview-footer {
-	display: flex;
-	justify-content: flex-end;
-	margin-top: 32px;
+
+.back-btn:hover {
+  background: #F5F5F5;
 }
-.preview-submit-btn {
-	background: #6366f1;
-	color: #fff;
-	border: none;
-	border-radius: 8px;
-	padding: 12px 32px;
-	font-size: 1.1rem;
-	font-weight: 600;
-	cursor: not-allowed;
-	opacity: 0.7;
+
+/* ==================== FORM CONTAINER ==================== */
+.form-container {
+  width: 100%;
+  max-width: 704px;
+  display: flex;
+  flex-direction: column;
+  padding: 33px;
+  gap: 32px;
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-sizing: border-box;
+  align-self: center;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 16px 8px;
+  }
+  
+  .form-container {
+    padding: 24px 16px;
+    margin: 0 8px;
+  }
 }
 </style>
