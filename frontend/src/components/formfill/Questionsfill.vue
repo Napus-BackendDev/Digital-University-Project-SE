@@ -39,15 +39,20 @@ function handleInput(questionId, value, type) {
 
 // Handle checkbox toggle
 function handleCheckbox(questionId, optionId) {
-    if (!Array.isArray(props.responses[questionId])) {
-        props.responses[questionId] = [];
-    }
-    const index = props.responses[questionId].indexOf(optionId);
+    // สร้าง array ใหม่แทนการแก้ไขโดยตรง เพื่อ trigger reactivity
+    const current = Array.isArray(props.responses[questionId]) 
+        ? [...props.responses[questionId]] 
+        : [];
+    
+    const index = current.indexOf(optionId);
     if (index === -1) {
-        props.responses[questionId].push(optionId);
+        current.push(optionId);
     } else {
-        props.responses[questionId].splice(index, 1);
+        current.splice(index, 1);
     }
+    
+    // Assign array ใหม่เพื่อ trigger reactivity
+    props.responses[questionId] = current;
 }
 
 // Handle dropdown toggle
