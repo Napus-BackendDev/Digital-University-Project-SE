@@ -6,7 +6,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useFormStore } from '@/stores/form'
-import { questionsAPI } from '@/services/api'
+import { questionsAPI, responseAPI } from '@/services/api'
 
 // Composables
 import { useModal, useQuestionManager, useFormSettings, useAutoSave } from '@/composables'
@@ -273,6 +273,9 @@ onMounted(async () => {
       
       loadSettings(form)
     }
+    
+    // ดึงข้อมูล responses
+    await fetchResponses()
   }
 })
 
@@ -280,9 +283,29 @@ onMounted(async () => {
 /* ===================================
    Tab Configuration
    =================================== */
-const responsesData = ref({ totalResponses: 0 })
+const responsesData = ref({ 
+  totalResponses: 0,
+  responses: []
+})
 const responseViewMode = ref('summary')
 const responseCount = computed(() => responsesData.value.totalResponses || 0)
+
+// ฟังก์ชันดึงข้อมูล responses
+async function fetchResponses() {
+  if (!formId.value) return
+  
+  try {
+    const result = await responseAPI.getByFormId(formId.value)
+    if (result && result.data) {
+      responsesData.value = {
+        totalResponses: result.data.length || 0,
+        responses: result.data
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching responses:', error)
+  }
+}
 
 const tabs = computed(() => [
   { id: 'questions', label: 'Questions', icon: 'questions' },
@@ -368,6 +391,7 @@ function handleUpdateSettings(newSettings) {
         v-else-if="activeTab === 'responses'"
         :questions="questions"
         :totalResponses="responsesData.totalResponses"
+        :responses="responsesData.responses"
         :viewMode="responseViewMode"
         @update:viewMode="responseViewMode = $event"
         @export="handleExport"

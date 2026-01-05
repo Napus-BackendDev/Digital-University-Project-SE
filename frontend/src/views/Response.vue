@@ -517,15 +517,45 @@ const handleSubmit = async () => {
   isSubmitting.value = true;
   try {
     // Prepare response data matching backend Response schema
-    const answers = formData.value.questions.map(q => ({
-      question: q._id,
-      response: responses[q._id]
-    }));
+    // Filter out follow-up responses (keys with dashes like "id-1-2") and only keep main question responses
+    const mainQuestionIds = new Set(formData.value.questions.map(q => q._id));
+    
+    const answers = formData.value.questions
+      .filter(q => {
+        // Skip non-answerable question types (title, image, video, divider)
+        return !['title', 'image', 'video', 'divider'].includes(q.type);
+      })
+      .map(q => {
+        let response = responses[q._id];
+        
+        // Filter out empty objects from file uploads - only keep valid File objects
+        if (Array.isArray(response)) {
+          response = response.filter(item => item instanceof File);
+          // If array becomes empty after filtering, set to undefined
+          if (response.length === 0) {
+            response = undefined;
+          }
+        }
+        
+        return {
+          question: q._id,
+          response: response
+        };
+      })
+      .filter(answer => {
+        // Filter out undefined/null/empty responses
+        if (answer.response === undefined || answer.response === null) return false;
+        if (answer.response === '') return false;
+        if (Array.isArray(answer.response) && answer.response.length === 0) return false;
+        return true;
+      });
+    
     const responseData = {
       form: formData.value.id, // ObjectId of the form
-      answers
+      answers,
+      responder: '507f1f77bcf86cd799439011' // Mock user ID for testing
     };
-    console.log('Submitting response data:', responseData);
+    
     // Submit to API
     const result = await responseAPI.submit(responseData);
     console.log('Form submitted successfully:', result);

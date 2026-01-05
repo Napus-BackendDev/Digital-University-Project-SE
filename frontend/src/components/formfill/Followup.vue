@@ -19,11 +19,14 @@ const emit = defineEmits(['update:answers']);
 
 // --- Handle input: toggles selection, supports deselect ---
 function handleInput(val) {
-  if (props.answers[props.idx] === val) {
+  // Store option text instead of option id
+  const optionText = typeof val === 'number' ? props.option.text : val;
+  
+  if (props.answers[props.idx] === optionText) {
     // Deselect if already selected
     props.answers[props.idx] = null;
   } else {
-    props.answers[props.idx] = val;
+    props.answers[props.idx] = optionText;
   }
   emit('update:answers', props.answers);
 }
@@ -40,22 +43,22 @@ export default {
     <!-- Main option row -->
     <div
       class="preview-option-row clickable"
-      :class="{ selected: answers[idx] === option.id }"
+      :class="{ selected: answers[idx] === option.text }"
       @click="handleInput(option.id)"
       tabindex="0"
       @keydown.enter.space="handleInput(option.id)"
       role="radio"
-      :aria-checked="answers[idx] === option.id"
+      :aria-checked="answers[idx] === option.text"
     >
       <!-- Radio visual -->
       <div class="preview-radio-circle">
-        <div v-if="answers[idx] === option.id" class="preview-radio-dot"></div>
+        <div v-if="answers[idx] === option.text" class="preview-radio-dot"></div>
       </div>
       <!-- Option text -->
       <span class="preview-option-text">{{ option.text }}</span>
     </div>
     <!-- Render follow-up recursively if selected and has follow-up -->
-    <div v-if="answers[idx] === option.id && option.hasFollowUp && option.followUpQuestion && Array.isArray(option.followUpQuestion.options)" class="preview-followup-list-box">
+    <div v-if="answers[idx] === option.text && option.hasFollowUp && option.followUpQuestion && Array.isArray(option.followUpQuestion.options)" class="preview-followup-list-box">
       <!-- Follow-up question title -->
       <div v-if="option.followUpQuestion.title" class="followup-question-title">{{ option.followUpQuestion.title }}</div>
       <!-- Recursive follow-up options -->

@@ -143,7 +143,7 @@ export const questionsAPI = {
 export const responseAPI = {
   // ดึงคำตอบทั้งหมดของฟอร์ม
   async getByFormId(formId) {
-    return fetchAPI(`/response/getByFormId?formId=${formId}`)
+    return fetchAPI(`/response/getByFormId?form_id=${formId}`)
   },
   
   // ดึงคำตอบตาม User ID
