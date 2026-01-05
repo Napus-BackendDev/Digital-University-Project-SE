@@ -293,6 +293,50 @@ function getRatingChartData(questionId, maxRating = 5) {
   }))
 }
 
+// Get file responses with uploader info
+function getFileResponses(questionId) {
+  const fileList = []
+  
+  props.responses.forEach((resp) => {
+    const answer = resp.answers?.find(a => a.question?._id === questionId)
+    if (answer && answer.response) {
+      const uploaderName = resp.responder?.name || resp.responder?.email || 'Anonymous'
+      
+      // Handle array of files
+      if (Array.isArray(answer.response)) {
+        answer.response.forEach(file => {
+          if (file) {
+            fileList.push({
+              name: typeof file === 'string' ? file : (file.name || file.filename || 'Unknown file'),
+              type: file.type || file.mimeType || '',
+              url: file.url || file,
+              uploaderName: uploaderName.toUpperCase()
+            })
+          }
+        })
+      } else if (typeof answer.response === 'string' && answer.response) {
+        // Single file as string (filename or URL)
+        fileList.push({
+          name: answer.response,
+          type: '',
+          url: answer.response,
+          uploaderName: uploaderName.toUpperCase()
+        })
+      } else if (answer.response && typeof answer.response === 'object') {
+        // Single file object
+        fileList.push({
+          name: answer.response.name || answer.response.filename || 'Unknown file',
+          type: answer.response.type || answer.response.mimeType || '',
+          url: answer.response.url || '',
+          uploaderName: uploaderName.toUpperCase()
+        })
+      }
+    }
+  })
+  
+  return fileList
+}
+
 </script>
 
 <template>
@@ -342,8 +386,7 @@ function getRatingChartData(questionId, maxRating = 5) {
             </template>
             <template v-else-if="question.type === 'file-upload'">
               <FileUploadSummary 
-                :count="getQuestionResponses(question._id || question.id).length" 
-                fileType="file" 
+                :files="getFileResponses(question._id || question.id)"
               />
             </template>
           </ResponseSummaryCard>
