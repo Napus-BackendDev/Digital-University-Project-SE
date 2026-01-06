@@ -374,7 +374,6 @@ function getFileResponses(questionId) {
             <template v-else-if="question.type === 'rating'">
               <BarChartSummary 
                 :chartData="getRatingChartData(question._id || question.id, question.maxRating || 5)" 
-                :maxValue="question.maxRating || 5" 
               />
             </template>
             <template v-else-if="question.type === 'date' || question.type === 'time'">
