@@ -23,33 +23,61 @@ defineProps({
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 0px;
+  padding: 0;
   gap: 8px;
-  width: 1216px;
-  height: 72px;
+  width: 100%;
+  max-width: 1216px;
+  min-height: 72px;
 }
 
 .page-heading {
-  width: 1216px;
-  height: 40px;
+  width: 100%;
   font-family: 'Inter', sans-serif;
   font-weight: 700;
   font-size: 36px;
-  line-height: 40px;
+  line-height: 1.2;
   letter-spacing: -0.530859px;
   color: var(--text-primary);
   margin: 0;
 }
 
 .page-paragraph {
-  width: 1216px;
-  height: 24px;
+  width: 100%;
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 16px;
-  line-height: 24px;
+  line-height: 1.5;
   letter-spacing: -0.3125px;
   color: #525252;
   margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-container {
+    gap: 6px;
+  }
+
+  .page-heading {
+    font-size: 28px;
+  }
+
+  .page-paragraph {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    gap: 4px;
+  }
+
+  .page-heading {
+    font-size: 24px;
+  }
+
+  .page-paragraph {
+    font-size: 14px;
+  }
 }
 </style>

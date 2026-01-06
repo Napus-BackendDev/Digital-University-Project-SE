@@ -37,7 +37,6 @@
           <div class="table-row header-row">
             <div class="table-head form-name-head">Form Name</div>
             <div class="table-head status-head">Status</div>
-            <div class="table-head responses-head">Responses</div>
             <div class="table-head modified-head">Last Modified</div>
             <div class="table-head actions-head">Actions</div>
           </div>
@@ -69,18 +68,6 @@
               </div>
             </div>
 
-            <!-- Responses Cell -->
-            <div class="table-cell responses-cell">
-              <div class="responses-info">
-                <div class="responses-icon-wrapper">
-                  <i class="pi pi-comment"></i>
-                </div>
-                <div class="responses-content">
-                  <div class="responses-count">{{ form.responses }}</div>
-                  <div class="responses-label">responses</div>
-                </div>
-              </div>
-            </div>
 
             <!-- Last Modified Cell -->
             <div class="table-cell modified-cell">
@@ -136,7 +123,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   max-width: 1216px;
   min-height: 653px;
   background: #FFFFFF;
-  border: 1px solid var(--border-color);
+  border: 1px solid #E5E5E5;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
 }
@@ -161,7 +148,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   margin-top: 16px;
   font-weight: 500;
   font-size: 16px;
-  color: var(--text-primary);
+  color: #333333;
 }
 
 /* Error State */
@@ -183,7 +170,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   margin-top: 16px;
   font-weight: 500;
   font-size: 16px;
-  color: var(--text-primary);
+  color: #333333;
 }
 
 .retry-button {
@@ -230,7 +217,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   margin-top: 16px;
   font-weight: 600;
   font-size: 18px;
-  color: var(--text-primary);
+  color: #333333;
 }
 
 .empty-subtext {
@@ -256,8 +243,8 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 .header-row {
   display: grid;
   grid-template-columns: 3fr 1fr 1.2fr 1.3fr 1fr;
-  background: var(--bg-gray);
-  border-bottom: 1px solid var(--border-color);
+  background: #FAFAFA;
+  border-bottom: 1px solid #E5E5E5;
   height: 52px;
 }
 
@@ -296,7 +283,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 }
 
 .data-row:hover {
-  background: var(--bg-gray);
+  background: #FAFAFA;
 }
 
 .data-row:last-child {
@@ -353,8 +340,8 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 }
 
 .status-draft {
-  background: var(--bg-gray-light);
-  border: 1px solid var(--border-color);
+  background: #F5F5F5;
+  border: 1px solid #E5E5E5;
 }
 
 .status-closed,

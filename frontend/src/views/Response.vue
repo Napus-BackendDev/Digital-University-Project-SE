@@ -342,13 +342,6 @@ const prevSection = () => {
   }
 };
 
-// Get global question index (across all sections, excluding dividers)
-const getGlobalQuestionIndex = (question) => {
-  if (!formData.value?.questions) return 1;
-  const nonDividerQuestions = formData.value.questions.filter(q => q.type !== 'divider');
-  const index = nonDividerQuestions.findIndex(q => q._id === question._id);
-  return index >= 0 ? index + 1 : 1;
-};
 
 // เช็คว่า user เคย submit form นี้แล้วหรือยัง (ใช้ localStorage)
 const checkIfAlreadySubmitted = (formId) => {
@@ -504,7 +497,7 @@ onMounted(() => {
 });
 
 const goBack = () => {
-  router.push('/');
+  router.push('/home');
 };
 
 const handleSubmit = async () => {
@@ -532,8 +525,8 @@ const handleSubmit = async () => {
     
     const answers = formData.value.questions
       .filter(q => {
-        // Skip non-answerable question types (title, image, video, divider)
-        return !['title', 'image', 'video', 'divider'].includes(q.type);
+        // Skip non-answerable question types (title, image, video, divider, section-divider, title-description)
+        return !['title', 'image', 'video', 'divider', 'section-divider', 'title-description', 'section'].includes(q.type);
       })
       .map(q => {
         let response = responses[q._id];
@@ -586,25 +579,9 @@ const handleSubmit = async () => {
 
 const closeModal = () => {
   showSuccessModal.value = false;
-  router.push('/');
+  router.push('/home');
 };
 
-// Submit another response - reset form and close modal
-const submitAnotherResponse = () => {
-  // Clear all responses
-  Object.keys(responses).forEach(key => {
-    if (Array.isArray(responses[key])) {
-      responses[key] = [];
-    } else {
-      responses[key] = null;
-    }
-  });
-  respondentEmail.value = '';
-  currentSection.value = 0; // Reset to first section
-  showSuccessModal.value = false;
-  // Scroll to top
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
 </script>
 
 <style scoped>
