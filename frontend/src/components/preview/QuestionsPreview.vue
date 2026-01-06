@@ -2,7 +2,7 @@
 // --- Import dependencies ---
 // Vue core and child component imports
 import { ref, watch } from 'vue'
-import FollowupOption from './Followup.vue';
+import FollowupOption from '@/components/formfill/Followup.vue';
 import { ArrowLeftIcon } from '@/components/icons';
 
 // --- Define component props ---
@@ -92,7 +92,7 @@ function handleInput(idx, value, type) {
                     <template v-else-if="q.type === 'multiple-choice'">
                         <div class="preview-mc-list">
                             <FollowupOption v-for="opt in q.options || []" :key="opt.id" :option="opt" :idx="idx"
-                                v-model:answers="answers" />
+                                :storeAsText="false" v-model:answers="answers" />
                         </div>
                     </template>
 
@@ -247,7 +247,7 @@ function handleInput(idx, value, type) {
     top: 100%;
     width: 100%;
     background: #fff;
-    border: 1.5px solid #e5e5e5;
+    border: 1.5px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
     margin-top: 2px;
@@ -271,7 +271,7 @@ function handleInput(idx, value, type) {
 
 .preview-dropdown-option.selected {
     background: #e0e7ff;
-    color: #6366f1;
+    color: var(--primary);
 }
 
 /* =============================
@@ -307,9 +307,9 @@ function handleInput(idx, value, type) {
     justify-content: center;
     gap: 8px;
     padding: 24px 18px;
-    border: 2px dashed #e5e5e5;
+    border: 2px dashed var(--border-color);
     border-radius: 8px;
-    color: #999;
+    color: var(--text-muted);
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     cursor: pointer;
@@ -323,7 +323,7 @@ function handleInput(idx, value, type) {
 }
 
 .file-upload-area:hover {
-    border-color: #6366f1;
+    border-color: var(--primary);
     background: #fafaff;
 }
 
@@ -375,14 +375,14 @@ function handleInput(idx, value, type) {
 }
 
 .preview-checkbox-row.checked .preview-checkbox-box {
-    border-color: #6366f1;
+    border-color: var(--primary);
     background: #f5f7ff;
 }
 
 .preview-checkbox-tick {
     width: 12px;
     height: 12px;
-    background: #6366f1;
+    background: var(--primary);
     border-radius: 2px;
 }
 
@@ -402,7 +402,7 @@ function handleInput(idx, value, type) {
     padding: 7px 14px;
     border-radius: 8px;
     background: #fff;
-    border: 1.5px solid #e5e5e5;
+    border: 1.5px solid var(--border-color);
     font-size: 1rem;
     color: #222;
     font-family: 'Inter', sans-serif;
@@ -455,7 +455,7 @@ function handleInput(idx, value, type) {
     padding: 7px 14px;
     border-radius: 8px;
     background: #fff;
-    border: 1.5px solid #e5e5e5;
+    border: 1.5px solid var(--border-color);
     font-size: 1rem;
     color: #222;
     font-family: 'Inter', sans-serif;
@@ -483,11 +483,11 @@ function handleInput(idx, value, type) {
 .custom-input {
     width: 100%;
     padding: 10px 14px;
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 1rem;
-    color: #333;
-    background: #fafafa;
+    color: var(--text-primary);
+    background: var(--bg-gray);
     margin-bottom: 8px;
     font-family: 'Inter', sans-serif;
     min-height: 40px;
@@ -524,7 +524,7 @@ function handleInput(idx, value, type) {
     margin-top: 4px;
     margin-bottom: 8px;
     padding-left: 8px;
-    border-left: 2px solid #e5e5e5;
+    border-left: 2px solid var(--border-color);
 }
 
 .followup-label {
@@ -564,7 +564,7 @@ function handleInput(idx, value, type) {
 
 .custom-rating .star {
     cursor: pointer;
-    color: #e5e5e5;
+    color: var(--border-color);
     transition: color 0.2s;
 }
 
@@ -576,7 +576,7 @@ function handleInput(idx, value, type) {
    Caption, Image, Video
 ============================= */
 .custom-caption {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.95em;
     margin-top: 4px;
 }
@@ -626,11 +626,11 @@ function handleInput(idx, value, type) {
     font-size: 2rem;
     font-weight: 600;
     margin-bottom: 8px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .preview-description {
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 0;
     font-size: 1.1rem;
 }

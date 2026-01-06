@@ -338,7 +338,7 @@ function handleSubmit() {
     top: 100%;
     width: 100%;
     background: #fff;
-    border: 1.5px solid #e5e5e5;
+    border: 1.5px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
     margin-top: 2px;
@@ -362,7 +362,7 @@ function handleSubmit() {
 
 .preview-dropdown-option.selected {
     background: #e0e7ff;
-    color: #6366f1;
+    color: var(--primary);
 }
 
 /* =============================
@@ -399,7 +399,7 @@ function handleSubmit() {
 .file-icon {
     width: 24px;
     height: 24px;
-    color: #6366f1;
+    color: var(--primary);
 }
 
 .preview-file-name {
@@ -452,9 +452,9 @@ function handleSubmit() {
     justify-content: center;
     gap: 8px;
     padding: 24px 18px;
-    border: 2px dashed #e5e5e5;
+    border: 2px dashed var(--border-color);
     border-radius: 8px;
-    color: #999;
+    color: var(--text-muted);
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     cursor: pointer;
@@ -468,7 +468,7 @@ function handleSubmit() {
 }
 
 .file-upload-area:hover {
-    border-color: #6366f1;
+    border-color: var(--primary);
     background: #fafaff;
 }
 
@@ -520,14 +520,14 @@ function handleSubmit() {
 }
 
 .preview-checkbox-row.checked .preview-checkbox-box {
-    border-color: #6366f1;
+    border-color: var(--primary);
     background: #f5f7ff;
 }
 
 .preview-checkbox-tick {
     width: 12px;
     height: 12px;
-    background: #6366f1;
+    background: var(--primary);
     border-radius: 2px;
 }
 
@@ -547,7 +547,7 @@ function handleSubmit() {
     padding: 7px 14px;
     border-radius: 8px;
     background: #fff;
-    border: 1.5px solid #e5e5e5;
+    border: 1.5px solid var(--border-color);
     font-size: 1rem;
     color: #222;
     font-family: 'Inter', sans-serif;
@@ -600,7 +600,7 @@ function handleSubmit() {
     padding: 7px 14px;
     border-radius: 8px;
     background: #fff;
-    border: 1.5px solid #e5e5e5;
+    border: 1.5px solid var(--border-color);
     font-size: 1rem;
     color: #222;
     font-family: 'Inter', sans-serif;
@@ -628,11 +628,11 @@ function handleSubmit() {
 .custom-input {
     width: 100%;
     padding: 10px 14px;
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 1rem;
-    color: #333;
-    background: #fafafa;
+    color: var(--text-primary);
+    background: var(--bg-gray);
     margin-bottom: 8px;
     font-family: 'Inter', sans-serif;
     min-height: 40px;
@@ -669,7 +669,7 @@ function handleSubmit() {
     margin-top: 4px;
     margin-bottom: 8px;
     padding-left: 8px;
-    border-left: 2px solid #e5e5e5;
+    border-left: 2px solid var(--border-color);
 }
 
 .followup-label {
@@ -709,7 +709,7 @@ function handleSubmit() {
 
 .custom-rating .star {
     cursor: pointer;
-    color: #e5e5e5;
+    color: var(--border-color);
     transition: color 0.2s;
 }
 
@@ -721,7 +721,7 @@ function handleSubmit() {
    Caption, Image, Video
 ============================= */
 .custom-caption {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.95em;
     margin-top: 4px;
 }
@@ -771,11 +771,11 @@ function handleSubmit() {
     font-size: 2rem;
     font-weight: 600;
     margin-bottom: 8px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .preview-description {
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 0;
     font-size: 1.1rem;
 }
@@ -883,7 +883,7 @@ function handleSubmit() {
     align-items: center;
     gap: 8px;
     padding: 10px 20px;
-    border: 1px solid #E5E5E5;
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     background: #FFFFFF;
     font-family: 'Inter', sans-serif;
@@ -891,13 +891,13 @@ function handleSubmit() {
     font-size: 14px;
     line-height: 20px;
     letter-spacing: -0.15px;
-    color: #333;
+    color: var(--text-primary);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .nav-btn:hover {
-    background: #F5F5F5;
+    background: var(--bg-gray-light);
     border-color: #D4D4D4;
 }
 
@@ -911,8 +911,8 @@ function handleSubmit() {
 }
 
 .next-btn {
-    background: #6366F1;
-    border-color: #6366F1;
+    background: var(--primary);
+    border-color: var(--primary);
     color: #FFFFFF;
 }
 

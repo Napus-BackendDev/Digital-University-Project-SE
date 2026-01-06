@@ -117,14 +117,14 @@ function getBarHeight(value) {
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .chart-content {
   flex: 1;
   position: relative;
-  border-left: 1px solid #e5e5e5;
-  border-bottom: 1px solid #e5e5e5;
+  border-left: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .grid-lines {
@@ -185,7 +185,7 @@ function getBarHeight(value) {
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   text-align: center;
 }
 </style>

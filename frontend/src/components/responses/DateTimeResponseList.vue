@@ -28,8 +28,8 @@ defineProps({
 }
 
 .response-item {
-  background: #fafafa;
-  border: 1px solid #e5e5e5;
+  background: var(--bg-gray);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 12px;
   height: 46px;
@@ -42,6 +42,6 @@ defineProps({
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
-  color: #333;
+  color: var(--text-primary);
 }
 </style>

@@ -264,7 +264,7 @@ const slices = computed(() => {
   padding: 8px 14px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #333;
+  color: var(--text-primary);
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -343,7 +343,7 @@ const slices = computed(() => {
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .legend-value {
@@ -351,13 +351,13 @@ const slices = computed(() => {
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .legend-bar-bg {
   width: 100%;
   height: 6px;
-  background: #f5f5f5;
+  background: var(--bg-gray-light);
   border-radius: 9999px;
   overflow: hidden;
 }

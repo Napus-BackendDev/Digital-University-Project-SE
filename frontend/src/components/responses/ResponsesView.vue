@@ -116,7 +116,7 @@ function handleExport(format) {
   padding: 6px 10px;
   height: 32px;
   border-radius: 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   background: rgba(229, 229, 229, 0.3);
   cursor: pointer;
   font-family: 'Inter', sans-serif;
@@ -155,7 +155,7 @@ function handleExport(format) {
   height: 36px;
   min-width: 100px;
   border-radius: 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   background: rgba(229, 229, 229, 0.3);
   cursor: pointer;
   font-family: 'Inter', sans-serif;
@@ -181,7 +181,7 @@ function handleExport(format) {
   right: 0;
   min-width: 150px;
   background: white;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -198,13 +198,13 @@ function handleExport(format) {
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .dropdown-item:hover {
-  background: #f5f5f5;
+  background: var(--bg-gray-light);
 }
 
 .responses-list {

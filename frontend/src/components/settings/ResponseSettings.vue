@@ -51,7 +51,7 @@ const emit = defineEmits([
 <style scoped>
 .settings-section {
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 24px;
 }
@@ -60,14 +60,14 @@ const emit = defineEmits([
   font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0 0 4px;
 }
 
 .section-description {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 20px;
 }
 </style>

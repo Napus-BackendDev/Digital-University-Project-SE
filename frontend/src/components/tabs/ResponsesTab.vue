@@ -4,6 +4,7 @@
  */
 import { computed, ref } from 'vue'
 import { EmptyResponseIcon } from '@/components/icons'
+import { formatDate, formatResponse } from '@/utils/formatters'
 import ResponsesView from '@/components/responses/ResponsesView.vue'
 import ResponseSummaryCard from '@/components/responses/ResponseSummaryCard.vue'
 import TextResponseTable from '@/components/responses/TextResponseTable.vue'
@@ -67,20 +68,6 @@ const visiblePages = computed(() => {
   return pages.filter(p => p !== '...' || pages.indexOf(p) === pages.lastIndexOf(p))
 })
 
-// Date formatter
-function formatDate(dateString) {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return date.toLocaleString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  })
-}
-
 // View individual response
 function viewResponse(responseId) {
   const response = props.responses.find(r => r._id === responseId)
@@ -120,33 +107,6 @@ function navigateToResponse(respId) {
 function getAnswer(questionId) {
   if (!selectedResponse.value?.answers) return null
   return selectedResponse.value.answers.find(a => a.question?._id === questionId)
-}
-
-// Format response value
-function formatResponse(answer, question) {
-  if (!answer || answer.response === null || answer.response === undefined) {
-    return '-'
-  }
-  
-  const value = answer.response
-  
-  if (Array.isArray(value)) {
-    if (value.length === 0) return '-'
-    if (question.type === 'file-upload') {
-      return `${value.length} file(s) uploaded`
-    }
-    return value.join(', ')
-  }
-  
-  if (question.type === 'rating') {
-    return `${value} / ${question.maxRating || 5}`
-  }
-  
-  if (question.type === 'file-upload' && typeof value === 'string') {
-    return value
-  }
-  
-  return value
 }
 
 // Export response
@@ -648,7 +608,7 @@ function getFileResponses(questionId) {
   text-align: center;
   background: #fff;
   border-radius: 16px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
 }
 
 .empty-responses .empty-icon {
@@ -659,8 +619,8 @@ function getFileResponses(questionId) {
 }
 
 .empty-responses .empty-icon svg { width: 100%; height: 100%; }
-.empty-responses h3 { font-size: 20px; font-weight: 600; color: #333; margin: 0 0 8px; }
-.empty-responses p { font-size: 14px; color: #666; margin: 0; max-width: 400px; }
+.empty-responses h3 { font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 0 0 8px; }
+.empty-responses p { font-size: 14px; color: var(--text-secondary); margin: 0; max-width: 400px; }
 
 /* Individual View Styles */
 .individual-view {
@@ -682,35 +642,35 @@ function getFileResponses(questionId) {
   transform: translateY(-50%);
   width: 16px;
   height: 16px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .search-input {
   width: 100%;
   padding: 12px 16px 12px 44px;
-  border: 1.5px solid #E5E5E5;
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
-  background: #FAFAFA;
+  color: var(--text-primary);
+  background: var(--bg-gray);
   transition: all 0.2s;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #6366F1;
+  border-color: var(--primary);
   background: #FFF;
 }
 
 .search-input::placeholder {
-  color: #999;
+  color: var(--text-muted);
 }
 
 /* Table Container */
 .table-container {
   background: #FFF;
-  border: 1.5px solid #E5E5E5;
+  border: 1.5px solid var(--border-color);
   border-radius: 16px;
   overflow: hidden;
 }
@@ -721,8 +681,8 @@ function getFileResponses(questionId) {
 }
 
 .responses-table thead {
-  background: #FAFAFA;
-  border-bottom: 1.5px solid #E5E5E5;
+  background: var(--bg-gray);
+  border-bottom: 1.5px solid var(--border-color);
 }
 
 .responses-table th {
@@ -745,14 +705,14 @@ function getFileResponses(questionId) {
 }
 
 .responses-table tbody tr:hover {
-  background: #FAFAFA;
+  background: var(--bg-gray);
 }
 
 .responses-table td {
   padding: 16px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .col-number {
@@ -799,18 +759,18 @@ function getFileResponses(questionId) {
   gap: 6px;
   padding: 6px 12px;
   background: transparent;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .view-btn-action:hover {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   border-color: #D4D4D4;
 }
 
@@ -834,18 +794,18 @@ function getFileResponses(questionId) {
   gap: 6px;
   padding: 8px 12px;
   background: #FFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .page-btn:hover:not(:disabled) {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   border-color: #D4D4D4;
 }
 
@@ -869,18 +829,18 @@ function getFileResponses(questionId) {
   height: 32px;
   padding: 0 8px;
   background: #FFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .page-number:hover {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   border-color: #D4D4D4;
 }
 
@@ -903,18 +863,18 @@ function getFileResponses(questionId) {
   gap: 8px;
   padding: 8px 12px;
   background: #FFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
   align-self: flex-start;
 }
 
 .back-to-list-btn:hover {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   border-color: #D4D4D4;
 }
 
@@ -946,8 +906,8 @@ function getFileResponses(questionId) {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: #FAFAFA;
-  border: 1px solid #E5E5E5;
+  background: var(--bg-gray);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
 }
 
@@ -964,14 +924,14 @@ function getFileResponses(questionId) {
   width: 32px;
   height: 32px;
   background: #FFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .nav-btn:hover:not(:disabled) {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   border-color: #D4D4D4;
 }
 
@@ -988,7 +948,7 @@ function getFileResponses(questionId) {
 .nav-text {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
@@ -1004,7 +964,7 @@ function getFileResponses(questionId) {
   gap: 6px;
   padding: 8px 12px;
   background: #FFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
@@ -1014,11 +974,11 @@ function getFileResponses(questionId) {
 }
 
 .export-btn {
-  color: #333;
+  color: var(--text-primary);
 }
 
 .export-btn:hover {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   border-color: #D4D4D4;
 }
 
@@ -1040,8 +1000,8 @@ function getFileResponses(questionId) {
 
 .email-section {
   padding: 20px;
-  background: #FAFAFA;
-  border: 1px solid #E5E5E5;
+  background: var(--bg-gray);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
 }
 
@@ -1064,7 +1024,7 @@ function getFileResponses(questionId) {
 
 .answers-section {
   background: #FFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -1075,8 +1035,8 @@ function getFileResponses(questionId) {
 }
 
 .answers-table thead {
-  background: #FAFAFA;
-  border-bottom: 1px solid #E5E5E5;
+  background: var(--bg-gray);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .answers-table th {
@@ -1100,7 +1060,7 @@ function getFileResponses(questionId) {
   padding: 16px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   vertical-align: top;
 }
 
@@ -1127,18 +1087,18 @@ function getFileResponses(questionId) {
 
 .question-type {
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
   text-transform: capitalize;
 }
 
 .response-text {
-  color: #333;
+  color: var(--text-primary);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .file-link {
-  color: #6366F1;
+  color: var(--primary);
   text-decoration: underline;
   cursor: pointer;
   transition: color 0.2s;
@@ -1151,7 +1111,7 @@ function getFileResponses(questionId) {
 .all-responses-section {
   margin-top: 12px;
   padding-top: 24px;
-  border-top: 1px solid #E5E5E5;
+  border-top: 1px solid var(--border-color);
 }
 
 .section-title {
@@ -1165,14 +1125,14 @@ function getFileResponses(questionId) {
 .responses-list-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
   background: #FFF;
 }
 
 .responses-list-table thead {
-  background: #FAFAFA;
+  background: var(--bg-gray);
 }
 
 .responses-list-table th {
@@ -1196,7 +1156,7 @@ function getFileResponses(questionId) {
 }
 
 .responses-list-table tbody tr:hover {
-  background: #FAFAFA;
+  background: var(--bg-gray);
 }
 
 .responses-list-table tbody tr.active-row {
@@ -1207,7 +1167,7 @@ function getFileResponses(questionId) {
   padding: 12px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .responses-list-table .col-number {
@@ -1239,12 +1199,12 @@ function getFileResponses(questionId) {
 
 .view-btn-small {
   background: #FFF;
-  border: 1px solid #E5E5E5;
-  color: #333;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
 }
 
 .view-btn-small:hover {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   border-color: #D4D4D4;
 }
 

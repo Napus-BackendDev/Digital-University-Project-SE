@@ -182,7 +182,7 @@ function removeNestedFollowUp(optionId) {
   padding: 12px;
   background: #f8f8ff;
   border: 1px solid #e0e0ff;
-  border-left: 3px solid #6366f1;
+  border-left: 3px solid var(--primary);
   border-radius: 8px;
   margin-top: 8px;
 }
@@ -198,7 +198,7 @@ function removeNestedFollowUp(optionId) {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #6366f1;
+  color: var(--primary);
   font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 600;
@@ -219,7 +219,7 @@ function removeNestedFollowUp(optionId) {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  color: #999;
+  color: var(--text-muted);
   transition: all 0.2s;
 }
 
@@ -246,17 +246,17 @@ function removeNestedFollowUp(optionId) {
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   background: #fff;
 }
 
 .followup-title-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 
 .followup-title-input::placeholder {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .followup-settings {
@@ -278,7 +278,7 @@ function removeNestedFollowUp(optionId) {
 
 .followup-type-select:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 
 .followup-required {
@@ -294,7 +294,7 @@ function removeNestedFollowUp(optionId) {
 .followup-required input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #6366f1;
+  accent-color: var(--primary);
   cursor: pointer;
 }
 
@@ -333,13 +333,13 @@ function removeNestedFollowUp(optionId) {
   border-radius: 6px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #333;
+  color: var(--text-primary);
   background: #fff;
 }
 
 .followup-option-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 
 .option-delete-btn-small {
@@ -352,7 +352,7 @@ function removeNestedFollowUp(optionId) {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  color: #999;
+  color: var(--text-muted);
   transition: all 0.2s;
 }
 
@@ -377,7 +377,7 @@ function removeNestedFollowUp(optionId) {
   border-radius: 6px;
   font-family: 'Inter', sans-serif;
   font-size: 12px;
-  color: #6366f1;
+  color: var(--primary);
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -401,7 +401,7 @@ function removeNestedFollowUp(optionId) {
   border-radius: 6px;
   font-family: 'Inter', sans-serif;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: background-color 0.2s;
 }

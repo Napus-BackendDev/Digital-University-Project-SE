@@ -151,9 +151,9 @@ function formatSize(mb) {
   justify-content: center;
   gap: 8px;
   padding: 24px 18px;
-  border: 2px dashed #e5e5e5;
+  border: 2px dashed var(--border-color);
   border-radius: 8px;
-  color: #999;
+  color: var(--text-muted);
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   cursor: pointer;
@@ -161,7 +161,7 @@ function formatSize(mb) {
 }
 
 .file-upload-area:hover {
-  border-color: #6366f1;
+  border-color: var(--primary);
   background: #fafaff;
 }
 
@@ -182,7 +182,7 @@ function formatSize(mb) {
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  background: #fafafa;
+  background: var(--bg-gray);
   border-radius: 8px;
 }
 
@@ -196,7 +196,7 @@ function formatSize(mb) {
 .setting-label {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 /* Toggle Switch */
@@ -220,7 +220,7 @@ function formatSize(mb) {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #e5e5e5;
+  background-color: var(--border-color);
   transition: 0.3s;
   border-radius: 24px;
 }
@@ -239,7 +239,7 @@ function formatSize(mb) {
 }
 
 .toggle input:checked + .toggle-slider {
-  background-color: #6366f1;
+  background-color: var(--primary);
 }
 
 .toggle input:checked + .toggle-slider:before {
@@ -277,8 +277,8 @@ function formatSize(mb) {
 }
 
 .file-type-checkbox input:checked + .checkbox-box {
-  background: #6366f1;
-  border-color: #6366f1;
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .file-type-checkbox input:checked + .checkbox-box::after {
@@ -294,17 +294,17 @@ function formatSize(mb) {
 .checkbox-label {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 /* Select Dropdown */
 .setting-select {
   padding: 8px 32px 8px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   background: #fff;
   cursor: pointer;
   appearance: none;
@@ -316,6 +316,6 @@ function formatSize(mb) {
 
 .setting-select:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 </style>

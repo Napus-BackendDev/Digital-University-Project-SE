@@ -46,7 +46,7 @@ function getRowNumber(index) {
 
 <style scoped>
 .text-response-table {
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   overflow: hidden;
 }
@@ -57,7 +57,7 @@ function getRowNumber(index) {
 }
 
 .table-header-row {
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .table-head {
@@ -71,7 +71,7 @@ function getRowNumber(index) {
 }
 
 .table-row {
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .table-row:last-child {
@@ -94,7 +94,7 @@ function getRowNumber(index) {
 .row-number {
   width: 32px;
   height: 32px;
-  background: #f5f5f5;
+  background: var(--bg-gray-light);
   border-radius: 50%;
   display: flex;
   align-items: center;

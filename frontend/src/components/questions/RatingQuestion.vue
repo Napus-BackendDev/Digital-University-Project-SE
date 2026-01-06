@@ -39,21 +39,21 @@ const emit = defineEmits(['update:maxRating'])
 .field-label {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .rating-input {
   width: 80px;
   padding: 8px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .rating-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 </style>

@@ -109,7 +109,7 @@ function updateCollaboratorRole(id, role) {
 <style scoped>
 .settings-section {
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 24px;
 }
@@ -118,14 +118,14 @@ function updateCollaboratorRole(id, role) {
   font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0 0 4px;
 }
 
 .section-description {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 20px;
 }
 
@@ -140,17 +140,17 @@ function updateCollaboratorRole(id, role) {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .select-input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   background: #fff;
   cursor: pointer;
   appearance: none;
@@ -162,7 +162,7 @@ function updateCollaboratorRole(id, role) {
 
 .select-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 
 .collaborators-section {
@@ -186,26 +186,26 @@ function updateCollaboratorRole(id, role) {
 .collaborator-email {
   flex: 1;
   padding: 10px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .collaborator-email:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 
 .collaborator-role {
   width: 100px;
   padding: 10px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   background: #fff;
   cursor: pointer;
 }
@@ -220,7 +220,7 @@ function updateCollaboratorRole(id, role) {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  color: #999;
+  color: var(--text-muted);
   transition: all 0.2s;
 }
 
@@ -244,14 +244,14 @@ function updateCollaboratorRole(id, role) {
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .add-collaborator-btn:hover {
-  border-color: #6366f1;
-  color: #6366f1;
+  border-color: var(--primary);
+  color: var(--primary);
   background: #f5f5ff;
 }
 

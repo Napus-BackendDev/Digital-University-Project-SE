@@ -172,7 +172,7 @@ const handleGoogleLogin = async () => {
 
 .welcome-subtitle {
   font-size: 16px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 40px 0;
 }
 
@@ -198,7 +198,7 @@ const handleGoogleLogin = async () => {
 .password-label-row .form-label {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -217,7 +217,7 @@ const handleGoogleLogin = async () => {
 :deep(.form-label) {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
@@ -309,7 +309,7 @@ const handleGoogleLogin = async () => {
 }
 
 :deep(.google-button.btn-light) {
-  color: #333;
+  color: var(--text-primary);
   background-color: white;
   border: 1px solid #d1d5db;
 }

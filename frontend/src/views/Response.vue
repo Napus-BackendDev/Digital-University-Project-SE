@@ -610,7 +610,7 @@ const submitAnotherResponse = () => {
 <style scoped>
 .response {
   min-height: 100vh;
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   font-family: 'Inter', sans-serif;
   padding-top: 65px;
 }
@@ -641,21 +641,21 @@ const submitAnotherResponse = () => {
   gap: 8px;
   padding: 8px 16px;
   background: transparent;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.15px;
-  color: #333333;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
   box-sizing: border-box;
 }
 
 .back-btn:hover {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
 }
 
 /* ==================== FORM CONTAINER ==================== */
@@ -667,7 +667,7 @@ const submitAnotherResponse = () => {
   padding: 33px;
   gap: 32px;
   background: #FFFFFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
   box-sizing: border-box;
@@ -686,8 +686,8 @@ const submitAnotherResponse = () => {
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #E5E5E5;
-  border-top-color: #333333;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--text-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -703,7 +703,7 @@ const submitAnotherResponse = () => {
   font-weight: 600;
   font-size: 16px;
   line-height: 24px;
-  color: #333333;
+  color: var(--text-primary);
   margin-top: 16px;
 }
 
@@ -721,7 +721,7 @@ const submitAnotherResponse = () => {
   flex-direction: column;
   gap: 8px;
   padding-bottom: 24px;
-  border-bottom: 1px solid #E5E5E5;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .form-title {
@@ -730,7 +730,7 @@ const submitAnotherResponse = () => {
   font-size: 36px;
   line-height: 40px;
   letter-spacing: -0.53px;
-  color: #333333;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -755,7 +755,7 @@ const submitAnotherResponse = () => {
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
-  color: #6366F1;
+  color: var(--primary);
   text-align: center;
   padding: 12px;
   background: #EEF2FF;
@@ -801,7 +801,7 @@ const submitAnotherResponse = () => {
   font-size: 24px;
   line-height: 32px;
   text-align: center;
-  color: #333333;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -843,8 +843,8 @@ const submitAnotherResponse = () => {
 
 .modal-button.secondary {
   background: transparent;
-  color: #6366F1;
-  border: 1px solid #6366F1;
+  color: var(--primary);
+  border: 1px solid var(--primary);
 }
 
 .modal-button.secondary:hover {
@@ -862,7 +862,7 @@ const submitAnotherResponse = () => {
 .progress-bar {
   flex: 1;
   height: 8px;
-  background: #E5E5E5;
+  background: var(--border-color);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -876,7 +876,7 @@ const submitAnotherResponse = () => {
 
 .progress-text {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -899,20 +899,20 @@ const submitAnotherResponse = () => {
 .form-closed-message h2 {
   font-size: 24px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0 0 12px 0;
 }
 
 .form-closed-message p {
   font-size: 16px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 /* ==================== EMAIL SECTION ==================== */
 .email-section {
   background: #F9FAFB;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
@@ -922,7 +922,7 @@ const submitAnotherResponse = () => {
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
@@ -931,21 +931,21 @@ const submitAnotherResponse = () => {
   height: 36px;
   padding: 4px 12px;
   background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.15px;
-  color: #333333;
+  color: var(--text-primary);
   box-sizing: border-box;
   transition: all 0.2s;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #333333;
+  border-color: var(--text-primary);
   background: #FFFFFF;
 }
 

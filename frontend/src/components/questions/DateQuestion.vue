@@ -34,9 +34,9 @@ const emit = defineEmits(['update:value'])
   align-items: center;
   gap: 8px;
   padding: 12px;
-  border: 1px dashed #e5e5e5;
+  border: 1px dashed var(--border-color);
   border-radius: 8px;
-  color: #999;
+  color: var(--text-muted);
   font-family: 'Inter', sans-serif;
   font-size: 14px;
 }

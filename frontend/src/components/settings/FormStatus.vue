@@ -143,7 +143,7 @@ const showScheduleFields = computed(() => props.status === 'auto')
 <style scoped>
 .settings-section {
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 24px;
 }
@@ -152,7 +152,7 @@ const showScheduleFields = computed(() => props.status === 'auto')
   font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0 0 20px;
 }
 
@@ -167,7 +167,7 @@ const showScheduleFields = computed(() => props.status === 'auto')
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .select-wrapper {
@@ -179,11 +179,11 @@ const showScheduleFields = computed(() => props.status === 'auto')
   width: 100%;
   padding: 12px 16px;
   padding-right: 40px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   background: #fff;
   cursor: pointer;
   appearance: none;
@@ -191,7 +191,7 @@ const showScheduleFields = computed(() => props.status === 'auto')
 
 .status-select:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 
 .select-arrow {
@@ -201,14 +201,14 @@ const showScheduleFields = computed(() => props.status === 'auto')
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  color: #666;
+  color: var(--text-secondary);
   pointer-events: none;
 }
 
 .status-description {
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -232,17 +232,17 @@ const showScheduleFields = computed(() => props.status === 'auto')
   width: 100%;
   padding: 10px 12px;
   padding-right: 40px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   background: #fff;
 }
 
 .datetime-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 
 .input-icon {
@@ -252,7 +252,7 @@ const showScheduleFields = computed(() => props.status === 'auto')
   transform: translateY(-50%);
   width: 18px;
   height: 18px;
-  color: #999;
+  color: var(--text-muted);
   pointer-events: none;
 }
 

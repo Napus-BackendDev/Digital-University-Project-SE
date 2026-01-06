@@ -33,7 +33,7 @@ const emit = defineEmits(['update:confirmationMessage'])
 <style scoped>
 .settings-section {
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 24px;
 }
@@ -42,14 +42,14 @@ const emit = defineEmits(['update:confirmationMessage'])
   font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0 0 4px;
 }
 
 .section-description {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 20px;
 }
 
@@ -64,23 +64,23 @@ const emit = defineEmits(['update:confirmationMessage'])
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .textarea-input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   resize: vertical;
   min-height: 80px;
 }
 
 .textarea-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 </style>

@@ -135,7 +135,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   width: 1216px;
   min-height: 653px;
   background: #FFFFFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
   flex: none;
@@ -163,7 +163,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   margin-top: 16px;
   font-weight: 500;
   font-size: 16px;
-  color: #333333;
+  color: var(--text-primary);
 }
 
 /* Error State */
@@ -185,7 +185,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   margin-top: 16px;
   font-weight: 500;
   font-size: 16px;
-  color: #333333;
+  color: var(--text-primary);
 }
 
 .retry-button {
@@ -232,7 +232,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
   margin-top: 16px;
   font-weight: 600;
   font-size: 18px;
-  color: #333333;
+  color: var(--text-primary);
 }
 
 .empty-subtext {
@@ -258,8 +258,8 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 .header-row {
   display: grid;
   grid-template-columns: 604.36px 134.75px 161.61px 176.41px 136.91px;
-  background: #FAFAFA;
-  border-bottom: 1px solid #E5E5E5;
+  background: var(--bg-gray);
+  border-bottom: 1px solid var(--border-color);
   height: 52px;
 }
 
@@ -298,7 +298,7 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 }
 
 .data-row:hover {
-  background: #FAFAFA;
+  background: var(--bg-gray);
 }
 
 .data-row:last-child {
@@ -355,8 +355,8 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 }
 
 .status-draft {
-  background: #F5F5F5;
-  border: 1px solid #E5E5E5;
+  background: var(--bg-gray-light);
+  border: 1px solid var(--border-color);
 }
 
 .status-closed,

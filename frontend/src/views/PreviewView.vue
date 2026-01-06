@@ -122,7 +122,7 @@ onMounted(fetchForm)
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: #333;
+  color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
@@ -147,7 +147,7 @@ onMounted(fetchForm)
 	margin-top: 32px;
 }
 .preview-submit-btn {
-	background: #6366f1;
+	background: var(--primary);
 	color: #fff;
 	border: none;
 	border-radius: 8px;

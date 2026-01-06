@@ -124,7 +124,7 @@ function close() {
 
 .toast-message {
   flex: 1;
-  color: #333;
+  color: var(--text-primary);
   line-height: 1.4;
 }
 
@@ -139,7 +139,7 @@ function close() {
 }
 
 .toast-close:hover {
-  color: #333;
+  color: var(--text-primary);
 }
 
 .toast-close svg {

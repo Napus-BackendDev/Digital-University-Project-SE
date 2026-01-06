@@ -138,7 +138,7 @@ function handleCancel() {
 
 .modal-icon.info {
   background: #e0e7ff;
-  color: #6366f1;
+  color: var(--primary);
 }
 
 .modal-icon.warning {
@@ -155,14 +155,14 @@ function handleCancel() {
   font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0 0 8px;
 }
 
 .modal-message {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 24px;
   line-height: 1.5;
 }
@@ -185,7 +185,7 @@ function handleCancel() {
 }
 
 .btn-primary {
-  background: #6366f1;
+  background: var(--primary);
   color: #fff;
 }
 
@@ -194,9 +194,9 @@ function handleCancel() {
 }
 
 .btn-secondary {
-  background: #f5f5f5;
-  color: #333;
-  border: 1px solid #e5e5e5;
+  background: var(--bg-gray-light);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {

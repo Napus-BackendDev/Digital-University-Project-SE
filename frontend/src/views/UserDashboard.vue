@@ -63,6 +63,7 @@ import Pagination from '@/components/Pagination.vue';
 import SearchBar from '@/components/SearchBar.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { formAPI } from '@/services/api';
+import { formatDateShort } from '@/utils/formatters';
 
 const router = useRouter();
 
@@ -90,14 +91,6 @@ const getTitle = (titleArray) => {
   return enTitle || thTitle || firstTitle || ''
 }
 
-// Format date to readable format
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  const options = { month: 'short', day: 'numeric', year: 'numeric' };
-  return date.toLocaleDateString('en-US', options);
-};
-
 // Fetch forms from API
 const fetchForms = async () => {
   loading.value = true;
@@ -120,7 +113,7 @@ const fetchForms = async () => {
         description: getTitle(form.description) || 'No description',
         status: form.status || 'open',
         responses: form.responseCount || 0,
-        createdDate: formatDate(form.updatedAt || form.createdAt)
+        createdDate: formatDateShort(form.updatedAt || form.createdAt)
       }));
     
   } catch (err) {
@@ -201,7 +194,7 @@ onMounted(() => {
   position: relative;
   width: 1536px;
   min-height: 1000px;
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   font-family: 'Inter', sans-serif;
   margin: 0 auto;
 }
@@ -215,7 +208,7 @@ onMounted(() => {
   gap: 32px;
   width: 1536px;
   min-height: calc(100vh - 65px);
-  background: #FAFAFA;
+  background: var(--bg-gray);
   flex: none;
   order: 1;
   flex-grow: 0;
@@ -237,7 +230,7 @@ onMounted(() => {
   width: 1216px;
   min-height: 653px;
   background: #FFFFFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
   flex: none;
@@ -254,8 +247,8 @@ onMounted(() => {
 /* ==================== TABLE HEADER ==================== */
 .table-header {
   width: 100%;
-  background: #FAFAFA;
-  border-bottom: 1px solid #E5E5E5;
+  background: var(--bg-gray);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-row {
@@ -298,7 +291,7 @@ onMounted(() => {
 }
 
 .data-row:hover {
-  background: #FAFAFA;
+  background: var(--bg-gray);
 }
 
 .data-row:last-child {
@@ -516,7 +509,7 @@ onMounted(() => {
   top: 40px;
   width: 160px;
   background: #FFFFFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 10000;
@@ -537,13 +530,13 @@ onMounted(() => {
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.15px;
-  color: #333333;
+  color: var(--text-primary);
   text-align: left;
   transition: background-color 0.2s;
 }
 
 .dropdown-item:hover {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
 }
 
 .dropdown-item svg {
@@ -565,8 +558,8 @@ onMounted(() => {
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #E5E5E5;
-  border-top-color: #333333;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--text-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -580,7 +573,7 @@ onMounted(() => {
   font-weight: 600;
   font-size: 16px;
   line-height: 24px;
-  color: #333333;
+  color: var(--text-primary);
   margin-top: 16px;
 }
 
@@ -594,7 +587,7 @@ onMounted(() => {
   font-weight: 600;
   font-size: 16px;
   line-height: 24px;
-  color: #333333;
+  color: var(--text-primary);
 }
 
 .empty-subtext {

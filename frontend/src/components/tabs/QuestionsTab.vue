@@ -168,7 +168,7 @@ const localQuestions = computed({
   gap: 12px;
   padding: 25px;
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   margin-bottom: 24px;
 }
@@ -179,8 +179,8 @@ const localQuestions = computed({
 .status-banner.warning .status-icon { background: #fef3c7; color: #f59e0b; }
 .status-banner.draft { border-left: 4px solid #6b7280; }
 .status-banner.draft .status-icon { background: #f3f4f6; color: #6b7280; }
-.status-banner.scheduled { border-left: 4px solid #6366f1; }
-.status-banner.scheduled .status-icon { background: #e0e7ff; color: #6366f1; }
+.status-banner.scheduled { border-left: 4px solid var(--primary); }
+.status-banner.scheduled .status-icon { background: #e0e7ff; color: var(--primary); }
 
 .status-icon {
   width: 40px;
@@ -194,18 +194,18 @@ const localQuestions = computed({
 .status-icon svg { width: 20px; height: 20px; }
 
 .status-content { flex: 1; }
-.status-content h3 { font-size: 20px; font-weight: 600; color: #333; margin: 0 0 4px; }
-.status-content p { font-size: 14px; color: #666; margin: 0 0 12px; }
+.status-content h3 { font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px; }
+.status-content p { font-size: 14px; color: var(--text-secondary); margin: 0 0 12px; }
 
 .status-actions { display: flex; gap: 8px; }
 
 .url-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   background: #f9f9f9;
 }
 
@@ -222,9 +222,9 @@ const localQuestions = computed({
 }
 
 .btn-secondary {
-  background: #f5f5f5;
-  color: #333;
-  border: 1px solid #e5e5e5;
+  background: var(--bg-gray-light);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover { background: #eee; }
@@ -232,7 +232,7 @@ const localQuestions = computed({
 /* Form Header */
 .form-header-section {
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 33px;
   margin-bottom: 24px;
@@ -251,23 +251,23 @@ const localQuestions = computed({
   border-bottom: 2px solid transparent;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   background: transparent;
 }
 
-.form-title-input:focus { outline: none; border-bottom-color: #6366f1; }
+.form-title-input:focus { outline: none; border-bottom-color: var(--primary); }
 
 .form-description-input {
   width: 100%;
   padding: 8px 32px 8px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   resize: vertical;
 }
 
-.form-description-input:focus { outline: none; border-color: #6366f1; }
+.form-description-input:focus { outline: none; border-color: var(--primary); }
 
 .edit-hint-icon {
   position: absolute;
@@ -329,7 +329,7 @@ const localQuestions = computed({
   padding: 60px 40px;
   text-align: center;
   background: #fff;
-  border: 2px dashed #e5e5e5;
+  border: 2px dashed var(--border-color);
   border-radius: 16px;
 }
 
@@ -340,8 +340,8 @@ const localQuestions = computed({
   margin-bottom: 16px;
 }
 
-.empty-questions h3 { font-size: 16px; font-weight: 500; color: #666; margin: 0 0 4px; }
-.empty-questions p { font-size: 14px; color: #999; margin: 0; }
+.empty-questions h3 { font-size: 16px; font-weight: 500; color: var(--text-secondary); margin: 0 0 4px; }
+.empty-questions p { font-size: 14px; color: var(--text-muted); margin: 0; }
 
 @media (max-width: 1024px) {
   .questions-tab {

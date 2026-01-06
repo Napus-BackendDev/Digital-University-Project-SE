@@ -81,16 +81,16 @@ function updateOptionText(optionId, text) {
 .option-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .option-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 
 .option-delete-btn {
@@ -103,7 +103,7 @@ function updateOptionText(optionId, text) {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  color: #999;
+  color: var(--text-muted);
   transition: all 0.2s;
 }
 
@@ -127,13 +127,13 @@ function updateOptionText(optionId, text) {
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .add-option-btn:hover {
-  background: #f5f5f5;
+  background: var(--bg-gray-light);
 }
 
 .add-option-btn svg {

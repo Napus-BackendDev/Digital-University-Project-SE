@@ -181,13 +181,13 @@ function getFileIcon(file) {
   gap: 12px;
   padding: 10px 12px;
   background: white;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   transition: background 0.2s;
 }
 
 .file-item:hover {
-  background: #FAFAFA;
+  background: var(--bg-gray);
 }
 
 .file-icon {
@@ -218,7 +218,7 @@ function getFileIcon(file) {
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
-  color: #333;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

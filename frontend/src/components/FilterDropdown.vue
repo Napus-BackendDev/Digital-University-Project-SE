@@ -87,7 +87,7 @@ onUnmounted(() => {
   width: 140px;
   height: 36px;
   background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   cursor: pointer;
   flex: none;
@@ -110,7 +110,7 @@ onUnmounted(() => {
   line-height: 20px;
   text-align: center;
   letter-spacing: -0.150391px;
-  color: #333333;
+  color: var(--text-primary);
   white-space: nowrap;
   flex: 1;
 }
@@ -127,7 +127,7 @@ onUnmounted(() => {
   left: 0;
   min-width: 140px;
   background: #FFFFFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -143,7 +143,7 @@ onUnmounted(() => {
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
-  color: #333333;
+  color: var(--text-primary);
   background: none;
   border: none;
   text-align: left;
@@ -152,7 +152,7 @@ onUnmounted(() => {
 }
 
 .filter-option:hover {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
 }
 
 .filter-option.active {

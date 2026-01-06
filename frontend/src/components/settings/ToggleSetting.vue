@@ -54,7 +54,7 @@ const emit = defineEmits(['update:modelValue'])
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .toggle-description {
@@ -102,7 +102,7 @@ const emit = defineEmits(['update:modelValue'])
 }
 
 .toggle input:checked + .toggle-slider {
-  background-color: #6366f1;
+  background-color: var(--primary);
 }
 
 .toggle input:checked + .toggle-slider:before {

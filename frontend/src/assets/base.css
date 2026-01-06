@@ -19,6 +19,32 @@
   --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
   --vt-c-text-dark-1: var(--vt-c-white);
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+
+  /* ===== Project Design Tokens ===== */
+  /* Primary Colors */
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-light: #e0e7ff;
+  
+  /* Text Colors */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --text-dark: #171717;
+  
+  /* Background Colors */
+  --bg-white: #ffffff;
+  --bg-gray: #fafafa;
+  --bg-gray-light: #f5f5f5;
+  
+  /* Border Colors */
+  --border-color: #e5e5e5;
+  --border-dark: #737373;
+  
+  /* Status Colors */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
 }
 
 /* semantic color variables for this project */

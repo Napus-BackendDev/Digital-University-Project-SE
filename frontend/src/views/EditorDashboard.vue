@@ -91,6 +91,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { formAPI } from '@/services/api'
+import { formatDateShort } from '@/utils/formatters'
 import FormTable from '@/components/FormTable.vue'
 import Pagination from '@/components/Pagination.vue'
 import SearchBar from '@/components/SearchBar.vue'
@@ -114,14 +115,6 @@ const filterOptions = [
   { value: 'draft', label: 'Draft' },
   { value: 'closed', label: 'Closed' }
 ]
-
-// Format date helper
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  const options = { year: 'numeric', month: 'short', day: 'numeric' }
-  return date.toLocaleDateString('en-US', options)
-}
 
 // Get title from multilingual array
 const getTitle = (titleArray) => {
@@ -154,7 +147,7 @@ const fetchForms = async () => {
       description: getTitle(form.description) || 'No description',
       status: form.status || 'draft',
       responses: form.responseCount || 0,
-      createdDate: formatDate(form.updatedAt || form.createdAt)
+      createdDate: formatDateShort(form.updatedAt || form.createdAt)
     }))
     
   } catch (err) {
@@ -309,7 +302,7 @@ onMounted(() => {
 .editordashboard {
   width: 1536px;
   min-height: 100vh;
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
   font-family: 'Inter', sans-serif;
   overflow-x: auto;
   margin: 0 auto;
@@ -324,7 +317,7 @@ onMounted(() => {
   gap: 32px;
   width: 1536px;
   min-height: 1020px;
-  background: #FAFAFA;
+  background: var(--bg-gray);
 }
 
 /* Toolbar */
@@ -402,7 +395,7 @@ onMounted(() => {
   width: 1216px;
   min-height: 653px;
   background: #FFFFFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   border-radius: 16px;
   flex: none;
@@ -452,7 +445,7 @@ onMounted(() => {
   margin-top: 16px;
   font-weight: 500;
   font-size: 16px;
-  color: #333333;
+  color: var(--text-primary);
 }
 
 .retry-button {
@@ -499,7 +492,7 @@ onMounted(() => {
   margin-top: 16px;
   font-weight: 600;
   font-size: 18px;
-  color: #333333;
+  color: var(--text-primary);
 }
 
 .empty-subtext {
@@ -525,8 +518,8 @@ onMounted(() => {
 .header-row {
   display: grid;
   grid-template-columns: 604.36px 134.75px 161.61px 176.41px 136.91px;
-  background: #FAFAFA;
-  border-bottom: 1px solid #E5E5E5;
+  background: var(--bg-gray);
+  border-bottom: 1px solid var(--border-color);
   height: 52px;
 }
 
@@ -565,7 +558,7 @@ onMounted(() => {
 }
 
 .data-row:hover {
-  background: #FAFAFA;
+  background: var(--bg-gray);
 }
 
 .table-cell {
@@ -618,8 +611,8 @@ onMounted(() => {
 }
 
 .status-draft {
-  background: #F5F5F5;
-  border: 1px solid #E5E5E5;
+  background: var(--bg-gray-light);
+  border: 1px solid var(--border-color);
 }
 
 .status-closed {
@@ -767,7 +760,7 @@ onMounted(() => {
 
 .action-button i {
   font-size: 16px;
-  color: #333333;
+  color: var(--text-primary);
 }
 
 .action-more-wrapper {
@@ -780,7 +773,7 @@ onMounted(() => {
   right: 0;
   min-width: 180px;
   background: #FFFFFF;
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -799,7 +792,7 @@ onMounted(() => {
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
-  color: #333333;
+  color: var(--text-primary);
   background: none;
   border: none;
   text-align: left;
@@ -808,7 +801,7 @@ onMounted(() => {
 }
 
 .action-dropdown-item:hover {
-  background: #F5F5F5;
+  background: var(--bg-gray-light);
 }
 
 .action-dropdown-item.danger {
@@ -839,7 +832,7 @@ onMounted(() => {
 
 .dropdown-divider {
   height: 1px;
-  background: #E5E5E5;
+  background: var(--border-color);
   margin: 4px 0;
 }
 

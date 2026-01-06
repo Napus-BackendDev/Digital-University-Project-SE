@@ -419,7 +419,7 @@ function handleUpdateSettings(newSettings) {
 .form-builder {
   padding: 24px 288px;
   min-height: 100vh;
-  background: #fafafa;
+  background: var(--bg-gray);
 }
 
 .top-actions {
@@ -436,7 +436,7 @@ function handleUpdateSettings(newSettings) {
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: #333;
+  color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
@@ -462,7 +462,7 @@ function handleUpdateSettings(newSettings) {
 /* Tabs */
 .tabs {
   display: flex;
-  background: #f5f5f5;
+  background: var(--bg-gray-light);
   border-radius: 12px;
   padding: 3.5px;
   margin-bottom: 32px;
@@ -481,18 +481,18 @@ function handleUpdateSettings(newSettings) {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #666;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tab-btn:hover {
-  color: #333;
+  color: var(--text-primary);
 }
 
 .tab-btn.active {
   background: #fff;
-  color: #333;
+  color: var(--text-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 

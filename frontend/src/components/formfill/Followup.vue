@@ -1,34 +1,45 @@
 <script setup>
-// --- FollowupOption.vue: Handles rendering and selection for a single option (with recursive follow-up) ---
-
-// Define component name for recursive usage
+/**
+ * FollowupOption - Unified component for follow-up question options
+ * Handles rendering and selection for a single option (with recursive follow-up)
+ * 
+ * Props:
+ * - storeAsText: if true, stores option.text; if false, stores option.id
+ * - answers: can be Object or Array depending on usage context
+ */
 import { defineComponent } from 'vue'
 
-// --- Define component props ---
-// option: option object for this row
-// idx: index or key for answer tracking
-// answers: shared answers object (v-model) - changed from Array to Object
 const props = defineProps({
   option: { type: Object, required: true },
   idx: { type: [Number, String], required: true },
-  answers: { type: Object, required: true }, // Changed from Array to Object
+  answers: { type: [Object, Array], required: true },
+  // If true, stores option.text in answers; if false, stores option.id
+  storeAsText: { type: Boolean, default: true }
 });
 
-// --- Emits update:answers for v-model ---
 const emit = defineEmits(['update:answers']);
 
-// --- Handle input: toggles selection, supports deselect ---
+// Get the value to compare/store based on storeAsText prop
+function getStoredValue() {
+  return props.storeAsText ? props.option.text : props.option.id;
+}
+
+// Handle input: toggles selection, supports deselect
 function handleInput(val) {
-  // Store option text instead of option id
-  const optionText = typeof val === 'number' ? props.option.text : val;
+  const storedValue = getStoredValue();
   
-  if (props.answers[props.idx] === optionText) {
+  if (props.answers[props.idx] === storedValue) {
     // Deselect if already selected
     props.answers[props.idx] = null;
   } else {
-    props.answers[props.idx] = optionText;
+    props.answers[props.idx] = storedValue;
   }
   emit('update:answers', props.answers);
+}
+
+// Check if current option is selected
+function isSelected() {
+  return props.answers[props.idx] === getStoredValue();
 }
 </script>
 
@@ -43,22 +54,22 @@ export default {
     <!-- Main option row -->
     <div
       class="preview-option-row clickable"
-      :class="{ selected: answers[idx] === option.text }"
+      :class="{ selected: isSelected() }"
       @click="handleInput(option.id)"
       tabindex="0"
       @keydown.enter.space="handleInput(option.id)"
       role="radio"
-      :aria-checked="answers[idx] === option.text"
+      :aria-checked="isSelected()"
     >
       <!-- Radio visual -->
       <div class="preview-radio-circle">
-        <div v-if="answers[idx] === option.text" class="preview-radio-dot"></div>
+        <div v-if="isSelected()" class="preview-radio-dot"></div>
       </div>
       <!-- Option text -->
       <span class="preview-option-text">{{ option.text }}</span>
     </div>
     <!-- Render follow-up recursively if selected and has follow-up -->
-    <div v-if="answers[idx] === option.text && option.hasFollowUp && option.followUpQuestion && Array.isArray(option.followUpQuestion.options)" class="preview-followup-list-box">
+    <div v-if="isSelected() && option.hasFollowUp && option.followUpQuestion && Array.isArray(option.followUpQuestion.options)" class="preview-followup-list-box">
       <!-- Follow-up question title -->
       <div v-if="option.followUpQuestion.title" class="followup-question-title">{{ option.followUpQuestion.title }}</div>
       <!-- Recursive follow-up options -->
@@ -68,6 +79,7 @@ export default {
         :option="fopt"
         :idx="`${idx}-${option.id}`"
         :answers="answers"
+        :storeAsText="storeAsText"
         @update:answers="$emit('update:answers', $event)"
       />
     </div>
@@ -109,12 +121,12 @@ export default {
   transition: border-color 0.2s;
 }
 .preview-option-row.selected .preview-radio-circle {
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 .preview-radio-dot {
   width: 10px;
   height: 10px;
-  background: #6366f1;
+  background: var(--primary);
   border-radius: 50%;
 }
 .preview-option-text {
@@ -127,7 +139,7 @@ export default {
   margin-top: 6px;
   margin-bottom: 6px;
   padding: 12px 12px 8px 16px;
-  border-left: 3px solid #6366f1;
+  border-left: 3px solid var(--primary);
   background: #f8f9ff;
   border-radius: 0 8px 8px 0;
 }

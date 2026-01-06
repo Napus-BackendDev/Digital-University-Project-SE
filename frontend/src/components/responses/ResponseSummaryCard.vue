@@ -13,6 +13,7 @@
       <Pagination 
         :currentPage="currentPage" 
         :totalPages="totalPages"
+        :usePageChange="true"
         @page-change="$emit('page-change', $event)"
       />
     </div>
@@ -24,7 +25,7 @@
  * ResponseSummaryCard - การ์ดสรุปคำตอบของแต่ละคำถาม
  * รองรับ chart, table, หรือ content อื่นๆ ผ่าน slot
  */
-import Pagination from './Pagination.vue'
+import Pagination from '@/components/Pagination.vue'
 
 defineProps({
   questionNumber: { type: Number, required: true },  // ลำดับคำถาม
@@ -41,7 +42,7 @@ defineEmits(['page-change'])
 <style scoped>
 .response-summary-card {
   background: white;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.08);
   padding: 25px;
@@ -61,7 +62,7 @@ defineEmits(['page-change'])
   font-weight: 600;
   font-size: 24px;
   line-height: 32px;
-  color: #333;
+  color: var(--text-primary);
   margin: 0;
 }
 

@@ -42,19 +42,19 @@ defineEmits(['update:modelValue'])
   width: 100%;
   height: 36px;
   background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
-  color: #333333;
+  color: var(--text-primary);
   outline: none;
 }
 
 .search-input::placeholder {
-  color: #333333;
+  color: var(--text-primary);
 }
 
 .search-icon {

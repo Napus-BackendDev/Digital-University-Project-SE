@@ -151,7 +151,7 @@ function addQuestion(type) {
 <style scoped>
 .question-type-selector {
   background: #ffffff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 17px;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
@@ -159,7 +159,7 @@ function addQuestion(type) {
 
 .section-divider {
   height: 1px;
-  background: #e5e5e5;
+  background: var(--border-color);
   margin: 16px 0;
 }
 
@@ -168,7 +168,7 @@ function addQuestion(type) {
   font-weight: 600;
   font-size: 20px;
   line-height: 28px;
-  color: #333;
+  color: var(--text-primary);
   margin: 0 0 16px 12px;
   letter-spacing: -0.45px;
 }
@@ -202,7 +202,7 @@ function addQuestion(type) {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .type-icon svg {
@@ -215,7 +215,7 @@ function addQuestion(type) {
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
-  color: #333;
+  color: var(--text-primary);
   letter-spacing: -0.15px;
 }
 
@@ -257,7 +257,7 @@ function addQuestion(type) {
     padding: 8px 12px;
     min-width: 50px;
     border-radius: 12px;
-    background: #f5f5f5;
+    background: var(--bg-gray-light);
   }
 
   .question-type-btn:hover,

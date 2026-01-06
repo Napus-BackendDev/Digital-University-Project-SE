@@ -69,7 +69,7 @@ function handleLogout() {
 <style scoped>
 .navbar {
   background-color: #ffffff;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--border-color);
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
   padding: 0 160px;
 }
@@ -152,7 +152,7 @@ function handleLogout() {
   font-family: 'Inter', sans-serif;
   font-weight: 500;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   transition: background-color 0.2s;
 }
 

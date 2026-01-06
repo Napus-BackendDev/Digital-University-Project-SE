@@ -280,7 +280,7 @@ function updateCaption(caption) {
 <style scoped>
 .question-card {
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
@@ -293,8 +293,8 @@ function updateCaption(caption) {
 
 .question-card.expanded {
   cursor: default;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 1px #6366f1;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 .question-content {
@@ -318,7 +318,7 @@ function updateCaption(caption) {
 }
 
 .drag-handle:hover {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .drag-handle svg {
@@ -347,13 +347,13 @@ function updateCaption(caption) {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   background: transparent;
 }
 
 .question-title-input:focus {
   outline: none;
-  border-bottom-color: #6366f1;
+  border-bottom-color: var(--primary);
 }
 
 .question-title-input:focus + .edit-hint-icon {
@@ -371,7 +371,7 @@ function updateCaption(caption) {
 }
 
 .title-input-wrapper:hover .edit-hint-icon {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .delete-question-btn {
@@ -384,7 +384,7 @@ function updateCaption(caption) {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  color: #999;
+  color: var(--text-muted);
   transition: all 0.2s;
   flex-shrink: 0;
 }
@@ -404,8 +404,8 @@ function updateCaption(caption) {
   display: flex;
   justify-content: space-between;
   padding: 17px 25px;
-  border-top: 1px solid #e5e5e5;
-  background: #fafafa;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-gray);
 }
 
 .footer-row {
@@ -417,16 +417,16 @@ function updateCaption(caption) {
 .field-label {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .type-select {
   padding: 8px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   background: #fff;
   cursor: pointer;
 }
@@ -470,7 +470,7 @@ function updateCaption(caption) {
 }
 
 .toggle input:checked + .toggle-slider {
-  background-color: #6366f1;
+  background-color: var(--primary);
 }
 
 .toggle input:checked + .toggle-slider:before {

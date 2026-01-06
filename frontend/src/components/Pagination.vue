@@ -4,7 +4,7 @@
       class="pagination-button prev-button" 
       :disabled="currentPage === 1"
       :class="{ disabled: currentPage === 1 }"
-      @click="$emit('prev')"
+      @click="handlePrev"
     >
       <svg viewBox="0 0 16 16" fill="none">
         <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
@@ -17,7 +17,7 @@
       :key="page"
       class="pagination-button page-button"
       :class="{ active: page === currentPage }"
-      @click="$emit('goto', page)"
+      @click="handleGoto(page)"
     >
       {{ page }}
     </button>
@@ -26,7 +26,7 @@
       class="pagination-button next-button" 
       :disabled="currentPage === totalPages"
       :class="{ disabled: currentPage === totalPages }"
-      @click="$emit('next')"
+      @click="handleNext"
     >
       <span>Next</span>
       <svg viewBox="0 0 16 16" fill="none">
@@ -37,6 +37,12 @@
 </template>
 
 <script setup>
+/**
+ * Pagination - Unified pagination component
+ * Supports both emit patterns:
+ * - prev/next/goto (default)
+ * - page-change (when usePageChange=true)
+ */
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -51,10 +57,42 @@ const props = defineProps({
   maxVisiblePages: {
     type: Number,
     default: 5
+  },
+  // Use 'page-change' emit instead of prev/next/goto
+  usePageChange: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits(['prev', 'next', 'goto'])
+const emit = defineEmits(['prev', 'next', 'goto', 'page-change'])
+
+// Handle prev button
+function handlePrev() {
+  if (props.usePageChange) {
+    emit('page-change', props.currentPage - 1)
+  } else {
+    emit('prev')
+  }
+}
+
+// Handle next button
+function handleNext() {
+  if (props.usePageChange) {
+    emit('page-change', props.currentPage + 1)
+  } else {
+    emit('next')
+  }
+}
+
+// Handle page number click
+function handleGoto(page) {
+  if (props.usePageChange) {
+    emit('page-change', page)
+  } else {
+    emit('goto', page)
+  }
+}
 
 const visiblePages = computed(() => {
   const pages = []
@@ -131,7 +169,7 @@ const visiblePages = computed(() => {
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.150391px;
-  color: #333333;
+  color: var(--text-primary);
   transition: all 0.2s;
 }
 
@@ -164,7 +202,7 @@ const visiblePages = computed(() => {
 
 .page-button.active {
   background: rgba(229, 229, 229, 0.3);
-  border: 1px solid #E5E5E5;
+  border: 1px solid var(--border-color);
   color: #0A0A0A;
 }
 </style>

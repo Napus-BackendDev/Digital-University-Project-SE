@@ -54,7 +54,7 @@ function sendViaEmail() {
 <style scoped>
 .settings-section {
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 24px;
 }
@@ -63,14 +63,14 @@ function sendViaEmail() {
   font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0 0 4px;
 }
 
 .section-description {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 20px;
 }
 
@@ -99,7 +99,7 @@ function sendViaEmail() {
 }
 
 .btn-primary {
-  background: #6366f1;
+  background: var(--primary);
   color: #fff;
   border: none;
 }
@@ -109,9 +109,9 @@ function sendViaEmail() {
 }
 
 .btn-secondary {
-  background: #f5f5f5;
-  color: #333;
-  border: 1px solid #e5e5e5;
+  background: var(--bg-gray-light);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
