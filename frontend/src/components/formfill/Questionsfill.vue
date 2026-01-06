@@ -817,10 +817,9 @@ function handleSubmit() {
 .question-title {
     flex: 1;
     font-family: 'Inter', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 500;
+    font-size: 1.0rem;
+    font-weight: 200;
     color: #222;
-    margin-bottom: 4px;
 }
 
 .required-dot {

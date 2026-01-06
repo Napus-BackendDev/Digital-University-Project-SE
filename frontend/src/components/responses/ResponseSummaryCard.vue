@@ -1,7 +1,7 @@
 <template>
   <div class="response-summary-card">
     <div class="card-header">
-      <h3 class="question-title">{{ questionNumber }}. {{ title }}</h3>
+      <h3 class="question-title">{{ title }}</h3>
       <p class="response-count">{{ responseCount }} responses</p>
     </div>
     
@@ -27,7 +27,6 @@
 import Pagination from './Pagination.vue'
 
 defineProps({
-  questionNumber: { type: Number, required: true },  // ลำดับคำถาม
   title: { type: String, required: true },           // หัวข้อคำถาม
   responseCount: { type: Number, default: 0 },       // จำนวนคำตอบ
   showPagination: { type: Boolean, default: false }, // แสดง pagination หรือไม่

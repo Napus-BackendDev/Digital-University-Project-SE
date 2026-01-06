@@ -10,13 +10,16 @@ const props = defineProps({
   caption: { type: String, default: '' }
 })
 
-const emit = defineEmits(['update:imageUrl', 'update:caption'])
+const emit = defineEmits(['update:imageUrl', 'update:caption', 'error'])
 
 // Reference สำหรับ hidden file input
 const fileInput = ref(null)
 
 // Preview URL เมื่ออัพโหลดจากเครื่อง
 const previewUrl = ref('')
+
+// Error state
+const errorMessage = ref('')
 
 /**
  * เปิด file picker
@@ -34,9 +37,11 @@ function handleFileSelect(event) {
 
   // ตรวจสอบว่าเป็นไฟล์รูปภาพ
   if (!file.type.startsWith('image/')) {
-    alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น')
+    errorMessage.value = 'Please select an image file only'
+    emit('error', 'Please select an image file only')
     return
   }
+  errorMessage.value = ''
 
   // สร้าง preview URL
   const reader = new FileReader()

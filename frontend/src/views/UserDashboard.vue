@@ -62,7 +62,7 @@ import FormTable from '@/components/FormTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import SearchBar from '@/components/SearchBar.vue';
 import PageHeader from '@/components/PageHeader.vue';
-import { formAPI } from '@/services/api';
+import { formAPI, responseAPI } from '@/services/api';
 
 const router = useRouter();
 
@@ -90,6 +90,17 @@ const getTitle = (titleArray) => {
   return enTitle || thTitle || firstTitle || ''
 }
 
+// Get actual response count for a form
+const getResponseCount = async (formId) => {
+  try {
+    const result = await responseAPI.getByFormId(formId)
+    return result.data?.length || 0
+  } catch (err) {
+    console.error('Error fetching responses for form:', formId, err)
+    return 0
+  }
+}
+
 // Format date to readable format
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -114,18 +125,25 @@ const fetchForms = async () => {
     console.log('Form Data:', formData);
     console.log('Form Data Length:', formData.length);
     
-    // Transform API data to match component structure
+    // Transform API data to match component structure and get actual response counts
     // Filter forms with status 'open' or 'closed' for user dashboard
-    formsData.value = formData
-      .filter(form => form.status === 'open' || form.status === 'close' || form.status === 'closed')
-      .map(form => ({
+    const filteredForms = formData.filter(form => form.status === 'open' || form.status === 'close' || form.status === 'closed')
+    
+    const formsWithResponses = await Promise.all(filteredForms.map(async form => {
+      const responseCount = await getResponseCount(form._id)
+      console.log('Processing form:', getTitle(form.title) || 'Untitled', 'Responses:', responseCount)
+      
+      return {
         id: form._id,
         title: getTitle(form.title) || 'Untitled Form',
         description: getTitle(form.description) || 'No description',
         status: form.status || 'open',
-        responses: form.responseCount || 0,
+        responses: responseCount,
         createdDate: formatDate(form.updatedAt || form.createdAt)
-      }));
+      }
+    }))
+    
+    formsData.value = formsWithResponses;
     
     console.log('Filtered Forms (open/closed only):', formsData.value);
     console.log('Filtered Forms Count:', formsData.value.length);

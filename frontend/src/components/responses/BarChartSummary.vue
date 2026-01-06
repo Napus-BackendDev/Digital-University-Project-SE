@@ -69,17 +69,36 @@ const props = defineProps({
 
 // คำนวณค่าสูงสุดสำหรับแกน Y
 const calculatedMax = computed(() => {
-  if (props.maxValue > 0) return props.maxValue
-  const max = Math.max(...props.chartData.map(d => d.value))
-  return Math.ceil(max * 1.2) || 5
+  // หาค่าสูงสุดจากข้อมูลจริง
+  const max = Math.max(...props.chartData.map(d => d.value || 0), 0)
+  
+  // ถ้าไม่มีข้อมูลเลย ให้ใช้ค่าเริ่มต้น 5
+  if (max === 0) return 5
+  
+  // คำนวณค่า scale ที่เหมาะสม
+  // เพิ่ม 20% padding ด้านบนและปัดเป็นจำนวนเต็มที่สวยงาม
+  const paddedMax = max * 1.2
+  
+  // ปัดเป็นตัวเลขที่สวยงาม (1, 2, 5, 10, 20, 50, 100, ...)
+  const magnitude = Math.pow(10, Math.floor(Math.log10(paddedMax)))
+  const normalized = paddedMax / magnitude
+  
+  let niceMax
+  if (normalized <= 1) niceMax = magnitude
+  else if (normalized <= 2) niceMax = 2 * magnitude
+  else if (normalized <= 5) niceMax = 5 * magnitude
+  else niceMax = 10 * magnitude
+  
+  return niceMax
 })
 
-// สร้าง label สำหรับแกน Y (5 ขีด)
+// สร้าง label สำหรับแกน Y (5 ขีด) - แสดงเฉพาะจำนวนเต็ม
 const yLabels = computed(() => {
   const labels = []
   const step = calculatedMax.value / 4
   for (let i = 4; i >= 0; i--) {
-    labels.push((step * i).toFixed(step < 1 ? 2 : 0))
+    const value = Math.round(step * i)
+    labels.push(value.toString())
   }
   return labels
 })

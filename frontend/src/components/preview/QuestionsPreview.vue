@@ -58,6 +58,8 @@ function handleInput(idx, value, type) {
         <form class="preview-questions-list" @submit.prevent>
             <!-- Render each question card -->
             <div v-for="(q, idx) in questions" :key="q.id || idx" class="preview-question-card">
+                <!-- --- Section Header --- -->
+
                 <!-- --- Question Title Row --- -->
                 <!-- Question title and required marker -->
                 <div class="question-title-row">

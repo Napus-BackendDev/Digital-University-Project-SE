@@ -82,7 +82,7 @@ export function useQuestionManager() {
    * เมื่อ drag & drop คำถามเสร็จ
    */
   function onQuestionReorder() {
-    console.log('คำถามถูกจัดลำดับใหม่:', questions.value.map(q => q.id))
+    // Questions reordered - order updated in array
   }
 
   /**

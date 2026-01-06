@@ -37,7 +37,6 @@
           <div class="table-row header-row">
             <div class="table-head form-name-head">Form Name</div>
             <div class="table-head status-head">Status</div>
-            <div class="table-head responses-head">Responses</div>
             <div class="table-head modified-head">Last Modified</div>
             <div class="table-head actions-head">Actions</div>
           </div>
@@ -61,26 +60,14 @@
 
             <!-- Status Cell -->
             <div class="table-cell status-cell">
-              <div :class="['status-badge', getStatusClass(form)]">
+              <div :class="['status-badge', `status-${form.status}`]">
                 <div class="status-dot"></div>
                 <div class="status-text">
-                  {{ getStatusText(form) }}
+                  {{ form.status === 'open' ? 'Open' : form.status === 'draft' ? 'Draft' : 'Closed' }}
                 </div>
               </div>
             </div>
 
-            <!-- Responses Cell -->
-            <div class="table-cell responses-cell">
-              <div class="responses-info">
-                <div class="responses-icon-wrapper">
-                  <i class="pi pi-comment"></i>
-                </div>
-                <div class="responses-content">
-                  <div class="responses-count">{{ form.responses }}</div>
-                  <div class="responses-label">responses</div>
-                </div>
-              </div>
-            </div>
 
             <!-- Last Modified Cell -->
             <div class="table-cell modified-cell">
@@ -102,8 +89,6 @@
 </template>
 
 <script setup>
-import { useFormStatus } from '@/composables'
-
 defineProps({
   forms: {
     type: Array,
@@ -124,9 +109,6 @@ defineProps({
 })
 
 defineEmits(['form-click', 'toggle-dropdown', 'retry'])
-
-// ใช้ composable สำหรับจัดการสถานะแบบ dynamic
-const { getStatusText, getStatusClass } = useFormStatus()
 </script>
 
 <style scoped>
