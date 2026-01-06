@@ -17,7 +17,7 @@
       </div>
 
       <!-- Table Container -->
-      <FormTable
+      <FormTableUser
         :forms="paginatedForms"
         :loading="loading"
         :error="error"
@@ -41,7 +41,7 @@
             </div>
           </div>
         </template>
-      </FormTable>
+      </FormTableUser>
 
       <!-- Pagination -->
       <Pagination
@@ -58,7 +58,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import FormTable from '@/components/FormTable.vue';
+import FormTableUser from '@/components/FormTableUser.vue';
 import Pagination from '@/components/Pagination.vue';
 import SearchBar from '@/components/SearchBar.vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -119,7 +119,6 @@ const fetchForms = async () => {
         title: getTitle(form.title) || 'Untitled Form',
         description: getTitle(form.description) || 'No description',
         status: form.status || 'open',
-        responses: form.responseCount || 0,
         createdDate: formatDate(form.updatedAt || form.createdAt)
       }));
     
@@ -158,11 +157,6 @@ const handleLogout = () => {
   if (confirm('Are you sure you want to logout?')) {
     router.push('/');
   }
-};
-
-const handleViewForm = (formId) => {
-  activeDropdown.value = null;
-  router.push(`/form/${formId}/preview`);
 };
 
 const handleFillForm = (formId) => {
