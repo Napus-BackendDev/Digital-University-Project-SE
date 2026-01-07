@@ -7,7 +7,7 @@ const verification = require("./service/verification");
 // const auth_message = require("./service/auth_message");
 // const Role = require("../Accounts/service/role");
 // const Authen_Type = require("../Accounts/service/authen_type");
-
+const question = require("./service/question");
 
 router.get("/message", message.onQuerys);
 router.post("/message", message.onCreate);
@@ -31,7 +31,6 @@ router.post("/verification", verification.onCreate);
 router.put("/verification", verification.onUpdate);
 router.delete("/verification", verification.onDelete);
 
-
 // authen service
 
 // router.get("/auth/message", auth_message.onQuerys);
@@ -50,5 +49,9 @@ router.delete("/verification", verification.onDelete);
 // router.put("/authen/type", Authen_Type.onUpdate);
 // router.delete("/authen/type", Authen_Type.onDelete);
 
+router.get("/question", question.onQuerys);
+router.post("/question", question.onCreate);
+router.put("/question", question.onUpdate);
+router.delete("/question", question.onDelete);
 
 module.exports = router;
