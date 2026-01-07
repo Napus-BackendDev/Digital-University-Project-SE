@@ -1,9 +1,8 @@
 'use strict'
-
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
 const { STATUS, ALLOW_STATUS } = require('../service/formStatus'); 
 const form = require('../controller/form');
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
     title : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
@@ -13,6 +12,15 @@ var objSchema = new Schema({
     schedule: {
         startAt: { type: Date, default: null },
         endAt: { type: Date, default: null }
+    },
+    settings: {
+        whoCanRespond: { type: String, default: 'anyone' },
+        collectEmails: { type: Boolean, default: false },
+        limitResponses: { type: Boolean, default: false },
+        maxResponses: { type: Number, default: 100 },
+        showProgressBar: { type: Boolean, default: true },
+        confirmationMessage: { type: String, default: 'Thank you for completing this survey. Your response has been recorded.' },
+        showAnotherResponseLink: { type: Boolean, default: true }
     },
     responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null },

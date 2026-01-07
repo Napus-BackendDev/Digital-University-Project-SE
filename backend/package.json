@@ -5,6 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon -r dotenv/config server.js",
+    "dev": "nodemon -r dotenv/config server.js dotenv_config_path=.env.dev",
+    "seed": "node -r dotenv/config seed.js dotenv_config_path=.env.dev",
     "serve:test": "node -r dotenv/config server.js dotenv_config_path=.env.test",
     "serve:prod": "node -r dotenv/config server.js dotenv_config_path=.env.prod"
   },
@@ -28,6 +30,7 @@
     "morgan": "^1.10.0",
     "nocache": "^4.0.0",
     "node-cron": "^4.2.1",
+    "primeicons": "^7.0.0",
     "sass-middleware": "^0.0.3",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.15.0",
@@ -41,4 +44,5 @@
     "mongoose": "^5.13.22",
     "nodemon": "^3.1.7"
   }
+  
 }
