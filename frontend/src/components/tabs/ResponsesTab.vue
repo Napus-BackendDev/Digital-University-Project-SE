@@ -184,35 +184,51 @@ function getQuestionResponses(questionId) {
 function getChoiceChartData(questionId, options) {
   const responses = getQuestionResponses(questionId)
   const counts = {}
-  
-  // นับจำนวนแต่ละตัวเลือก
-  options.forEach(opt => {
-    counts[opt.text] = 0
-  })
-  
+
+  // Recursive function to collect all options (main + follow-up)
+  function collectOptions(opts, prefix = '') {
+    opts.forEach(opt => {
+      // label: prefix + opt.text (e.g., "Chicken Rice", "Chicken Rice.Fried Chicken")
+      const label = prefix ? `${prefix}.${opt.text}` : opt.text
+      counts[label] = 0
+      // ถ้ามี followUpQuestion ให้วนลูปต่อ
+      if (opt.hasFollowUp && opt.followUpQuestion && Array.isArray(opt.followUpQuestion.options)) {
+        collectOptions(opt.followUpQuestion.options, label)
+      }
+    })
+  }
+  collectOptions(options)
+
+  // นับจำนวนแต่ละตัวเลือก (main + follow-up)
+  // Response value can be:
+  // 1. Array of paths like ["Chicken Rice", "Chicken Rice.Fried Chicken", "Chicken Rice.Fried Chicken.Yes"]
+  // 2. Single string like "Chicken Rice"
+  // 3. Array of strings for checkbox
   responses.forEach(resp => {
-    // Handle checkbox (array of values)
-    if (Array.isArray(resp.value)) {
-      resp.value.forEach(val => {
-        if (counts[val] !== undefined) {
-          counts[val]++
+    const value = resp.value
+    
+    if (Array.isArray(value)) {
+      // Each item in array is a path like "Chicken Rice.Fried Chicken"
+      value.forEach(path => {
+        if (typeof path === 'string' && counts[path] !== undefined) {
+          counts[path]++
         }
       })
-    } else {
-      // Handle single choice
-      if (counts[resp.value] !== undefined) {
-        counts[resp.value]++
+    } else if (typeof value === 'string') {
+      // Single value - check if it matches any label
+      if (counts[value] !== undefined) {
+        counts[value]++
       }
     }
   })
-  
+
   // สีสำหรับ chart
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', 
     '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2',
     '#F8B739', '#52B788', '#E76F51', '#2A9D8F'
   ]
-  
+
   return Object.entries(counts).map(([label, count], index) => ({
     label,
     count,

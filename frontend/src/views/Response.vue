@@ -500,6 +500,74 @@ const goBack = () => {
   router.push('/home');
 };
 
+// Helper function to collect follow-up responses for a question
+// Returns an object like: { main: "Chicken Rice", followUps: { "optId1": "Fried Chicken", "optId1-subOptId": "Yes" } }
+const collectFollowUpResponses = (questionId, options) => {
+  const result = {
+    main: responses[questionId] || null,
+    followUps: {}
+  };
+  
+  // Recursively collect follow-up responses
+  const collectFromOptions = (opts, prefix) => {
+    if (!opts || !Array.isArray(opts)) return;
+    
+    opts.forEach(opt => {
+      const key = `${prefix}-${opt.id}`;
+      if (responses[key] !== undefined && responses[key] !== null) {
+        result.followUps[key] = responses[key];
+      }
+      // Check nested follow-ups
+      if (opt.hasFollowUp && opt.followUpQuestion?.options) {
+        collectFromOptions(opt.followUpQuestion.options, key);
+      }
+    });
+  };
+  
+  if (options && Array.isArray(options)) {
+    collectFromOptions(options, questionId);
+  }
+  
+  return result;
+};
+
+// Helper function to build a nested response path like "Chicken Rice.Fried Chicken.Yes"
+const buildNestedResponsePath = (questionId, options) => {
+  const paths = [];
+  const mainValue = responses[questionId];
+  
+  if (!mainValue) return paths;
+  
+  // Add main selection
+  paths.push(mainValue);
+  
+  // Recursively find selected follow-ups and build path
+  const findSelectedPath = (opts, prefix, currentPath) => {
+    if (!opts || !Array.isArray(opts)) return;
+    
+    opts.forEach(opt => {
+      const key = `${prefix}-${opt.id}`;
+      const value = responses[key];
+      
+      if (value) {
+        const newPath = `${currentPath}.${value}`;
+        paths.push(newPath);
+        
+        // Continue recursively for nested follow-ups
+        if (opt.hasFollowUp && opt.followUpQuestion?.options) {
+          findSelectedPath(opt.followUpQuestion.options, key, newPath);
+        }
+      }
+    });
+  };
+  
+  if (options && Array.isArray(options)) {
+    findSelectedPath(options, questionId, mainValue);
+  }
+  
+  return paths;
+};
+
 const handleSubmit = async () => {
   // Validate current section before submit
   if (!validateCurrentSection()) {
@@ -520,9 +588,6 @@ const handleSubmit = async () => {
   isSubmitting.value = true;
   try {
     // Prepare response data matching backend Response schema
-    // Filter out follow-up responses (keys with dashes like "id-1-2") and only keep main question responses
-    const mainQuestionIds = new Set(formData.value.questions.map(q => q._id));
-    
     const answers = formData.value.questions
       .filter(q => {
         // Skip non-answerable question types (title, image, video, divider, section-divider, title-description)
@@ -530,6 +595,15 @@ const handleSubmit = async () => {
       })
       .map(q => {
         let response = responses[q._id];
+        
+        // For multiple-choice with follow-ups, collect all selected paths
+        if ((q.type === 'choices' || q.type === 'choice') && q.options) {
+          const nestedPaths = buildNestedResponsePath(q._id, q.options);
+          if (nestedPaths.length > 0) {
+            // Store as array of all selected paths (e.g., ["Chicken Rice", "Chicken Rice.Fried Chicken", "Chicken Rice.Fried Chicken.Yes"])
+            response = nestedPaths;
+          }
+        }
         
         // Filter out empty objects from file uploads - only for file-upload questions
         if (q.type === 'file' && Array.isArray(response)) {

@@ -92,7 +92,7 @@ function handleInput(idx, value, type) {
                     <template v-else-if="q.type === 'multiple-choice'">
                         <div class="preview-mc-list">
                             <FollowupOption v-for="opt in q.options || []" :key="opt.id" :option="opt" :idx="idx"
-                                :storeAsText="false" v-model:answers="answers" />
+                                :storeAsText="false" :answers="answers" @update:answers="val => answers = val" />
                         </div>
                     </template>
 
