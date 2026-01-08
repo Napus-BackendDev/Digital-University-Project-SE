@@ -15,12 +15,7 @@ exports.onQuerys = async function (request, response) {
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to fetch responses",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to fetch responses", err.message);
     }
 }
 
@@ -31,12 +26,7 @@ exports.onGetByFormId = async function (request, response) {
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to fetch responses by form ID",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to fetch responses by form ID", err.message);
     }
 };
 exports.onGetByUserId = async function (request, response) {
@@ -46,12 +36,7 @@ exports.onGetByUserId = async function (request, response) {
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to fetch responses by user ID",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to fetch responses by user ID", err.message);
     }
 };
 
@@ -215,12 +200,7 @@ exports.onCreate = async function (request, response) {
         const doc = await responseService.onCreate(responseData);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to create response",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to create response", err.message);
     }
 };
 
@@ -230,19 +210,11 @@ exports.onUpdate = async function (request, response) {
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await responseService.onUpdate(query, request.body);
         if(!doc){
-            return response.status(404).json({
-                success: false,
-                message: "Response not found"
-            });
+            return ResMessage.sendResponse(response, 1, 40400, "Response not found");
         }
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to update response",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to update response", err.message);
     }
 };
 
@@ -253,12 +225,7 @@ exports.onDelete = async function (request, response) {
         const doc = await responseService.onDelete(query);
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to delete response",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to delete response", err.message);
     }
 };
 exports.onDeleteByFormId = async function (request, response) {
@@ -268,78 +235,46 @@ exports.onDeleteByFormId = async function (request, response) {
         const doc = await responseService.onDelete(query);
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to delete responses by form ID",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to delete responses by form ID", err.message);
     }
 };
 exports.generateExportLinkByFormAndUser = async function (request, response) {
     try {
         const { formId, userId } = request.body;
         if (!formId || !mongo.ObjectId.isValid(formId)) {
-            return response.status(400).json({
-                success: false,
-                message: "Invalid form ID"
-            });
+                    return ResMessage.sendResponse(response, 1, 40000, "Invalid form ID");
         }
         //Need to uncomment for production
-        // if (userId && !mongo.ObjectId.isValid(userId)) {
-        //     return response.status(400).json({
-        //         success: false,
-        //         message: "Invalid user ID"
-        //     });
-        // }
+        if (userId && !mongo.ObjectId.isValid(userId)) {
+            return ResMessage.sendResponse(response, 1, 40000, "Invalid user ID");
+        }
         let exportLink = `${request.protocol}://${request.get('host')}/api/v1/response/export/${formId}/user/${userId}`;
-        return response.status(200).json({
-            success: true,
-            message: "Export link generated successfully",
-            data: {
-                downloadLink: exportLink,
-                formId: formId,
-                userId: userId || null
-            }
+        return ResMessage.sendResponse(response, 0, 20000, {
+            downloadLink: exportLink,
+            formId: formId,
+            userId: userId
         });
 
     }
     catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to generate export link",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to generate export link", err.message);
     }
 };
 exports.generateExportLinkFormId = async function (request, response) {
     try {
         const { form_id } = request.body;
         if (!form_id || !mongo.ObjectId.isValid(form_id)) {
-            return response.status(400).json({
-                success: false,
-                message: "Invalid form ID"
-            });
+            return ResMessage.sendResponse(response, 1, 40000, "Invalid form ID");
         }
         
         const exportLink = `${request.protocol}://${request.get('host')}/api/v1/response/download/${form_id}`;
 
-        return response.status(200).json({
-            success: true,
-            message: "Export link generated successfully",
-            data: {
-                downloadLink: exportLink,
-                formId: form_id
-            }
+        return ResMessage.sendResponse(response, 0, 20000, {
+            downloadLink: exportLink,
+            formId: form_id
         });
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to generate export link",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to generate export link", err.message);
     }
 };
 exports.downloadUserJSON = async function (request, response) {
@@ -398,14 +333,9 @@ exports.downloadUserJSON = async function (request, response) {
 
         response.setHeader('Content-Type', 'application/json');
         response.setHeader('Content-Disposition', `attachment; filename="responses_${form_id}_${user_id || 'all'}_${Date.now()}.json"`);
-        return response.status(200).send(JSON.stringify(formattedData, null, 2));
+        return ResMessage.sendResponse(response, 0, 20000, formattedData);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to download responses",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to download responses", err.message);
     }
 }
 exports.publicDownloadUsersJSON = async function (request, response) {
@@ -453,37 +383,9 @@ exports.publicDownloadUsersJSON = async function (request, response) {
 
         response.setHeader('Content-Type', 'application/json');
         response.setHeader('Content-Disposition', `attachment; filename="responses_${form_id}_${Date.now()}.json"`);
-        return response.status(200).send(JSON.stringify(formattedData, null, 2));
-
+        return ResMessage.sendResponse(response, 0, 20000, formattedData);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to download responses",
-            error: err.message
-        });
-    }
-};
-
-exports.onUpdate = async function (request, response) {
-    try {
-        let query = {}
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await responseService.onUpdate(query, request.body);
-        if(!doc){
-            return response.status(404).json({
-                success: false,
-                message: "Response not found"
-            });
-        }
-        return ResMessage.sendResponse(response, 0 , 20000, doc);
-    } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to update response",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to download responses", err.message);
     }
 };
 
@@ -494,12 +396,7 @@ exports.onDelete = async function (request, response) {
         const doc = await responseService.onDelete(query);
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to delete response",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to delete response", err.message);
     }
 };
 exports.onDeleteByFormId = async function (request, response) {
@@ -509,12 +406,7 @@ exports.onDeleteByFormId = async function (request, response) {
         const doc = await responseService.onDelete(query);
         return ResMessage.sendResponse(response, 0 , 20000, doc);
     } catch (err) {
-        console.log(err);
-        return response.status(500).json({
-            success: false,
-            message: "Failed to delete responses by form ID",
-            error: err.message
-        });
+        return ResMessage.sendResponse(response, 1, 50000, "Failed to delete responses by form ID", err.message);
     }
 };
 
