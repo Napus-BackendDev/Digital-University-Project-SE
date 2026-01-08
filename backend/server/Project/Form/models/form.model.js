@@ -1,6 +1,5 @@
-'use strict'
-const { STATUS, ALLOW_STATUS } = require('../service/formStatus'); 
-const form = require('../controller/form');
+'use strict';
+
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
@@ -14,12 +13,11 @@ var objSchema = new Schema({
         endAt: { type: Date, default: null }
     },
     settings: {
-        whoCanRespond: { type: String, default: 'anyone' },
-        collectEmails: { type: Boolean, default: false },
-        limitResponses: { type: Boolean, default: false },
-        maxResponses: { type: Number, default: 100 },
-        showProgressBar: { type: Boolean, default: true },
-        confirmationMessage: { type: String, default: 'Thank you for completing this survey. Your response has been recorded.' },
+        whoCanRespond: { type: String, ref: 'Setting_Respond', default: '' },
+        collectEmail: { type: Boolean, default: false },
+        limitResponse: { type: Boolean, default: false },
+        progressBar: { type: Boolean, default: false },
+        confirmMessage: { type: String, default: 'Thank you for completing this survey. Your response has been recorded.' },
         showAnotherResponseLink: { type: Boolean, default: true }
     },
     responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
@@ -29,17 +27,6 @@ var objSchema = new Schema({
     //     response: { type: String, default: null }, 
     //     collaborators: [ { userId: { type: Schema.Types.ObjectId, ref: 'Users' }, role: { type: String, default: 'editor' } } ] // editor, viewer
     // }],
-
-    form_settings: {
-        collectEmail: { type: Boolean, default: false },
-        limitResponse: { type: Boolean, default: false },
-        editSubmit: { type: Boolean, default: false },
-        progressBar: { type: Boolean, default: false },
-    },
-
-    confirm_message: { 
-        message: { type: String, default: 'Your response has been recorded. Thank you!' },
-     },
     
 }, { timestamps: true });
 
