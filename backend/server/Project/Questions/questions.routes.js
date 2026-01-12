@@ -3,10 +3,34 @@ const router = express.Router();
 
 const question = require('./service/question');
 
-router.get("/id", question.onQuery);
-router.get("", question.onQuerys);
-router.post("", question.onCreate);
-router.put("", question.onUpdate);
-router.delete("", question.onDelete);
+// Get One by ID
+router.get("/id", function (req, res, next) {
+    req.query.apiId = 0;
+    next();
+}, question.onQuery);
+
+// Get All
+router.get("", function (req, res, next) {
+    req.query.apiId = 0;
+    next();
+}, question.onQuerys);
+
+// Create
+router.post("", function (req, res, next) {
+    req.query.apiId = 0;
+    next();
+}, question.onCreate);
+
+// Update
+router.put("", function (req, res, next) {
+    req.query.apiId = 0;
+    next();
+}, question.onUpdate);
+
+// Delete
+router.delete("", function (req, res, next) {
+    req.query.apiId = 0;
+    next();
+}, question.onDelete);
 
 module.exports = router;

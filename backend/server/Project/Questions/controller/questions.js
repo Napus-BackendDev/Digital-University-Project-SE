@@ -7,4 +7,4 @@ const defaultPopulate = [
     { path: "subQuestion" }
 ];
 
-module.exports = createBaseService(objSchema.Questions, defaultPopulate);
+module.exports = createBaseService(objSchema, defaultPopulate);
