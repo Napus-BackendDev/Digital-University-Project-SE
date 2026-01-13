@@ -16,7 +16,11 @@ const mockUserForAnonymous = (req, res, next) => {
 
 //export .csv file
 // router.get("/exportResponsesByFormId",response.onExportResponses);
-router.get("/getByFormId",response.onGetByFormId);
+router.get("/getByFormId", function(req, res, next) {
+    // Custom middleware logic can be added here
+    req.body.apiid = '1';
+    next();
+  },response.onGetByFormId);
 router.get("/getByUserId",response.onGetByUserId);
 router.get("/getById",response.onGetById);
 router.get("",response.onQuerys);
