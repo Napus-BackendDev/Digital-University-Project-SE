@@ -1,5 +1,5 @@
 var mongo = require('mongodb');
-var Status = require('../controller/status');
+var Status = require('../controller/group');
 const resMsg = require("../service/message");
 
 exports.onQuery = async function (request, response, next) {
@@ -37,11 +37,11 @@ exports.onCreate = async function (request, response, next) {
     try {
         const doc = await Status.onCreate(request.body);
 
-        // var data = {}
-        // data.tiltle = request.body.tiltle;
-        // data.description = request.body.description;
-        // data.state = request.body.state;
-        // data.create = request.body.create;
+        var data = {}
+        data.tiltle = request.body.tiltle;
+        data.description = request.body.description;
+        data.state = request.body.state;
+        data.create = request.body.create;
 
 
         var resData = await resMsg.onMessage_Response(0,20000)

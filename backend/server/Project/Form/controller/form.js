@@ -5,7 +5,7 @@ const createBaseService = require("../../../../helpers/base.service")
 const defaultPopulate = [
     { path: 'questions' },
     { path: 'responses' },
-    { path: 'Setting_Status' },
+    { path: 'status' , select: 'title' },
 ]
 
 module.exports = createBaseService(objSchema, defaultPopulate);

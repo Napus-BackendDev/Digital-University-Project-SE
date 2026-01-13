@@ -23,11 +23,6 @@ var objSchema = new Schema({
     responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null },
 
-    // access_control: [{
-    //     response: { type: String, default: null }, 
-    //     collaborators: [ { userId: { type: Schema.Types.ObjectId, ref: 'Users' }, role: { type: String, default: 'editor' } } ] // editor, viewer
-    // }],
-    
 }, { timestamps: true });
 
 module.exports = mongoose.model('Forms', objSchema, "Forms");
