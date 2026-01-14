@@ -40,6 +40,10 @@ exports.onQuery = async function (request, response) {
 exports.onQuerys = async function (request, response) {
   try {
     let query = {};
+    if (request.body.allowAll != true) {
+      query.schedule.endAt = { $gte: new Date() }; // query only in time 
+    }
+
     const doc = await Form.onQuerys(query);
     return ResMessage.sendResponse(response, 0, 20000, doc);
   } catch (err) {

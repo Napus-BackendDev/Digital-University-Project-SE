@@ -1,13 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const { apivalidation } = require('../../../../helpers/utils');
 
 const question = require('./service/question');
 
 // Get One by ID
-router.get("/id", function (req, res, next) {
-    req.query.apiId = 0;
-    next();
-}, question.onQuery);
+router.get("/id", apivalidation(0), question.onQuery);
 
 // Get All
 router.get("", function (req, res, next) {
