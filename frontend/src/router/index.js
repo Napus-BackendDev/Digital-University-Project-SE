@@ -2,9 +2,9 @@ import Vue from 'vue'
 import Router from 'vue-router'
 
 // Containers
-const TheContainer = () => import('@/containers/TheContainer')
-const TheContainer_Landing = () => import('@/containers/TheContainer_Landing.vue')
-const TheContainer_Project = () => import('@/containers/TheContainer_Project')
+const TheContainer = () => import('@/containers/d/TheContainer')
+const TheContainer_Landing = () => import('@/containers/d/TheContainer_Landing.vue')
+const TheContainer_Project = () => import('@/containers/d/TheContainer_Project')
 
 
 // Views
@@ -51,6 +51,9 @@ const ValidationForms = () => import('@/views/forms/ValidationForms')
 
 // Views - Questionnaire
 const MyForms = () => import('@/views/questionnaire/MyForms')
+
+// Views - FormBuilder
+const FormBuilderView = () => import('@/views/FormBuilder/FormBuilderView')
 
 // Views GoogleMaps
 const GoogleMaps = () => import('@/views/GoogleMaps')
@@ -160,6 +163,11 @@ export default new Router({
                             path: 'my-forms',
                             name: 'MyForms',
                             component: MyForms
+                        },
+                        {
+                            path: 'form-builder/:id',
+                            name: 'FormBuilder',
+                            component: FormBuilderView
                         }
                     ]
                 },

@@ -34,7 +34,7 @@ import { io } from "socket.io-client";
 import DialogMessage from "@/projects/components/dialog/DialogMessage.vue";
 import CenterLoading from "@/projects/components/dialog/CenterLoading.vue";
 import SignIn from "@/projects/components/dialog/SignIn.vue";
-import TheSidebar_Project from "@/containers/TheSidebar_Project.vue";
+import TheSidebar_Project from "@/containers/d/TheSidebar_Project.vue";
 //
 export default {
   name: 'TheContainer_Project',
