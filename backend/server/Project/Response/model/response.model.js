@@ -12,8 +12,7 @@ var objSchema = new Schema(
         question: { type: Schema.Types.ObjectId, ref: "Questions" },
         response: { type: Schema.Types.Mixed },
       },
-    ],
-    submittedAt: { type: Date, default: Date.now },
+    ]
   },
   { timestamps: true }
 );
