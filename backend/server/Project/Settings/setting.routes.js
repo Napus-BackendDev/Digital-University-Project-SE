@@ -55,9 +55,9 @@ router.delete("/verification", verification.onDelete);
 // router.put("/authen/type", Authen_Type.onUpdate);
 // router.delete("/authen/type", Authen_Type.onDelete);
 
-router.get("/question", question.onQuerys);
-router.post("/question", question.onCreate);
-router.put("/question", question.onUpdate);
-router.delete("/question", question.onDelete);
+router.get("/question_type", question.onQuerys);
+router.post("/question_type", question.onCreate);
+router.put("/question_type", question.onUpdate);
+router.delete("/question_type", question.onDelete);
 
 module.exports = router;
