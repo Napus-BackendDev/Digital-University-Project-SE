@@ -49,7 +49,7 @@
       />
 
       <!-- Responses Tab -->
-      <ResponsesTab
+      <DataResponses
         v-else-if="activeTab === 'responses'"
         :questions="questionsForResponses"
         :totalResponses="responsesData.totalResponses"
@@ -60,7 +60,7 @@
       />
 
       <!-- Settings Tab -->
-      <SettingsTab
+      <Setting
         v-else-if="activeTab === 'settings'"
         :settings="settings"
         :formUrl="formUrl"
@@ -93,7 +93,11 @@ import { questionsAPI, responseAPI } from '@/services/api'
 import { ArrowLeftIcon, QuestionsIcon, ResponsesIcon, SettingsIcon } from '@/components/icons'
 
 // Tab Components
-import { QuestionsTab, ResponsesTab, SettingsTab } from '@/components/tabs'
+import { QuestionsTab } from '@/components/tabs'
+
+// Local Components
+import DataResponses from './DataResponses.vue'
+import Setting from './Setting.vue'
 
 // Modal
 import Modal from '@/components/Modal.vue'
@@ -107,8 +111,8 @@ export default {
     ResponsesIcon,
     SettingsIcon,
     QuestionsTab,
-    ResponsesTab,
-    SettingsTab,
+    DataResponses,
+    Setting,
     Modal
   },
 
