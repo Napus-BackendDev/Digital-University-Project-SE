@@ -1,350 +1,3 @@
-<script setup>
-/**
- * FormBuilderView - หน้าสร้างและแก้ไขฟอร์ม
- * แบ่งเป็น 3 tabs: Questions, Responses, Settings
- */
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, onBeforeRouteLeave } from 'vue-router'
-import { useFormStore } from '@/stores/form'
-import { questionsAPI, responseAPI } from '@/services/api'
-
-// Composables
-import { useModal, useQuestionManager, useFormSettings, useAutoSave } from '@/composables'
-
-// Icons
-import { ArrowLeftIcon, QuestionsIcon, ResponsesIcon, SettingsIcon } from '@/components/icons'
-
-// Tab Components
-import { QuestionsTab, ResponsesTab, SettingsTab } from '@/components/tabs'
-
-// Modal
-import Modal from '@/components/Modal.vue'
-
-
-/* ===================================
-   Setup & State
-   =================================== */
-const route = useRoute()
-const formStore = useFormStore()
-
-const formId = computed(() => route.params.id)
-// เก็บ active tab ใน localStorage และ sync กับ URL query
-const activeTab = ref(route.query.tab || localStorage.getItem(`formBuilder_${route.params.id}_activeTab`) || 'questions')
-const formTitle = ref('Untitled Form')
-const formDescription = ref('')
-const currentFormStatus = ref('draft') // เก็บ status ปัจจุบันจาก database
-
-const formUrl = computed(() => {
-  const baseUrl = window.location.origin
-  return formId.value ? `${baseUrl}/form/${formId.value}/response` : ''
-})
-
-const previewUrl = computed(() => {
-  const baseUrl = window.location.origin
-  return formId.value ? `${baseUrl}/form/${formId.value}/preview` : ''
-})
-
-
-/* ===================================
-   Composables
-   =================================== */
-const { modalVisible, modalType, modalTitle, modalMessage, showModal, closeModal } = useModal()
-
-const { 
-  questions, 
-  expandedQuestionId, 
-  toggleQuestion, 
-  addQuestion, 
-  deleteQuestion, 
-  updateQuestion, 
-  addOption, 
-  removeOption, 
-  onQuestionReorder,
-  setQuestions 
-} = useQuestionManager()
-
-const { 
-  settings, 
-  addCollaborator, 
-  removeCollaborator, 
-  loadSettings,
-  buildSchedule,
-  buildSettingsPayload 
-} = useFormSettings()
-
-
-/* ===================================
-   Auto-save
-   =================================== */
-
-// แปลง frontend question type เป็น backend type
-function mapQuestionType(frontendType) {
-  const typeMap = {
-    'short-answer': 'short',
-    'paragraph': 'paragraph',
-    'multiple-choice': 'choices',
-    'checkbox': 'checkbox',
-    'rating': 'rating',
-    'file-upload': 'file',
-    'title-description': 'title',
-    'image': 'image',
-    'section-divider': 'divider'
-  }
-  return typeMap[frontendType] || frontendType
-}
-
-async function saveForm() {
-  if (!formId.value) return
-  
-  try {
-    // แยก questions ที่มี _id (existing) และไม่มี _id (new)
-    const existingQuestions = questions.value.filter(q => q && q._id)
-    const newQuestions = questions.value.filter(q => q && !q._id)
-    
-    // อัพเดท existing questions ใน database
-    for (const q of existingQuestions) {
-      const updateData = {
-        _id: q._id,
-        title: [{ key: 'en', value: q.title || '' }],
-        type: mapQuestionType(q.type),
-        required: q.required || false,
-        order: questions.value.indexOf(q) + 1,
-        config: {
-          options: q.options || [],
-          maxRating: q.maxRating || 5,
-          allowSpecificTypes: q.allowSpecificTypes || false,
-          allowedFileTypes: q.allowedFileTypes || [],
-          maxFiles: q.maxFiles || 1,
-          maxSize: q.maxSize || 10,
-          // Image & Video fields
-          imageUrl: q.imageUrl || '',
-          videoUrl: q.videoUrl || '',
-          caption: q.caption || ''
-        }
-      }
-      await questionsAPI.update(updateData)
-    }
-    
-    // สร้าง questions ใหม่ใน database
-    const createdQuestionIds = []
-    for (const q of newQuestions) {
-      // ข้าม question ที่ไม่มี title (validation จะ fail)
-      if (!q.title || q.title.trim() === '') {
-        continue
-      }
-      
-      const questionData = {
-        form: formId.value,
-        title: [{ key: 'en', value: q.title }],
-        type: mapQuestionType(q.type),
-        required: q.required || false,
-        order: questions.value.indexOf(q) + 1,
-        config: {
-          options: q.options?.map(opt => ({
-            id: opt.id,
-            text: opt.text,
-            hasFollowUp: opt.hasFollowUp || false,
-            followUpQuestion: opt.followUpQuestion || null
-          })) || [],
-          maxRating: q.maxRating || 5,
-          allowSpecificTypes: q.allowSpecificTypes || false,
-          allowedFileTypes: q.allowedFileTypes || [],
-          maxFiles: q.maxFiles || 1,
-          maxSize: q.maxSize || 10,
-          // Image & Video fields
-          imageUrl: q.imageUrl || '',
-          videoUrl: q.videoUrl || '',
-          caption: q.caption || ''
-        }
-      }
-      
-      const result = await questionsAPI.create(questionData)
-      if (result.data && result.data._id) {
-        // อัพเดท question ใน local state ด้วย _id ใหม่
-        q._id = result.data._id
-        createdQuestionIds.push(result.data._id)
-      }
-    }
-    
-    // รวม question IDs ทั้งหมด
-    const allQuestionIds = [
-      ...existingQuestions.map(q => q._id),
-      ...createdQuestionIds
-    ]
-    
-    // ใช้ status ใหม่ถ้ามีการเปลี่ยน หรือใช้ status ปัจจุบัน
-    const statusToSave = settings.value.formStatus || currentFormStatus.value || 'draft'
-    
-    const formData = {
-      _id: formId.value,
-      title: [{ key: 'en', value: formTitle.value }],
-      description: [{ key: 'en', value: formDescription.value }],
-      questions: allQuestionIds,
-      status: statusToSave,
-      schedule: buildSchedule(),
-      settings: buildSettingsPayload()
-    }
-    
-    const result = await formStore.updateForm(formData)
-    
-    // อัพเดท currentFormStatus หลังจาก save สำเร็จ
-    if (result) {
-      currentFormStatus.value = result.status
-    }
-  } catch (error) {
-    console.error('เกิดข้อผิดพลาดในการบันทึก:', error)
-  }
-}
-
-const { saving, debounceSave, executeSave, hasPendingSave, initAutoSave } = useAutoSave(saveForm)
-
-// Watch for changes - trigger auto-save
-watch(formTitle, () => debounceSave())
-watch(formDescription, () => debounceSave())
-watch(questions, () => debounceSave(), { deep: true })
-watch(settings, () => debounceSave(), { deep: true })
-
-// Save before leaving the page - always save to be safe
-onBeforeRouteLeave(async () => {
-  await executeSave()
-  return true
-})
-
-
-/* ===================================
-   Lifecycle
-   =================================== */
-
-// แปลง backend question type เป็น frontend type
-function mapQuestionTypeFromBackend(backendType) {
-  const typeMap = {
-    'short': 'short-answer',
-    'paragraph': 'paragraph',
-    'choices': 'multiple-choice',
-    'checkbox': 'checkbox',
-    'rating': 'rating',
-    'file': 'file-upload',
-    'title': 'title-description',
-    'image': 'image',
-    'divider': 'section-divider'
-  }
-  return typeMap[backendType] || backendType
-}
-
-// แปลง questions จาก API เป็น format ที่ frontend ใช้
-function transformQuestionsFromAPI(apiQuestions) {
-  return apiQuestions.map(q => ({
-    _id: q._id,
-    id: q._id,
-    type: mapQuestionTypeFromBackend(q.type),
-    title: q.title?.[0]?.value || 'Untitled Question',
-    required: q.required || false,
-    options: q.config?.options || [],
-    maxRating: q.config?.maxRating || 5,
-    allowSpecificTypes: q.config?.allowSpecificTypes || false,
-    allowedFileTypes: q.config?.allowedFileTypes || [],
-    maxFiles: q.config?.maxFiles || 1,
-    maxSize: q.config?.maxSize || 10,
-    // Image & Video fields
-    imageUrl: q.config?.imageUrl || '',
-    videoUrl: q.config?.videoUrl || '',
-    caption: q.config?.caption || ''
-  }))
-}
-
-onMounted(async () => {
-  initAutoSave()
-  
-  if (formId.value) {
-    const form = await formStore.fetchFormById(formId.value)
-    if (form) {
-      formTitle.value = form.title?.[0]?.value || 'Untitled Form'
-      formDescription.value = form.description?.[0]?.value || ''
-      currentFormStatus.value = form.status || 'draft' // เก็บ status ปัจจุบัน
-      
-      if (form.questions?.length > 0) {
-        // แปลง questions จาก API format เป็น frontend format
-        const transformedQuestions = transformQuestionsFromAPI(form.questions)
-        setQuestions(transformedQuestions)
-      }
-      
-      loadSettings(form)
-    }
-    
-    // ดึงข้อมูล responses
-    await fetchResponses()
-  }
-})
-
-// Watch activeTab เพื่อบันทึกลง localStorage และ update URL
-watch(activeTab, (newTab) => {
-  if (formId.value) {
-    localStorage.setItem(`formBuilder_${formId.value}_activeTab`, newTab)
-  }
-})
-
-
-/* ===================================
-   Tab Configuration
-   =================================== */
-const responsesData = ref({ 
-  totalResponses: 0,
-  responses: []
-})
-const responseViewMode = ref('summary')
-const responseCount = computed(() => responsesData.value.totalResponses || 0)
-
-// กรอง questions สำหรับแสดงใน Responses tab (ตัดประเภทที่ไม่ต้องแสดง)
-const questionsForResponses = computed(() => {
-  const excludedTypes = ['title-description', 'image', 'video', 'section-divider']
-  return questions.value.filter(q => !excludedTypes.includes(q.type))
-})
-
-// ฟังก์ชันดึงข้อมูล responses
-async function fetchResponses() {
-  if (!formId.value) return
-  
-  try {
-    const result = await responseAPI.getByFormId(formId.value)
-    if (result && result.data) {
-      responsesData.value = {
-        totalResponses: result.data.length || 0,
-        responses: result.data
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching responses:', error)
-  }
-}
-
-const tabs = computed(() => [
-  { id: 'questions', label: 'Questions', icon: 'questions' },
-  { id: 'responses', label: `Responses (${responseCount.value})`, icon: 'responses' },
-  { id: 'settings', label: 'Settings', icon: 'settings' }
-])
-
-
-/* ===================================
-   Actions
-   =================================== */
-function copyFormUrl() {
-  navigator.clipboard.writeText(formUrl.value)
-  showModal('success', 'Copied!', 'URL copied to clipboard!')
-}
-
-function testForm() {
-  window.open(previewUrl.value, '_self')
-}
-
-function handleExport(format) {
-  showModal('success', 'Export Started', `Exporting responses as ${format.toUpperCase()}`)
-}
-
-function handleUpdateSettings(newSettings) {
-  Object.assign(settings.value, newSettings)
-}
-</script>
-
 <template>
   <div class="form-builder">
     <!-- Top Actions -->
@@ -395,7 +48,6 @@ function handleUpdateSettings(newSettings) {
         @reorder-questions="onQuestionReorder"
       />
 
-      
       <!-- Responses Tab -->
       <ResponsesTab
         v-else-if="activeTab === 'responses'"
@@ -428,6 +80,551 @@ function handleUpdateSettings(newSettings) {
     />
   </div>
 </template>
+
+<script>
+/**
+ * FormBuilderView - หน้าสร้างและแก้ไขฟอร์ม
+ * แบ่งเป็น 3 tabs: Questions, Responses, Settings
+ */
+import { useFormStore } from '@/stores/form'
+import { questionsAPI, responseAPI } from '@/services/api'
+
+// Icons
+import { ArrowLeftIcon, QuestionsIcon, ResponsesIcon, SettingsIcon } from '@/components/icons'
+
+// Tab Components
+import { QuestionsTab, ResponsesTab, SettingsTab } from '@/components/tabs'
+
+// Modal
+import Modal from '@/components/Modal.vue'
+
+export default {
+  name: 'FormBuilderView',
+
+  components: {
+    ArrowLeftIcon,
+    QuestionsIcon,
+    ResponsesIcon,
+    SettingsIcon,
+    QuestionsTab,
+    ResponsesTab,
+    SettingsTab,
+    Modal
+  },
+
+  data() {
+    return {
+      // Form Data
+      formTitle: 'Untitled Form',
+      formDescription: '',
+      currentFormStatus: 'draft',
+      activeTab: 'questions',
+
+      // Questions
+      questions: [],
+      expandedQuestionId: null,
+
+      // Settings
+      settings: {
+        formStatus: 'draft',
+        startDate: '',
+        startTime: '',
+        endDate: '',
+        endTime: '',
+        whoCanRespond: 'anyone',
+        collaborators: [
+          { id: 1, email: 'tanakrit.a@mfu.ac.th', role: 'Editor' },
+          { id: 2, email: 'somchai.w@mfu.ac.th', role: 'Viewer' }
+        ],
+        collectEmails: false,
+        limitResponses: false,
+        maxResponses: 100,
+        showProgressBar: true,
+        confirmationMessage: 'Thank you for completing this survey. Your response has been recorded.'
+      },
+
+      // Modal
+      modalVisible: false,
+      modalType: 'info',
+      modalTitle: '',
+      modalMessage: '',
+
+      // Responses
+      responsesData: {
+        totalResponses: 0,
+        responses: []
+      },
+      responseViewMode: 'summary',
+
+      // Auto-save
+      saving: false,
+      saveTimeout: null
+    }
+  },
+
+  computed: {
+    formId() {
+      return this.$route.params.id
+    },
+
+    formUrl() {
+      const baseUrl = window.location.origin
+      return this.formId ? `${baseUrl}/form/${this.formId}/response` : ''
+    },
+
+    previewUrl() {
+      const baseUrl = window.location.origin
+      return this.formId ? `${baseUrl}/form/${this.formId}/preview` : ''
+    },
+
+    responseCount() {
+      return this.responsesData.totalResponses || 0
+    },
+
+    questionsForResponses() {
+      const excludedTypes = ['title-description', 'image', 'video', 'section-divider']
+      return this.questions.filter(q => !excludedTypes.includes(q.type))
+    },
+
+    tabs() {
+      return [
+        { id: 'questions', label: 'Questions', icon: 'questions' },
+        { id: 'responses', label: `Responses (${this.responseCount})`, icon: 'responses' },
+        { id: 'settings', label: 'Settings', icon: 'settings' }
+      ]
+    }
+  },
+
+  watch: {
+    formTitle() {
+      this.debounceSave()
+    },
+    formDescription() {
+      this.debounceSave()
+    },
+    questions: {
+      handler() {
+        this.debounceSave()
+      },
+      deep: true
+    },
+    settings: {
+      handler() {
+        this.debounceSave()
+      },
+      deep: true
+    },
+    activeTab(newTab) {
+      if (this.formId) {
+        localStorage.setItem(`formBuilder_${this.formId}_activeTab`, newTab)
+      }
+    }
+  },
+
+  async mounted() {
+    // Init active tab from localStorage or query
+    this.activeTab = this.$route.query.tab || localStorage.getItem(`formBuilder_${this.$route.params.id}_activeTab`) || 'questions'
+
+    // Init auto-save listener
+    window.addEventListener('beforeunload', this.handleBeforeUnload)
+
+    if (this.formId) {
+      const formStore = useFormStore()
+      const form = await formStore.fetchFormById(this.formId)
+      if (form) {
+        this.formTitle = form.title?.[0]?.value || 'Untitled Form'
+        this.formDescription = form.description?.[0]?.value || ''
+        this.currentFormStatus = form.status || 'draft'
+
+        if (form.questions?.length > 0) {
+          this.questions = this.transformQuestionsFromAPI(form.questions)
+        }
+
+        this.loadSettings(form)
+      }
+
+      await this.fetchResponses()
+    }
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('beforeunload', this.handleBeforeUnload)
+    if (this.saveTimeout) clearTimeout(this.saveTimeout)
+  },
+
+  async beforeRouteLeave(to, from, next) {
+    await this.executeSave()
+    next()
+  },
+
+  methods: {
+    /* ===================================
+       Modal Methods
+       =================================== */
+    showModal(type, title, message) {
+      this.modalType = type
+      this.modalTitle = title
+      this.modalMessage = message
+      this.modalVisible = true
+    },
+
+    closeModal() {
+      this.modalVisible = false
+    },
+
+    /* ===================================
+       Question Manager Methods
+       =================================== */
+    toggleQuestion(questionId) {
+      this.expandedQuestionId = this.expandedQuestionId === questionId ? null : questionId
+    },
+
+    addQuestion(type) {
+      const newQuestion = {
+        id: this.questions.length + 1,
+        type: type.id,
+        title: 'Untitled Question',
+        required: false
+      }
+
+      if (['multiple-choice', 'checkbox', 'dropdown'].includes(type.id)) {
+        newQuestion.options = [{ id: 1, text: 'Option 1' }]
+      }
+
+      if (type.id === 'rating') {
+        newQuestion.maxRating = 5
+      }
+
+      if (type.id === 'file-upload') {
+        newQuestion.allowSpecificTypes = false
+        newQuestion.allowedFileTypes = []
+        newQuestion.maxFiles = 1
+        newQuestion.maxSize = 10
+      }
+
+      this.questions.push(newQuestion)
+    },
+
+    deleteQuestion(questionId) {
+      this.questions = this.questions.filter(q => q.id !== questionId)
+    },
+
+    updateQuestion(updatedQuestion) {
+      const index = this.questions.findIndex(q => q.id === updatedQuestion.id)
+      if (index !== -1) {
+        this.questions[index] = updatedQuestion
+      }
+    },
+
+    addOption(question) {
+      const newOptionId = question.options.length + 1
+      question.options.push({ id: newOptionId, text: `Option ${newOptionId}` })
+    },
+
+    removeOption(question, optionId) {
+      question.options = question.options.filter(o => o.id !== optionId)
+    },
+
+    onQuestionReorder() {
+      // Questions reordered - order updated in array
+    },
+
+    setQuestions(loadedQuestions) {
+      this.questions = loadedQuestions
+    },
+
+    /* ===================================
+       Settings Methods
+       =================================== */
+    addCollaborator() {
+      const newId = this.settings.collaborators.length + 1
+      this.settings.collaborators.push({ id: newId, email: '', role: 'Viewer' })
+    },
+
+    removeCollaborator(id) {
+      this.settings.collaborators = this.settings.collaborators.filter(c => c.id !== id)
+    },
+
+    loadSettings(form) {
+      if (form.status) {
+        this.settings.formStatus = form.status
+      }
+
+      if (form.schedule) {
+        if (form.schedule.startAt) {
+          const startDate = new Date(form.schedule.startAt)
+          this.settings.startDate = startDate.toISOString().split('T')[0]
+          this.settings.startTime = startDate.toTimeString().slice(0, 5)
+        }
+        if (form.schedule.endAt) {
+          const endDate = new Date(form.schedule.endAt)
+          this.settings.endDate = endDate.toISOString().split('T')[0]
+          this.settings.endTime = endDate.toTimeString().slice(0, 5)
+        }
+      }
+
+      if (form.settings) {
+        const s = form.settings
+        if (s.whoCanRespond !== undefined) this.settings.whoCanRespond = s.whoCanRespond
+        if (s.collectEmails !== undefined) this.settings.collectEmails = s.collectEmails
+        if (s.limitResponses !== undefined) this.settings.limitResponses = s.limitResponses
+        if (s.maxResponses !== undefined) this.settings.maxResponses = s.maxResponses
+        if (s.showProgressBar !== undefined) this.settings.showProgressBar = s.showProgressBar
+        if (s.confirmationMessage !== undefined) this.settings.confirmationMessage = s.confirmationMessage
+      }
+    },
+
+    buildSchedule() {
+      const schedule = { startAt: null, endAt: null }
+      if (this.settings.formStatus === 'auto') {
+        if (this.settings.startDate && this.settings.startTime) {
+          schedule.startAt = new Date(`${this.settings.startDate}T${this.settings.startTime}`).toISOString()
+        }
+        if (this.settings.endDate && this.settings.endTime) {
+          schedule.endAt = new Date(`${this.settings.endDate}T${this.settings.endTime}`).toISOString()
+        }
+      }
+      return schedule
+    },
+
+    buildSettingsPayload() {
+      return {
+        whoCanRespond: this.settings.whoCanRespond,
+        collectEmails: this.settings.collectEmails,
+        limitResponses: this.settings.limitResponses,
+        maxResponses: this.settings.maxResponses,
+        showProgressBar: this.settings.showProgressBar,
+        confirmationMessage: this.settings.confirmationMessage
+      }
+    },
+
+    handleUpdateSettings(newSettings) {
+      Object.assign(this.settings, newSettings)
+    },
+
+    /* ===================================
+       Auto-save Methods
+       =================================== */
+    debounceSave(delay = 1000) {
+      if (this.saveTimeout) clearTimeout(this.saveTimeout)
+      this.saveTimeout = setTimeout(() => {
+        this.executeSave()
+      }, delay)
+    },
+
+    async executeSave() {
+      if (this.saveTimeout) clearTimeout(this.saveTimeout)
+      this.saveTimeout = null
+
+      this.saving = true
+      try {
+        await this.saveForm()
+      } catch (err) {
+        console.error('บันทึกไม่สำเร็จ:', err)
+      } finally {
+        this.saving = false
+      }
+    },
+
+    hasPendingSave() {
+      return this.saveTimeout !== null
+    },
+
+    handleBeforeUnload(e) {
+      if (this.saveTimeout) {
+        this.executeSave()
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    },
+
+    /* ===================================
+       Type Mapping Methods
+       =================================== */
+    mapQuestionType(frontendType) {
+      const typeMap = {
+        'short-answer': 'short',
+        'paragraph': 'paragraph',
+        'multiple-choice': 'choices',
+        'checkbox': 'checkbox',
+        'rating': 'rating',
+        'file-upload': 'file',
+        'title-description': 'title',
+        'image': 'image',
+        'section-divider': 'divider'
+      }
+      return typeMap[frontendType] || frontendType
+    },
+
+    mapQuestionTypeFromBackend(backendType) {
+      const typeMap = {
+        'short': 'short-answer',
+        'paragraph': 'paragraph',
+        'choices': 'multiple-choice',
+        'checkbox': 'checkbox',
+        'rating': 'rating',
+        'file': 'file-upload',
+        'title': 'title-description',
+        'image': 'image',
+        'divider': 'section-divider'
+      }
+      return typeMap[backendType] || backendType
+    },
+
+    transformQuestionsFromAPI(apiQuestions) {
+      return apiQuestions.map(q => ({
+        _id: q._id,
+        id: q._id,
+        type: this.mapQuestionTypeFromBackend(q.type),
+        title: q.title?.[0]?.value || 'Untitled Question',
+        required: q.required || false,
+        options: q.config?.options || [],
+        maxRating: q.config?.maxRating || 5,
+        allowSpecificTypes: q.config?.allowSpecificTypes || false,
+        allowedFileTypes: q.config?.allowedFileTypes || [],
+        maxFiles: q.config?.maxFiles || 1,
+        maxSize: q.config?.maxSize || 10,
+        imageUrl: q.config?.imageUrl || '',
+        videoUrl: q.config?.videoUrl || '',
+        caption: q.config?.caption || ''
+      }))
+    },
+
+    /* ===================================
+       Save Form Method
+       =================================== */
+    async saveForm() {
+      if (!this.formId) return
+
+      const formStore = useFormStore()
+
+      try {
+        const existingQuestions = this.questions.filter(q => q && q._id)
+        const newQuestions = this.questions.filter(q => q && !q._id)
+
+        for (const q of existingQuestions) {
+          const updateData = {
+            _id: q._id,
+            title: [{ key: 'en', value: q.title || '' }],
+            type: this.mapQuestionType(q.type),
+            required: q.required || false,
+            order: this.questions.indexOf(q) + 1,
+            config: {
+              options: q.options || [],
+              maxRating: q.maxRating || 5,
+              allowSpecificTypes: q.allowSpecificTypes || false,
+              allowedFileTypes: q.allowedFileTypes || [],
+              maxFiles: q.maxFiles || 1,
+              maxSize: q.maxSize || 10,
+              imageUrl: q.imageUrl || '',
+              videoUrl: q.videoUrl || '',
+              caption: q.caption || ''
+            }
+          }
+          await questionsAPI.update(updateData)
+        }
+
+        const createdQuestionIds = []
+        for (const q of newQuestions) {
+          if (!q.title || q.title.trim() === '') {
+            continue
+          }
+
+          const questionData = {
+            form: this.formId,
+            title: [{ key: 'en', value: q.title }],
+            type: this.mapQuestionType(q.type),
+            required: q.required || false,
+            order: this.questions.indexOf(q) + 1,
+            config: {
+              options: q.options?.map(opt => ({
+                id: opt.id,
+                text: opt.text,
+                hasFollowUp: opt.hasFollowUp || false,
+                followUpQuestion: opt.followUpQuestion || null
+              })) || [],
+              maxRating: q.maxRating || 5,
+              allowSpecificTypes: q.allowSpecificTypes || false,
+              allowedFileTypes: q.allowedFileTypes || [],
+              maxFiles: q.maxFiles || 1,
+              maxSize: q.maxSize || 10,
+              imageUrl: q.imageUrl || '',
+              videoUrl: q.videoUrl || '',
+              caption: q.caption || ''
+            }
+          }
+
+          const result = await questionsAPI.create(questionData)
+          if (result.data && result.data._id) {
+            q._id = result.data._id
+            createdQuestionIds.push(result.data._id)
+          }
+        }
+
+        const allQuestionIds = [
+          ...existingQuestions.map(q => q._id),
+          ...createdQuestionIds
+        ]
+
+        const statusToSave = this.settings.formStatus || this.currentFormStatus || 'draft'
+
+        const formData = {
+          _id: this.formId,
+          title: [{ key: 'en', value: this.formTitle }],
+          description: [{ key: 'en', value: this.formDescription }],
+          questions: allQuestionIds,
+          status: statusToSave,
+          schedule: this.buildSchedule(),
+          settings: this.buildSettingsPayload()
+        }
+
+        const result = await formStore.updateForm(formData)
+
+        if (result) {
+          this.currentFormStatus = result.status
+        }
+      } catch (error) {
+        console.error('เกิดข้อผิดพลาดในการบันทึก:', error)
+      }
+    },
+
+    /* ===================================
+       Responses Methods
+       =================================== */
+    async fetchResponses() {
+      if (!this.formId) return
+
+      try {
+        const result = await responseAPI.getByFormId(this.formId)
+        if (result && result.data) {
+          this.responsesData = {
+            totalResponses: result.data.length || 0,
+            responses: result.data
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching responses:', error)
+      }
+    },
+
+    /* ===================================
+       Actions
+       =================================== */
+    copyFormUrl() {
+      navigator.clipboard.writeText(this.formUrl)
+      this.showModal('success', 'Copied!', 'URL copied to clipboard!')
+    },
+
+    testForm() {
+      window.open(this.previewUrl, '_self')
+    },
+
+    handleExport(format) {
+      this.showModal('success', 'Export Started', `Exporting responses as ${format.toUpperCase()}`)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .form-builder {
