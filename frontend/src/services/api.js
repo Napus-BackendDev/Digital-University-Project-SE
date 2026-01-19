@@ -3,214 +3,136 @@
  * ใช้จัดการ HTTP requests ทั้งหมดของแอป
  */
 
-// ดึง API URL จาก environment variable หรือใช้ค่า default
+import axios from 'axios'
+
+// axios instance
+const instance = axios.create()
+
 // Backend ใช้ port 8081 (ตาม .env)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api/v1'
+instance.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api/v1'
 
-/**
- * ฟังก์ชันหลักสำหรับเรียก API
- * รองรับ GET, POST, PUT, DELETE
- * 
- * @param {string} endpoint - path ของ API เช่น '/form'
- * @param {object} options - ตัวเลือกเพิ่มเติม (method, body, headers)
- * @returns {Promise} ข้อมูลที่ได้จาก API
- */
-async function fetchAPI(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`
-  
-  // กำหนด headers เริ่มต้น
-  const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  }
-  
-  // เรียก API
-  const response = await fetch(url, { ...defaultOptions, ...options })
-  const data = await response.json()
-  
-  // ถ้า response ไม่ ok ให้ throw error
-  if (!response.ok) {
-    throw new Error(data.message || 'API request failed')
-  }
-  
-  return data
+instance.defaults.headers = {
+  "Content-Type": "application/json",
+  "X-Access-Token": "1a661eec9bf358b8567c3dc022146d19c69d2ceafe92f503e89391e5d9f9f739",
 }
 
 
-/* ===================================
-   Form API - จัดการฟอร์ม
-   =================================== */
-export const formAPI = {
-  // ดึงฟอร์มทั้งหมด
-  async getAll() {
-    return fetchAPI('/form')
-  },
-  
-  // ดึงฟอร์มตาม ID
-  async getById(id) {
-    return fetchAPI(`/form/id?_id=${id}`)
-  },
-  
-  // สร้างฟอร์มใหม่
-  async create(formData) {
-    return fetchAPI('/form', {
-      method: 'POST',
-      body: JSON.stringify(formData),
-    })
-  },
-  
-  // อัพเดทฟอร์ม
-  async update(formData) {
-    return fetchAPI('/form', {
-      method: 'PUT',
-      body: JSON.stringify(formData),
-    })
-  },
-  
-  // ลบฟอร์ม
-  async delete(id) {
-    return fetchAPI('/form', {
-      method: 'DELETE',
-      body: JSON.stringify({ _id: id }),
-    })
-  },
-  
-  // ทำสำเนาฟอร์ม
-  async duplicate(id) {
-    return fetchAPI('/form/duplicate', {
-      method: 'POST',
-      body: JSON.stringify({ _id: id }),
-    })
-  },
-}
-
-
-/* ===================================
-   Questions API - จัดการคำถาม
-   =================================== */
-export const questionsAPI = {
-  // ดึงคำถามทั้งหมดของฟอร์ม
-  async getByFormId(formId) {
-    return fetchAPI(`/question?formId=${formId}`)
-  },
-  
-  // สร้างคำถามใหม่ (รองรับทั้ง single และ array)
-  async create(questionsData) {
-    return fetchAPI('/question', {
-      method: 'POST',
-      body: JSON.stringify(questionsData),
-    })
-  },
-  
-  // สร้างคำถามหลายอันพร้อมกัน
-  async createMany(questionsArray) {
-    return fetchAPI('/question', {
-      method: 'POST',
-      body: JSON.stringify(questionsArray),
-    })
-  },
-  
-  // อัพเดทคำถาม
-  async update(questionsData) {
-    return fetchAPI('/question', {
-      method: 'PUT',
-      body: JSON.stringify(questionsData),
-    })
-  },
-  
-  // ลบคำถาม
-  async delete(id) {
-    return fetchAPI('/question', {
-      method: 'DELETE',
-      body: JSON.stringify({ _id: id }),
-    })
-  },
-  
-  // ลบคำถามทั้งหมดของ form
-  async deleteByFormId(formId) {
-    return fetchAPI(`/question/byForm`, {
-      method: 'DELETE',
-      body: JSON.stringify({ formId: formId }),
-    })
-  },
-}
-
-
-/* ===================================
-   Response API - จัดการคำตอบ
-   =================================== */
-export const responseAPI = {
-  // ดึงคำตอบทั้งหมดของฟอร์ม
-  async getByFormId(formId) {
-    return fetchAPI(`/response/getByFormId?form_id=${formId}`)
-  },
-  
-  // ดึงคำตอบตาม User ID
-  async getByUserId(userId) {
-    return fetchAPI(`/response/getByUserId?userId=${userId}`)
-  },
-  
-  // ดึงคำตอบตาม ID
-  async getById(id) {
-    return fetchAPI(`/response/getById?_id=${id}`)
-  },
-  
-  // ส่งคำตอบ
-  async submit(responseData) {
-    return fetchAPI('/response/submit', {
-      method: 'POST',
-      body: JSON.stringify(responseData),
-    })
-  },
-  
-  // อัพเดทคำตอบ
-  async update(responseData) {
-    return fetchAPI('/response/update', {
-      method: 'PATCH',
-      body: JSON.stringify(responseData),
-    })
-  },
-  
-  // ลบคำตอบ
-  async delete(id) {
-    return fetchAPI('/response/delete', {
-      method: 'DELETE',
-      body: JSON.stringify({ _id: id }),
-    })
-  },
-  
-  // ลบคำตอบทั้งหมดของฟอร์ม
-  async deleteByFormId(formId) {
-    return fetchAPI('/response/deleteByFormId', {
-      method: 'DELETE',
-      body: JSON.stringify({ formId: formId }),
-    })
-  },
-  
-  // ดาวน์โหลด JSON ของ user
-  async downloadUserJSON(formId, userId) {
-    return fetchAPI(`/response/download/${formId}/user/${userId}`)
-  },
-  
-  // ดาวน์โหลด JSON ทั้งหมดของฟอร์ม
-  async downloadFormJSON(formId) {
-    return fetchAPI(`/response/download/${formId}`)
-  },
-  
-  // สร้าง export link
-  async generateExportLink(formId) {
-    return fetchAPI('/response/export/link', {
-      method: 'POST',
-      body: JSON.stringify({ formId: formId }),
-    })
-  },
-}
-
-
-// Export ทั้งหมดเป็น object เดียว
 export default {
-  form: formAPI,
-  questions: questionsAPI,
-  response: responseAPI,
+  
+  /* ===================================
+     Form API - จัดการฟอร์ม
+     =================================== */
+  form(method, data, configs) {
+    switch (method) {
+      case 'get-all':
+        return instance.get('/form')
+      case 'get-by-id':
+        return instance.get(`/form/id?_id=${data._id}`)
+      case 'create':
+        return instance.post('/form', data)
+      case 'update':
+        return instance.put('/form', data)
+      case 'delete':
+        return instance.delete('/form', { data: { _id: data._id } })
+      case 'duplicate':
+        return instance.post('/form/duplicate', { _id: data._id })
+      default:
+        break
+    }
+  },
+
+  /* ===================================
+     Questions API - จัดการคำถาม
+     =================================== */
+  question(method, data, configs) {
+    switch (method) {
+      case 'get-by-form-id':
+        return instance.get(`/question?formId=${data.formId}`)
+      case 'create':
+        return instance.post('/question', data)
+      case 'create-many':
+        return instance.post('/question', data)
+      case 'update':
+        return instance.put('/question', data)
+      case 'delete':
+        return instance.delete('/question', { data: { _id: data._id } })
+      case 'delete-by-form-id':
+        return instance.delete('/question/byForm', { data: { formId: data.formId } })
+      default:
+        break
+    }
+  },
+
+  /* ===================================
+     Response API - จัดการคำตอบ
+     =================================== */
+  response(method, data, configs) {
+    switch (method) {
+      case 'get-by-form-id':
+        return instance.get(`/response/getByFormId?form_id=${data.formId}`)
+      case 'get-by-user-id':
+        return instance.get(`/response/getByUserId?userId=${data.userId}`)
+      case 'get-by-id':
+        return instance.get(`/response/getById?_id=${data._id}`)
+      case 'submit':
+        return instance.post('/response/submit', data)
+      case 'update':
+        return instance.patch('/response/update', data)
+      case 'delete':
+        return instance.delete('/response/delete', { data: { _id: data._id } })
+      case 'delete-by-form-id':
+        return instance.delete('/response/deleteByFormId', { data: { formId: data.formId } })
+      case 'download-user-json':
+        return instance.get(`/response/download/${data.formId}/user/${data.userId}`)
+      case 'download-form-json':
+        return instance.get(`/response/download/${data.formId}`)
+      case 'generate-export-link':
+        return instance.post('/response/export/link', { formId: data.formId })
+      default:
+        break
+    }
+  },
+
+  /* ===================================
+     Settings API - จัดการการตั้งค่า
+     =================================== */
+  setting(method, data, configs) {
+    switch (method) {
+      // Message settings
+      case 'message-get':
+        return instance.get('/setting/message')
+      case 'message-create':
+        return instance.post('/setting/message', data)
+      case 'message-update':
+        return instance.put('/setting/message', data)
+      case 'message-delete':
+        return instance.delete('/setting/message', { data })
+      
+      // Status settings
+      case 'status-get':
+        return instance.get('/setting/status')
+      case 'status-create':
+        return instance.post('/setting/status', data)
+      case 'status-update':
+        return instance.put('/setting/status', data)
+      case 'status-delete':
+        return instance.delete('/setting/status', { data })
+      
+      // Verification settings
+      case 'verification-get':
+        return instance.get('/setting/verification')
+      case 'verification-create':
+        return instance.post('/setting/verification', data)
+      case 'verification-explorers':
+        return instance.post('/setting/verification/explorers', data)
+      case 'verification-update':
+        return instance.put('/setting/verification', data)
+      case 'verification-delete':
+        return instance.delete('/setting/verification', { data })
+      
+      default:
+        break
+    }
+  },
+
 }
