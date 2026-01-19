@@ -1,30 +1,3 @@
-<script setup>
-/**
- * SendForm - แชร์ฟอร์มให้ผู้ตอบ
- * - Copy link ไปยัง clipboard
- * - ส่งผ่านอีเมล
- */
-import { defineProps, defineEmits } from 'vue'
-
-const props = defineProps({
-  formUrl: { type: String, default: '' }
-})
-
-const emit = defineEmits(['copy-link', 'send-email'])
-
-// Copy link ไปยัง clipboard
-function copyLink() {
-  navigator.clipboard.writeText(props.formUrl)
-  emit('copy-link')
-}
-
-// เปิด mail client เพื่อส่งฟอร์ม
-function sendViaEmail() {
-  window.location.href = `mailto:?subject=Form Invitation&body=Please fill out this form: ${props.formUrl}`
-  emit('send-email')
-}
-</script>
-
 <template>
   <div class="send-form-wrapper">
     <div class="settings-section">
@@ -50,6 +23,31 @@ function sendViaEmail() {
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * SendForm - แชร์ฟอร์มให้ผู้ตอบ
+ * - Copy link ไปยัง clipboard
+ * - ส่งผ่านอีเมล
+ */
+export default {
+  name: 'SendForm',
+  props: {
+    formUrl: { type: String, default: '' }
+  },
+  emits: ['copy-link', 'send-email'],
+  methods: {
+    copyLink() {
+      navigator.clipboard.writeText(this.formUrl)
+      this.$emit('copy-link')
+    },
+    sendViaEmail() {
+      window.location.href = `mailto:?subject=Form Invitation&body=Please fill out this form: ${this.formUrl}`
+      this.$emit('send-email')
+    }
+  }
+}
+</script>
 
 <style scoped>
 .settings-section {

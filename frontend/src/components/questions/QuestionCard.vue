@@ -1,140 +1,3 @@
-<script setup>
-/**
- * QuestionCard - แสดงคำถามแต่ละข้อในฟอร์ม
- * สามารถแก้ไขหัวข้อ, เปลี่ยนประเภท, ลบคำถามได้
- */
-
-// Import icon components
-import { TrashIcon, EditIcon } from '@/components/icons'
-
-// Import question type components
-import ShortAnswerQuestion from './ShortAnswerQuestion.vue'
-import ParagraphQuestion from './ParagraphQuestion.vue'
-import MultipleChoiceQuestion from './MultipleChoiceQuestion.vue'
-import CheckboxQuestion from './CheckboxQuestion.vue'
-import DropdownQuestion from './DropdownQuestion.vue'
-import RatingQuestion from './RatingQuestion.vue'
-import DateQuestion from './DateQuestion.vue'
-import TimeQuestion from './TimeQuestion.vue'
-import FileUploadQuestion from './FileUploadQuestion.vue'
-import ImageQuestion from './ImageQuestion.vue'
-import VideoQuestion from './VideoQuestion.vue'
-
-
-/* ===================================
-   Props & Emits
-   =================================== */
-const props = defineProps({
-  question: { type: Object, required: true },
-  showFooter: { type: Boolean, default: false },
-  isExpanded: { type: Boolean, default: false }
-})
-
-const emit = defineEmits([
-  'update:question',
-  'delete',
-  'add-option',
-  'remove-option',
-  'toggle'
-])
-
-
-/* ===================================
-   Question Type Labels - ชื่อประเภทคำถาม
-   =================================== */
-const questionTypeLabels = {
-  'short-answer': 'Short Answer',
-  'paragraph': 'Paragraph',
-  'multiple-choice': 'Multiple Choice',
-  'checkbox': 'Checkbox',
-  'dropdown': 'Dropdown',
-  'rating': 'Rating',
-  'file-upload': 'File Upload',
-  'date': 'Date',
-  'time': 'Time',
-  'image': 'Image',
-  'video': 'Video'
-}
-
-function getQuestionTypeLabel(type) {
-  return questionTypeLabels[type] || type
-}
-
-
-/* ===================================
-   Update Functions - ฟังก์ชันอัพเดทข้อมูล
-   =================================== */
-
-// อัพเดทหัวข้อคำถาม
-function updateTitle(title) {
-  emit('update:question', { ...props.question, title })
-}
-
-// เปลี่ยนประเภทคำถาม
-function updateType(type) {
-  const updated = { ...props.question, type }
-  
-  // เพิ่ม options ถ้าเปลี่ยนเป็นแบบเลือก
-  if (['multiple-choice', 'checkbox', 'dropdown'].includes(type) && !updated.options) {
-    updated.options = [{ id: 1, text: 'Option 1' }]
-  }
-  
-  // เพิ่ม maxRating ถ้าเปลี่ยนเป็น rating
-  if (type === 'rating' && !updated.maxRating) {
-    updated.maxRating = 5
-  }
-  
-  emit('update:question', updated)
-}
-
-// อัพเดทว่าจำเป็นต้องตอบหรือไม่
-function updateRequired(required) {
-  emit('update:question', { ...props.question, required })
-}
-
-// อัพเดทตัวเลือก
-function updateOptions(options) {
-  emit('update:question', { ...props.question, options })
-}
-
-// อัพเดท max rating
-function updateMaxRating(maxRating) {
-  emit('update:question', { ...props.question, maxRating })
-}
-
-// อัพเดท file upload settings
-function updateAllowSpecificTypes(allowSpecificTypes) {
-  emit('update:question', { ...props.question, allowSpecificTypes })
-}
-
-function updateAllowedFileTypes(allowedFileTypes) {
-  emit('update:question', { ...props.question, allowedFileTypes })
-}
-
-function updateMaxFiles(maxFiles) {
-  emit('update:question', { ...props.question, maxFiles })
-}
-
-function updateMaxSize(maxSize) {
-  emit('update:question', { ...props.question, maxSize })
-}
-
-// อัพเดท URL รูปภาพ
-function updateImageUrl(imageUrl) {
-  emit('update:question', { ...props.question, imageUrl })
-}
-
-// อัพเดท URL วิดีโอ
-function updateVideoUrl(videoUrl) {
-  emit('update:question', { ...props.question, videoUrl })
-}
-
-// อัพเดท caption
-function updateCaption(caption) {
-  emit('update:question', { ...props.question, caption })
-}
-</script>
-
 <template>
   <div :class="['question-card', { expanded: isExpanded }]">
     <div class="question-content" @click="emit('toggle')">
@@ -276,6 +139,131 @@ function updateCaption(caption) {
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * QuestionCard - แสดงคำถามแต่ละข้อในฟอร์ม
+ * สามารถแก้ไขหัวข้อ, เปลี่ยนประเภท, ลบคำถามได้
+ */
+
+// Import icon components
+import { TrashIcon, EditIcon } from '@/components/icons'
+
+// Import question type components
+import ShortAnswerQuestion from './ShortAnswerQuestion.vue'
+import ParagraphQuestion from './ParagraphQuestion.vue'
+import MultipleChoiceQuestion from './MultipleChoiceQuestion.vue'
+import CheckboxQuestion from './CheckboxQuestion.vue'
+import DropdownQuestion from './DropdownQuestion.vue'
+import RatingQuestion from './RatingQuestion.vue'
+import DateQuestion from './DateQuestion.vue'
+import TimeQuestion from './TimeQuestion.vue'
+import FileUploadQuestion from './FileUploadQuestion.vue'
+import ImageQuestion from './ImageQuestion.vue'
+import VideoQuestion from './VideoQuestion.vue'
+
+export default {
+  name: 'QuestionCard',
+  components: {
+    TrashIcon,
+    EditIcon,
+    ShortAnswerQuestion,
+    ParagraphQuestion,
+    MultipleChoiceQuestion,
+    CheckboxQuestion,
+    DropdownQuestion,
+    RatingQuestion,
+    DateQuestion,
+    TimeQuestion,
+    FileUploadQuestion,
+    ImageQuestion,
+    VideoQuestion
+  },
+  props: {
+    question: { type: Object, required: true },
+    showFooter: { type: Boolean, default: false },
+    isExpanded: { type: Boolean, default: false }
+  },
+  emits: [
+    'update:question',
+    'delete',
+    'add-option',
+    'remove-option',
+    'toggle'
+  ],
+  data() {
+    return {
+      questionTypeLabels: {
+        'short-answer': 'Short Answer',
+        'paragraph': 'Paragraph',
+        'multiple-choice': 'Multiple Choice',
+        'checkbox': 'Checkbox',
+        'dropdown': 'Dropdown',
+        'rating': 'Rating',
+        'file-upload': 'File Upload',
+        'date': 'Date',
+        'time': 'Time',
+        'image': 'Image',
+        'video': 'Video'
+      }
+    }
+  },
+  methods: {
+    getQuestionTypeLabel(type) {
+      return this.questionTypeLabels[type] || type
+    },
+    updateTitle(title) {
+      this.$emit('update:question', { ...this.question, title })
+    },
+    updateType(type) {
+      const updated = { ...this.question, type }
+      
+      if (['multiple-choice', 'checkbox', 'dropdown'].includes(type) && !updated.options) {
+        updated.options = [{ id: 1, text: 'Option 1' }]
+      }
+      
+      if (type === 'rating' && !updated.maxRating) {
+        updated.maxRating = 5
+      }
+      
+      this.$emit('update:question', updated)
+    },
+    updateRequired(required) {
+      this.$emit('update:question', { ...this.question, required })
+    },
+    updateOptions(options) {
+      this.$emit('update:question', { ...this.question, options })
+    },
+    updateMaxRating(maxRating) {
+      this.$emit('update:question', { ...this.question, maxRating })
+    },
+    updateAllowSpecificTypes(allowSpecificTypes) {
+      this.$emit('update:question', { ...this.question, allowSpecificTypes })
+    },
+    updateAllowedFileTypes(allowedFileTypes) {
+      this.$emit('update:question', { ...this.question, allowedFileTypes })
+    },
+    updateMaxFiles(maxFiles) {
+      this.$emit('update:question', { ...this.question, maxFiles })
+    },
+    updateMaxSize(maxSize) {
+      this.$emit('update:question', { ...this.question, maxSize })
+    },
+    updateImageUrl(imageUrl) {
+      this.$emit('update:question', { ...this.question, imageUrl })
+    },
+    updateVideoUrl(videoUrl) {
+      this.$emit('update:question', { ...this.question, videoUrl })
+    },
+    updateCaption(caption) {
+      this.$emit('update:question', { ...this.question, caption })
+    },
+    emit(event, ...args) {
+      this.$emit(event, ...args)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .question-card {

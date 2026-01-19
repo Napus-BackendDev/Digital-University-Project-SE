@@ -1,89 +1,3 @@
-<script setup>
-/**
- * NestedFollowUp - Follow-up question ที่ซ้อนกันได้หลายชั้น
- * รองรับ recursive nesting: 1.1 → 1.1.1 → 1.1.1.1 ไปเรื่อยๆ
- * Follow-up เป็น Multiple Choice เสมอ
- */
-import { computed } from 'vue'
-
-const props = defineProps({
-  followUp: { type: Object, required: true },
-  depth: { type: Number, default: 1 }
-})
-
-const emit = defineEmits(['update', 'remove'])
-
-// สร้าง depth indicator (1.1, 1.1.1, etc.)
-const depthLabel = computed(() => {
-  return '1' + '.1'.repeat(props.depth)
-})
-
-// อัพเดท follow-up data
-function updateFollowUp(updates) {
-  emit('update', { ...props.followUp, ...updates })
-}
-
-// อัพเดท title
-function updateTitle(title) {
-  updateFollowUp({ title })
-}
-
-// อัพเดท required
-function updateRequired(required) {
-  updateFollowUp({ required })
-}
-
-// === Multiple Choice Options ===
-function updateOptionText(optionId, text) {
-  const options = props.followUp.options.map(o => 
-    o.id === optionId ? { ...o, text } : o
-  )
-  updateFollowUp({ options })
-}
-
-function addOption() {
-  const newId = (props.followUp.options?.length || 0) + 1
-  const options = [...(props.followUp.options || []), { id: newId, text: `Option ${newId}` }]
-  updateFollowUp({ options })
-}
-
-function removeOption(optionId) {
-  const options = props.followUp.options.filter(o => o.id !== optionId)
-  updateFollowUp({ options })
-}
-
-// === Nested Follow-up ===
-function addNestedFollowUp(optionId) {
-  const options = props.followUp.options.map(o => 
-    o.id === optionId ? { 
-      ...o, 
-      hasFollowUp: true,
-      followUpQuestion: {
-        type: 'multiple-choice',
-        title: '',
-        required: false,
-        options: [{ id: 1, text: 'Option 1' }]
-      }
-    } : o
-  )
-  updateFollowUp({ options })
-}
-
-function updateNestedFollowUp(optionId, nestedFollowUp) {
-  const options = props.followUp.options.map(o => 
-    o.id === optionId ? { ...o, followUpQuestion: nestedFollowUp } : o
-  )
-  updateFollowUp({ options })
-}
-
-function removeNestedFollowUp(optionId) {
-  const options = props.followUp.options.map(o => 
-    o.id === optionId ? { ...o, hasFollowUp: false, followUpQuestion: null } : o
-  )
-  updateFollowUp({ options })
-}
-</script>
-
 <template>
   <div class="followup-container" :style="{ marginLeft: depth > 1 ? '20px' : '28px' }">
     <div class="followup-header">
@@ -176,6 +90,83 @@ function removeNestedFollowUp(optionId) {
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * NestedFollowUp - Follow-up question ที่ซ้อนกันได้หลายชั้น
+ * รองรับ recursive nesting: 1.1 → 1.1.1 → 1.1.1.1 ไปเรื่อยๆ
+ * Follow-up เป็น Multiple Choice เสมอ
+ */
+export default {
+  name: 'NestedFollowUp',
+  props: {
+    followUp: { type: Object, required: true },
+    depth: { type: Number, default: 1 }
+  },
+  emits: ['update', 'remove'],
+  computed: {
+    depthLabel() {
+      return '1' + '.1'.repeat(this.depth)
+    }
+  },
+  methods: {
+    updateFollowUp(updates) {
+      this.$emit('update', { ...this.followUp, ...updates })
+    },
+    updateTitle(title) {
+      this.updateFollowUp({ title })
+    },
+    updateRequired(required) {
+      this.updateFollowUp({ required })
+    },
+    updateOptionText(optionId, text) {
+      const options = this.followUp.options.map(o => 
+        o.id === optionId ? { ...o, text } : o
+      )
+      this.updateFollowUp({ options })
+    },
+    addOption() {
+      const newId = (this.followUp.options?.length || 0) + 1
+      const options = [...(this.followUp.options || []), { id: newId, text: `Option ${newId}` }]
+      this.updateFollowUp({ options })
+    },
+    removeOption(optionId) {
+      const options = this.followUp.options.filter(o => o.id !== optionId)
+      this.updateFollowUp({ options })
+    },
+    addNestedFollowUp(optionId) {
+      const options = this.followUp.options.map(o => 
+        o.id === optionId ? { 
+          ...o, 
+          hasFollowUp: true,
+          followUpQuestion: {
+            type: 'multiple-choice',
+            title: '',
+            required: false,
+            options: [{ id: 1, text: 'Option 1' }]
+          }
+        } : o
+      )
+      this.updateFollowUp({ options })
+    },
+    updateNestedFollowUp(optionId, nestedFollowUp) {
+      const options = this.followUp.options.map(o => 
+        o.id === optionId ? { ...o, followUpQuestion: nestedFollowUp } : o
+      )
+      this.updateFollowUp({ options })
+    },
+    removeNestedFollowUp(optionId) {
+      const options = this.followUp.options.map(o => 
+        o.id === optionId ? { ...o, hasFollowUp: false, followUpQuestion: null } : o
+      )
+      this.updateFollowUp({ options })
+    },
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .followup-container {

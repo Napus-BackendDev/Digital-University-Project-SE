@@ -1,58 +1,3 @@
-<script setup>
-/**
- * VideoQuestion - เพิ่มวิดีโอในคำถาม
- * รองรับ YouTube URL, direct link หรืออัพโหลดจากเครื่อง พร้อม caption
- */
-import { ref } from 'vue'
-
-const props = defineProps({
-  videoUrl: { type: String, default: '' },
-  caption: { type: String, default: '' }
-})
-
-const emit = defineEmits(['update:videoUrl', 'update:caption', 'error'])
-
-// Reference สำหรับ hidden file input
-const fileInput = ref(null)
-
-// Preview URL เมื่ออัพโหลดจากเครื่อง
-const previewUrl = ref('')
-
-// Error state
-const errorMessage = ref('')
-
-/**
- * เปิด file picker
- */
-function triggerFileUpload() {
-  fileInput.value?.click()
-}
-
-/**
- * จัดการไฟล์ที่เลือก - สร้าง preview และส่ง data URL
- */
-function handleFileSelect(event) {
-  const file = event.target.files?.[0]
-  if (!file) return
-
-  // ตรวจสอบว่าเป็นไฟล์วิดีโอ
-  if (!file.type.startsWith('video/')) {
-    errorMessage.value = 'Please select a video file only'
-    emit('error', 'Please select a video file only')
-    return
-  }
-  errorMessage.value = ''
-
-  // สร้าง preview URL
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    previewUrl.value = e.target.result
-    emit('update:videoUrl', e.target.result)
-  }
-  reader.readAsDataURL(file)
-}
-</script>
-
 <template>
   <div class="question-field media-field">
     <!-- Hidden file input -->
@@ -98,6 +43,53 @@ function handleFileSelect(event) {
     />
   </div>
 </template>
+
+<script>
+/**
+ * VideoQuestion - เพิ่มวิดีโอในคำถาม
+ * รองรับ YouTube URL, direct link หรืออัพโหลดจากเครื่อง พร้อม caption
+ */
+export default {
+  name: 'VideoQuestion',
+  props: {
+    videoUrl: { type: String, default: '' },
+    caption: { type: String, default: '' }
+  },
+  emits: ['update:videoUrl', 'update:caption', 'error'],
+  data() {
+    return {
+      previewUrl: '',
+      errorMessage: ''
+    }
+  },
+  methods: {
+    triggerFileUpload() {
+      this.$refs.fileInput?.click()
+    },
+    handleFileSelect(event) {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      if (!file.type.startsWith('video/')) {
+        this.errorMessage = 'Please select a video file only'
+        this.$emit('error', 'Please select a video file only')
+        return
+      }
+      this.errorMessage = ''
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        this.previewUrl = e.target.result
+        this.$emit('update:videoUrl', e.target.result)
+      }
+      reader.readAsDataURL(file)
+    },
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .question-field {

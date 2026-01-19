@@ -1,18 +1,21 @@
-<script setup>
-/**
- * ParagraphQuestion - แสดง preview คำถามแบบตอบยาว
- * เป็น textarea สำหรับให้ผู้ตอบพิมพ์คำตอบยาวๆ
- */
-defineProps({
-  placeholder: { type: String, default: 'Long answer text' }
-})
-</script>
-
 <template>
   <div class="question-field">
     <textarea :placeholder="placeholder" class="answer-preview textarea" disabled></textarea>
   </div>
 </template>
+
+<script>
+/**
+ * ParagraphQuestion - แสดง preview คำถามแบบตอบยาว
+ * เป็น textarea สำหรับให้ผู้ตอบพิมพ์คำตอบยาวๆ
+ */
+export default {
+  name: 'ParagraphQuestion',
+  props: {
+    placeholder: { type: String, default: 'Long answer text' }
+  }
+}
+</script>
 
 <style scoped>
 .question-field {

@@ -1,23 +1,3 @@
-<script setup>
-/**
- * DropdownQuestion - คำถามแบบ dropdown
- * ผู้ตอบเลือกจาก list ที่แสดงเป็น dropdown
- */
-const props = defineProps({
-  options: { type: Array, default: () => [] }
-})
-
-const emit = defineEmits(['update:options', 'add-option', 'remove-option'])
-
-// อัพเดทข้อความของตัวเลือก
-function updateOptionText(optionId, text) {
-  const updated = props.options.map(o => 
-    o.id === optionId ? { ...o, text } : o
-  )
-  emit('update:options', updated)
-}
-</script>
-
 <template>
   <div class="question-field options-field">
     <div v-for="option in options" :key="option.id" class="option-row">
@@ -46,6 +26,31 @@ function updateOptionText(optionId, text) {
     </button>
   </div>
 </template>
+
+<script>
+/**
+ * DropdownQuestion - คำถามแบบ dropdown
+ * ผู้ตอบเลือกจาก list ที่แสดงเป็น dropdown
+ */
+export default {
+  name: 'DropdownQuestion',
+  props: {
+    options: { type: Array, default: () => [] }
+  },
+  emits: ['update:options', 'add-option', 'remove-option'],
+  methods: {
+    updateOptionText(optionId, text) {
+      const updated = this.options.map(o => 
+        o.id === optionId ? { ...o, text } : o
+      )
+      this.$emit('update:options', updated)
+    },
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .question-field {

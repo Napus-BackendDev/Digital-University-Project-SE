@@ -1,63 +1,3 @@
-<script setup>
-/**
- * MultipleChoiceQuestion - คำถามแบบเลือกตอบ (Radio)
- * ผู้ตอบเลือกได้เพียง 1 ตัวเลือก
- * รองรับ nested follow-up question หลายชั้น (1.1, 1.1.1, 1.1.1.1, ...)
- */
-import NestedFollowUp from './NestedFollowUp.vue'
-
-const props = defineProps({
-  options: { type: Array, default: () => [] }
-})
-
-const emit = defineEmits(['update:options', 'add-option', 'remove-option'])
-
-// อัพเดทข้อความของตัวเลือก
-function updateOptionText(optionId, text) {
-  const updated = props.options.map(o => 
-    o.id === optionId ? { ...o, text } : o
-  )
-  emit('update:options', updated)
-}
-
-// เพิ่ม follow-up question สำหรับตัวเลือกนี้ (เป็น Multiple Choice เสมอ)
-function addFollowUp(optionId) {
-  const updated = props.options.map(o => 
-    o.id === optionId ? { 
-      ...o, 
-      hasFollowUp: true,
-      followUpQuestion: {
-        type: 'multiple-choice',
-        title: '',
-        required: false,
-        options: [{ id: 1, text: 'Option 1' }]
-      }
-    } : o
-  )
-  emit('update:options', updated)
-}
-
-// ลบ follow-up question
-function removeFollowUp(optionId) {
-  const updated = props.options.map(o => 
-    o.id === optionId ? { 
-      ...o, 
-      hasFollowUp: false,
-      followUpQuestion: null
-    } : o
-  )
-  emit('update:options', updated)
-}
-
-// อัพเดท follow-up question
-function updateFollowUp(optionId, followUpQuestion) {
-  const updated = props.options.map(o => 
-    o.id === optionId ? { ...o, followUpQuestion } : o
-  )
-  emit('update:options', updated)
-}
-</script>
-
 <template>
   <div class="question-field options-field">
     <div v-for="option in options" :key="option.id" class="option-row">
@@ -103,6 +43,68 @@ function updateFollowUp(optionId, followUpQuestion) {
     </button>
   </div>
 </template>
+
+<script>
+/**
+ * MultipleChoiceQuestion - คำถามแบบเลือกตอบ (Radio)
+ * ผู้ตอบเลือกได้เพียง 1 ตัวเลือก
+ * รองรับ nested follow-up question หลายชั้น (1.1, 1.1.1, 1.1.1.1, ...)
+ */
+import NestedFollowUp from './NestedFollowUp.vue'
+
+export default {
+  name: 'MultipleChoiceQuestion',
+  components: {
+    NestedFollowUp
+  },
+  props: {
+    options: { type: Array, default: () => [] }
+  },
+  emits: ['update:options', 'add-option', 'remove-option'],
+  methods: {
+    updateOptionText(optionId, text) {
+      const updated = this.options.map(o => 
+        o.id === optionId ? { ...o, text } : o
+      )
+      this.$emit('update:options', updated)
+    },
+    addFollowUp(optionId) {
+      const updated = this.options.map(o => 
+        o.id === optionId ? { 
+          ...o, 
+          hasFollowUp: true,
+          followUpQuestion: {
+            type: 'multiple-choice',
+            title: '',
+            required: false,
+            options: [{ id: 1, text: 'Option 1' }]
+          }
+        } : o
+      )
+      this.$emit('update:options', updated)
+    },
+    removeFollowUp(optionId) {
+      const updated = this.options.map(o => 
+        o.id === optionId ? { 
+          ...o, 
+          hasFollowUp: false,
+          followUpQuestion: null
+        } : o
+      )
+      this.$emit('update:options', updated)
+    },
+    updateFollowUp(optionId, followUpQuestion) {
+      const updated = this.options.map(o => 
+        o.id === optionId ? { ...o, followUpQuestion } : o
+      )
+      this.$emit('update:options', updated)
+    },
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .question-field {

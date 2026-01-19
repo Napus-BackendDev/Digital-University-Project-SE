@@ -1,25 +1,3 @@
-<script setup>
-/**
- * ResponseSettings - ตั้งค่าการรับ response
- */
-import { defineProps, defineEmits } from 'vue'
-import ToggleSetting from './ToggleSetting.vue'
-
-
-/* Props & Emits */
-const props = defineProps({
-  collectEmails: { type: Boolean, default: false },
-  limitResponses: { type: Boolean, default: false },
-  showProgressBar: { type: Boolean, default: true }
-})
-
-const emit = defineEmits([
-  'update:collectEmails',
-  'update:limitResponses', 
-  'update:showProgressBar'
-])
-</script>
-
 <template>
   <div class="settings-section">
     <h3 class="section-title">Response Settings</h3>
@@ -47,6 +25,35 @@ const emit = defineEmits([
     />
   </div>
 </template>
+
+<script>
+/**
+ * ResponseSettings - ตั้งค่าการรับ response
+ */
+import ToggleSetting from './ToggleSetting.vue'
+
+export default {
+  name: 'ResponseSettings',
+  components: {
+    ToggleSetting
+  },
+  props: {
+    collectEmails: { type: Boolean, default: false },
+    limitResponses: { type: Boolean, default: false },
+    showProgressBar: { type: Boolean, default: true }
+  },
+  emits: [
+    'update:collectEmails',
+    'update:limitResponses', 
+    'update:showProgressBar'
+  ],
+  methods: {
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .settings-section {

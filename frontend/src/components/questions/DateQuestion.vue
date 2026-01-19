@@ -1,15 +1,3 @@
-<script setup>
-/**
- * DateQuestion - คำถามแบบเลือกวันที่
- * แสดง date picker ให้ผู้ตอบเลือกวันที่
- */
-defineProps({
-  value: { type: String, default: '' }
-})
-
-const emit = defineEmits(['update:value'])
-</script>
-
 <template>
   <div class="question-field">
     <div class="date-picker-preview">
@@ -21,6 +9,20 @@ const emit = defineEmits(['update:value'])
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * DateQuestion - คำถามแบบเลือกวันที่
+ * แสดง date picker ให้ผู้ตอบเลือกวันที่
+ */
+export default {
+  name: 'DateQuestion',
+  props: {
+    value: { type: String, default: '' }
+  },
+  emits: ['update:value']
+}
+</script>
 
 <style scoped>
 .question-field {

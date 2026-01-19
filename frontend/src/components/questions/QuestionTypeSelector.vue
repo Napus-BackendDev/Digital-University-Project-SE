@@ -1,34 +1,3 @@
-<script setup>
-/**
- * QuestionTypeSelector - Sidebar เลือกประเภทคำถาม
- * แบ่งเป็น 2 หมวด: Question Types และ Content Elements
- */
-
-// รายการประเภทคำถาม
-const questionTypes = [
-  { id: 'short-answer', name: 'Short Answer', icon: 'short-text' },
-  { id: 'paragraph', name: 'Paragraph', icon: 'paragraph' },
-  { id: 'multiple-choice', name: 'Multiple Choice', icon: 'radio' },
-  { id: 'checkbox', name: 'Checkbox', icon: 'checkbox' },
-  { id: 'rating', name: 'Rating', icon: 'star' },
-  { id: 'file-upload', name: 'File Upload', icon: 'upload' }
-]
-
-// รายการ Content Elements (ไม่ใช่คำถาม)
-const contentElements = [
-  { id: 'title-description', name: 'Title & Description', icon: 'title' },
-  { id: 'image', name: 'Image', icon: 'image' },
-  { id: 'section-divider', name: 'Section Divider', icon: 'divider' }
-]
-
-const emit = defineEmits(['add-question'])
-
-// เพิ่มคำถามใหม่ตามประเภทที่เลือก
-function addQuestion(type) {
-  emit('add-question', type)
-}
-</script>
-
 <template>
   <div class="question-type-selector">
     <!-- Question Types Section -->
@@ -147,6 +116,39 @@ function addQuestion(type) {
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * QuestionTypeSelector - Sidebar เลือกประเภทคำถาม
+ * แบ่งเป็น 2 หมวด: Question Types และ Content Elements
+ */
+export default {
+  name: 'QuestionTypeSelector',
+  emits: ['add-question'],
+  data() {
+    return {
+      questionTypes: [
+        { id: 'short-answer', name: 'Short Answer', icon: 'short-text' },
+        { id: 'paragraph', name: 'Paragraph', icon: 'paragraph' },
+        { id: 'multiple-choice', name: 'Multiple Choice', icon: 'radio' },
+        { id: 'checkbox', name: 'Checkbox', icon: 'checkbox' },
+        { id: 'rating', name: 'Rating', icon: 'star' },
+        { id: 'file-upload', name: 'File Upload', icon: 'upload' }
+      ],
+      contentElements: [
+        { id: 'title-description', name: 'Title & Description', icon: 'title' },
+        { id: 'image', name: 'Image', icon: 'image' },
+        { id: 'section-divider', name: 'Section Divider', icon: 'divider' }
+      ]
+    }
+  },
+  methods: {
+    addQuestion(type) {
+      this.$emit('add-question', type)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .question-type-selector {

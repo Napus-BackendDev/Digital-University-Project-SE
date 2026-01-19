@@ -1,70 +1,3 @@
-<script setup>
-/**
- * FileUploadQuestion - คำถามแบบอัพโหลดไฟล์
- * รองรับ click to upload
- * มีตัวเลือกจำกัดประเภทไฟล์, จำนวนไฟล์, และขนาดไฟล์
- */
-import { ref, computed } from 'vue'
-
-const props = defineProps({
-  allowSpecificTypes: { type: Boolean, default: false },
-  allowedFileTypes: { type: Array, default: () => [] },
-  maxFiles: { type: Number, default: 1 },
-  maxSize: { type: Number, default: 10 }
-})
-
-const emit = defineEmits([
-  'update:allowSpecificTypes',
-  'update:allowedFileTypes',
-  'update:maxFiles',
-  'update:maxSize',
-  'file-selected'
-])
-
-// File type options
-const fileTypeOptions = [
-  { id: 'document', label: 'Document' },
-  { id: 'spreadsheet', label: 'Spreadsheet' },
-  { id: 'pdf', label: 'PDF' },
-  { id: 'video', label: 'Video' },
-  { id: 'presentation', label: 'Presentation' },
-  { id: 'drawing', label: 'Drawing' },
-  { id: 'image', label: 'Image' },
-  { id: 'audio', label: 'Audio' }
-]
-
-// Max files options
-const maxFilesOptions = [1, 5, 10]
-
-// Max size options (in MB)
-const maxSizeOptions = [1, 10, 100, 1024]
-
-// Toggle file type
-function toggleFileType(typeId) {
-  const currentTypes = [...props.allowedFileTypes]
-  const index = currentTypes.indexOf(typeId)
-  if (index > -1) {
-    currentTypes.splice(index, 1)
-  } else {
-    currentTypes.push(typeId)
-  }
-  emit('update:allowedFileTypes', currentTypes)
-}
-
-// Check if file type is selected
-function isTypeSelected(typeId) {
-  return props.allowedFileTypes.includes(typeId)
-}
-
-// Format file size for display
-function formatSize(mb) {
-  if (mb >= 1024) {
-    return `${mb / 1024} GB`
-  }
-  return `${mb} MB`
-}
-</script>
-
 <template>
   <div class="file-upload-question">
     <!-- Google Form Style Upload Preview -->
@@ -138,6 +71,70 @@ function formatSize(mb) {
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * FileUploadQuestion - คำถามแบบอัพโหลดไฟล์
+ * รองรับ click to upload
+ * มีตัวเลือกจำกัดประเภทไฟล์, จำนวนไฟล์, และขนาดไฟล์
+ */
+export default {
+  name: 'FileUploadQuestion',
+  props: {
+    allowSpecificTypes: { type: Boolean, default: false },
+    allowedFileTypes: { type: Array, default: () => [] },
+    maxFiles: { type: Number, default: 1 },
+    maxSize: { type: Number, default: 10 }
+  },
+  emits: [
+    'update:allowSpecificTypes',
+    'update:allowedFileTypes',
+    'update:maxFiles',
+    'update:maxSize',
+    'file-selected'
+  ],
+  data() {
+    return {
+      fileTypeOptions: [
+        { id: 'document', label: 'Document' },
+        { id: 'spreadsheet', label: 'Spreadsheet' },
+        { id: 'pdf', label: 'PDF' },
+        { id: 'video', label: 'Video' },
+        { id: 'presentation', label: 'Presentation' },
+        { id: 'drawing', label: 'Drawing' },
+        { id: 'image', label: 'Image' },
+        { id: 'audio', label: 'Audio' }
+      ],
+      maxFilesOptions: [1, 5, 10],
+      maxSizeOptions: [1, 10, 100, 1024]
+    }
+  },
+  methods: {
+    toggleFileType(typeId) {
+      const currentTypes = [...this.allowedFileTypes]
+      const index = currentTypes.indexOf(typeId)
+      if (index > -1) {
+        currentTypes.splice(index, 1)
+      } else {
+        currentTypes.push(typeId)
+      }
+      this.$emit('update:allowedFileTypes', currentTypes)
+    },
+    isTypeSelected(typeId) {
+      return this.allowedFileTypes.includes(typeId)
+    },
+    formatSize(mb) {
+      if (mb >= 1024) {
+        return `${mb / 1024} GB`
+      }
+      return `${mb} MB`
+    },
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .file-upload-question {

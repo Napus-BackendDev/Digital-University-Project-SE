@@ -1,15 +1,3 @@
-<script setup>
-/**
- * RatingQuestion - คำถามแบบให้คะแนน
- * กำหนดคะแนนสูงสุดได้ (1-10)
- */
-defineProps({
-  maxRating: { type: Number, default: 5 }
-})
-
-const emit = defineEmits(['update:maxRating'])
-</script>
-
 <template>
   <div class="question-field rating-field">
     <label class="field-label">Max rating:</label>
@@ -23,6 +11,25 @@ const emit = defineEmits(['update:maxRating'])
     />
   </div>
 </template>
+
+<script>
+/**
+ * RatingQuestion - คำถามแบบให้คะแนน
+ * กำหนดคะแนนสูงสุดได้ (1-10)
+ */
+export default {
+  name: 'RatingQuestion',
+  props: {
+    maxRating: { type: Number, default: 5 }
+  },
+  emits: ['update:maxRating'],
+  methods: {
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .question-field {

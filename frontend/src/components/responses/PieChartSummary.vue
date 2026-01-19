@@ -64,164 +64,145 @@
   </div>
 </template>
 
-<script setup>
+<script>
 /**
  * PieChartSummary - แสดงผลคำตอบเป็น Donut Chart
  * มี tooltip แสดงเมื่อ hover และ legend ด้านข้าง
  */
-import { computed, ref, reactive } from 'vue'
-
-
-/* ===================================
-   Props
-   =================================== */
-const props = defineProps({
-  chartData: {
-    type: Array,
-    default: () => []
-  }
-})
-
-
-/* ===================================
-   Tooltip State - จัดการ tooltip
-   =================================== */
-const chartWrapper = ref(null)
-const hoveredIndex = ref(null)
-const tooltipVisible = ref(false)
-const tooltipPos = reactive({ x: 0, y: 0 })
-
-// ข้อมูลใน tooltip
-const tooltipData = computed(() => {
-  if (hoveredIndex.value === null || !props.chartData[hoveredIndex.value]) {
-    return { label: '', count: 0 }
-  }
-  const item = props.chartData[hoveredIndex.value]
-  return { label: item.label, count: item.count }
-})
-
-// ตำแหน่ง tooltip
-const tooltipStyle = computed(() => ({
-  left: `${tooltipPos.x}px`,
-  top: `${tooltipPos.y}px`
-}))
-
-
-/* ===================================
-   Mouse Event Handlers
-   =================================== */
-
-function handleMouseEnter(index, event) {
-  hoveredIndex.value = index
-  tooltipVisible.value = true
-  updateTooltipPos(event)
-}
-
-function handleMouseMove(event) {
-  updateTooltipPos(event)
-}
-
-function handleMouseLeave() {
-  hoveredIndex.value = null
-  tooltipVisible.value = false
-}
-
-// อัพเดทตำแหน่ง tooltip ตาม mouse
-function updateTooltipPos(event) {
-  if (!chartWrapper.value) return
-  const rect = chartWrapper.value.getBoundingClientRect()
-  tooltipPos.x = event.clientX - rect.left + 12
-  tooltipPos.y = event.clientY - rect.top - 35
-}
-
-
-/* ===================================
-   Chart Calculations - คำนวณ chart
-   =================================== */
-
-// รวมจำนวนทั้งหมด
-const total = computed(() => {
-  return props.chartData.reduce((sum, item) => sum + item.count, 0)
-})
-
-// หาค่ามากสุดสำหรับ legend bar
-const maxCount = computed(() => {
-  return Math.max(...props.chartData.map(d => d.count))
-})
-
-// คำนวณความกว้าง bar ใน legend
-function getBarWidth(count) {
-  if (maxCount.value === 0) return 0
-  return (count / maxCount.value) * 100
-}
-
-/**
- * คำนวณ path สำหรับ donut slices
- * ใช้ SVG arc เพื่อวาดแต่ละส่วน
- */
-const slices = computed(() => {
-  // ป้องกันการคำนวณถ้า total เป็น 0 หรือไม่มีข้อมูล
-  if (!total.value || total.value === 0 || !props.chartData.length) {
-    return []
-  }
-  
-  const result = []
-  let currentAngle = -90 // เริ่มจากด้านบน
-  
-  const outerRadius = 85
-  const innerRadius = 50
-  
-  props.chartData.forEach((item) => {
-    // ข้ามถ้า count เป็น 0 (ไม่วาด slice)
-    if (item.count === 0) {
-      return
+export default {
+  name: 'PieChartSummary',
+  props: {
+    chartData: {
+      type: Array,
+      default: () => []
     }
-    
-    const percentage = item.count / total.value
-    const angle = percentage * 360
-    
-    // เพิ่ม gap เล็กๆ ระหว่าง slices
-    const gapAngle = 2
-    const startAngle = currentAngle + gapAngle / 2
-    const endAngle = currentAngle + angle - gapAngle / 2
-    
-    // แปลงเป็น radians
-    const startRad = (startAngle * Math.PI) / 180
-    const endRad = (endAngle * Math.PI) / 180
-    
-    // จุดบน arc ด้านนอก
-    const x1 = Math.cos(startRad) * outerRadius
-    const y1 = Math.sin(startRad) * outerRadius
-    const x2 = Math.cos(endRad) * outerRadius
-    const y2 = Math.sin(endRad) * outerRadius
-    
-    // จุดบน arc ด้านใน
-    const x3 = Math.cos(endRad) * innerRadius
-    const y3 = Math.sin(endRad) * innerRadius
-    const x4 = Math.cos(startRad) * innerRadius
-    const y4 = Math.sin(startRad) * innerRadius
-    
-    const largeArc = angle > 180 ? 1 : 0
-    
-    // สร้าง SVG path สำหรับ donut slice
-    const path = `
-      M ${x1} ${y1}
-      A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}
-      L ${x3} ${y3}
-      A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}
-      Z
-    `
-    
-    result.push({
-      path,
-      color: item.color
-    })
-    
-    currentAngle = currentAngle + angle
-  })
-  
-  return result
-})
+  },
+  data() {
+    return {
+      hoveredIndex: null,
+      tooltipVisible: false,
+      tooltipPos: { x: 0, y: 0 }
+    }
+  },
+  computed: {
+    // ข้อมูลใน tooltip
+    tooltipData() {
+      if (this.hoveredIndex === null || !this.chartData[this.hoveredIndex]) {
+        return { label: '', count: 0 }
+      }
+      const item = this.chartData[this.hoveredIndex]
+      return { label: item.label, count: item.count }
+    },
+    // ตำแหน่ง tooltip
+    tooltipStyle() {
+      return {
+        left: `${this.tooltipPos.x}px`,
+        top: `${this.tooltipPos.y}px`
+      }
+    },
+    // รวมจำนวนทั้งหมด
+    total() {
+      return this.chartData.reduce((sum, item) => sum + item.count, 0)
+    },
+    // หาค่ามากสุดสำหรับ legend bar
+    maxCount() {
+      return Math.max(...this.chartData.map(d => d.count))
+    },
+    /**
+     * คำนวณ path สำหรับ donut slices
+     * ใช้ SVG arc เพื่อวาดแต่ละส่วน
+     */
+    slices() {
+      // ป้องกันการคำนวณถ้า total เป็น 0 หรือไม่มีข้อมูล
+      if (!this.total || this.total === 0 || !this.chartData.length) {
+        return []
+      }
+      
+      const result = []
+      let currentAngle = -90 // เริ่มจากด้านบน
+      
+      const outerRadius = 85
+      const innerRadius = 50
+      
+      this.chartData.forEach((item) => {
+        // ข้ามถ้า count เป็น 0 (ไม่วาด slice)
+        if (item.count === 0) {
+          return
+        }
+        
+        const percentage = item.count / this.total
+        const angle = percentage * 360
+        
+        // เพิ่ม gap เล็กๆ ระหว่าง slices
+        const gapAngle = 2
+        const startAngle = currentAngle + gapAngle / 2
+        const endAngle = currentAngle + angle - gapAngle / 2
+        
+        // แปลงเป็น radians
+        const startRad = (startAngle * Math.PI) / 180
+        const endRad = (endAngle * Math.PI) / 180
+        
+        // จุดบน arc ด้านนอก
+        const x1 = Math.cos(startRad) * outerRadius
+        const y1 = Math.sin(startRad) * outerRadius
+        const x2 = Math.cos(endRad) * outerRadius
+        const y2 = Math.sin(endRad) * outerRadius
+        
+        // จุดบน arc ด้านใน
+        const x3 = Math.cos(endRad) * innerRadius
+        const y3 = Math.sin(endRad) * innerRadius
+        const x4 = Math.cos(startRad) * innerRadius
+        const y4 = Math.sin(startRad) * innerRadius
+        
+        const largeArc = angle > 180 ? 1 : 0
+        
+        // สร้าง SVG path สำหรับ donut slice
+        const path = `
+          M ${x1} ${y1}
+          A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}
+          L ${x3} ${y3}
+          A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}
+          Z
+        `
+        
+        result.push({
+          path,
+          color: item.color
+        })
+        
+        currentAngle = currentAngle + angle
+      })
+      
+      return result
+    }
+  },
+  methods: {
+    handleMouseEnter(index, event) {
+      this.hoveredIndex = index
+      this.tooltipVisible = true
+      this.updateTooltipPos(event)
+    },
+    handleMouseMove(event) {
+      this.updateTooltipPos(event)
+    },
+    handleMouseLeave() {
+      this.hoveredIndex = null
+      this.tooltipVisible = false
+    },
+    // อัพเดทตำแหน่ง tooltip ตาม mouse
+    updateTooltipPos(event) {
+      if (!this.$refs.chartWrapper) return
+      const rect = this.$refs.chartWrapper.getBoundingClientRect()
+      this.tooltipPos.x = event.clientX - rect.left + 12
+      this.tooltipPos.y = event.clientY - rect.top - 35
+    },
+    // คำนวณความกว้าง bar ใน legend
+    getBarWidth(count) {
+      if (this.maxCount === 0) return 0
+      return (count / this.maxCount) * 100
+    }
+  }
+}
 </script>
 
 <style scoped>

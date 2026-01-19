@@ -52,32 +52,35 @@
   </div>
 </template>
 
-<script setup>
+<script>
 /**
  * ResponsesView - หน้าแสดงผลคำตอบทั้งหมด
  * - มี 2 โหมด: Summary และ Individual
  * - รองรับการ export ข้อมูลเป็น xlsx, csv, json
  */
-import { ref } from 'vue'
-
-defineProps({
-  totalResponses: { type: Number, default: 0 },
-  viewMode: { type: String, default: 'summary' }
-})
-
-const emit = defineEmits(['update:viewMode', 'export'])
-
-const showExportDropdown = ref(false)
-
-// เปิด/ปิด dropdown export
-function toggleExportDropdown() {
-  showExportDropdown.value = !showExportDropdown.value
-}
-
-// ส่ง event export พร้อม format ที่เลือก
-function handleExport(format) {
-  emit('export', format)
-  showExportDropdown.value = false
+export default {
+  name: 'ResponsesView',
+  props: {
+    totalResponses: { type: Number, default: 0 },
+    viewMode: { type: String, default: 'summary' }
+  },
+  emits: ['update:viewMode', 'export'],
+  data() {
+    return {
+      showExportDropdown: false
+    }
+  },
+  methods: {
+    // เปิด/ปิด dropdown export
+    toggleExportDropdown() {
+      this.showExportDropdown = !this.showExportDropdown
+    },
+    // ส่ง event export พร้อม format ที่เลือก
+    handleExport(format) {
+      this.$emit('export', format)
+      this.showExportDropdown = false
+    }
+  }
 }
 </script>
 

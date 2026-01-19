@@ -27,20 +27,24 @@
   </div>
 </template>
 
-<script setup>
+<script>
 /**
  * TextResponseTable - ตารางแสดงคำตอบแบบข้อความ
  * ใช้สำหรับ Short Answer และ Paragraph
  */
-const props = defineProps({
-  responses: { type: Array, default: () => [] }, // รายการคำตอบ
-  currentPage: { type: Number, default: 1 },
-  perPage: { type: Number, default: 6 }          // จำนวนต่อหน้า
-})
-
-// คำนวณเลขแถวตาม page ปัจจุบัน
-function getRowNumber(index) {
-  return (props.currentPage - 1) * props.perPage + index + 1
+export default {
+  name: 'TextResponseTable',
+  props: {
+    responses: { type: Array, default: () => [] }, // รายการคำตอบ
+    currentPage: { type: Number, default: 1 },
+    perPage: { type: Number, default: 6 }          // จำนวนต่อหน้า
+  },
+  methods: {
+    // คำนวณเลขแถวตาม page ปัจจุบัน
+    getRowNumber(index) {
+      return (this.currentPage - 1) * this.perPage + index + 1
+    }
+  }
 }
 </script>
 

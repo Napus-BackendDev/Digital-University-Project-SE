@@ -1,15 +1,3 @@
-<script setup>
-/**
- * TimeQuestion - คำถามแบบเลือกเวลา
- * แสดง time picker ให้ผู้ตอบเลือกเวลา
- */
-defineProps({
-  value: { type: String, default: '' }
-})
-
-const emit = defineEmits(['update:value'])
-</script>
-
 <template>
   <div class="question-field">
     <div class="time-picker-preview">
@@ -21,6 +9,20 @@ const emit = defineEmits(['update:value'])
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * TimeQuestion - คำถามแบบเลือกเวลา
+ * แสดง time picker ให้ผู้ตอบเลือกเวลา
+ */
+export default {
+  name: 'TimeQuestion',
+  props: {
+    value: { type: String, default: '' }
+  },
+  emits: ['update:value']
+}
+</script>
 
 <style scoped>
 .question-field {

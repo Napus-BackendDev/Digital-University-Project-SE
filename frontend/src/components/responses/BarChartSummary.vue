@@ -55,58 +55,60 @@
   </div>
 </template>
 
-<script setup>
+<script>
 /**
  * BarChartSummary - แสดงข้อมูลเป็น Bar Chart
  * ใช้สำหรับ Rating และข้อมูลตัวเลข
  */
-import { computed } from 'vue'
-
-const props = defineProps({
-  chartData: { type: Array, default: () => [] }, // ข้อมูล [{ label, value }]
-  maxValue: { type: Number, default: 0 }         // ค่าสูงสุด (0 = คำนวณอัตโนมัติ)
-})
-
-// คำนวณค่าสูงสุดสำหรับแกน Y
-const calculatedMax = computed(() => {
-  // หาค่าสูงสุดจากข้อมูลจริง
-  const max = Math.max(...props.chartData.map(d => d.value || 0), 0)
-  
-  // ถ้าไม่มีข้อมูลเลย ให้ใช้ค่าเริ่มต้น 5
-  if (max === 0) return 5
-  
-  // คำนวณค่า scale ที่เหมาะสม
-  // เพิ่ม 20% padding ด้านบนและปัดเป็นจำนวนเต็มที่สวยงาม
-  const paddedMax = max * 1.2
-  
-  // ปัดเป็นตัวเลขที่สวยงาม (1, 2, 5, 10, 20, 50, 100, ...)
-  const magnitude = Math.pow(10, Math.floor(Math.log10(paddedMax)))
-  const normalized = paddedMax / magnitude
-  
-  let niceMax
-  if (normalized <= 1) niceMax = magnitude
-  else if (normalized <= 2) niceMax = 2 * magnitude
-  else if (normalized <= 5) niceMax = 5 * magnitude
-  else niceMax = 10 * magnitude
-  
-  return niceMax
-})
-
-// สร้าง label สำหรับแกน Y (5 ขีด) - แสดงเฉพาะจำนวนเต็ม
-const yLabels = computed(() => {
-  const labels = []
-  const step = calculatedMax.value / 4
-  for (let i = 4; i >= 0; i--) {
-    const value = Math.round(step * i)
-    labels.push(value.toString())
+export default {
+  name: 'BarChartSummary',
+  props: {
+    chartData: { type: Array, default: () => [] }, // ข้อมูล [{ label, value }]
+    maxValue: { type: Number, default: 0 }         // ค่าสูงสุด (0 = คำนวณอัตโนมัติ)
+  },
+  computed: {
+    // คำนวณค่าสูงสุดสำหรับแกน Y
+    calculatedMax() {
+      // หาค่าสูงสุดจากข้อมูลจริง
+      const max = Math.max(...this.chartData.map(d => d.value || 0), 0)
+      
+      // ถ้าไม่มีข้อมูลเลย ให้ใช้ค่าเริ่มต้น 5
+      if (max === 0) return 5
+      
+      // คำนวณค่า scale ที่เหมาะสม
+      // เพิ่ม 20% padding ด้านบนและปัดเป็นจำนวนเต็มที่สวยงาม
+      const paddedMax = max * 1.2
+      
+      // ปัดเป็นตัวเลขที่สวยงาม (1, 2, 5, 10, 20, 50, 100, ...)
+      const magnitude = Math.pow(10, Math.floor(Math.log10(paddedMax)))
+      const normalized = paddedMax / magnitude
+      
+      let niceMax
+      if (normalized <= 1) niceMax = magnitude
+      else if (normalized <= 2) niceMax = 2 * magnitude
+      else if (normalized <= 5) niceMax = 5 * magnitude
+      else niceMax = 10 * magnitude
+      
+      return niceMax
+    },
+    // สร้าง label สำหรับแกน Y (5 ขีด) - แสดงเฉพาะจำนวนเต็ม
+    yLabels() {
+      const labels = []
+      const step = this.calculatedMax / 4
+      for (let i = 4; i >= 0; i--) {
+        const value = Math.round(step * i)
+        labels.push(value.toString())
+      }
+      return labels
+    }
+  },
+  methods: {
+    // คำนวณความสูงของ bar เป็นเปอร์เซ็นต์
+    getBarHeight(value) {
+      if (this.calculatedMax === 0) return 0
+      return (value / this.calculatedMax) * 100
+    }
   }
-  return labels
-})
-
-// คำนวณความสูงของ bar เป็นเปอร์เซ็นต์
-function getBarHeight(value) {
-  if (calculatedMax.value === 0) return 0
-  return (value / calculatedMax.value) * 100
 }
 </script>
 

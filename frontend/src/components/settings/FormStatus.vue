@@ -1,55 +1,3 @@
-<script setup>
-/**
- * FormStatus - ตั้งค่าสถานะของฟอร์ม
- * มี 4 สถานะ: Draft, Open, Close, Auto
- */
-import { defineProps, defineEmits, computed } from 'vue'
-
-
-/* ===================================
-   Props & Emits
-   =================================== */
-const props = defineProps({
-  status: { type: String, default: 'draft' },
-  startDate: { type: String, default: '' },
-  startTime: { type: String, default: '' },
-  endDate: { type: String, default: '' },
-  endTime: { type: String, default: '' }
-})
-
-const emit = defineEmits([
-  'update:status',
-  'update:startDate', 
-  'update:startTime', 
-  'update:endDate', 
-  'update:endTime'
-])
-
-
-/* ===================================
-   Computed Properties
-   =================================== */
-
-// คำอธิบายสถานะแต่ละแบบ
-const statusDescription = computed(() => {
-  switch (props.status) {
-    case 'draft':
-      return 'Form is not published yet'
-    case 'open':
-      return 'Form is live and accepting responses'
-    case 'close':
-      return 'Form is no longer accepting responses'
-    case 'auto':
-      return 'Form will open and close automatically based on schedule'
-    default:
-      return ''
-  }
-})
-
-// แสดง schedule fields เฉพาะเมื่อเลือก auto
-const showScheduleFields = computed(() => props.status === 'auto')
-</script>
-
 <template>
   <div class="settings-section">
     <h3 class="section-title">Form Status</h3>
@@ -139,6 +87,54 @@ const showScheduleFields = computed(() => props.status === 'auto')
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * FormStatus - ตั้งค่าสถานะของฟอร์ม
+ * มี 4 สถานะ: Draft, Open, Close, Auto
+ */
+export default {
+  name: 'FormStatus',
+  props: {
+    status: { type: String, default: 'draft' },
+    startDate: { type: String, default: '' },
+    startTime: { type: String, default: '' },
+    endDate: { type: String, default: '' },
+    endTime: { type: String, default: '' }
+  },
+  emits: [
+    'update:status',
+    'update:startDate', 
+    'update:startTime', 
+    'update:endDate', 
+    'update:endTime'
+  ],
+  computed: {
+    statusDescription() {
+      switch (this.status) {
+        case 'draft':
+          return 'Form is not published yet'
+        case 'open':
+          return 'Form is live and accepting responses'
+        case 'close':
+          return 'Form is no longer accepting responses'
+        case 'auto':
+          return 'Form will open and close automatically based on schedule'
+        default:
+          return ''
+      }
+    },
+    showScheduleFields() {
+      return this.status === 'auto'
+    }
+  },
+  methods: {
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .settings-section {

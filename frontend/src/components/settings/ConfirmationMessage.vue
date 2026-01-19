@@ -1,17 +1,3 @@
-<script setup>
-/**
- * ConfirmationMessage - ตั้งค่าข้อความหลังส่งฟอร์ม
- * แสดงเมื่อผู้ตอบกด submit สำเร็จ
- */
-import { defineProps, defineEmits } from 'vue'
-
-const props = defineProps({
-  confirmationMessage: { type: String, default: '' }
-})
-
-const emit = defineEmits(['update:confirmationMessage'])
-</script>
-
 <template>
   <div class="settings-section">
     <h3 class="section-title">Confirmation Message</h3>
@@ -29,6 +15,25 @@ const emit = defineEmits(['update:confirmationMessage'])
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * ConfirmationMessage - ตั้งค่าข้อความหลังส่งฟอร์ม
+ * แสดงเมื่อผู้ตอบกด submit สำเร็จ
+ */
+export default {
+  name: 'ConfirmationMessage',
+  props: {
+    confirmationMessage: { type: String, default: '' }
+  },
+  emits: ['update:confirmationMessage'],
+  methods: {
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .settings-section {

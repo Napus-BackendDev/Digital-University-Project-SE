@@ -38,115 +38,116 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { h } from 'vue';
 
 /**
  * FileUploadSummary - สรุปไฟล์ที่อัพโหลดแบบ Google Forms style
  * แสดงรายการไฟล์พร้อมไอคอนและลิงก์ไปยัง folder
  */
-const props = defineProps({
-  files: { 
-    type: Array, 
-    default: () => [] 
-    // Each file: { name, type, url, uploaderName }
+export default {
+  name: 'FileUploadSummary',
+  props: {
+    files: { 
+      type: Array, 
+      default: () => [] 
+      // Each file: { name, type, url, uploaderName }
+    },
+    folderUrl: { 
+      type: String, 
+      default: '' 
+    },
+    // Legacy props for backward compatibility
+    count: { type: Number, default: 0 },
+    fileType: { type: String, default: 'file' }
   },
-  folderUrl: { 
-    type: String, 
-    default: '' 
-  },
-  // Legacy props for backward compatibility
-  count: { type: Number, default: 0 },
-  fileType: { type: String, default: 'file' }
-});
-
-// Get file name from file object or string
-function getFileName(file) {
-  if (typeof file === 'string') return file;
-  return file.name || file.filename || 'Unknown file';
-}
-
-// Get file extension
-function getFileExtension(file) {
-  const name = getFileName(file);
-  const ext = name.split('.').pop()?.toLowerCase();
-  return ext || '';
-}
-
-// Determine file icon class based on file type
-function getFileIconClass(file) {
-  const ext = getFileExtension(file);
-  const mimeType = file.type || file.mimeType || '';
-  
-  if (['pdf'].includes(ext) || mimeType.includes('pdf')) {
-    return 'icon-pdf';
-  }
-  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext) || mimeType.includes('image')) {
-    return 'icon-image';
-  }
-  if (['doc', 'docx'].includes(ext) || mimeType.includes('word')) {
-    return 'icon-doc';
-  }
-  if (['xls', 'xlsx'].includes(ext) || mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
-    return 'icon-excel';
-  }
-  if (['ppt', 'pptx'].includes(ext) || mimeType.includes('powerpoint') || mimeType.includes('presentation')) {
-    return 'icon-ppt';
-  }
-  if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(ext) || mimeType.includes('video')) {
-    return 'icon-video';
-  }
-  if (['mp3', 'wav', 'ogg', 'flac'].includes(ext) || mimeType.includes('audio')) {
-    return 'icon-audio';
-  }
-  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext) || mimeType.includes('zip') || mimeType.includes('archive')) {
-    return 'icon-archive';
-  }
-  return 'icon-file';
-}
-
-// Get SVG icon component based on file type
-function getFileIcon(file) {
-  const iconClass = getFileIconClass(file);
-  
-  // PDF Icon (Red)
-  if (iconClass === 'icon-pdf') {
-    return {
-      render() {
-        return h('svg', { viewBox: '0 0 24 24', fill: 'none', class: 'file-type-icon' }, [
-          h('rect', { x: '4', y: '2', width: '16', height: '20', rx: '2', fill: '#EA4335' }),
-          h('text', { x: '12', y: '15', fill: 'white', 'font-size': '6', 'text-anchor': 'middle', 'font-weight': 'bold' }, 'PDF')
-        ]);
+  methods: {
+    // Get file name from file object or string
+    getFileName(file) {
+      if (typeof file === 'string') return file;
+      return file.name || file.filename || 'Unknown file';
+    },
+    // Get file extension
+    getFileExtension(file) {
+      const name = this.getFileName(file);
+      const ext = name.split('.').pop()?.toLowerCase();
+      return ext || '';
+    },
+    // Determine file icon class based on file type
+    getFileIconClass(file) {
+      const ext = this.getFileExtension(file);
+      const mimeType = file.type || file.mimeType || '';
+      
+      if (['pdf'].includes(ext) || mimeType.includes('pdf')) {
+        return 'icon-pdf';
       }
-    };
-  }
-  
-  // Image Icon (Red/Orange)
-  if (iconClass === 'icon-image') {
-    return {
-      render() {
-        return h('svg', { viewBox: '0 0 24 24', fill: 'none', class: 'file-type-icon' }, [
-          h('rect', { x: '3', y: '3', width: '18', height: '18', rx: '2', fill: '#EA4335' }),
-          h('circle', { cx: '8', cy: '8', r: '2', fill: 'white' }),
-          h('path', { d: 'M21 15L16 10L11 15L8 12L3 17V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V15Z', fill: 'white' })
-        ]);
+      if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext) || mimeType.includes('image')) {
+        return 'icon-image';
       }
-    };
-  }
-  
-  // Default file icon (Gray)
-  return {
-    render() {
-      return h('svg', { viewBox: '0 0 24 24', fill: 'none', class: 'file-type-icon' }, [
-        h('path', { 
-          d: 'M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z', 
-          fill: '#9E9E9E' 
-        }),
-        h('path', { d: 'M14 2V8H20', fill: '#BDBDBD' }),
-        h('path', { d: 'M14 2L20 8H14V2Z', fill: '#E0E0E0' })
-      ]);
+      if (['doc', 'docx'].includes(ext) || mimeType.includes('word')) {
+        return 'icon-doc';
+      }
+      if (['xls', 'xlsx'].includes(ext) || mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+        return 'icon-excel';
+      }
+      if (['ppt', 'pptx'].includes(ext) || mimeType.includes('powerpoint') || mimeType.includes('presentation')) {
+        return 'icon-ppt';
+      }
+      if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(ext) || mimeType.includes('video')) {
+        return 'icon-video';
+      }
+      if (['mp3', 'wav', 'ogg', 'flac'].includes(ext) || mimeType.includes('audio')) {
+        return 'icon-audio';
+      }
+      if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext) || mimeType.includes('zip') || mimeType.includes('archive')) {
+        return 'icon-archive';
+      }
+      return 'icon-file';
+    },
+    // Get SVG icon component based on file type
+    getFileIcon(file) {
+      const iconClass = this.getFileIconClass(file);
+      
+      // PDF Icon (Red)
+      if (iconClass === 'icon-pdf') {
+        return {
+          render() {
+            return h('svg', { viewBox: '0 0 24 24', fill: 'none', class: 'file-type-icon' }, [
+              h('rect', { x: '4', y: '2', width: '16', height: '20', rx: '2', fill: '#EA4335' }),
+              h('text', { x: '12', y: '15', fill: 'white', 'font-size': '6', 'text-anchor': 'middle', 'font-weight': 'bold' }, 'PDF')
+            ]);
+          }
+        };
+      }
+      
+      // Image Icon (Red/Orange)
+      if (iconClass === 'icon-image') {
+        return {
+          render() {
+            return h('svg', { viewBox: '0 0 24 24', fill: 'none', class: 'file-type-icon' }, [
+              h('rect', { x: '3', y: '3', width: '18', height: '18', rx: '2', fill: '#EA4335' }),
+              h('circle', { cx: '8', cy: '8', r: '2', fill: 'white' }),
+              h('path', { d: 'M21 15L16 10L11 15L8 12L3 17V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V15Z', fill: 'white' })
+            ]);
+          }
+        };
+      }
+      
+      // Default file icon (Gray)
+      return {
+        render() {
+          return h('svg', { viewBox: '0 0 24 24', fill: 'none', class: 'file-type-icon' }, [
+            h('path', { 
+              d: 'M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z', 
+              fill: '#9E9E9E' 
+            }),
+            h('path', { d: 'M14 2V8H20', fill: '#BDBDBD' }),
+            h('path', { d: 'M14 2L20 8H14V2Z', fill: '#E0E0E0' })
+          ]);
+        }
+      };
     }
-  };
+  }
 }
 </script>
 

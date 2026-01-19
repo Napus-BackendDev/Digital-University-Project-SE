@@ -10,14 +10,17 @@
   </div>
 </template>
 
-<script setup>
+<script>
 /**
  * DateTimeResponseList - แสดงคำตอบประเภทวันที่/เวลา
  * แสดงเป็น list ของคำตอบ
  */
-defineProps({
-  responses: { type: Array, default: () => [] }
-})
+export default {
+  name: 'DateTimeResponseList',
+  props: {
+    responses: { type: Array, default: () => [] }
+  }
+}
 </script>
 
 <style scoped>

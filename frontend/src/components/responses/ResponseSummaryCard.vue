@@ -20,23 +20,28 @@
   </div>
 </template>
 
-<script setup>
+<script>
 /**
  * ResponseSummaryCard - การ์ดสรุปคำตอบของแต่ละคำถาม
  * รองรับ chart, table, หรือ content อื่นๆ ผ่าน slot
  */
 import Pagination from '@/components/Pagination.vue'
 
-defineProps({
-  questionNumber: { type: Number, required: true },  // ลำดับคำถาม
-  title: { type: String, required: true },           // หัวข้อคำถาม
-  responseCount: { type: Number, default: 0 },       // จำนวนคำตอบ
-  showPagination: { type: Boolean, default: false }, // แสดง pagination หรือไม่
-  currentPage: { type: Number, default: 1 },
-  totalPages: { type: Number, default: 1 }
-})
-
-defineEmits(['page-change'])
+export default {
+  name: 'ResponseSummaryCard',
+  components: {
+    Pagination
+  },
+  props: {
+    questionNumber: { type: Number, required: true },  // ลำดับคำถาม
+    title: { type: String, required: true },           // หัวข้อคำถาม
+    responseCount: { type: Number, default: 0 },       // จำนวนคำตอบ
+    showPagination: { type: Boolean, default: false }, // แสดง pagination หรือไม่
+    currentPage: { type: Number, default: 1 },
+    totalPages: { type: Number, default: 1 }
+  },
+  emits: ['page-change']
+}
 </script>
 
 <style scoped>

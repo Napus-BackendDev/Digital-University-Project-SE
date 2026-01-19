@@ -1,56 +1,3 @@
-<script setup>
-/**
- * AccessControl - ตั้งค่าการเข้าถึงฟอร์ม
- * - กำหนดว่าใครสามารถตอบฟอร์มได้
- * - จัดการ collaborators (เพิ่ม/ลบ/แก้ไข)
- */
-import { defineProps, defineEmits } from 'vue'
-
-
-/* ===================================
-   Props & Emits
-   =================================== */
-const props = defineProps({
-  whoCanRespond: { type: String, default: 'anyone' },
-  collaborators: { type: Array, default: () => [] }
-})
-
-const emit = defineEmits(['update:whoCanRespond', 'update:collaborators', 'add-collaborator', 'remove-collaborator'])
-
-
-/* ===================================
-   Options - ตัวเลือกต่างๆ
-   =================================== */
-const accessOptions = [
-  { value: 'anyone', label: 'Anyone with the link' },
-  { value: 'organization', label: 'Only people in my organization' },
-  { value: 'specific', label: 'Specific people only' }
-]
-
-const roleOptions = ['Editor', 'Viewer']
-
-
-/* ===================================
-   Functions - จัดการ collaborators
-   =================================== */
-
-// อัพเดทอีเมลของ collaborator
-function updateCollaboratorEmail(id, email) {
-  const updated = props.collaborators.map(c => 
-    c.id === id ? { ...c, email } : c
-  )
-  emit('update:collaborators', updated)
-}
-
-// อัพเดท role ของ collaborator
-function updateCollaboratorRole(id, role) {
-  const updated = props.collaborators.map(c => 
-    c.id === id ? { ...c, role } : c
-  )
-  emit('update:collaborators', updated)
-}
-</script>
-
 <template>
   <div class="settings-section">
     <h3 class="section-title">Access Control</h3>
@@ -105,6 +52,49 @@ function updateCollaboratorRole(id, role) {
     </div>
   </div>
 </template>
+
+<script>
+/**
+ * AccessControl - ตั้งค่าการเข้าถึงฟอร์ม
+ * - กำหนดว่าใครสามารถตอบฟอร์มได้
+ * - จัดการ collaborators (เพิ่ม/ลบ/แก้ไข)
+ */
+export default {
+  name: 'AccessControl',
+  props: {
+    whoCanRespond: { type: String, default: 'anyone' },
+    collaborators: { type: Array, default: () => [] }
+  },
+  emits: ['update:whoCanRespond', 'update:collaborators', 'add-collaborator', 'remove-collaborator'],
+  data() {
+    return {
+      accessOptions: [
+        { value: 'anyone', label: 'Anyone with the link' },
+        { value: 'organization', label: 'Only people in my organization' },
+        { value: 'specific', label: 'Specific people only' }
+      ],
+      roleOptions: ['Editor', 'Viewer']
+    }
+  },
+  methods: {
+    updateCollaboratorEmail(id, email) {
+      const updated = this.collaborators.map(c => 
+        c.id === id ? { ...c, email } : c
+      )
+      this.$emit('update:collaborators', updated)
+    },
+    updateCollaboratorRole(id, role) {
+      const updated = this.collaborators.map(c => 
+        c.id === id ? { ...c, role } : c
+      )
+      this.$emit('update:collaborators', updated)
+    },
+    emit(event, payload) {
+      this.$emit(event, payload)
+    }
+  }
+}
+</script>
 
 <style scoped>
 .settings-section {

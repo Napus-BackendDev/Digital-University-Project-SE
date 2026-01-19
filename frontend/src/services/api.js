@@ -136,3 +136,57 @@ export default {
   },
 
 }
+
+// Named exports สำหรับใช้งานแบบ { formAPI, questionsAPI, ... }
+export const formAPI = {
+  getAll: () => instance.get('/form'),
+  getById: (id) => instance.get(`/form/id?_id=${id}`),
+  create: (data) => instance.post('/form', data),
+  update: (data) => instance.put('/form', data),
+  delete: (id) => instance.delete('/form', { data: { _id: id } }),
+  duplicate: (id) => instance.post('/form/duplicate', { _id: id })
+}
+
+export const questionsAPI = {
+  getByFormId: (formId) => instance.get(`/question?formId=${formId}`),
+  create: (data) => instance.post('/question', data),
+  createMany: (data) => instance.post('/question', data),
+  update: (data) => instance.put('/question', data),
+  delete: (id) => instance.delete('/question', { data: { _id: id } }),
+  deleteByFormId: (formId) => instance.delete('/question/byForm', { data: { formId } })
+}
+
+export const responseAPI = {
+  getByFormId: (formId) => instance.get(`/response/getByFormId?form_id=${formId}`),
+  getByUserId: (userId) => instance.get(`/response/getByUserId?userId=${userId}`),
+  getById: (id) => instance.get(`/response/getById?_id=${id}`),
+  submit: (data) => instance.post('/response/submit', data),
+  update: (data) => instance.patch('/response/update', data),
+  delete: (id) => instance.delete('/response/delete', { data: { _id: id } }),
+  deleteByFormId: (formId) => instance.delete('/response/deleteByFormId', { data: { formId } }),
+  downloadUserJson: (formId, userId) => instance.get(`/response/download/${formId}/user/${userId}`),
+  downloadFormJson: (formId) => instance.get(`/response/download/${formId}`),
+  generateExportLink: (formId) => instance.post('/response/export/link', { formId })
+}
+
+export const settingAPI = {
+  message: {
+    get: () => instance.get('/setting/message'),
+    create: (data) => instance.post('/setting/message', data),
+    update: (data) => instance.put('/setting/message', data),
+    delete: (data) => instance.delete('/setting/message', { data })
+  },
+  status: {
+    get: () => instance.get('/setting/status'),
+    create: (data) => instance.post('/setting/status', data),
+    update: (data) => instance.put('/setting/status', data),
+    delete: (data) => instance.delete('/setting/status', { data })
+  },
+  verification: {
+    get: () => instance.get('/setting/verification'),
+    create: (data) => instance.post('/setting/verification', data),
+    explorers: (data) => instance.post('/setting/verification/explorers', data),
+    update: (data) => instance.put('/setting/verification', data),
+    delete: (data) => instance.delete('/setting/verification', { data })
+  }
+}
