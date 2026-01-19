@@ -479,6 +479,31 @@
                 }
             }
         },
+        "/form/{id}": {
+            "get": {
+                "tags": [
+                    "Form"
+                ],
+                "summary": "Get form by ID (URL parameter)",
+                "description": "Retrieve a specific form by ID using URL parameter",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Form ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
         "/auth/register": {
             "post": {
                 "tags": [
@@ -839,6 +864,664 @@
                 "responses": {
                     "200": {
                         "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/response/getByFormId": {
+            "get": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Get responses by form ID",
+                "parameters": [
+                    {
+                        "name": "form_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/response/getByUserId": {
+            "get": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Get responses by user ID",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/response/getById": {
+            "get": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Get response by ID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/response/download/{form_id}/user/{user_id}": {
+            "get": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Download user response JSON by form and user ID",
+                "parameters": [
+                    {
+                        "name": "form_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/response/download/{form_id}": {
+            "get": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Public download of all users' responses JSON by form ID",
+                "parameters": [
+                    {
+                        "name": "form_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/response/submit": {
+            "post": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Submit a response (with mock user for anonymous)",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "form",
+                                    "answers"
+                                ],
+                                "properties": {
+                                    "form": {
+                                        "type": "string",
+                                        "description": "Form ID"
+                                    },
+                                    "answers": {
+                                        "type": "array"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/response/update": {
+            "patch": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Update a response",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    },
+                                    "answers": {
+                                        "type": "array"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/response/deleteByFormId": {
+            "delete": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Delete all responses by form ID",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "form_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/response/export/{formId}/user/{userId}": {
+            "post": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Generate export link by form and user ID",
+                "parameters": [
+                    {
+                        "name": "formId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/response/export/link": {
+            "post": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Generate export link by form ID",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "formId": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/settings/group": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get all groups",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Create a group",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update a group",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Delete a group",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/settings/message": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get all messages",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Create a message",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update a message",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Delete a message",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/settings/status": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get all statuses",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Create a status",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update a status",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Delete a status",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/settings/verification": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get all verifications",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Create a verification",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update a verification",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Delete a verification",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/settings/verification/explorers": {
+            "post": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Create verification (explorers endpoint)",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
                     }
                 }
             }
