@@ -66,11 +66,31 @@ function handleDropdownSelect(questionId, optionId, question) {
     question._dropdownOpen = false;
 }
 
-// Handle file upload
-function handleFileUpload(questionId, event) {
+// Handle file upload (Google Form style)
+function handleFileUpload(questionId, event, question) {
     const newFiles = Array.from(event.target.files);
     const existingFiles = props.responses[questionId] || [];
-    props.responses[questionId] = [...existingFiles, ...newFiles];
+    const maxFiles = question?.maxFiles || 10;
+    const maxSize = (question?.maxSize || 10) * 1024 * 1024; // Convert MB to bytes
+    
+    // Filter files by size
+    const validFiles = newFiles.filter(file => {
+        if (file.size > maxSize) {
+            alert(`File "${file.name}" is too large. Maximum size is ${formatFileSize(question?.maxSize || 10)}.`);
+            return false;
+        }
+        return true;
+    });
+    
+    // Check max files limit
+    const totalFiles = [...existingFiles, ...validFiles];
+    if (totalFiles.length > maxFiles) {
+        alert(`You can only upload up to ${maxFiles} files.`);
+        props.responses[questionId] = totalFiles.slice(0, maxFiles);
+    } else {
+        props.responses[questionId] = totalFiles;
+    }
+    
     event.target.value = ''; // Reset input to allow re-uploading same file
 }
 
@@ -79,6 +99,56 @@ function handleFileRemove(questionId, fileIndex) {
     if (Array.isArray(props.responses[questionId])) {
         props.responses[questionId].splice(fileIndex, 1);
     }
+}
+
+// Get accept types for file input
+function getAcceptTypes(question) {
+    if (!question.allowSpecificTypes || !question.allowedFileTypes?.length) {
+        return '*/*';
+    }
+    
+    const typeMap = {
+        'document': '.doc,.docx,.txt,.rtf',
+        'spreadsheet': '.xls,.xlsx,.csv',
+        'pdf': '.pdf',
+        'video': 'video/*',
+        'presentation': '.ppt,.pptx',
+        'drawing': '.svg,.ai,.eps',
+        'image': 'image/*',
+        'audio': 'audio/*'
+    };
+    
+    return question.allowedFileTypes.map(type => typeMap[type] || '').filter(Boolean).join(',');
+}
+
+// Check if file is an image
+function isImageFile(file) {
+    return file.type?.startsWith('image/');
+}
+
+// Get file preview URL
+function getFilePreview(file) {
+    if (file instanceof File) {
+        return URL.createObjectURL(file);
+    }
+    return file.url || '';
+}
+
+// Format file size in MB
+function formatFileSize(mb) {
+    if (mb >= 1024) {
+        return `${mb / 1024} GB`;
+    }
+    return `${mb} MB`;
+}
+
+// Format bytes to human readable
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 // --- Computed properties for section navigation ---
@@ -211,42 +281,71 @@ function handleSubmit() {
                         </div>
                     </template>
 
-                    <!-- File Upload (interactive preview, builder-style UI) -->
+                    <!-- File Upload (Google Form Style) -->
                     <template v-else-if="q.type === 'file-upload'">
-                        <div class="preview-file-upload">
-                            <label class="file-upload-area" style="cursor:pointer;">
-                                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="1.5">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                        <div class="google-file-upload">
+                            <!-- File Info Line -->
+                            <p class="gf-upload-info">Upload {{ q.maxFiles || 1 }} supported file{{ (q.maxFiles || 1) > 1 ? 's' : '' }}. Max {{ formatFileSize(q.maxSize || 10) }}.</p>
+                            
+                            <!-- Add File Button -->
+                            <label class="gf-add-file-btn">
+                                <svg class="gf-upload-icon" viewBox="0 0 24 24" fill="none">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2"/>
+                                    <polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="2"/>
+                                    <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2"/>
                                 </svg>
-                                <span>File upload area</span>
-                                <span class="upload-hint">Drag & drop or click to upload</span>
-                                <input type="file" :multiple="q.maxFiles > 1" style="display:none" 
-                                    @change="handleFileUpload(q._id, $event)" />
+                                Add file
+                                <input 
+                                    type="file" 
+                                    :multiple="(q.maxFiles || 1) > 1" 
+                                    :accept="getAcceptTypes(q)"
+                                    @change="handleFileUpload(q._id, $event, q)"
+                                    style="display:none"
+                                />
                             </label>
-                            <div v-if="Array.isArray(responses[q._id]) && responses[q._id].length" class="preview-file-list">
-                                <div v-for="(file, index) in responses[q._id]" :key="index" class="preview-file-item">
-                                    <div class="file-icon-wrapper">
-                                        <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                                            <polyline points="13 2 13 9 20 9"></polyline>
-                                        </svg>
-                                        <button 
-                                            type="button"
-                                            class="file-remove-btn" 
-                                            @click="handleFileRemove(q._id, index)"
-                                            title="Remove file"
-                                        >
-                                            <svg viewBox="0 0 16 16" fill="none">
-                                                <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+
+                            <!-- Uploaded Files List -->
+                            <div v-if="Array.isArray(responses[q._id]) && responses[q._id].length" class="uploaded-files-list">
+                                <div v-for="(file, index) in responses[q._id]" :key="index" class="uploaded-file-item">
+                                    <div class="file-preview">
+                                        <!-- Image Preview -->
+                                        <img 
+                                            v-if="isImageFile(file)" 
+                                            :src="getFilePreview(file)" 
+                                            class="file-thumbnail"
+                                            alt="Preview"
+                                        />
+                                        <!-- File Icon for non-images -->
+                                        <div v-else class="file-icon-box">
+                                            <svg class="file-type-icon" viewBox="0 0 24 24" fill="none">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.5"/>
+                                                <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5"/>
                                             </svg>
-                                        </button>
+                                        </div>
                                     </div>
-                                    <span class="preview-file-name">{{ file.name }}</span>
-                                    <span class="preview-file-size">({{ (file.size / 1024).toFixed(1) }} KB)</span>
+                                    <div class="file-details">
+                                        <span class="file-name">{{ file.name }}</span>
+                                        <span class="file-size">{{ formatBytes(file.size) }}</span>
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        class="remove-file-btn"
+                                        @click="handleFileRemove(q._id, index)"
+                                        title="Remove file"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
                                 </div>
+                            </div>
+                            
+                            <!-- Upload Progress (if uploading) -->
+                            <div v-if="q._uploadProgress" class="upload-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" :style="{ width: q._uploadProgress + '%' }"></div>
+                                </div>
+                                <span class="progress-text">Uploading... {{ q._uploadProgress }}%</span>
                             </div>
                         </div>
                     </template>
@@ -948,5 +1047,188 @@ function handleSubmit() {
     opacity: 0.7;
     cursor: not-allowed;
     background: #737373;
+}
+
+/* =============================
+   Google Form Style File Upload
+============================= */
+.google-file-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gf-upload-info {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #5f6368;
+}
+
+.gf-add-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a73e8;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gf-add-file-btn:hover {
+    background: #f8f9fa;
+    border-color: #1a73e8;
+}
+
+.gf-upload-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.file-constraints span {
+    padding: 4px 8px;
+    background: #f1f3f4;
+    border-radius: 4px;
+}
+
+/* Uploaded Files List */
+.uploaded-files-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.uploaded-file-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.uploaded-file-item:hover {
+    border-color: #bdc1c6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.file-preview {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-thumbnail {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.file-icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f3f4;
+    border-radius: 4px;
+}
+
+.file-type-icon {
+    width: 24px;
+    height: 24px;
+    color: #5f6368;
+}
+
+.file-details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.file-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.remove-file-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.remove-file-btn:hover {
+    background: #f1f3f4;
+}
+
+.remove-file-btn svg {
+    width: 18px;
+    height: 18px;
+    color: #5f6368;
+}
+
+.remove-file-btn:hover svg {
+    color: #d93025;
+}
+
+/* Upload Progress */
+.upload-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #e8eaed;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s;
+}
+
+.progress-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #5f6368;
 }
 </style>

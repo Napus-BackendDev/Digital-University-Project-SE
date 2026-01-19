@@ -34,14 +34,14 @@ const router = createRouter({
     {
       path: '/form-builder',
       name: 'form-builder',
-      component: () => import('../views/FormBuilderView.vue'),
+      component: () => import('../views/FormBuilderView/FormBuilderView.vue'),
     },
 
     // หน้าแก้ไขฟอร์ม (รับ ID จาก URL)
     {
       path: '/form-builder/:id',
       name: 'form-builder-edit',
-      component: () => import('../views/FormBuilderView.vue')
+      component: () => import('../views/FormBuilderView/FormBuilderView.vue')
     },
 
     // หน้า Public Form สำหรับpreviewแบบฟอร์ม (URL ที่แชร์ให้ผู้ใช้)

@@ -166,26 +166,24 @@ function handleInput(idx, value, type) {
                         </div>
                     </template>
 
-                    <!-- File Upload (interactive preview, builder-style UI) -->
-                    <!-- File Upload (interactive preview, builder-style UI) -->
+                    <!-- File Upload (Google Form Style) -->
                     <template v-else-if="q.type === 'file-upload'">
-                        <div class="preview-file-upload">
-                            <label class="file-upload-area" style="cursor:pointer;">
-                                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="1.5">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                        <div class="gf-file-upload">
+                            <p class="gf-upload-info">Upload {{ q.maxFiles || 1 }} supported file{{ (q.maxFiles || 1) > 1 ? 's' : '' }}. Max {{ q.maxSize || 10 }} MB.</p>
+                            <label class="gf-add-file-btn">
+                                <svg class="gf-upload-icon" viewBox="0 0 24 24" fill="none">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2"/>
+                                    <polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="2"/>
+                                    <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2"/>
                                 </svg>
-                                <span>File upload area</span>
-                                <span class="upload-hint">Drag & drop or click to upload</span>
-                                <input type="file" :multiple="q.maxFiles > 1" style="display:none" @change="e => {
+                                Add file
+                                <input type="file" :multiple="(q.maxFiles || 1) > 1" style="display:none" @change="e => {
                                     answers[idx] = Array.from(e.target.files);
                                 }" />
                             </label>
-                            <div v-if="Array.isArray(answers[idx]) && answers[idx].length" class="preview-file-list">
-                                <div v-for="file in answers[idx]" :key="file.name" class="preview-file-item">
-                                    <span class="preview-file-name">{{ file.name }}</span>
+                            <div v-if="Array.isArray(answers[idx]) && answers[idx].length" class="gf-file-list">
+                                <div v-for="file in answers[idx]" :key="file.name" class="gf-file-item">
+                                    <span class="gf-file-name">{{ file.name }}</span>
                                 </div>
                             </div>
                         </div>
@@ -438,8 +436,65 @@ function handleInput(idx, value, type) {
 
 
 /* =============================
-   File Upload (Preview)
+   File Upload (Google Form Style)
 ============================= */
+.gf-file-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gf-upload-info {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #5f6368;
+}
+
+.gf-add-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a73e8;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gf-add-file-btn:hover {
+    background: #f8f9fa;
+    border-color: #1a73e8;
+}
+
+.gf-upload-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.gf-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gf-file-item {
+    padding: 8px 12px;
+    background: #f1f3f4;
+    border-radius: 4px;
+}
+
+.gf-file-name {
+    font-size: 13px;
+    color: #202124;
+}
+
 .preview-file-upload {
     display: flex;
     flex-direction: column;

@@ -1,7 +1,7 @@
 <script setup>
 /**
  * FileUploadQuestion - คำถามแบบอัพโหลดไฟล์
- * รองรับ drag & drop และ click to upload
+ * รองรับ click to upload
  * มีตัวเลือกจำกัดประเภทไฟล์, จำนวนไฟล์, และขนาดไฟล์
  */
 import { ref, computed } from 'vue'
@@ -67,15 +67,17 @@ function formatSize(mb) {
 
 <template>
   <div class="file-upload-question">
-    <!-- Upload Area Preview -->
-    <div class="file-upload-area">
-      <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="17 8 12 3 7 8"></polyline>
-        <line x1="12" y1="3" x2="12" y2="15"></line>
-      </svg>
-      <span>File upload area</span>
-      <span class="upload-hint">Drag & drop or click to upload</span>
+    <!-- Google Form Style Upload Preview -->
+    <div class="gf-upload-preview">
+      <p class="gf-upload-info">Upload {{ maxFiles }} supported file{{ maxFiles > 1 ? 's' : '' }}. Max {{ formatSize(maxSize) }}.</p>
+      <button type="button" class="gf-add-file-btn">
+        <svg class="gf-upload-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2"/>
+          <polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="2"/>
+          <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Add file
+      </button>
     </div>
 
     <!-- Settings Section -->
@@ -144,36 +146,48 @@ function formatSize(mb) {
   gap: 16px;
 }
 
-.file-upload-area {
+/* Google Form Style */
+.gf-upload-preview {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 24px 18px;
-  border: 2px dashed var(--border-color);
+  gap: 12px;
+  padding: 16px;
+  background: #f8f9fa;
   border-radius: 8px;
-  color: var(--text-muted);
+}
+
+.gf-upload-info {
+  margin: 0;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
+  color: #5f6368;
+}
+
+.gf-add-file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 8px 16px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a73e8;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.file-upload-area:hover {
-  border-color: var(--primary);
-  background: #fafaff;
+.gf-add-file-btn:hover {
+  background: #f8f9fa;
+  border-color: #1a73e8;
 }
 
-.upload-icon {
-  width: 32px;
-  height: 32px;
-  color: #ccc;
-}
-
-.upload-hint {
-  font-size: 12px;
-  color: #bbb;
+.gf-upload-icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* Settings */

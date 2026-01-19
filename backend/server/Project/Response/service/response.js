@@ -13,7 +13,7 @@ exports.onQuerys = async function (request, response) {
     try {
         let query = {};
         const doc = await responseService.onQuerys(query);
-        return ResMessage.sendResponse(response, 0, 20000, doc);
+        return ResMessage.sendResponse(response, request.body.apiid, 20000, doc);
     } catch (err) {
         console.log(err);
         return response.status(500).json({
