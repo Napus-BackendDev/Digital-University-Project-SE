@@ -35,8 +35,8 @@
         :formStatus="settings.formStatus"
         :expandedQuestionId="expandedQuestionId"
         @update:questions="questions = $event"
-        @update:formTitle="formTitle = $event"
-        @update:formDescription="formDescription = $event"
+        @update:formTitle="handleUpdateTitle"
+        @update:formDescription="handleUpdateDescription"
         @copy-url="copyFormUrl"
         @test-form="testForm"
         @add-question="addQuestion"
@@ -160,9 +160,10 @@ export default {
       },
       responseViewMode: 'summary',
 
-      // Auto-save
+      // Auto-save (Event-driven)
       saving: false,
-      saveTimeout: null
+      saveTimeout: null,
+      isDirty: false
     }
   },
 
@@ -200,24 +201,6 @@ export default {
   },
 
   watch: {
-    formTitle() {
-      this.debounceSave()
-    },
-    formDescription() {
-      this.debounceSave()
-    },
-    questions: {
-      handler() {
-        this.debounceSave()
-      },
-      deep: true
-    },
-    settings: {
-      handler() {
-        this.debounceSave()
-      },
-      deep: true
-    },
     activeTab(newTab) {
       if (this.formId) {
         localStorage.setItem(`formBuilder_${this.formId}_activeTab`, newTab)
@@ -277,6 +260,19 @@ export default {
     },
 
     /* ===================================
+       Form Title/Description Methods
+       =================================== */
+    handleUpdateTitle(newTitle) {
+      this.formTitle = newTitle
+      this.triggerSave(1000) // Longer delay for typing
+    },
+
+    handleUpdateDescription(newDescription) {
+      this.formDescription = newDescription
+      this.triggerSave(1000) // Longer delay for typing
+    },
+
+    /* ===================================
        Question Manager Methods
        =================================== */
     toggleQuestion(questionId) {
@@ -284,6 +280,7 @@ export default {
     },
 
     addQuestion(type) {
+      console.log('[FormBuilder] addQuestion called with type:', type)
       const newQuestion = {
         id: this.questions.length + 1,
         type: type.id,
@@ -307,30 +304,35 @@ export default {
       }
 
       this.questions.push(newQuestion)
+      this.triggerSave() // Event-driven save
     },
 
     deleteQuestion(questionId) {
       this.questions = this.questions.filter(q => q.id !== questionId)
+      this.triggerSave() // Event-driven save
     },
 
     updateQuestion(updatedQuestion) {
       const index = this.questions.findIndex(q => q.id === updatedQuestion.id)
       if (index !== -1) {
         this.questions[index] = updatedQuestion
+        this.triggerSave() // Event-driven save
       }
     },
 
     addOption(question) {
       const newOptionId = question.options.length + 1
       question.options.push({ id: newOptionId, text: `Option ${newOptionId}` })
+      this.triggerSave() // Event-driven save
     },
 
     removeOption(question, optionId) {
       question.options = question.options.filter(o => o.id !== optionId)
+      this.triggerSave() // Event-driven save
     },
 
     onQuestionReorder() {
-      // Questions reordered - order updated in array
+      this.triggerSave() // Event-driven save on reorder
     },
 
     setQuestions(loadedQuestions) {
@@ -404,25 +406,59 @@ export default {
 
     handleUpdateSettings(newSettings) {
       Object.assign(this.settings, newSettings)
+      this.triggerSave() // Event-driven save on settings change
     },
 
     /* ===================================
-       Auto-save Methods
+       Event-driven Auto-save Methods
        =================================== */
-    debounceSave(delay = 1000) {
+    
+    /**
+     * Mark form as dirty and schedule save
+     * Called explicitly when user makes changes
+     */
+    markDirty() {
+      this.isDirty = true
+    },
+
+    /**
+     * Trigger save after specific event with optional delay
+     * @param {number} delay - delay in milliseconds (default 500ms)
+     */
+    triggerSave(delay = 500) {
+      console.log('[AutoSave] triggerSave called, delay:', delay)
+      this.markDirty()
       if (this.saveTimeout) clearTimeout(this.saveTimeout)
       this.saveTimeout = setTimeout(() => {
         this.executeSave()
       }, delay)
     },
 
+    /**
+     * Save immediately without delay
+     */
+    async saveNow() {
+      if (this.saveTimeout) clearTimeout(this.saveTimeout)
+      this.saveTimeout = null
+      await this.executeSave()
+    },
+
     async executeSave() {
+      console.log('[AutoSave] executeSave called, isDirty:', this.isDirty, 'formId:', this.formId)
       if (this.saveTimeout) clearTimeout(this.saveTimeout)
       this.saveTimeout = null
 
+      if (!this.isDirty) {
+        console.log('[AutoSave] Skipping save - not dirty')
+        return
+      }
+
       this.saving = true
       try {
+        console.log('[AutoSave] Calling saveForm...')
         await this.saveForm()
+        this.isDirty = false
+        console.log('[AutoSave] Save completed successfully')
       } catch (err) {
         console.error('บันทึกไม่สำเร็จ:', err)
       } finally {
@@ -431,11 +467,11 @@ export default {
     },
 
     hasPendingSave() {
-      return this.saveTimeout !== null
+      return this.isDirty || this.saveTimeout !== null
     },
 
     handleBeforeUnload(e) {
-      if (this.saveTimeout) {
+      if (this.hasPendingSave()) {
         this.executeSave()
         e.preventDefault()
         e.returnValue = ''
@@ -498,13 +534,18 @@ export default {
        Save Form Method
        =================================== */
     async saveForm() {
-      if (!this.formId) return
+      console.log('[SaveForm] Starting save, formId:', this.formId, 'questions:', this.questions.length)
+      if (!this.formId) {
+        console.log('[SaveForm] No formId, skipping')
+        return
+      }
 
       const formStore = useFormStore()
 
       try {
         const existingQuestions = this.questions.filter(q => q && q._id)
         const newQuestions = this.questions.filter(q => q && !q._id)
+        console.log('[SaveForm] Existing questions:', existingQuestions.length, 'New questions:', newQuestions.length)
 
         for (const q of existingQuestions) {
           const updateData = {
@@ -530,7 +571,9 @@ export default {
 
         const createdQuestionIds = []
         for (const q of newQuestions) {
+          console.log('[SaveForm] Processing new question:', q.title, 'type:', q.type)
           if (!q.title || q.title.trim() === '') {
+            console.log('[SaveForm] Skipping question with empty title')
             continue
           }
 
@@ -559,9 +602,13 @@ export default {
           }
 
           const result = await questionsAPI.create(questionData)
-          if (result.data && result.data._id) {
-            q._id = result.data._id
-            createdQuestionIds.push(result.data._id)
+          console.log('[SaveForm] Create question result:', result?.data)
+          // axios response: { data: { code, message, data: {...question} } }
+          const createdQuestion = result?.data?.data || result?.data
+          if (createdQuestion && createdQuestion._id) {
+            q._id = createdQuestion._id
+            createdQuestionIds.push(createdQuestion._id)
+            console.log('[SaveForm] Question created with ID:', createdQuestion._id)
           }
         }
 

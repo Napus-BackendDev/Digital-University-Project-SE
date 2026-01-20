@@ -216,15 +216,18 @@ const previousPage = () => {
 const handleCreateForm = async () => {
   // สร้างฟอร์มใหม่ แล้วไปหน้าแก้ไขฟอร์ม
   try {
-    const newForm = await formAPI.create({})
-    // รองรับกรณี backend ส่ง data: {...}
-    const formId = newForm?.data?._id || newForm?.data?.id
+    const response = await formAPI.create({})
+    // axios response: { data: { code, message, data: {...form} } }
+    // ดึง _id จาก response.data.data._id หรือ response.data._id (กรณี backend ส่งตรง)
+    const formId = response?.data?.data?._id || response?.data?._id || response?.data?.data?.id || response?.data?.id
     if (formId) {
       router.push(`/form-builder/${formId}`)
     } else {
+      console.error('Create form response:', response?.data)
       error.value = 'Create form failed: No ID returned'
     }
   } catch (err) {
+    console.error('Create form error:', err)
     error.value = 'Create form failed: ' + (err.message || err)
   }
 }

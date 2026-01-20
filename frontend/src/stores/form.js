@@ -43,7 +43,8 @@ export const useFormStore = defineStore('form', () => {
     
     try {
       const response = await formAPI.getAll()
-      forms.value = response.data || []
+      // Backend response: { data: { code, message, data: [...] } }
+      forms.value = response.data?.data || response.data || []
     } catch (err) {
       error.value = err.message
       console.error('โหลดฟอร์มไม่สำเร็จ:', err)
@@ -62,8 +63,10 @@ export const useFormStore = defineStore('form', () => {
     
     try {
       const response = await formAPI.getById(id)
-      currentForm.value = response.data
-      return response.data
+      // Backend response: { data: { code, message, data: {...form} } }
+      const formData = response.data?.data || response.data
+      currentForm.value = formData
+      return formData
     } catch (err) {
       error.value = err.message
       console.error('ดึงข้อมูลฟอร์มไม่สำเร็จ:', err)
@@ -95,7 +98,8 @@ export const useFormStore = defineStore('form', () => {
       }
       
       const response = await formAPI.create(newForm)
-      const createdForm = response.data
+      // Backend response: { data: { code, message, data: {...form} } }
+      const createdForm = response.data?.data || response.data
       
       // เพิ่มฟอร์มใหม่ไว้ด้านบนสุดของ list
       forms.value.unshift(createdForm)
@@ -118,21 +122,22 @@ export const useFormStore = defineStore('form', () => {
     error.value = null
     
     try {
-      
       const response = await formAPI.update(formData)
+      // Backend response: { data: { code, message, data: {...form} } }
+      const updatedForm = response.data?.data || response.data
       
       // อัพเดทใน list
       const index = forms.value.findIndex(f => f._id === formData._id)
       if (index !== -1) {
-        forms.value[index] = response.data
+        forms.value[index] = updatedForm
       }
       
       // อัพเดท currentForm ถ้าตรงกัน
       if (currentForm.value?._id === formData._id) {
-        currentForm.value = response.data
+        currentForm.value = updatedForm
       }
       
-      return response.data
+      return updatedForm
     } catch (err) {
       error.value = err.message
       console.error('อัพเดทฟอร์มไม่สำเร็จ:', err)
