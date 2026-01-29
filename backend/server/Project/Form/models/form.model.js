@@ -20,7 +20,7 @@ var objSchema = new Schema({
         confirmMessage: { type: String, default: 'Thank you for completing this survey. Your response has been recorded.' },
         showAnotherResponseLink: { type: Boolean, default: true }
     },
-    responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
+    respolinnses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null },
 
 }, { timestamps: true });

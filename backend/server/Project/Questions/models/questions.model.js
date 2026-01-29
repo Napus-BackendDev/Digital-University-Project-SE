@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
-    // form: [{ type: Schema.Types.ObjectId, ref: 'Forms', required: true }],
+    form: [{ type: Schema.Types.ObjectId, ref: 'Forms', required: true }],
     order: { type: Number, default: 1 },
     title: [
         {
@@ -14,7 +14,17 @@ var objSchema = new Schema({
         }
     ],
     type: { type: mongoose.Schema.Types.ObjectId, ref: 'Question_Types', required: true },
-    config: { type: mongoose.Schema.Types.Mixed, default: {} },
+    config: {
+        options: [
+            {
+                key: { type: String, required: true },
+                value: { type: String, required: true }
+            }
+        ],
+        allowMultiple: { type: Boolean, required: true },
+        maxRate: { type: Number, required: true },
+        maxText: { type: Number, required: true }
+    },
     required: { type: Boolean, default: false },
 }, { timestamps: true });
 
