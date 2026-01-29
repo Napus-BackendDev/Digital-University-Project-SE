@@ -131,6 +131,11 @@ exports.createNewDataFromDifferences = function(differences) {
     return result;
 }
 
+exports.apivalidation = function(number, req, res, next) {
+    req.query.apiId = number ;
+    next();
+}
+
 // Example usage:
 // const json1 = {
 //     name: "John",
