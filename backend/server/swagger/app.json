@@ -339,27 +339,99 @@
                                 "type": "object",
                                 "properties": {
                                     "title": {
-                                        "type": "string"
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string",
+                                                    "description": "Language code (e.g., 'en', 'th')"
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "description": "Title in that language"
+                                                }
+                                            }
+                                        },
+                                        "example": [{"key": "en", "value": "Customer Feedback Form"}]
                                     },
-                                    "can_duplicate": {
-                                        "type": "boolean"
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "example": [{"key": "en", "value": "Please provide your feedback"}]
+                                    },
+                                    "questions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "Array of question IDs",
+                                        "example": []
                                     },
                                     "status": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Status ID (ObjectId as string) or empty string",
+                                        "example": ""
                                     },
                                     "schedule": {
                                         "type": "object",
                                         "properties": {
-                                            "mode": {
-                                                "type": "string"
-                                            },
                                             "startAt": {
-                                                "type": "date"
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2026-01-20T00:00:00.000Z"
                                             },
                                             "endAt": {
-                                                "type": "date"
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2026-12-31T23:59:59.000Z"
                                             }
                                         }
+                                    },
+                                    "settings": {
+                                        "type": "object",
+                                        "properties": {
+                                            "whoCanRespond": {
+                                                "type": "string",
+                                                "description": "Setting_Respond ID (ObjectId) or empty string",
+                                                "example": ""
+                                            },
+                                            "collectEmail": {
+                                                "type": "boolean",
+                                                "example": false
+                                            },
+                                            "limitResponse": {
+                                                "type": "boolean",
+                                                "example": false
+                                            },
+                                            "progressBar": {
+                                                "type": "boolean",
+                                                "example": false
+                                            },
+                                            "confirmMessage": {
+                                                "type": "string",
+                                                "example": "Thank you for completing this survey. Your response has been recorded."
+                                            },
+                                            "showAnotherResponseLink": {
+                                                "type": "boolean",
+                                                "example": true
+                                            }
+                                        }
+                                    },
+                                    "originalFormId": {
+                                        "type": ["string", "null"],
+                                        "description": "Original form ID if this is a duplicate (ObjectId or null)",
+                                        "example": null
                                     }
                                 }
                             }
@@ -388,30 +460,86 @@
                                 ],
                                 "properties": {
                                     "_id": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Form ID to update"
                                     },
                                     "title": {
-                                        "type": "string"
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
                                     },
-                                    "can_duplicate": {
-                                        "type": "boolean"
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "questions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "Array of question IDs"
                                     },
                                     "status": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Status ID"
                                     },
                                     "schedule": {
                                         "type": "object",
                                         "properties": {
-                                            "mode": {
-                                                "type": "string"
-                                            },
                                             "startAt": {
-                                                "type": "date"
+                                                "type": "string",
+                                                "format": "date-time"
                                             },
                                             "endAt": {
-                                                "type": "date"
+                                                "type": "string",
+                                                "format": "date-time"
                                             }
                                         }
+                                    },
+                                    "settings": {
+                                        "type": "object",
+                                        "properties": {
+                                            "whoCanRespond": {
+                                                "type": "string"
+                                            },
+                                            "collectEmail": {
+                                                "type": "boolean"
+                                            },
+                                            "limitResponse": {
+                                                "type": "boolean"
+                                            },
+                                            "progressBar": {
+                                                "type": "boolean"
+                                            },
+                                            "confirmMessage": {
+                                                "type": "string"
+                                            },
+                                            "showAnotherResponseLink": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    },
+                                    "originalFormId": {
+                                        "type": "string"
                                     }
                                 }
                             }
@@ -497,114 +625,6 @@
                         "description": "Form ID"
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            }
-        },
-        "/auth/register": {
-            "post": {
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Register new user",
-                "description": "Create a new user account",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "minLength": 6
-                                    },
-                                    "roleId": {
-                                        "type": "string",
-                                        "description": "Role ID to assign to the user"
-                                    }
-                                },
-                                "required": [
-                                    "name",
-                                    "email",
-                                    "password",
-                                    "roleId"
-                                ]
-                            },
-                            "example": {
-                                "name": "Sai Leng",
-                                "email": "sai@gmail.com",
-                                "password": "sai123",
-                                "roleId": "693454ebdd1b76f3b7416c6b"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            }
-        },
-        "/auth/login": {
-            "post": {
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Login user",
-                "description": "Authenticate user and return JWT token in cookie",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email"
-                                    },
-                                    "password": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "email",
-                                    "password"
-                                ]
-                            },
-                            "example": {
-                                "email": "sai@gmail.com",
-                                "password": "sai123"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            }
-        },
-        "/auth/logout": {
-            "post": {
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Logout user",
-                "description": "Clear authentication token cookie",
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -1157,7 +1177,31 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        },
+                                        "example": [{"key": "en", "value": "Admin Group"}]
+                                    },
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        },
+                                        "example": [{"key": "en", "value": "Administrator group"}]
+                                    }
+                                }
                             }
                         }
                     }
@@ -1184,7 +1228,28 @@
                                 ],
                                 "properties": {
                                     "_id": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Group ID"
+                                    },
+                                    "title": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        }
+                                    },
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1249,7 +1314,34 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "type": "object",
+                                "required": ["number", "code"],
+                                "properties": {
+                                    "number": {
+                                        "type": "number",
+                                        "example": 20000
+                                    },
+                                    "code": {
+                                        "type": "number",
+                                        "example": 200
+                                    },
+                                    "message": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        },
+                                        "example": [{"key": "en", "value": "Success"}]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": "Setting_Status ObjectId",
+                                        "example": "689c04cb255db4e56aea88ef"
+                                    }
+                                }
                             }
                         }
                     }
@@ -1276,7 +1368,28 @@
                                 ],
                                 "properties": {
                                     "_id": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Message ID"
+                                    },
+                                    "number": {
+                                        "type": "number"
+                                    },
+                                    "code": {
+                                        "type": "number"
+                                    },
+                                    "message": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        }
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": "Setting_Status ObjectId"
                                     }
                                 }
                             }
@@ -1341,7 +1454,36 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        },
+                                        "example": [{"key": "en", "value": "Active"}]
+                                    },
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        },
+                                        "example": [{"key": "en", "value": "Active status"}]
+                                    },
+                                    "group": {
+                                        "type": "string",
+                                        "description": "Setting_Group ObjectId",
+                                        "example": "689c04cb255db4e56aea88ef"
+                                    }
+                                }
                             }
                         }
                     }
@@ -1368,7 +1510,32 @@
                                 ],
                                 "properties": {
                                     "_id": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Status ID"
+                                    },
+                                    "title": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        }
+                                    },
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        }
+                                    },
+                                    "group": {
+                                        "type": "string",
+                                        "description": "Setting_Group ObjectId"
                                     }
                                 }
                             }
@@ -1433,7 +1600,41 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        },
+                                        "example": [{"key": "en", "value": "Email Verification"}]
+                                    },
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        },
+                                        "example": [{"key": "en", "value": "Verify email address"}]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": "Setting_Status ObjectId",
+                                        "example": "689c04cb255db4e56aea88ef"
+                                    },
+                                    "group": {
+                                        "type": "string",
+                                        "description": "Setting_Group ObjectId",
+                                        "example": "689c04cb255db4e56aea88ef"
+                                    }
+                                }
                             }
                         }
                     }
@@ -1460,7 +1661,36 @@
                                 ],
                                 "properties": {
                                     "_id": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Verification ID"
+                                    },
+                                    "title": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        }
+                                    },
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        }
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": "Setting_Status ObjectId"
+                                    },
+                                    "group": {
+                                        "type": "string",
+                                        "description": "Setting_Group ObjectId"
                                     }
                                 }
                             }
@@ -1514,7 +1744,37 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        }
+                                    },
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {"type": "string"},
+                                                "value": {"type": "string"}
+                                            }
+                                        }
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": "Setting_Status ObjectId"
+                                    },
+                                    "group": {
+                                        "type": "string",
+                                        "description": "Setting_Group ObjectId"
+                                    }
+                                }
                             }
                         }
                     }
@@ -1522,528 +1782,6 @@
                 "responses": {
                     "201": {
                         "description": "Created"
-                    }
-                }
-            }
-        },
-        "/role": {
-            "get": {
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Get all roles",
-                "description": "Retrieve a list of all roles",
-                "responses": {
-                    "200": {
-                        "description": "Success",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "data": [
-                                        {
-                                            "_id": "693454ebdd1b76f3b7416c6b",
-                                            "name": "ADMIN",
-                                            "description": "Administrator role",
-                                            "permissions": [
-                                                "VIEW_USERS",
-                                                "DELETE_USER",
-                                                "VIEW_FORMS",
-                                                "CREATE_FORM",
-                                                "UPDATE_FORM",
-                                                "DELETE_FORM",
-                                                "VIEW_RESPONSES",
-                                                "SUBMIT_RESPONSES",
-                                                "EXPORT_RESPONSES"
-                                            ],
-                                            "createdAt": "2025-12-06T15:00:00.000Z",
-                                            "updatedAt": "2025-12-06T15:00:00.000Z"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Server error"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Create a new role",
-                "description": "Create a new role with permissions",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "description": "Role name (will be converted to uppercase)"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "description": "Role description"
-                                    },
-                                    "permissions": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "description": "Array of permission strings"
-                                    }
-                                },
-                                "required": [
-                                    "name"
-                                ]
-                            },
-                            "example": {
-                                "name": "MANAGER",
-                                "description": "Manager role with limited permissions",
-                                "permissions": [
-                                    "manage_forms",
-                                    "view_all_data"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Role created successfully"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Update role",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Role ID"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "description": {
-                                        "type": "string"
-                                    },
-                                    "permissions": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "example": {
-                                "name": "ADMIN",
-                                "description": "Updated administrator role",
-                                "permissions": [
-                                    "manage_users",
-                                    "manage_roles",
-                                    "manage_forms",
-                                    "manage_responses"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Role updated successfully"
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Delete role",
-                "description": "Delete a role by ID",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "_id": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "_id"
-                                ]
-                            },
-                            "example": {
-                                "_id": "693454ebdd1b76f3b7416c6b"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Role deleted successfully"
-                    }
-                }
-            }
-        },
-        "/role/id": {
-            "get": {
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Get role by ID",
-                "description": "Retrieve a specific role by ID",
-                "parameters": [
-                    {
-                        "name": "_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Role ID"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            }
-        },
-        "/role/id/permissions": {
-            "put": {
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Set role permissions",
-                "parameters": [
-                    {
-                        "name": "_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Role ID"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "permissions": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "required": [
-                                    "permissions"
-                                ]
-                            },
-                            "example": {
-                                "permissions": [
-                                    "manage_users",
-                                    "manage_forms",
-                                    "view_all_data"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Permissions updated successfully"
-                    }
-                }
-            }
-        },
-        "/role/id/permissions/add": {
-            "post": {
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Add permission to role",
-                "parameters": [
-                    {
-                        "name": "_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Role ID"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "permission": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "permission"
-                                ]
-                            },
-                            "example": {
-                                "permission": "EXPORT_RESPONSES"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Permission added successfully"
-                    }
-                }
-            }
-        },
-        "/role/id/permissions/remove": {
-            "post": {
-                "tags": [
-                    "Role"
-                ],
-                "summary": "Remove permission from role",
-                "parameters": [
-                    {
-                        "name": "_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Role ID"
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "permission": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "permission"
-                                ]
-                            },
-                            "example": {
-                                "permission": "VIEW_USERS"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Permission removed successfully"
-                    }
-                }
-            }
-        },
-        "/user": {
-            "get": {
-                "tags": [
-                    "User"
-                ],
-                "summary": "Get all users",
-                "description": "Retrieve a list of all users",
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "User"
-                ],
-                "summary": "Create a new user",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email"
-                                    },
-                                    "password": {
-                                        "type": "string"
-                                    },
-                                    "roles": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "description": "Array of role IDs"
-                                    }
-                                },
-                                "required": [
-                                    "name",
-                                    "email",
-                                    "password"
-                                ]
-                            },
-                            "example": {
-                                "name": "John Doe",
-                                "email": "john@example.com",
-                                "password": "securePassword123",
-                                "roles": [
-                                    "693454ebdd1b76f3b7416c6b"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Created"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "User"
-                ],
-                "summary": "Update user",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "_id": {
-                                        "type": "string"
-                                    },
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "email": {
-                                        "type": "string"
-                                    },
-                                    "roles": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "required": [
-                                    "_id"
-                                ]
-                            },
-                            "example": {
-                                "_id": "6934507ff4bd1edba77c6cad",
-                                "name": "Jane Smith",
-                                "email": "jane@example.com",
-                                "roles": [
-                                    "693454ebdd1b76f3b7416c6b"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Updated"
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "User"
-                ],
-                "summary": "Delete user",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "_id": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "_id"
-                                ]
-                            },
-                            "example": {
-                                "_id": "6934507ff4bd1edba77c6cad"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Deleted"
-                    }
-                }
-            }
-        },
-        "/user/id": {
-            "get": {
-                "tags": [
-                    "User"
-                ],
-                "summary": "Get user by ID",
-                "description": "Retrieve a specific user by ID",
-                "parameters": [
-                    {
-                        "name": "_id",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "User ID"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
                     }
                 }
             }
