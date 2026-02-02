@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
-    form: [{ type: Schema.Types.ObjectId, ref: 'Forms', required: true }],
+    form: { type: Schema.Types.ObjectId, ref: 'Forms', required: true },
     order: { type: Number, default: 1 },
     title: [
         {
@@ -21,11 +21,19 @@ var objSchema = new Schema({
                 value: { type: String, default: null }
             }
         ],
-        allowMultiple: { type: Boolean, default: false },
-        maxRate: { type: Number, default: 5 },
-        maxText: { type: Number, default: 300 },
+        allowMultipleSelect: { type: Boolean, default: false },
+        maxRate: { type: Number, default: null },
+        maxText: { type: Number, default: null },
     },
     required: { type: Boolean, default: false },
+    answers: [
+        {
+            id: false,
+            respondent: { type: mongoose.Schema.Types.ObjectId, ref: 'Users', required: true },
+            answer: { type: Schema.Types.Mixed, required: true },
+            datetime: { type: Date, default: Date.now }
+        }
+    ]
 }, { timestamps: true });
 
 // Auto-update Form's questions array when a new Question is created
