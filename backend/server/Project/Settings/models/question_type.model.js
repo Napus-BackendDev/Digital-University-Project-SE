@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objsSchema = new Schema({
-    type: { type: String, default: null },
+    type: { type: String, required: true },
     create: {
         by: { type: mongoose.Schema.Types.ObjectId, ref: 'Information_Accounts' },
         datetime: { type: Date, default: Date.now }

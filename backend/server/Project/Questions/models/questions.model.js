@@ -17,13 +17,13 @@ var objSchema = new Schema({
     config: {
         options: [
             {
-                key: { type: String, required: true },
-                value: { type: String, required: true }
+                key: { type: String, default: null },
+                value: { type: String, default: null }
             }
         ],
-        allowMultiple: { type: Boolean, required: true },
-        maxRate: { type: Number, required: true },
-        maxText: { type: Number, required: true }
+        allowMultiple: { type: Boolean, default: false },
+        maxRate: { type: Number, default: 5 },
+        maxText: { type: Number, default: 300 },
     },
     required: { type: Boolean, default: false },
 }, { timestamps: true });
