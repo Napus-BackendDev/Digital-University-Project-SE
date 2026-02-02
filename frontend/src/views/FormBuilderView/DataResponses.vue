@@ -1,51 +1,34 @@
 <template>
   <div class="data-responses">
     <ResponsesTab
-      :questions="questions"
-      :totalResponses="totalResponses"
-      :responses="responses"
-      :viewMode="viewMode"
-      @update:viewMode="$emit('update:viewMode', $event)"
-      @export="$emit('export', $event)"
+      :questions="questionsForResponses"
+      :totalResponses="responsesStore.totalResponses"
+      :responses="responsesStore.responses"
+      :viewMode="responsesStore.viewMode"
+      @update:viewMode="responsesStore.setViewMode"
+      @export="responsesStore.exportResponses"
     />
   </div>
 </template>
 
-<script>
+<script setup>
 /**
  * DataResponses - Component สำหรับแสดงข้อมูล Responses
- * แยกออกมาจาก FormBuilderView เพื่อให้ maintain ง่ายขึ้น
+ * ใช้ Pinia Store (dataResponses) จัดการ state
  */
+import { computed } from 'vue'
+import { useFormBuilderStore } from '@/stores/formBuilder'
+import { useDataResponsesStore } from '@/stores/dataResponses'
 import ResponsesTab from '@/components/tabs/ResponsesTab.vue'
 
-export default {
-  name: 'DataResponses',
+const formStore = useFormBuilderStore()
+const responsesStore = useDataResponsesStore()
 
-  components: {
-    ResponsesTab
-  },
-
-  props: {
-    questions: {
-      type: Array,
-      required: true
-    },
-    totalResponses: {
-      type: Number,
-      default: 0
-    },
-    responses: {
-      type: Array,
-      default: () => []
-    },
-    viewMode: {
-      type: String,
-      default: 'summary'
-    }
-  },
-
-  emits: ['update:viewMode', 'export']
-}
+// Get questions for responses from formBuilder store
+const questionsForResponses = computed(() => {
+  const excludedTypes = ['title-description', 'image', 'video', 'section-divider']
+  return formStore.questions.filter(q => !excludedTypes.includes(q.type))
+})
 </script>
 
 <style scoped>

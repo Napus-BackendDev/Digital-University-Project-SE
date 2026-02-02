@@ -216,7 +216,13 @@ const previousPage = () => {
 const handleCreateForm = async () => {
   // สร้างฟอร์มใหม่ แล้วไปหน้าแก้ไขฟอร์ม
   try {
-    const response = await formAPI.create({})
+    const newFormData = {
+      title: [{ key: 'en', value: 'Untitled Form' }],
+      description: [{ key: 'en', value: '' }],
+      status: 'draft',
+      questions: []
+    }
+    const response = await formAPI.create(newFormData)
     // axios response: { data: { code, message, data: {...form} } }
     // ดึง _id จาก response.data.data._id หรือ response.data._id (กรณี backend ส่งตรง)
     const formId = response?.data?.data?._id || response?.data?._id || response?.data?.data?.id || response?.data?.id
