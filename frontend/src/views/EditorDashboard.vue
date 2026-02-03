@@ -3,28 +3,19 @@
     <!-- Form List Page -->
     <main class="form-list-page-main">
       <!-- Page Header -->
-      <PageHeader 
-        title="My Forms" 
-        subtitle="Create and manage your forms" 
-      />
+      <PageHeader title="My Forms" subtitle="Create and manage your forms" />
 
       <!-- Toolbar -->
       <div class="toolbar-container">
         <!-- Search Input -->
         <div class="editor-search-wrapper">
-          <SearchBar 
-            v-model="searchQuery"
-            placeholder="Search forms..."
-          />
+          <SearchBar v-model="searchQuery" placeholder="Search forms..." />
         </div>
 
         <!-- Right Actions -->
         <div class="toolbar-right">
           <!-- Filter Dropdown -->
-          <FilterDropdown 
-            v-model="statusFilter"
-            :options="filterOptions"
-          />
+          <FilterDropdown v-model="statusFilter" :options="filterOptions" />
 
           <!-- Create Form Button -->
           <div class="create-link" @click="handleCreateForm">
@@ -35,22 +26,16 @@
       </div>
 
       <!-- Table Container -->
-      <FormTable
-        :forms="paginatedForms"
-        :loading="loading"
-        :error="error"
+      <FormTable :forms="paginatedForms" :loading="loading" :error="error"
         :empty-message="searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Create your first form to get started'"
-        @form-click="handleEdit"
-        @toggle-dropdown="toggleActionsDropdown"
-        @retry="fetchForms"
-      >
+        @form-click="handleEdit" @toggle-dropdown="toggleActionsDropdown" @retry="fetchForms">
         <template #actions="{ form }">
           <div class="actions-buttons" ref="actionsRef">
             <div class="action-more-wrapper">
               <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
                 <i class="pi pi-ellipsis-v"></i>
               </button>
-              
+
               <div v-if="showActionsDropdown === form.id" class="actions-dropdown-menu">
                 <button class="action-dropdown-item" @click.stop="handleEdit(form.id)">
                   <i class="pi pi-file-edit"></i>
@@ -76,227 +61,250 @@
       </FormTable>
 
       <!-- Pagination -->
-      <Pagination
-        :current-page="currentPage"
-        :total-pages="totalPages"
-        @prev="previousPage"
-        @next="nextPage"
-        @goto="goToPage"
-      />
+      <Pagination :current-page="currentPage" :total-pages="totalPages" @prev="previousPage" @next="nextPage"
+        @goto="goToPage" />
     </main>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { formAPI } from '@/services/api'
-import { formatDateShort } from '@/utils/formatters'
+<script>
 import FormTable from '@/components/FormTable.vue'
 import Pagination from '@/components/Pagination.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import FilterDropdown from '@/components/FilterDropdown.vue'
 import PageHeader from '@/components/PageHeader.vue'
 
-const router = useRouter()
-const searchQuery = ref('')
-const statusFilter = ref('all')
-const showActionsDropdown = ref(null)
-const actionsRef = ref(null)
-const forms = ref([])
-const loading = ref(false)
-const error = ref(null)
-const currentPage = ref(1)
-const itemsPerPage = ref(7)
+export default {
+  name: 'EditorDashboard',
+  components: {
+    FormTable,
+    Pagination,
+    SearchBar,
+    FilterDropdown,
+    PageHeader
+  },
+  data() {
+    return {
+      searchQuery: '',
+      statusFilter: 'all',
+      showActionsDropdown: null,
+      actionsRef: null,
+      forms: [],
+      loading: false,
+      error: null,
+      currentPage: 1,
+      itemsPerPage: 7,
+      filterOptions: [
+        { value: 'all', label: 'All Status' },
+        { value: 'open', label: 'Open' },
+        { value: 'draft', label: 'Draft' },
+        { value: 'closed', label: 'Closed' }
+      ]
+    }
+  },
 
-const filterOptions = [
-  { value: 'all', label: 'All Status' },
-  { value: 'open', label: 'Open' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'closed', label: 'Closed' }
-]
+  mounted() {
+    this.fetchForms()
+  },
 
-// Get title from multilingual array
-const getTitle = (titleArray) => {
-  if (!Array.isArray(titleArray) || titleArray.length === 0) return ''
-  
-  // Try English first, then Thai, then first available
-  const enTitle = titleArray.find(t => t.key === 'en')?.value
-  const thTitle = titleArray.find(t => t.key === 'th')?.value
-  const firstTitle = titleArray[0]?.value || titleArray[0]?.text
-  
-  return enTitle || thTitle || firstTitle || ''
-}
+  created() {
+    this.onInit();
+  },
 
-// Fetch forms from API
-const fetchForms = async () => {
-  loading.value = true
-  error.value = null
-  try {
-    const response = await formAPI.getAll()
-    
-    // Handle different API response structures
-    const formData = Array.isArray(response.data) 
-      ? response.data 
-      : (response.data.data || response.data.datas || [])
-    
-    // Transform API data to match component structure
-    forms.value = formData.map(form => ({
-      id: form._id,
-      title: getTitle(form.title) || 'Untitled Form',
-      description: getTitle(form.description) || 'No description',
-      status: form.status || 'draft',
-      responses: form.responseCount || 0,
-      createdDate: formatDateShort(form.updatedAt || form.createdAt)
-    }))
-    
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load forms'
-    console.error('Error fetching forms:', err)
-  } finally {
-    loading.value = false
-  }
-}
+  beforeDestroy() {
 
-const filteredForms = computed(() => {
-  let filtered = forms.value
+  },
 
-  // Filter by status
-  if (statusFilter.value !== 'all') {
-    filtered = filtered.filter(form => {
-      // Handle 'closed' filter matching 'close' status from API
-      if (statusFilter.value === 'closed') {
-        return form.status === 'close' || form.status === 'closed'
+  methods: {
+    onInit() {
+      // Logic from Setup that needs to run on init?
+      // fetchForms is called in mounted, matching original code.
+    },
+
+    // Get title from multilingual array
+    getTitle(titleArray) {
+      if (!Array.isArray(titleArray) || titleArray.length === 0) return ''
+
+      // Try English first, then Thai, then first available
+      const enTitle = titleArray.find(t => t.key === 'en')?.value
+      const thTitle = titleArray.find(t => t.key === 'th')?.value
+      const firstTitle = titleArray[0]?.value || titleArray[0]?.text
+
+      return enTitle || thTitle || firstTitle || ''
+    },
+
+    // Fetch forms from API
+    async fetchForms() {
+      this.loading = true
+      this.error = null
+      try {
+
+
+        // Handle different API response structures
+        const formData = Array.isArray(response.data)
+          ? response.data
+          : (response.data.data || response.data.datas || [])
+
+        // Transform API data to match component structure
+        this.forms = formData.map(form => ({
+          id: form._id,
+          title: this.getTitle(form.title) || 'Untitled Form',
+          description: this.getTitle(form.description) || 'No description',
+          status: form.status || 'draft',
+          responses: form.responseCount || 0,
+          createdDate: formatDateShort(form.updatedAt || form.createdAt)
+        }))
+
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to load forms'
+        console.error('Error fetching forms:', err)
+      } finally {
+        this.loading = false
       }
-      return form.status === statusFilter.value
-    })
-  }
+    },
 
-  // Filter by search query
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(form =>
-      form.title.toLowerCase().includes(query) ||
-      form.description.toLowerCase().includes(query)
-    )
-  }
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page
+      }
+    },
 
-  return filtered
-})
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++
+      }
+    },
 
-const totalPages = computed(() => {
-  const pages = Math.ceil(filteredForms.value.length / itemsPerPage.value)
-  return pages
-})
+    previousPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--
+      }
+    },
 
-const paginatedForms = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredForms.value.slice(start, end)
-})
+    async handleCreateForm() {
+      // สร้างฟอร์มใหม่ แล้วไปหน้าแก้ไขฟอร์ม
+      try {
+        const newFormData = {
+          title: [{ key: 'en', value: 'Untitled Form' }],
+          description: [{ key: 'en', value: '' }],
+          status: 'draft',
+          questions: []
+        }
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
-}
+        // axios response: { data: { code, message, data: {...form} } }
+        // ดึง _id จาก response.data.data._id หรือ response.data._id (กรณี backend ส่งตรง)
+        const formId = response?.data?.data?._id || response?.data?._id || response?.data?.data?.id || response?.data?.id
+        if (formId) {
+          this.$router.push(`/form-builder/${formId}`)
+        } else {
+          console.error('Create form response:', response?.data)
+          this.error = 'Create form failed: No ID returned'
+        }
+      } catch (err) {
+        console.error('Create form error:', err)
+        this.error = 'Create form failed: ' + (err.message || err)
+      }
+    },
 
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
+    handleLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        // TODO: Clear authentication tokens
+        this.$router.push('/')
+      }
+    },
 
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
+    handleEdit(formId) {
+      this.showActionsDropdown = null
+      this.$router.push(`/form-builder/${formId}`)
+    },
 
-const handleCreateForm = async () => {
-  // สร้างฟอร์มใหม่ แล้วไปหน้าแก้ไขฟอร์ม
-  try {
-    const newFormData = {
-      title: [{ key: 'en', value: 'Untitled Form' }],
-      description: [{ key: 'en', value: '' }],
-      status: 'draft',
-      questions: []
+    handlePreview(formId) {
+      this.showActionsDropdown = null
+      this.$router.push(`/form/${formId}/preview`)
+    },
+
+    async handleDuplicate(formId) {
+      this.showActionsDropdown = null
+
+      try {
+        this.loading = true
+
+        // Refresh the forms list to show the duplicated form
+        await this.fetchForms()
+      } catch (err) {
+        console.error('Error duplicating form:', err)
+        this.error = err.response?.data?.message || 'Failed to duplicate form. Please try again.'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    handleMore(formId) {
+      // More options handler
+    },
+
+    toggleActionsDropdown(formId) {
+      this.showActionsDropdown = this.showActionsDropdown === formId ? null : formId
+    },
+
+    async handleDelete(formId) {
+      this.showActionsDropdown = null
+      if (!confirm('Are you sure you want to delete this form?')) {
+        return
+      }
+      try {
+
+        await this.fetchForms()
+      } catch (err) {
+        console.error('Error deleting form:', err)
+        this.error = err.response?.data?.message || err.message || 'Failed to delete form. Please try again.'
+      }
     }
-    const response = await formAPI.create(newFormData)
-    // axios response: { data: { code, message, data: {...form} } }
-    // ดึง _id จาก response.data.data._id หรือ response.data._id (กรณี backend ส่งตรง)
-    const formId = response?.data?.data?._id || response?.data?._id || response?.data?.data?.id || response?.data?.id
-    if (formId) {
-      router.push(`/form-builder/${formId}`)
-    } else {
-      console.error('Create form response:', response?.data)
-      error.value = 'Create form failed: No ID returned'
+  },
+
+  computed: {
+    filteredForms() {
+      let filtered = this.forms
+
+      // Filter by status
+      if (this.statusFilter !== 'all') {
+        filtered = filtered.filter(form => {
+          // Handle 'closed' filter matching 'close' status from API
+          if (this.statusFilter === 'closed') {
+            return form.status === 'close' || form.status === 'closed'
+          }
+          return form.status === this.statusFilter
+        })
+      }
+
+      // Filter by search query
+      if (this.searchQuery.trim()) {
+        const query = this.searchQuery.toLowerCase()
+        filtered = filtered.filter(form =>
+          form.title.toLowerCase().includes(query) ||
+          form.description.toLowerCase().includes(query)
+        )
+      }
+
+      return filtered
+    },
+
+    totalPages() {
+      const pages = Math.ceil(this.filteredForms.length / this.itemsPerPage)
+      return pages
+    },
+
+    paginatedForms() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return this.filteredForms.slice(start, end)
     }
-  } catch (err) {
-    console.error('Create form error:', err)
-    error.value = 'Create form failed: ' + (err.message || err)
+  },
+
+  watch: {
+
   }
 }
-
-const handleLogout = () => {
-  if (confirm('Are you sure you want to logout?')) {
-    // TODO: Clear authentication tokens
-    router.push('/')
-  }
-}
-
-const handleEdit = (formId) => {
-  showActionsDropdown.value = null
-  router.push(`/form-builder/${formId}`)
-}
-
-const handlePreview = (formId) => {
-  showActionsDropdown.value = null
-  router.push(`/form/${formId}/preview`)
-}
-
-const handleDuplicate = async (formId) => {
-  showActionsDropdown.value = null
-  
-  try {
-    loading.value = true
-    const result = await formAPI.duplicate(formId)
-    // Refresh the forms list to show the duplicated form
-    await fetchForms()
-  } catch (err) {
-    console.error('Error duplicating form:', err)
-    error.value = err.response?.data?.message || 'Failed to duplicate form. Please try again.'
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleMore = (formId) => {
-  // More options handler
-}
-
-const toggleActionsDropdown = (formId) => {
-  showActionsDropdown.value = showActionsDropdown.value === formId ? null : formId
-}
-
-const handleDelete = async (formId) => {
-  showActionsDropdown.value = null
-  if (!confirm('Are you sure you want to delete this form?')) {
-    return
-  }
-  try {
-    await formAPI.delete(formId)
-    await fetchForms()
-  } catch (err) {
-    console.error('Error deleting form:', err)
-    error.value = err.response?.data?.message || err.message || 'Failed to delete form. Please try again.'
-  }
-}
-
-onMounted(() => {
-  // Fetch forms when component is mounted
-  fetchForms()
-})
 </script>
 
 <style scoped>

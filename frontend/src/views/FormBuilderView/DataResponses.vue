@@ -17,8 +17,7 @@
  * ใช้ Pinia Store (dataResponses) จัดการ state
  */
 import { computed } from 'vue'
-import { useFormBuilderStore } from '@/stores/formBuilder'
-import { useDataResponsesStore } from '@/stores/dataResponses'
+
 import ResponsesTab from '@/components/tabs/ResponsesTab.vue'
 
 const formStore = useFormBuilderStore()

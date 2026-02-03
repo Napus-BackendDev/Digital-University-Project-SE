@@ -11,12 +11,7 @@
 </template>
 
 <script setup>
-/**
- * Setting - Component สำหรับตั้งค่าฟอร์ม
- * ใช้ Pinia Store (setting) จัดการ state
- */
-import { useFormBuilderStore } from '@/stores/formBuilder'
-import { useSettingStore } from '@/stores/setting'
+
 import SettingsTab from '@/components/tabs/SettingsTab.vue'
 
 const formStore = useFormBuilderStore()

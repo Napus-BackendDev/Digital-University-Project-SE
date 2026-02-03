@@ -1,6 +1,47 @@
-<script setup>
+<script>
 import LeftSection from '@/components/Login/LeftSection.vue'
 import RightSection from '@/components/Login/RightSection.vue'
+
+export default {
+  name: 'LoginView',
+  components: {
+    LeftSection,
+    RightSection
+  },
+  data() {
+    return {
+
+    }
+  },
+
+  mounted() {
+
+  },
+
+  created() {
+    this.onInit();
+  },
+
+  beforeDestroy() {
+
+  },
+
+  methods: {
+    onInit() {
+
+    },
+
+
+  },
+
+  computed: {
+
+  },
+
+  watch: {
+
+  }
+}
 </script>
 
 <template>
@@ -14,7 +55,8 @@ import RightSection from '@/components/Login/RightSection.vue'
 .login-container {
   display: flex;
   min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  min-height: 100dvh;
+  /* Dynamic viewport height for mobile */
   width: 100%;
   overflow-x: hidden;
 }
@@ -32,7 +74,7 @@ import RightSection from '@/components/Login/RightSection.vue'
     flex-direction: column;
   }
 
-  .login-container > :nth-child(2) {
+  .login-container> :nth-child(2) {
     order: -1;
   }
 }
@@ -40,7 +82,8 @@ import RightSection from '@/components/Login/RightSection.vue'
 /* Very small screens */
 @media (max-width: 480px) {
   .login-container {
-    min-height: 100svh; /* Small viewport height */
+    min-height: 100svh;
+    /* Small viewport height */
   }
 }
 </style>

@@ -1,28 +1,17 @@
-/**
- * Main Entry Point
- * จุดเริ่มต้นของแอป Vue
- */
-
-// Import global styles
 import './assets/main.css'
-import 'primeicons/primeicons.css'
-
-// Vue และ plugins
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-
-// App และ Router
 import App from './App.vue'
 import router from './router'
+import store from './stores/store'
+import moment from 'moment'
+import 'primeicons/primeicons.css'
 
-// สร้าง Vue app
 const app = createApp(App)
 
-// เพิ่ม Pinia (state management)
-app.use(createPinia())
+// global moment (แทน Vue.prototype)
+app.config.globalProperties.$moment = moment
 
-// เพิ่ม Router
 app.use(router)
+app.use(store)
 
-// Mount app ไปที่ #app ใน index.html
 app.mount('#app')

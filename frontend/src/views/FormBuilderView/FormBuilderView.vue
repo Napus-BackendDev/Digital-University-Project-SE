@@ -12,12 +12,8 @@
     <div class="form-content">
       <!-- Tabs -->
       <div class="tabs">
-        <button
-          v-for="tab in store.tabs"
-          :key="tab.id"
-          :class="['tab-btn', { active: store.activeTab === tab.id }]"
-          @click="store.setActiveTab(tab.id)"
-        >
+        <button v-for="tab in store.tabs" :key="tab.id" :class="['tab-btn', { active: store.activeTab === tab.id }]"
+          @click="store.setActiveTab(tab.id)">
           <QuestionsIcon v-if="tab.icon === 'questions'" />
           <ResponsesIcon v-else-if="tab.icon === 'responses'" />
           <SettingsIcon v-else-if="tab.icon === 'settings'" />
@@ -26,27 +22,14 @@
       </div>
 
       <!-- Questions Tab -->
-      <QuestionsTab
-        v-if="store.activeTab === 'questions'"
-        :questions="store.questions"
-        :formTitle="store.formTitle"
-        :formDescription="store.formDescription"
-        :formUrl="store.formUrl"
-        :formStatus="settingStore.settings.formStatus"
-        :expandedQuestionId="store.expandedQuestionId"
-        @update:questions="handleQuestionsUpdate"
-        @update:formTitle="store.setFormTitle"
-        @update:formDescription="store.setFormDescription"
-        @copy-url="store.copyFormUrl"
-        @test-form="store.openPreview"
-        @add-question="store.addQuestion"
-        @update-question="store.updateQuestion"
-        @delete-question="store.deleteQuestion"
-        @add-option="store.addOption"
-        @remove-option="handleRemoveOption"
-        @toggle-question="store.toggleQuestion"
-        @reorder-questions="handleReorder"
-      />
+      <QuestionsTab v-if="store.activeTab === 'questions'" :questions="store.questions" :formTitle="store.formTitle"
+        :formDescription="store.formDescription" :formUrl="store.formUrl" :formStatus="settingStore.settings.formStatus"
+        :expandedQuestionId="store.expandedQuestionId" @update:questions="handleQuestionsUpdate"
+        @update:formTitle="store.setFormTitle" @update:formDescription="store.setFormDescription"
+        @copy-url="store.copyFormUrl" @test-form="store.openPreview" @add-question="store.addQuestion"
+        @update-question="store.updateQuestion" @delete-question="store.deleteQuestion" @add-option="store.addOption"
+        @remove-option="handleRemoveOption" @toggle-question="store.toggleQuestion"
+        @reorder-questions="handleReorder" />
 
       <!-- Responses Tab -->
       <DataResponses v-else-if="store.activeTab === 'responses'" />
@@ -56,26 +39,12 @@
     </div>
 
     <!-- Modal -->
-    <Modal
-      :show="store.modal.visible"
-      :type="store.modal.type"
-      :title="store.modal.title"
-      :message="store.modal.message"
-      @close="store.closeModal"
-    />
+    <Modal :show="store.modal.visible" :type="store.modal.type" :title="store.modal.title"
+      :message="store.modal.message" @close="store.closeModal" />
   </div>
 </template>
 
-<script setup>
-/**
- * FormBuilderView - หน้าสร้างและแก้ไขฟอร์ม
- * ใช้ Pinia Store (formBuilder) จัดการ state ทั้งหมด
- * แบ่งเป็น 3 tabs: Questions, Responses, Settings
- */
-import { onMounted, onBeforeUnmount, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { useFormBuilderStore } from '@/stores/formBuilder'
-import { useSettingStore } from '@/stores/setting'
+<script>
 
 // Icons
 import { ArrowLeftIcon, QuestionsIcon, ResponsesIcon, SettingsIcon } from '@/components/icons'
@@ -90,96 +59,104 @@ import Setting from './Setting.vue'
 // Modal
 import Modal from '@/components/Modal.vue'
 
-// Store & Route
-const store = useFormBuilderStore()
-const settingStore = useSettingStore()
-const route = useRoute()
+export default {
+  name: 'FormBuilderView',
+  components: {
+    ArrowLeftIcon,
+    QuestionsIcon,
+    ResponsesIcon,
+    SettingsIcon,
+    QuestionsTab,
+    DataResponses,
+    Setting,
+    Modal
+  },
+  data() {
+    return {
+      saveTimeout: null
+    }
+  },
+  computed: {
+    store() {
+      return useFormBuilderStore()
+    },
+    settingStore() {
+      return useSettingStore()
+    },
+    isDirty() {
+      return this.store.isDirty
+    }
+  },
+  watch: {
+    isDirty(newVal) {
+      if (newVal) {
+        this.triggerAutoSave()
+      }
+    }
+  },
+  created() {
+    this.onInit()
+  },
+  mounted() {
+    // Moved logic to onInit to follow template pattern, but route params access typically happens here or created.
+    // However, onMounted is async in original code.
+  },
+  beforeDestroy() { // equivalent to onBeforeUnmount in Vue 2 or comp API, user requested beforeDestroy in template
+    window.removeEventListener('beforeunload', this.handleBeforeUnload)
+    if (this.saveTimeout) clearTimeout(this.saveTimeout)
 
-// Auto-save variables
-let saveTimeout = null
+    // Save before leaving
+    if (this.store.hasPendingChanges) {
+      this.store.saveForm()
+    }
+  },
+  methods: {
+    async onInit() {
+      const formId = this.$route.params.id
 
-/* ===================================
-   Lifecycle Hooks
-   =================================== */
+      // Restore active tab from localStorage or query
+      const savedTab = this.$route.query.tab || localStorage.getItem(`formBuilder_${formId}_activeTab`)
+      if (savedTab) {
+        this.store.setActiveTab(savedTab)
+      }
 
-onMounted(async () => {
-  const formId = route.params.id
-  
-  // Restore active tab from localStorage or query
-  const savedTab = route.query.tab || localStorage.getItem(`formBuilder_${formId}_activeTab`)
-  if (savedTab) {
-    store.setActiveTab(savedTab)
+      // Load form data
+      if (formId) {
+        await this.store.loadForm(formId)
+      }
+
+      // Add beforeunload listener
+      window.addEventListener('beforeunload', this.handleBeforeUnload)
+    },
+
+    handleQuestionsUpdate(newQuestions) {
+      this.store.reorderQuestions(newQuestions)
+    },
+
+    handleRemoveOption(question, optionId) {
+      this.store.removeOption(question, optionId)
+    },
+
+    handleReorder() {
+      this.store.markDirty()
+    },
+
+    handleBeforeUnload(e) {
+      if (this.store.hasPendingChanges) {
+        this.store.saveForm()
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    },
+
+    triggerAutoSave(delay = 500) {
+      if (this.saveTimeout) clearTimeout(this.saveTimeout)
+      this.saveTimeout = setTimeout(async () => {
+        await this.store.saveForm()
+      }, delay)
+    }
   }
-  
-  // Load form data
-  if (formId) {
-    await store.loadForm(formId)
-  }
-  
-  // Add beforeunload listener
-  window.addEventListener('beforeunload', handleBeforeUnload)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('beforeunload', handleBeforeUnload)
-  if (saveTimeout) clearTimeout(saveTimeout)
-  
-  // Save before leaving
-  if (store.hasPendingChanges) {
-    store.saveForm()
-  }
-})
-
-/* ===================================
-   Watchers
-   =================================== */
-
-// Watch for dirty state and trigger auto-save
-watch(() => store.isDirty, (isDirty) => {
-  if (isDirty) {
-    triggerAutoSave()
-  }
-})
-
-/* ===================================
-   Event Handlers
-   =================================== */
-
-function handleQuestionsUpdate(newQuestions) {
-  store.reorderQuestions(newQuestions)
 }
-
-function handleRemoveOption(question, optionId) {
-  store.removeOption(question, optionId)
-}
-
-function handleReorder() {
-  store.markDirty()
-}
-
-function handleBeforeUnload(e) {
-  if (store.hasPendingChanges) {
-    store.saveForm()
-    e.preventDefault()
-    e.returnValue = ''
-  }
-}
-
-/* ===================================
-   Auto-save Functions
-   =================================== */
-
-function triggerAutoSave(delay = 500) {
-  if (saveTimeout) clearTimeout(saveTimeout)
-  saveTimeout = setTimeout(async () => {
-    await store.saveForm()
-  }, delay)
-}
-
-/* ===================================
-   Navigation Guard (Composition API style)
-   =================================== */
-// Note: For beforeRouteLeave, use in-component guard or router.beforeEach
 </script>
 
 <style scoped>

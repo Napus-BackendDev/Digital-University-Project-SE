@@ -3,35 +3,23 @@
     <!-- Form List Page -->
     <main class="form-list-page">
       <!-- Page Header -->
-      <PageHeader 
-        title="Available Forms" 
-        subtitle="Fill out forms and submit responses" 
-      />
+      <PageHeader title="Available Forms" subtitle="Fill out forms and submit responses" />
 
       <!-- Search Bar -->
       <div class="search-container">
-        <SearchBar 
-          v-model="searchQuery"
-          placeholder="Search forms..."
-        />
+        <SearchBar v-model="searchQuery" placeholder="Search forms..." />
       </div>
 
       <!-- Table Container -->
-      <FormTableUser
-        :forms="paginatedForms"
-        :loading="loading"
-        :error="error"
+      <FormTableUser :forms="paginatedForms" :loading="loading" :error="error"
         :empty-message="searchQuery ? 'Try adjusting your search' : 'No forms available at the moment'"
-        @form-click="handleFillForm"
-        @toggle-dropdown="toggleActionsDropdown"
-        @retry="fetchForms"
-      >
+        @form-click="handleFillForm" @toggle-dropdown="toggleActionsDropdown" @retry="fetchForms">
         <template #actions="{ form }">
           <div class="actions-buttons">
             <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
               <i class="pi pi-ellipsis-v"></i>
             </button>
-            
+
             <!-- Actions Dropdown -->
             <div v-if="activeDropdown === form.id" class="actions-dropdown">
               <button class="dropdown-item" @click.stop="handleFillForm(form.id)">
@@ -44,143 +32,133 @@
       </FormTableUser>
 
       <!-- Pagination -->
-      <Pagination
-        :current-page="currentPage"
-        :total-pages="totalPages"
-        @prev="previousPage"
-        @next="nextPage"
-        @goto="goToPage"
-      />
+      <Pagination :current-page="currentPage" :total-pages="totalPages" @prev="previousPage" @next="nextPage"
+        @goto="goToPage" />
     </main>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+<script>
 import FormTableUser from '@/components/FormTableUser.vue';
 import Pagination from '@/components/Pagination.vue';
 import SearchBar from '@/components/SearchBar.vue';
 import PageHeader from '@/components/PageHeader.vue';
-import { formAPI } from '@/services/api';
-import { formatDateShort } from '@/utils/formatters';
+import { mapGetters } from 'vuex';
 
-const router = useRouter();
+export default {
+  name: 'dashboard',
+  components: {
+    FormTableUser,
+    Pagination,
+    SearchBar,
+    PageHeader
+  },
+  data() {
+    return {
+      searchQuery: '',
+      loading: false,
+      error: null,
+      activeDropdown: null,
+      currentPage: 1,
+      itemsPerPage: 6,
+      formsData: []
+    }
+  },
 
-const searchQuery = ref('');
-const loading = ref(false);
-const error = ref(null);
-const activeDropdown = ref(null);
-const currentPage = ref(1);
-const itemsPerPage = 6;
+  mounted() {
 
-// Forms data from API
-const formsData = ref([]);
+  },
 
-// Helper function to extract title from array structure
-const getTitle = (titleArray) => {
-  if (!titleArray) return ''
-  if (typeof titleArray === 'string') return titleArray
-  if (!Array.isArray(titleArray)) return ''
-  
-  // Try English first, then Thai, then first available
-  const enTitle = titleArray.find(t => t.key === 'en')?.value
-  const thTitle = titleArray.find(t => t.key === 'th')?.value
-  const firstTitle = titleArray[0]?.value || titleArray[0]?.text
-  
-  return enTitle || thTitle || firstTitle || ''
+  created() {
+    this.onInit();
+  },
+
+  beforeDestroy() {
+
+  },
+
+  methods: {
+    onInit() {
+      this.$store.dispatch('form/getForms');
+    },
+
+    getTitle(titleArray) {
+      if (!titleArray) return ''
+      if (typeof titleArray === 'string') return titleArray
+      if (!Array.isArray(titleArray)) return ''
+
+      // Try English first, then Thai, then first available
+      const enTitle = titleArray.find(t => t.key === 'en')?.value
+      const thTitle = titleArray.find(t => t.key === 'th')?.value
+      const firstTitle = titleArray[0]?.value || titleArray[0]?.text
+
+      return enTitle || thTitle || firstTitle || ''
+    },
+
+    handleLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        this.$router.push('/');
+      }
+    },
+
+    handleFillForm(formId) {
+      this.activeDropdown = null;
+      this.$router.push(`/form/${formId}/response`);
+    },
+
+    toggleActionsDropdown(formId) {
+      this.activeDropdown = this.activeDropdown === formId ? null : formId;
+    },
+
+    previousPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+
+    goToPage(page) {
+      this.currentPage = page;
+    }
+  },
+
+  computed: {
+    ...mapGetters('form', ['forms']),
+
+    filteredForms() {
+      let forms = this.forms;
+
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        forms = forms.filter(form =>
+          form.title.toLowerCase().includes(query) ||
+          form.description.toLowerCase().includes(query)
+        );
+      }
+
+      return forms;
+    },
+
+    totalPages() {
+      return Math.ceil(this.filteredForms.length / this.itemsPerPage);
+    },
+
+    paginatedForms() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredForms.slice(start, end);
+    }
+  },
+
+  watch: {
+
+  }
 }
-
-// Fetch forms from API
-const fetchForms = async () => {
-  loading.value = true;
-  error.value = null;
-  try {
-    const response = await formAPI.getAll();
-    
-    // Handle different API response structures
-    const formData = Array.isArray(response.data) 
-      ? response.data 
-      : (response.data.data || response.data.datas || []);
-    
-    // Transform API data to match component structure
-    // Filter forms with status 'open' or 'closed' for user dashboard
-    formsData.value = formData
-      .filter(form => form.status === 'open' || form.status === 'close' || form.status === 'closed')
-      .map(form => ({
-        id: form._id,
-        title: getTitle(form.title) || 'Untitled Form',
-        description: getTitle(form.description) || 'No description',
-        status: form.status || 'open',
-        responses: form.responseCount || 0,
-        createdDate: formatDateShort(form.updatedAt || form.createdAt)
-      }));
-    
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load forms';
-    console.error('Error fetching forms:', err);
-    formsData.value = [];
-  } finally {
-    loading.value = false;
-  }
-};
-
-const filteredForms = computed(() => {
-  let forms = formsData.value;
-  
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    forms = forms.filter(form => 
-      form.title.toLowerCase().includes(query) || 
-      form.description.toLowerCase().includes(query)
-    );
-  }
-  
-  return forms;
-});
-
-const totalPages = computed(() => Math.ceil(filteredForms.value.length / itemsPerPage));
-
-const paginatedForms = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  return filteredForms.value.slice(start, end);
-});
-
-const handleLogout = () => {
-  if (confirm('Are you sure you want to logout?')) {
-    router.push('/');
-  }
-};
-
-const handleFillForm = (formId) => {
-  activeDropdown.value = null;
-  router.push(`/form/${formId}/response`);
-};
-
-const toggleActionsDropdown = (formId) => {
-  activeDropdown.value = activeDropdown.value === formId ? null : formId;
-};
-
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-  }
-};
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-  }
-};
-
-const goToPage = (page) => {
-  currentPage.value = page;
-};
-
-onMounted(() => {
-  fetchForms();
-});
 </script>
 
 <style scoped>
@@ -559,7 +537,9 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
