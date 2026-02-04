@@ -7,13 +7,13 @@ var objSchema = new Schema({
     title : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
     description : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
     questions: { type : [{ type: Schema.Types.ObjectId, ref: 'Questions' }] , default: [] },
-    status: { type: String, ref: 'Setting_Status', default: ''},
+    status: { type: Schema.Types.ObjectId, ref: 'Setting_Status', default: null },
     schedule: {
         startAt: { type: Date, default: null },
         endAt: { type: Date, default: null }
     },
     settings: {
-        whoCanRespond: { type: String, ref: 'Setting_Respond', default: '' },
+        whoCanRespond: { type: Schema.Types.ObjectId, ref: 'Setting_Respond', default: null },
         collectEmail: { type: Boolean, default: false },
         limitResponse: { type: Boolean, default: false },
         progressBar: { type: Boolean, default: false },
