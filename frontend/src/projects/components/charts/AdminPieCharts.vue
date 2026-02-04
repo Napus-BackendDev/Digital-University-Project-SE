@@ -8,7 +8,8 @@
         </div>
 
         <div class="chart-container mb-4">
-            <CChartPie :datasets="defaultDatasets" :labels="['Open', 'Draft', 'Closed']" :options="defaultOptions" />
+            <CChartDoughnut :datasets="defaultDatasets" :labels="['Open', 'Draft', 'Closed']"
+                :options="defaultOptions" />
         </div>
 
         <div class="custom-legend">
@@ -17,33 +18,63 @@
                     <span class="legend-dot bg-success"></span>
                     <span class="text-muted">Open</span>
                 </div>
-                <span class="font-weight-bold">5</span>
+                <span class="font-weight-bold">{{ statusCounts.Open }}</span>
             </div>
             <div class="legend-item d-flex justify-content-between align-items-center mb-2">
                 <div class="d-flex align-items-center">
                     <span class="legend-dot bg-warning"></span>
                     <span class="text-muted">Draft</span>
                 </div>
-                <span class="font-weight-bold">1</span>
+                <span class="font-weight-bold">{{ statusCounts.Draft }}</span>
             </div>
             <div class="legend-item d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <span class="legend-dot" style="background-color: #6c757d;"></span>
                     <span class="text-muted">Closed</span>
                 </div>
-                <span class="font-weight-bold">1</span>
+                <span class="font-weight-bold">{{ statusCounts.Closed }}</span>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import { CChartPie } from '@coreui/vue-chartjs'
+import { CChartDoughnut } from '@coreui/vue-chartjs'
+import { mapGetters } from 'vuex'
 
 export default {
     name: 'AdminPieCharts',
-    components: { CChartPie },
+    components: { CChartDoughnut },
     computed: {
+        ...mapGetters('Forms', ['forms']),
+
+        statusCounts() {
+            const counts = { Open: 0, Draft: 0, Closed: 0 };
+
+            this.forms.forEach(form => {
+                let statusRaw = ''
+                if (form.status && form.status.title) {
+                    if (Array.isArray(form.status.title)) {
+                        const enItem = form.status.title.find(item => item.key === 'en')
+                        statusRaw = enItem ? enItem.value : (form.status.title[0]?.value || '')
+                    } else {
+                        statusRaw = form.status.title
+                    }
+                }
+
+                statusRaw = statusRaw.toLowerCase()
+
+                let status = 'Draft'
+                if (statusRaw.includes('open') || statusRaw.includes('publish')) status = 'Open'
+                else if (statusRaw.includes('close')) status = 'Closed'
+                else if (statusRaw.includes('draft')) status = 'Draft'
+
+                counts[status]++
+            })
+
+            return counts
+        },
+
         defaultDatasets() {
             return [
                 {
@@ -52,7 +83,11 @@ export default {
                         '#f9b115', // Yellow - Draft
                         '#6c757d'  // Grey - Closed
                     ],
-                    data: [5, 1, 1],
+                    data: [
+                        this.statusCounts.Open,
+                        this.statusCounts.Draft,
+                        this.statusCounts.Closed
+                    ],
                     borderWidth: 0
                 }
             ]
@@ -68,6 +103,16 @@ export default {
                     enabled: true
                 }
             }
+        }
+    },
+    methods: {
+        getLang(data) {
+            if (!data || !Array.isArray(data)) return data;
+            const currentLang = this.$i18n.locale;
+            let content = data.find(item => item.key === currentLang);
+            if (!content) content = data.find(item => item.key === 'en');
+            if (!content && data.length > 0) content = data[0];
+            return content ? content.value : '';
         }
     }
 }

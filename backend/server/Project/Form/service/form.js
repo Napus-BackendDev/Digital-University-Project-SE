@@ -40,9 +40,9 @@ exports.onQuery = async function (request, response) {
 exports.onQuerys = async function (request, response) {
   try {
     let query = {};
-    if (request.body.allowAll != true) {
-      query.schedule.endAt = { $gte: new Date() }; // query only in time 
-    }
+    // if (request.body.allowAll != true) {
+    //   query.schedule = { endAt: { $gte: new Date() } };
+    // }
 
     const doc = await Form.onQuerys(query);
     return ResMessage.sendResponse(response, 0, 20000, doc);
@@ -50,7 +50,7 @@ exports.onQuerys = async function (request, response) {
     return ResMessage.sendResponse(response, 0, 40400, err.message);
   }
 };
-
+  
 exports.onCreate = async function (request, response) {
   try {
     const doc = await Form.onCreate(request.body);

@@ -49,9 +49,9 @@ export default {
   form(method, data, configs) {
     switch (method) {
       case 'exp':
-        return instance.get('/form', data)
-      case 'get':
-        return instance.get('/form', data)
+        return instance.get('/form')
+      // case 'get':
+      //   return instance.get('/form', data)
       case 'create':
         return instance.post('/form', data)
       case 'update':

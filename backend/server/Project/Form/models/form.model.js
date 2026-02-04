@@ -7,7 +7,7 @@ var objSchema = new Schema({
     title : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
     description : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
     questions: { type : [{ type: Schema.Types.ObjectId, ref: 'Questions' }] , default: [] },
-    status: { type: String, ref: 'Setting_Status', default: ''},
+    status: { type: String, ref: 'Setting_Status', default: '6982ee0d50e7666e04a5c7b8'},
     schedule: {
         startAt: { type: Date, default: null },
         endAt: { type: Date, default: null }

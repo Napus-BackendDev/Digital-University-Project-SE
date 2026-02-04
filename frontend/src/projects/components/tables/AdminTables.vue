@@ -19,7 +19,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(item, index) in tableData" :key="index">
+                    <tr v-for="(item, index) in paginatedData" :key="index">
                         <td>
                             <div class="font-weight-bold text-dark">{{ item.title }}</div>
                             <div class="small text-muted" v-if="item.description">{{ item.description }}</div>
@@ -47,67 +47,82 @@
             </table>
         </div>
         <div class="d-flex justify-content-center mt-3">
-            <CPagination :active-page.sync="currentPage" :pages="10" responsive />
+            <CPagination :active-page.sync="currentPage" :pages="totalPages" responsive />
         </div>
     </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+import moment from 'moment'
+
 export default {
     name: 'AdminTables',
     data() {
         return {
             currentPage: 1,
-            tableData: [
-                {
-                    title: 'Comprehensive Survey - All Question Types',
-                    description: 'A demonstration survey showcasing all available question types in the system',
-                    status: 'Open',
-                    access: 'Public',
-                    responses: 6,
-                    created: '1 ธ.ค. 2567'
-                },
-                {
-                    title: 'Customer Satisfaction Survey',
-                    description: 'Help us improve our services by sharing your feedback',
-                    status: 'Draft',
-                    access: 'Private',
-                    responses: 12,
-                    created: '1 ธ.ค. 2567'
-                },
-                {
-                    title: 'Weekly Team Check-in',
-                    description: 'Quick pulse check for the team',
-                    status: 'Closed',
-                    access: 'Private',
-                    responses: 0,
-                    created: '1 ธ.ค. 2567'
-                },
-                {
-                    title: 'Employee Feedback Q4 2024',
-                    description: 'Internal feedback survey for team members',
-                    status: 'Open',
-                    access: 'Public',
-                    responses: 156,
-                    created: '1 ธ.ค. 2567'
-                },
-                {
-                    title: 'Conference Feedback 2025',
-                    description: '',
-                    status: 'Open',
-                    access: 'Public',
-                    responses: 234,
-                    created: '1 ธ.ค. 2567'
+            pageSize: 5,
+        }
+    },
+    computed: {
+        ...mapGetters('Forms', ['forms']),
+
+        tableData() {
+
+            if (!this.forms || this.forms.length === 0) return []
+
+            // Sort forms by createdAt (newest first)
+            const sortedForms = [...this.forms].sort((a, b) => {
+                return new Date(b.createdAt) - new Date(a.createdAt)
+            })
+
+            return sortedForms.map(form => {
+
+                return {
+                    title: this.getLang(form.title) || 'Untitled Form',
+                    description: this.getLang(form.description) || '',
+                    status: this.getLang(form.status.title) || 'Draft',
+                    access: form.isPublic ? 'Public' : 'Private',
+                    responses: form.responses ? form.responses.length : 0,
+                    created: form.createdAt ? moment(form.createdAt).format('D MMM YYYY') : '-'
                 }
-            ]
+            })
+        },
+        totalPages() {
+            return Math.ceil(this.tableData.length / this.pageSize)
+        },
+        paginatedData() {
+            const start = (this.currentPage - 1) * this.pageSize
+            const end = start + this.pageSize
+            return this.tableData.slice(start, end)
         }
     },
     methods: {
+        getLang(data) {
+            if (!data || !Array.isArray(data)) return data;
+
+            // Find content matching current locale
+            const currentLang = this.$i18n.locale;
+            let content = data.find(item => item.key === currentLang);
+
+            // Fallback to 'en' if current locale not found
+            if (!content) {
+                content = data.find(item => item.key === 'en');
+            }
+
+            // Fallback to first available if 'en' not found
+            if (!content && data.length > 0) {
+                content = data[0];
+            }
+
+            return content ? content.value : '';
+        },
         getStatusIcon(status) {
             switch (status) {
                 case 'Open': return 'cil-check-circle';
                 case 'Draft': return 'cil-clock';
                 case 'Closed': return 'cil-x-circle';
+                case 'Scheduled': return 'cil-calendar';
                 default: return 'cil-circle';
             }
         }

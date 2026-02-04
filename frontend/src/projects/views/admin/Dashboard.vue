@@ -39,7 +39,6 @@ export default {
     },
     data() {
         return {
-
         }
     },
     created() {
@@ -51,7 +50,6 @@ export default {
         },
     },
     computed: {
-        ...mapGetters('Forms', ['forms'])
     },
     watch: {
         forms: {

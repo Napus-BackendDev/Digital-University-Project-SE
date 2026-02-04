@@ -5,14 +5,11 @@
                 <CIcon name="cil-chart" class="text-danger mr-2" size="lg" />
                 <h4 class="m-0 font-weight-bold">Top Performing Forms</h4>
             </div>
-            <div class="text-muted small ml-1">Forms with the most responses</div>
+            <div class="text-muted small ">Forms with the most responses</div>
         </div>
 
-        <!-- 
-      Using CChartHorizontalBar if available for Chart.js 2.x which CoreUI usually wraps.
-    -->
         <div class="chart-container">
-            <CChartHorizontalBar :datasets="defaultDatasets" :labels="labels" :options="defaultOptions"
+            <CChartHorizontalBar :datasets="defaultDatasets" :labels="chartData.labels" :options="defaultOptions"
                 style="height: 300px;" />
         </div>
     </div>
@@ -20,34 +17,66 @@
 
 <script>
 import { CChartHorizontalBar } from '@coreui/vue-chartjs'
+import { mapGetters } from 'vuex'
 
 export default {
     name: 'AdminBarCharts',
     components: { CChartHorizontalBar },
-    data() {
-        return {
-            labels: [
-                'Product Feature Request',
-                'Customer Satisfaction Survey',
-                'Event Registration Form',
-                'Conference Feedback 2024',
-                'Weekly Team Check-in'
-            ]
-        }
-    },
     computed: {
+        ...mapGetters('Forms', ['forms']),
+
+        topForms() {
+            if (!this.forms) return []
+            // Sort by response count descending
+            const sorted = [...this.forms].sort((a, b) => {
+                const countA = a.responses ? a.responses.length : 0
+                const countB = b.responses ? b.responses.length : 0
+                return countB - countA
+            })
+            // Take top 5
+            return sorted.slice(0, 5)
+        },
+
+        chartData() {
+            const labels = []
+            const data = []
+
+            this.topForms.forEach(form => {
+                // Initial title logic
+                let title = 'default'
+                if (form.title) {
+                    if (Array.isArray(form.title)) {
+                        const enItem = form.title.find(item => item.key === 'en')
+                        title = enItem ? enItem.value : (form.title[0]?.value)
+                    } else {
+                        title = form.title
+                    }
+                }
+                labels.push(title)
+
+                data.push(form.responses ? form.responses.length : 0)
+            })
+
+            return { labels, data }
+        },
+
         defaultDatasets() {
             return [
                 {
                     label: 'Responses',
-                    backgroundColor: '#9B1B30', // Deep Red
-                    data: [235, 170, 95, 45, 15],
+                    backgroundColor: '#9B1B30',
+                    data: this.chartData.data,
                     barPercentage: 0.6,
                     categoryPercentage: 0.8
                 }
             ]
         },
         defaultOptions() {
+            // Find max value to set scale slightly higher
+            const maxVal = Math.max(...this.chartData.data, 0)
+            const tickMax = maxVal === 0 ? 10 : Math.ceil(maxVal * 1.2) // Add 20% breathing room
+            const stepSize = Math.ceil(tickMax / 5)
+
             return {
                 maintainAspectRatio: false,
                 legend: {
@@ -57,8 +86,8 @@ export default {
                     xAxes: [{
                         ticks: {
                             beginAtZero: true,
-                            max: 240,
-                            stepSize: 60
+                            max: tickMax,
+                            stepSize: stepSize || 1 // Prevent 0 step size
                         },
                         gridLines: {
                             display: true,
