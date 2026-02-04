@@ -14,26 +14,7 @@ const mockUserForAnonymous = (req, res, next) => {
     next();
 };
 
-//export .csv file
-// router.get("/exportResponsesByFormId",response.onExportResponses);
-router.get("/getByFormId", function(req, res, next) {
-    // Custom middleware logic can be added here
-    req.body.apiid = '1';
-    next();
-  },response.onGetByFormId);
-router.get("/getByUserId",response.onGetByUserId);
-router.get("/getById",response.onGetById);
-router.get("",response.onQuerys);
-router.get("/download/:form_id/user/:user_id",response.downloadUserJSON);
-router.get("/download/:form_id",response.publicDownloadUsersJSON);
-router.post("/submit", mockUserForAnonymous, response.onCreate);
-router.patch("/update",response.onUpdate);
-router.delete("/delete",response.onDelete);
-router.delete("/deleteByFormId",response.onDeleteByFormId);
-// router.get("/exportResponsesByFormId",function(req,res,next){
-//     req.query.apiId=0;
-//     next();
-// },response.onExportResponses);
+
 router.get("/getByFormId", function (req, res, next) {
     req.query.apiId = 0;
     next();
