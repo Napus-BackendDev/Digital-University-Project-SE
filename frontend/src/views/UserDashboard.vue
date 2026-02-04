@@ -1,45 +1,43 @@
 <template>
-  <div class="userdashboard">
-    <!-- Form List Page -->
-    <main class="form-list-page">
-      <!-- Page Header -->
-      <PageHeader title="Available Forms" subtitle="Fill out forms and submit responses" />
+  <!-- Form List Page -->
+  <main>
+    <!-- Page Header -->
+    <PageHeader title="Available Forms" subtitle="Fill out forms and submit responses" />
 
-      <!-- Search Bar -->
-      <div class="search-container">
-        <SearchBar v-model="searchQuery" placeholder="Search forms..." />
-      </div>
+    <!-- Search Bar -->
+    <div class="search-container">
+      <SearchBar v-model="searchQuery" placeholder="Search forms..." />
+    </div>
 
-      <!-- Table Container -->
-      <FormTableUser :forms="paginatedForms" :loading="loading" :error="error"
-        :empty-message="searchQuery ? 'Try adjusting your search' : 'No forms available at the moment'"
-        @form-click="handleFillForm" @toggle-dropdown="toggleActionsDropdown" @retry="fetchForms">
-        <template #actions="{ form }">
-          <div class="actions-buttons">
-            <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
-              <i class="pi pi-ellipsis-v"></i>
+    <!-- Table Container -->
+    <FormTableUser :forms="paginatedForms" :loading="loading" :error="error"
+      :empty-message="searchQuery ? 'Try adjusting your search' : 'No forms available at the moment'"
+      @form-click="handleFillForm" @toggle-dropdown="toggleActionsDropdown" @retry="fetchForms">
+      <template #actions="{ form }">
+        <div class="actions-buttons">
+          <button class="action-button more-button" @click.stop="toggleActionsDropdown(form.id)">
+            <i class="pi pi-ellipsis-v"></i>
+          </button>
+
+          <!-- Actions Dropdown -->
+          <div v-if="activeDropdown === form.id" class="actions-dropdown">
+            <button class="dropdown-item" @click.stop="handleFillForm(form.id)">
+              <i class="pi pi-file-edit"></i>
+              <span>Fill Form</span>
             </button>
-
-            <!-- Actions Dropdown -->
-            <div v-if="activeDropdown === form.id" class="actions-dropdown">
-              <button class="dropdown-item" @click.stop="handleFillForm(form.id)">
-                <i class="pi pi-file-edit"></i>
-                <span>Fill Form</span>
-              </button>
-            </div>
           </div>
-        </template>
-      </FormTableUser>
+        </div>
+      </template>
+    </FormTableUser>
 
-      <!-- Pagination -->
-      <Pagination :current-page="currentPage" :total-pages="totalPages" @prev="previousPage" @next="nextPage"
-        @goto="goToPage" />
-    </main>
-  </div>
+    <!-- Pagination -->
+    <Pagination :current-page="currentPage" :total-pages="totalPages" @prev="previousPage" @next="nextPage"
+      @goto="goToPage" />
+  </main>
 </template>
 
 <script>
-import FormTableUser from '@/components/FormTableUser.vue';
+import FormTableUser from '@/components/tables/FormTableUser.vue';
 import Pagination from '@/components/Pagination.vue';
 import SearchBar from '@/components/SearchBar.vue';
 import PageHeader from '@/components/PageHeader.vue';

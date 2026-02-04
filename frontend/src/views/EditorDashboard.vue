@@ -68,7 +68,7 @@
 </template>
 
 <script>
-import FormTable from '@/components/FormTable.vue'
+import FormTable from '@/components/tables/FormTable.vue'
 import Pagination from '@/components/Pagination.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import FilterDropdown from '@/components/FilterDropdown.vue'

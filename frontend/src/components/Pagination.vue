@@ -1,36 +1,25 @@
 <template>
   <div class="pagination-container" v-if="totalPages > 0">
-    <button 
-      class="pagination-button prev-button" 
-      :disabled="currentPage === 1"
-      :class="{ disabled: currentPage === 1 }"
-      @click="handlePrev"
-    >
+    <button class="pagination-button prev-button" :disabled="currentPage === 1" :class="{ disabled: currentPage === 1 }"
+      @click="handlePrev">
       <svg viewBox="0 0 16 16" fill="none">
-        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round"
+          stroke-linejoin="round" />
       </svg>
       <span>Previous</span>
     </button>
-    
-    <button 
-      v-for="page in visiblePages" 
-      :key="page"
-      class="pagination-button page-button"
-      :class="{ active: page === currentPage }"
-      @click="handleGoto(page)"
-    >
+
+    <button v-for="page in visiblePages" :key="page" class="pagination-button page-button"
+      :class="{ active: page === currentPage }" @click="handleGoto(page)">
       {{ page }}
     </button>
-    
-    <button 
-      class="pagination-button next-button" 
-      :disabled="currentPage === totalPages"
-      :class="{ disabled: currentPage === totalPages }"
-      @click="handleNext"
-    >
+
+    <button class="pagination-button next-button" :disabled="currentPage === totalPages"
+      :class="{ disabled: currentPage === totalPages }" @click="handleNext">
       <span>Next</span>
       <svg viewBox="0 0 16 16" fill="none">
-        <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round"
+          stroke-linejoin="round" />
       </svg>
     </button>
   </div>
@@ -99,7 +88,7 @@ const visiblePages = computed(() => {
   const total = props.totalPages
   const current = props.currentPage
   const max = props.maxVisiblePages
-  
+
   if (total <= max) {
     // Show all pages if total is less than max
     for (let i = 1; i <= total; i++) {
@@ -127,7 +116,7 @@ const visiblePages = computed(() => {
       }
     }
   }
-  
+
   return pages
 })
 </script>
@@ -144,6 +133,7 @@ const visiblePages = computed(() => {
   min-width: 299.66px;
   height: 36px;
   flex: none;
+  margin-top: 20px;
   order: 3;
   flex-grow: 0;
 }

@@ -1,0 +1,32 @@
+{
+  "common": {
+    "dashboard": "แดชบอร์ด",
+    "login": "เข้าสู่ระบบ",
+    "logout": "ออกจากระบบ",
+    "admin": "ผู้ดูแลระบบ",
+    "editor": "ผู้แก้ไข",
+    "user": "ผู้ใช้งาน",
+    "save": "บันทึก",
+    "cancel": "ยกเลิก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "create": "สร้าง",
+    "submit": "ส่ง"
+  },
+  "dashboard": {
+    "title": "แดชบอร์ดผู้ดูแลระบบ",
+    "subtitle": "ภาพรวมของแบบฟอร์มและการตอบกลับทั้งหมด",
+    "totalForms": "แบบฟอร์มทั้งหมด",
+    "totalResponses": "การตอบกลับทั้งหมด",
+    "activeForms": "แบบฟอร์มที่ใช้งานอยู่",
+    "avgResponses": "เฉลี่ยการตอบกลับ/แบบฟอร์ม",
+    "responseTrends": "แนวโน้มการตอบกลับ",
+    "responseTrendsSubtitle": "การตอบกลับรายวันในสัปดาห์ที่ผ่านมา",
+    "topPerforming": "แบบฟอร์มยอดนิยม",
+    "topPerformingSubtitle": "แบบฟอร์มที่มีการตอบกลับสูงสุด",
+    "formsByStatus": "สถานะแบบฟอร์ม",
+    "currentFormDistribution": "การกระจายตัวของสถานะแบบฟอร์มปัจจุบัน",
+    "userRoleControl": "จัดการสิทธิ์ผู้ใช้",
+    "userRoleControlSubtitle": "รายชื่อแบบฟอร์มทั้งหมดในระบบ"
+  }
+}

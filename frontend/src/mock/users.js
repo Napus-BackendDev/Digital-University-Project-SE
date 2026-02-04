@@ -20,6 +20,13 @@ export const mockUsers = [
     name: 'Staff Member',
     token: 'mock-staff-token-67890'
   },
+  {
+    email: 'editor@lamduan.mfu.ac.th',
+    password: 'editor123',
+    role: 'editor',
+    name: 'Editor Member',
+    token: 'mock-editor-token-67890'
+  },
 ]
 
 

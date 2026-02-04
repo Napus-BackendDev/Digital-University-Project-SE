@@ -106,6 +106,8 @@ const handleLogin = async () => {
     // Redirect based on role
     if (result.data.user.role === 'editor' || result.data.user.role === 'staff') {
       router.push('/editor')
+    } else if (result.data.user.role === 'admin') {
+      router.push('/admin')
     } else {
       router.push('/home')
     }
