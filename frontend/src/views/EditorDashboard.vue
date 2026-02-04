@@ -64,6 +64,20 @@
       <Pagination :current-page="currentPage" :total-pages="totalPages" @prev="previousPage" @next="nextPage"
         @goto="goToPage" />
     </main>
+
+    <!-- Delete Confirmation Modal -->
+    <Modal
+      :show="showDeleteModal"
+      type="warning"
+      title="Delete Form"
+      message="Are you sure you want to delete this form?"
+      :show-cancel="true"
+      confirm-text="OK"
+      cancel-text="Cancel"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+      @close="cancelDelete"
+    />
   </div>
 </template>
 
@@ -73,6 +87,7 @@ import Pagination from '@/components/Pagination.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import FilterDropdown from '@/components/FilterDropdown.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import Modal from '@/components/Modal.vue'
 
 export default {
   name: 'EditorDashboard',

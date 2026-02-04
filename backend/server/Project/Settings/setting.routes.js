@@ -2,12 +2,18 @@ const express = require('express');
 const router = express.Router();
 
 const message = require("./service/message");
+const group = require("./service/group");
 const status = require("./service/status");
 const verification = require("./service/verification");
+const question = require("./service/question");
 // const auth_message = require("./service/auth_message");
 // const Role = require("../Accounts/service/role");
 // const Authen_Type = require("../Accounts/service/authen_type");
 
+router.get("/group", group.onQuerys);
+router.post("/group", group.onCreate);
+router.put("/group", group.onUpdate);
+router.delete("/group", group.onDelete);
 
 router.get("/message", message.onQuerys);
 router.post("/message", message.onCreate);
@@ -31,7 +37,6 @@ router.post("/verification", verification.onCreate);
 router.put("/verification", verification.onUpdate);
 router.delete("/verification", verification.onDelete);
 
-
 // authen service
 
 // router.get("/auth/message", auth_message.onQuerys);
@@ -50,5 +55,9 @@ router.delete("/verification", verification.onDelete);
 // router.put("/authen/type", Authen_Type.onUpdate);
 // router.delete("/authen/type", Authen_Type.onDelete);
 
+router.get("/question_type", question.onQuerys);
+router.post("/question_type", question.onCreate);
+router.put("/question_type", question.onUpdate);
+router.delete("/question_type", question.onDelete);
 
 module.exports = router;

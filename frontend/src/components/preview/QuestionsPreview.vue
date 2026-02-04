@@ -2,7 +2,7 @@
 // --- Import dependencies ---
 // Vue core and child component imports
 import { ref, watch } from 'vue'
-import FollowupOption from '@/components/formfill/Followup.vue';
+import FollowupOption from './Followup.vue';
 import { ArrowLeftIcon } from '@/components/icons';
 
 // --- Define component props ---
@@ -59,10 +59,7 @@ function handleInput(idx, value, type) {
             <!-- Render each question card -->
             <div v-for="(q, idx) in questions" :key="q.id || idx" class="preview-question-card">
                 <!-- --- Section Header --- -->
-                <!-- Section header (question number) -->
-                <div class="question-section-header">
-                    <span class="question-section-label">Question {{ idx + 1 }}</span>
-                </div>
+
                 <!-- --- Question Title Row --- -->
                 <!-- Question title and required marker -->
                 <div class="question-title-row">
@@ -92,7 +89,7 @@ function handleInput(idx, value, type) {
                     <template v-else-if="q.type === 'multiple-choice'">
                         <div class="preview-mc-list">
                             <FollowupOption v-for="opt in q.options || []" :key="opt.id" :option="opt" :idx="idx"
-                                :storeAsText="false" :answers="answers" @update:answers="val => answers = val" />
+                                v-model:answers="answers" />
                         </div>
                     </template>
 
@@ -166,24 +163,26 @@ function handleInput(idx, value, type) {
                         </div>
                     </template>
 
-                    <!-- File Upload (Google Form Style) -->
+                    <!-- File Upload (interactive preview, builder-style UI) -->
+                    <!-- File Upload (interactive preview, builder-style UI) -->
                     <template v-else-if="q.type === 'file-upload'">
-                        <div class="gf-file-upload">
-                            <p class="gf-upload-info">Upload {{ q.maxFiles || 1 }} supported file{{ (q.maxFiles || 1) > 1 ? 's' : '' }}. Max {{ q.maxSize || 10 }} MB.</p>
-                            <label class="gf-add-file-btn">
-                                <svg class="gf-upload-icon" viewBox="0 0 24 24" fill="none">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2"/>
-                                    <polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="2"/>
-                                    <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2"/>
+                        <div class="preview-file-upload">
+                            <label class="file-upload-area" style="cursor:pointer;">
+                                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
                                 </svg>
-                                Add file
-                                <input type="file" :multiple="(q.maxFiles || 1) > 1" style="display:none" @change="e => {
+                                <span>File upload area</span>
+                                <span class="upload-hint">Drag & drop or click to upload</span>
+                                <input type="file" :multiple="q.maxFiles > 1" style="display:none" @change="e => {
                                     answers[idx] = Array.from(e.target.files);
                                 }" />
                             </label>
-                            <div v-if="Array.isArray(answers[idx]) && answers[idx].length" class="gf-file-list">
-                                <div v-for="file in answers[idx]" :key="file.name" class="gf-file-item">
-                                    <span class="gf-file-name">{{ file.name }}</span>
+                            <div v-if="Array.isArray(answers[idx]) && answers[idx].length" class="preview-file-list">
+                                <div v-for="file in answers[idx]" :key="file.name" class="preview-file-item">
+                                    <span class="preview-file-name">{{ file.name }}</span>
                                 </div>
                             </div>
                         </div>
@@ -245,7 +244,7 @@ function handleInput(idx, value, type) {
     top: 100%;
     width: 100%;
     background: #fff;
-    border: 1.5px solid var(--border-color);
+    border: 1.5px solid #e5e5e5;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
     margin-top: 2px;
@@ -269,7 +268,7 @@ function handleInput(idx, value, type) {
 
 .preview-dropdown-option.selected {
     background: #e0e7ff;
-    color: var(--primary);
+    color: #6366f1;
 }
 
 /* =============================
@@ -305,9 +304,9 @@ function handleInput(idx, value, type) {
     justify-content: center;
     gap: 8px;
     padding: 24px 18px;
-    border: 2px dashed var(--border-color);
+    border: 2px dashed #e5e5e5;
     border-radius: 8px;
-    color: var(--text-muted);
+    color: #999;
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     cursor: pointer;
@@ -321,7 +320,7 @@ function handleInput(idx, value, type) {
 }
 
 .file-upload-area:hover {
-    border-color: var(--primary);
+    border-color: #6366f1;
     background: #fafaff;
 }
 
@@ -373,14 +372,14 @@ function handleInput(idx, value, type) {
 }
 
 .preview-checkbox-row.checked .preview-checkbox-box {
-    border-color: var(--primary);
+    border-color: #6366f1;
     background: #f5f7ff;
 }
 
 .preview-checkbox-tick {
     width: 12px;
     height: 12px;
-    background: var(--primary);
+    background: #6366f1;
     border-radius: 2px;
 }
 
@@ -400,7 +399,7 @@ function handleInput(idx, value, type) {
     padding: 7px 14px;
     border-radius: 8px;
     background: #fff;
-    border: 1.5px solid var(--border-color);
+    border: 1.5px solid #e5e5e5;
     font-size: 1rem;
     color: #222;
     font-family: 'Inter', sans-serif;
@@ -436,65 +435,8 @@ function handleInput(idx, value, type) {
 
 
 /* =============================
-   File Upload (Google Form Style)
+   File Upload (Preview)
 ============================= */
-.gf-file-upload {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.gf-upload-info {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    color: #5f6368;
-}
-
-.gf-add-file-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    width: fit-content;
-    padding: 8px 16px;
-    background: #fff;
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    color: #1a73e8;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.gf-add-file-btn:hover {
-    background: #f8f9fa;
-    border-color: #1a73e8;
-}
-
-.gf-upload-icon {
-    width: 18px;
-    height: 18px;
-}
-
-.gf-file-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.gf-file-item {
-    padding: 8px 12px;
-    background: #f1f3f4;
-    border-radius: 4px;
-}
-
-.gf-file-name {
-    font-size: 13px;
-    color: #202124;
-}
-
 .preview-file-upload {
     display: flex;
     flex-direction: column;
@@ -510,7 +452,7 @@ function handleInput(idx, value, type) {
     padding: 7px 14px;
     border-radius: 8px;
     background: #fff;
-    border: 1.5px solid var(--border-color);
+    border: 1.5px solid #e5e5e5;
     font-size: 1rem;
     color: #222;
     font-family: 'Inter', sans-serif;
@@ -579,7 +521,7 @@ function handleInput(idx, value, type) {
     margin-top: 4px;
     margin-bottom: 8px;
     padding-left: 8px;
-    border-left: 2px solid var(--border-color);
+    border-left: 2px solid #e5e5e5;
 }
 
 .followup-label {
@@ -664,12 +606,12 @@ function handleInput(idx, value, type) {
    Main Container & Layout
 ============================= */
 .questions-preview-googleform {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    padding: 32px;
-    max-width: 650px;
-    margin: 40px auto;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    max-width: none;
+    margin: 0;
 }
 
 .preview-header {
@@ -732,9 +674,10 @@ function handleInput(idx, value, type) {
 .question-title {
     flex: 1;
     font-family: 'Inter', sans-serif;
-    font-size: 1.0rem;
-    font-weight: 200;
+    font-size: 1.2rem;
+    font-weight: 500;
     color: #222;
+    margin-bottom: 4px;
 }
 
 .required-dot {

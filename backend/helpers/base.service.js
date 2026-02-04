@@ -43,25 +43,6 @@ module.exports = function createBaseService(objSchema, defaultPopulate = []) {
 
             if (!select) return populated;
 
-            // เลือกเฉพาะ fields ที่ต้องการ
-            const result = {};
-            select.split(' ').forEach(field => {
-                if (field && populated[field] !== undefined) {
-                    result[field] = populated[field];
-                }
-            });
-            return result;
-        },
-
-        // ====================================
-        // 🔹 Create Many
-        // ====================================
-        onCreateMany: async (data, populate = defaultPopulate, select = '') => {
-            const newObj = await objSchema.create(data);
-            const populated = await objSchema.populate(newObj, populate);
-
-            if (!select) return populated;
-
             const populatedFields = (populatedData) => {
                 // เลือกเฉพาะ fields ที่ต้องการ
                 const result = {};
@@ -78,7 +59,6 @@ module.exports = function createBaseService(objSchema, defaultPopulate = []) {
             } else {
                 return populatedFields(populated);
             }
-
         },
 
         // ====================================

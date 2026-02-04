@@ -156,7 +156,21 @@ export default {
   watch: {
 
   }
-}
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const goToPage = (page) => {
+  currentPage.value = page;
+};
+
+onMounted(() => {
+  fetchForms();
+});
 </script>
 
 <style scoped>

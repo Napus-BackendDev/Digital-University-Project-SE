@@ -1,3 +1,61 @@
+<<<<<<< HEAD
+=======
+<script setup>
+/**
+ * ImageQuestion - เพิ่มรูปภาพในคำถาม
+ * สามารถใส่ URL หรืออัพโหลดรูปจากเครื่อง พร้อม caption
+ */
+import { ref } from 'vue'
+
+const props = defineProps({
+  imageUrl: { type: String, default: '' },
+  caption: { type: String, default: '' }
+})
+
+const emit = defineEmits(['update:imageUrl', 'update:caption', 'error'])
+
+// Reference สำหรับ hidden file input
+const fileInput = ref(null)
+
+// Preview URL เมื่ออัพโหลดจากเครื่อง
+const previewUrl = ref('')
+
+// Error state
+const errorMessage = ref('')
+
+/**
+ * เปิด file picker
+ */
+function triggerFileUpload() {
+  fileInput.value?.click()
+}
+
+/**
+ * จัดการไฟล์ที่เลือก - สร้าง preview และส่ง data URL
+ */
+function handleFileSelect(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  // ตรวจสอบว่าเป็นไฟล์รูปภาพ
+  if (!file.type.startsWith('image/')) {
+    errorMessage.value = 'Please select an image file only'
+    emit('error', 'Please select an image file only')
+    return
+  }
+  errorMessage.value = ''
+
+  // สร้าง preview URL
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    previewUrl.value = e.target.result
+    emit('update:imageUrl', e.target.result)
+  }
+  reader.readAsDataURL(file)
+}
+</script>
+
+>>>>>>> origin/backend/merge
 <template>
   <div class="question-field media-field">
     <!-- Hidden file input -->

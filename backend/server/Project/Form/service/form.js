@@ -1,84 +1,84 @@
-const mongo = require('mongodb');
+const mongo = require("mongodb");
 const Form = require("../controller/form");
 const ResMessage = require("../../Settings/service/message");
-const { canTransition } = require('../service/formStatus');
 
 exports.onQuery = async function (request, response) {
-    try {
-        let query = {};
-        query._id = new mongo.ObjectId(request.query._id);
-        const doc = await Form.onQuery(query);
-        return ResMessage.sendResponse(response, 0, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400, err.message);
-    }
-}
+  try {
+    let query = {};
+    query._id = new mongo.ObjectId(request.params.id);
+
+    const doc = await Form.onAggregate([
+      { $match: query },
+      {
+        $graphLookup: {
+          from: "Forms",
+          startWith: "$_id",
+          connectFromField: "_id",
+          connectToField: "originalFormId",
+          as: "childrenForms",
+          depthField: "depth",
+        },
+      },
+      {
+        $addFields: {
+          childrenForms: {
+            $sortArray: {
+              input: "$childrenForms",
+              sortBy: { depth: 1, createdAt: -1 },
+            },
+          },
+        },
+      },
+    ]);
+
+    return ResMessage.sendResponse(response, 0, 20000, doc[0]);
+  } catch (err) {
+    return ResMessage.sendResponse(response, 0, 40400, err.message);
+  }
+};
 
 exports.onQuerys = async function (request, response) {
-    try {
-        let query = {};
-        const doc = await Form.onQuerys(query);
-        return ResMessage.sendResponse(response, 0, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400, err.message);
+  try {
+    let query = {};
+    if (request.body.allowAll != true) {
+      query.schedule.endAt = { $gte: new Date() }; // query only in time 
     }
+
+    const doc = await Form.onQuerys(query);
+    return ResMessage.sendResponse(response, 0, 20000, doc);
+  } catch (err) {
+    return ResMessage.sendResponse(response, 0, 40400, err.message);
+  }
 };
 
 exports.onCreate = async function (request, response) {
-    try {
-        const doc = await Form.onCreate(request.body);
-        return ResMessage.sendResponse(response, 0, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400, err.message);
-    }
-};
-
-exports.onDuplicate = async function (request, response) {
-    try {
-        let query = {}
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await Form.onQuery(query);
-
-        delete doc._id;
-        doc.originalFormId = request.body._id;
-
-        // Add " - Duplicate" to the title for all languages
-        if (doc.title && Array.isArray(doc.title)) {
-            doc.title = doc.title.map(t => ({
-                ...t,
-                value: t.value + ' - Duplicate'
-            }));
-        }
-
-        const duplicate = await Form.onCreate(doc);
-        return ResMessage.sendResponse(response, 0, 20000, duplicate);
-    } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400, err.message);
-    }
+  try {
+    const doc = await Form.onCreate(request.body);
+    return ResMessage.sendResponse(response, 0, 20000, doc);
+  } catch (err) {
+    return ResMessage.sendResponse(response, 0, 40400, err.message);
+  }
 };
 
 exports.onUpdate = async function (request, response) {
-    try {
-        let query = {}
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await Form.onQuery(query);
-        if (!canTransition(doc.status, request.body.status)) {
-            return ResMessage.sendResponse(response, 0, 40000, `Cannot transition form status from ${doc.status} to ${request.body.status}`);
-        }
-        const docUpdate = await Form.onUpdate(query, request.body);
-        return ResMessage.sendResponse(response, 0, 20000, docUpdate);
-    } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400, err.message);
-    }
-}
+  try {
+    let query = {};
+    query._id = new mongo.ObjectId(request.body._id);
+
+    const doc = await Form.onUpdate(query, request.body);
+    return ResMessage.sendResponse(response, 0, 20000, doc);
+  } catch (err) {
+    return ResMessage.sendResponse(response, 0, 40400, err.message);
+  }
+};
 
 exports.onDelete = async function (request, response) {
-    try {
-        let query = {}
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await Form.onDelete(query);
-        return ResMessage.sendResponse(response, 0, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, 0, 40400, err.message);
-    }
-}
+  try {
+    let query = {};
+    query._id = new mongo.ObjectId(request.body._id);
+    const doc = await Form.onDelete(query);
+    return ResMessage.sendResponse(response, 0, 20000, doc);
+  } catch (err) {
+    return ResMessage.sendResponse(response, 0, 40400, err.message);
+  }
+};

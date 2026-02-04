@@ -203,6 +203,115 @@ export default {
     }
   }
 }
+<<<<<<< HEAD
+=======
+
+function handleMouseMove(event) {
+  updateTooltipPos(event)
+}
+
+function handleMouseLeave() {
+  hoveredIndex.value = null
+  tooltipVisible.value = false
+}
+
+// อัพเดทตำแหน่ง tooltip ตาม mouse
+function updateTooltipPos(event) {
+  if (!chartWrapper.value) return
+  const rect = chartWrapper.value.getBoundingClientRect()
+  tooltipPos.x = event.clientX - rect.left + 12
+  tooltipPos.y = event.clientY - rect.top - 35
+}
+
+
+/* ===================================
+   Chart Calculations - คำนวณ chart
+   =================================== */
+
+// รวมจำนวนทั้งหมด
+const total = computed(() => {
+  return props.chartData.reduce((sum, item) => sum + item.count, 0)
+})
+
+// หาค่ามากสุดสำหรับ legend bar
+const maxCount = computed(() => {
+  return Math.max(...props.chartData.map(d => d.count))
+})
+
+// คำนวณความกว้าง bar ใน legend
+function getBarWidth(count) {
+  if (maxCount.value === 0) return 0
+  return (count / maxCount.value) * 100
+}
+
+/**
+ * คำนวณ path สำหรับ donut slices
+ * ใช้ SVG arc เพื่อวาดแต่ละส่วน
+ */
+const slices = computed(() => {
+  // ป้องกันการคำนวณถ้า total เป็น 0 หรือไม่มีข้อมูล
+  if (!total.value || total.value === 0 || !props.chartData.length) {
+    return []
+  }
+  
+  const result = []
+  let currentAngle = -90 // เริ่มจากด้านบน
+  
+  const outerRadius = 85
+  const innerRadius = 50
+  
+  props.chartData.forEach((item) => {
+    // ข้ามถ้า count เป็น 0 (ไม่วาด slice)
+    if (item.count === 0) {
+      return
+    }
+    
+    const percentage = item.count / total.value
+    const angle = percentage * 360
+    
+    // เพิ่ม gap เล็กๆ ระหว่าง slices
+    const gapAngle = 2
+    const startAngle = currentAngle + gapAngle / 2
+    const endAngle = currentAngle + angle - gapAngle / 2
+    
+    // แปลงเป็น radians
+    const startRad = (startAngle * Math.PI) / 180
+    const endRad = (endAngle * Math.PI) / 180
+    
+    // จุดบน arc ด้านนอก
+    const x1 = Math.cos(startRad) * outerRadius
+    const y1 = Math.sin(startRad) * outerRadius
+    const x2 = Math.cos(endRad) * outerRadius
+    const y2 = Math.sin(endRad) * outerRadius
+    
+    // จุดบน arc ด้านใน
+    const x3 = Math.cos(endRad) * innerRadius
+    const y3 = Math.sin(endRad) * innerRadius
+    const x4 = Math.cos(startRad) * innerRadius
+    const y4 = Math.sin(startRad) * innerRadius
+    
+    const largeArc = angle > 180 ? 1 : 0
+    
+    // สร้าง SVG path สำหรับ donut slice
+    const path = `
+      M ${x1} ${y1}
+      A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}
+      L ${x3} ${y3}
+      A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}
+      Z
+    `
+    
+    result.push({
+      path,
+      color: item.color
+    })
+    
+    currentAngle = currentAngle + angle
+  })
+  
+  return result
+})
+>>>>>>> origin/backend/merge
 </script>
 
 <style scoped>

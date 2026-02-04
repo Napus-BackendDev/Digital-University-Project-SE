@@ -61,10 +61,10 @@
 
             <!-- Status Cell -->
             <div class="table-cell status-cell">
-              <div :class="['status-badge', `status-${form.status}`]">
+              <div :class="['status-badge', getStatusClass(form)]">
                 <div class="status-dot"></div>
                 <div class="status-text">
-                  {{ form.status === 'open' ? 'Open' : form.status === 'draft' ? 'Draft' : 'Closed' }}
+                  {{ getStatusText(form) }}
                 </div>
               </div>
             </div>
@@ -102,6 +102,8 @@
 </template>
 
 <script setup>
+import { useFormStatus } from '@/composables'
+
 defineProps({
   forms: {
     type: Array,
@@ -122,6 +124,9 @@ defineProps({
 })
 
 defineEmits(['form-click', 'toggle-dropdown', 'retry'])
+
+// ใช้ composable สำหรับจัดการสถานะแบบ dynamic
+const { getStatusText, getStatusClass } = useFormStatus()
 </script>
 
 <style scoped>
@@ -256,8 +261,13 @@ defineEmits(['form-click', 'toggle-dropdown', 'retry'])
 .header-row {
   display: grid;
   grid-template-columns: 3fr 1fr 1.2fr 1.3fr 1fr;
+<<<<<<< HEAD:frontend/src/components/tables/FormTable.vue
   background: var(--bg-gray);
   border-bottom: 1px solid var(--border-color);
+=======
+  background: #FAFAFA;
+  border-bottom: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge:frontend/src/components/FormTable.vue
   height: 52px;
 }
 

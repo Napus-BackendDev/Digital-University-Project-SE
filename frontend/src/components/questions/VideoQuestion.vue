@@ -1,3 +1,61 @@
+<<<<<<< HEAD
+=======
+<script setup>
+/**
+ * VideoQuestion - เพิ่มวิดีโอในคำถาม
+ * รองรับ YouTube URL, direct link หรืออัพโหลดจากเครื่อง พร้อม caption
+ */
+import { ref } from 'vue'
+
+const props = defineProps({
+  videoUrl: { type: String, default: '' },
+  caption: { type: String, default: '' }
+})
+
+const emit = defineEmits(['update:videoUrl', 'update:caption', 'error'])
+
+// Reference สำหรับ hidden file input
+const fileInput = ref(null)
+
+// Preview URL เมื่ออัพโหลดจากเครื่อง
+const previewUrl = ref('')
+
+// Error state
+const errorMessage = ref('')
+
+/**
+ * เปิด file picker
+ */
+function triggerFileUpload() {
+  fileInput.value?.click()
+}
+
+/**
+ * จัดการไฟล์ที่เลือก - สร้าง preview และส่ง data URL
+ */
+function handleFileSelect(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  // ตรวจสอบว่าเป็นไฟล์วิดีโอ
+  if (!file.type.startsWith('video/')) {
+    errorMessage.value = 'Please select a video file only'
+    emit('error', 'Please select a video file only')
+    return
+  }
+  errorMessage.value = ''
+
+  // สร้าง preview URL
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    previewUrl.value = e.target.result
+    emit('update:videoUrl', e.target.result)
+  }
+  reader.readAsDataURL(file)
+}
+</script>
+
+>>>>>>> origin/backend/merge
 <template>
   <div class="question-field media-field">
     <!-- Hidden file input -->

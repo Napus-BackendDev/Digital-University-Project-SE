@@ -1,7 +1,7 @@
 <template>
   <div class="response-summary-card">
     <div class="card-header">
-      <h3 class="question-title">{{ questionNumber }}. {{ title }}</h3>
+      <h3 class="question-title">{{ title }}</h3>
       <p class="response-count">{{ responseCount }} responses</p>
     </div>
     
@@ -27,6 +27,7 @@
  */
 import Pagination from '@/components/Pagination.vue'
 
+<<<<<<< HEAD
 export default {
   name: 'ResponseSummaryCard',
   components: {
@@ -42,6 +43,17 @@ export default {
   },
   emits: ['page-change']
 }
+=======
+defineProps({
+  title: { type: String, required: true },           // หัวข้อคำถาม
+  responseCount: { type: Number, default: 0 },       // จำนวนคำตอบ
+  showPagination: { type: Boolean, default: false }, // แสดง pagination หรือไม่
+  currentPage: { type: Number, default: 1 },
+  totalPages: { type: Number, default: 1 }
+})
+
+defineEmits(['page-change'])
+>>>>>>> origin/backend/merge
 </script>
 
 <style scoped>

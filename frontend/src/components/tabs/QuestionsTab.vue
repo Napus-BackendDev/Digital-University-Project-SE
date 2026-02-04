@@ -4,6 +4,7 @@
  */
 import { computed } from 'vue'
 import draggable from 'vuedraggable'
+import { useFormStatus } from '@/composables'
 import {
   CheckCircleIcon,
   CloseCircleIcon,
@@ -21,6 +22,7 @@ const props = defineProps({
   formDescription: { type: String, default: '' },
   formUrl: { type: String, default: '' },
   formStatus: { type: String, default: 'draft' },
+  formData: { type: Object, default: () => ({ status: 'draft', schedule: { startAt: null, endAt: null } }) },
   questions: { type: Array, required: true },
   expandedQuestionId: { type: [Number, String, null], default: null }
 })
@@ -40,6 +42,13 @@ const emit = defineEmits([
   'reorder-questions'
 ])
 
+// ใช้ composable สำหรับจัดการสถานะแบบ dynamic
+const { getCurrentStatus, getStatusText } = useFormStatus()
+
+// คำนวณสถานะปัจจุบัน
+const currentStatus = computed(() => getCurrentStatus(props.formData))
+const currentStatusText = computed(() => getStatusText(props.formData))
+
 // Computed for v-model with draggable
 const localQuestions = computed({
   get: () => props.questions,
@@ -50,11 +59,12 @@ const localQuestions = computed({
 <template>
   <div class="questions-tab">
     <!-- Status Banners -->
-    <div v-if="formStatus === 'open'" class="status-banner success">
+    <div v-if="currentStatus === 'open'" class="status-banner success">
       <div class="status-icon"><CheckCircleIcon /></div>
       <div class="status-content">
         <h3>Form is Live & Public</h3>
-        <p>Your form is published and accepting responses. Anyone with the link can submit.</p>
+        <p v-if="formStatus === 'auto'">This form is automatically open based on schedule.</p>
+        <p v-else>Your form is published and accepting responses. Anyone with the link can submit.</p>
         <div class="status-actions">
           <input type="text" :value="formUrl" readonly class="url-input" />
           <button class="btn btn-secondary" @click="emit('copy-url')"><CopyIcon /> Copy</button>
@@ -63,33 +73,34 @@ const localQuestions = computed({
       </div>
     </div>
 
-    <div v-else-if="formStatus === 'close'" class="status-banner warning">
+    <div v-else-if="currentStatus === 'close'" class="status-banner warning">
       <div class="status-icon"><CloseCircleIcon /></div>
       <div class="status-content">
         <h3>Form is Closed</h3>
-        <p>This form is no longer accepting responses.</p>
-      </div>
-    </div>
-
-    <div v-else-if="formStatus === 'draft'" class="status-banner draft">
-      <div class="status-icon"><EditIcon /></div>
-      <div class="status-content">
-        <h3>Draft Mode</h3>
-        <p>This form is not published yet. Change status to "Open" to start collecting responses.</p>
-        <div class="status-actions">
-          <button class="btn btn-secondary" @click="emit('test-form')"><PlayIcon /> Preview</button>
-        </div>
+        <p v-if="formStatus === 'auto'">This form is automatically closed based on schedule.</p>
+        <p v-else>This form is no longer accepting responses.</p>
       </div>
     </div>
 
     <div v-else-if="formStatus === 'auto'" class="status-banner scheduled">
       <div class="status-icon"><ClockIcon /></div>
       <div class="status-content">
-        <h3>Scheduled</h3>
+        <h3>Scheduled ({{ currentStatusText }})</h3>
         <p>This form will automatically open and close based on the schedule in settings.</p>
         <div class="status-actions">
           <input type="text" :value="formUrl" readonly class="url-input" />
           <button class="btn btn-secondary" @click="emit('copy-url')"><CopyIcon /> Copy</button>
+          <button class="btn btn-secondary" @click="emit('test-form')"><PlayIcon /> Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="currentStatus === 'draft'" class="status-banner draft">
+      <div class="status-icon"><EditIcon /></div>
+      <div class="status-content">
+        <h3>Draft Mode</h3>
+        <p>This form is not published yet. Change status to "Open" to start collecting responses.</p>
+        <div class="status-actions">
           <button class="btn btn-secondary" @click="emit('test-form')"><PlayIcon /> Preview</button>
         </div>
       </div>

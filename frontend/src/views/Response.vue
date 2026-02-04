@@ -97,9 +97,20 @@
         </div>
 
         <!-- Questionsfill Component -->
-        <Questionsfill :formTitle="''" :formDescription="''" :formStatus="formStatus" :questions="transformedQuestions"
-          :responses="responses" :isResponseMode="true" :currentSection="currentSection" :totalSections="totalSections"
-          :isSubmitting="isSubmitting" @submit="handleSubmit" @next="nextSection" @prev="prevSection" />
+        <Questionsfill 
+          :formTitle="''"
+          :formDescription="''"
+          :formStatus="formStatus"
+          :questions="transformedQuestions"
+          :responses="responses"
+          :isResponseMode="true"
+          :currentSection="currentSection"
+          :totalSections="totalSections"
+          :isSubmitting="isSubmitting"
+          @submit="handleSubmit"
+          @next="nextSection"
+          @prev="prevSection"
+        />
       </div>
     </main>
 
@@ -123,481 +134,456 @@
     </div>
 
     <!-- Toast Notification -->
-    <Toast v-model="toastVisible" :message="toastMessage" :type="toastType" />
+    <Toast 
+      v-model="toastVisible" 
+      :message="toastMessage" 
+      :type="toastType" 
+    />
   </div>
 </template>
 
-<script>
-
+<script setup>
+import { ref, computed, reactive, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { formAPI, responseAPI } from '@/services/api';
 import Questionsfill from '@/components/formfill/Questionsfill.vue';
 import Toast from '@/components/Toast.vue';
 
-export default {
-  name: 'Response',
-  components: {
-    Questionsfill,
-    Toast
-  },
-  data() {
-    return {
-      responses: {},
-      isSubmitting: false,
-      showSuccessModal: false,
-      loading: true,
-      toastVisible: false,
-      toastMessage: '',
-      toastType: 'info',
-      formData: null,
-      formSettings: null,
-      formStatus: null,
-      respondentEmail: '',
-      confirmationMessage: 'Thank you for your response!',
-      hasAlreadySubmitted: false,
-      currentSection: 0
-    }
-  },
+const router = useRouter();
+const route = useRoute();
 
-  mounted() {
-    // Already handled by created -> onInit
-  },
+const responses = reactive({});
+const isSubmitting = ref(false);
+const showSuccessModal = ref(false);
+const loading = ref(true);
 
-  created() {
-    this.onInit();
-  },
+// Toast state
+const toastVisible = ref(false);
+const toastMessage = ref('');
+const toastType = ref('info');
 
-  beforeDestroy() {
+// Show toast function
+const showToast = (message, type = 'info') => {
+  toastMessage.value = message;
+  toastType.value = type;
+  toastVisible.value = true;
+};
+const formData = ref(null);
+const formSettings = ref(null);
+const formStatus = ref(null);
+const respondentEmail = ref('');
+const confirmationMessage = ref('Thank you for your response!');
+const hasAlreadySubmitted = ref(false);
 
-  },
+// ===== Section Navigation (Multi-page forms like Google Forms) =====
+const currentSection = ref(0);
 
-  methods: {
-    onInit() {
-      this.fetchFormData();
-    },
+// แบ่ง questions เป็น sections โดยใช้ divider เป็นจุดแบ่ง
+const sections = computed(() => {
+  if (!formData.value?.questions?.length) return [[]];
 
-    showToast(message, type = 'info') {
-      this.toastMessage = message;
-      this.toastType = type;
-      this.toastVisible = true;
-    },
+  const result = [];
+  let currentSectionQuestions = [];
 
-    async fetchFormData() {
-      this.loading = true;
-      try {
-        const formId = this.$route.params.id;
-
-
-        // Handle nested data structure
-        const formDataResponse = response.data.data || response.data;
-
-        // Extract title and description
-        const titleObj = formDataResponse.title?.find(t => t.key === 'en');
-        const titleThObj = formDataResponse.title?.find(t => t.key === 'th');
-        const title = titleObj?.value || titleThObj?.value || 'Untitled Form';
-
-        const descObj = formDataResponse.description?.find(d => d.key === 'en');
-        const descThObj = formDataResponse.description?.find(d => d.key === 'th');
-        const description = descObj?.value || descThObj?.value || '';
-
-        // Check if questions exist and map them
-        let questions = [];
-
-        if (formDataResponse.questions && Array.isArray(formDataResponse.questions)) {
-          questions = formDataResponse.questions.map(q => {
-            // Extract question title from multilingual array
-            const titleObj = q.title?.find(t => t.key === 'en') || q.questionTitle?.find(t => t.key === 'en');
-            const titleThObj = q.title?.find(t => t.key === 'th') || q.questionTitle?.find(t => t.key === 'th');
-            const label = titleObj?.value || titleThObj?.value || '';
-            // Parse options for checkbox and choices types
-            let options = [];
-            const optionsArray = q.config?.options || q.options;
-            if (optionsArray && Array.isArray(optionsArray)) {
-              options = optionsArray.map(opt => {
-                if (typeof opt === 'string') return opt;
-
-                // If option is an object with text and followUp
-                if (opt.text) {
-                  return {
-                    id: opt.id,
-                    text: opt.text,
-                    hasFollowUp: opt.hasFollowUp || false,
-                    followUpQuestion: opt.followUpQuestion || null
-                  };
-                }
-
-                if (opt.label) return opt.label;
-                if (opt.value) return opt.value;
-
-                // Array of multilingual objects
-                if (Array.isArray(opt)) {
-                  const enOpt = opt.find(o => o.key === 'en');
-                  const thOpt = opt.find(o => o.key === 'th');
-                  return enOpt?.value || thOpt?.value || '';
-                }
-
-                // Single multilingual object
-                const optEn = opt.key === 'en' ? opt.value : null;
-                const optTh = opt.key === 'th' ? opt.value : null;
-                return optEn || optTh || '';
-              });
-            }
-            return {
-              _id: q._id,
-              type: q.type,
-              label: label,
-              required: q.required || false,
-              options: options,
-              min: q.min || 1,
-              max: q.max || 5,
-              step: q.step || 1,
-              textType: q.textType || 'short_answer',
-              maxLength: q.maxLength || 500,
-              url: q.config?.imageUrl || q.config?.videoUrl || q.url || '',
-              caption: q.config?.caption || q.caption || ''
-            };
-          });
-        }
-
-        this.formData = {
-          id: formDataResponse._id,
-          title: title,
-          description: description,
-          questions: questions
-        };
-
-        // เก็บ settings และ status
-        this.formStatus = formDataResponse.status || 'draft';
-        this.formSettings = formDataResponse.settings || {};
-        this.confirmationMessage = this.formSettings.confirmationMessage || 'Thank you for your response!';
-
-        // เช็คว่าเคย submit แล้วหรือยัง (ถ้าเปิด limitResponses)
-        if (this.formSettings.limitResponses) {
-          this.hasAlreadySubmitted = this.checkIfAlreadySubmitted(formDataResponse._id);
-        }
-
-        // Initialize checkbox arrays
-        questions.forEach(question => {
-          if (question.type === 'checkbox' && !this.responses[question._id]) {
-            this.responses[question._id] = [];
-          }
-        });
-
-      } catch (error) {
-        this.showToast('Failed to load form. Please try again.', 'error');
-        this.$router.push('/');
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    goBack() {
-      this.$router.push('/home');
-    },
-
-    checkIfAlreadySubmitted(formId) {
-      const submittedForms = JSON.parse(localStorage.getItem('submittedForms') || '[]');
-      return submittedForms.includes(formId);
-    },
-
-    markAsSubmitted(formId) {
-      const submittedForms = JSON.parse(localStorage.getItem('submittedForms') || '[]');
-      if (!submittedForms.includes(formId)) {
-        submittedForms.push(formId);
-        localStorage.setItem('submittedForms', JSON.stringify(submittedForms));
-      }
-    },
-
-    validateCurrentSection() {
-      const requiredQuestions = this.currentSectionQuestions.filter(q => q.required);
-      for (const question of requiredQuestions) {
-        const response = this.responses[question._id];
-        if (!response ||
-          (Array.isArray(response) && response.length === 0) ||
-          response === '') {
-          this.showToast(`Please answer the required question: ${question.label}`, 'warning');
-          return false;
-        }
-      }
-      return true;
-    },
-
-    nextSection() {
-      if (!this.validateCurrentSection()) return;
-
-      if (this.currentSection < this.totalSections - 1) {
-        this.currentSection++;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    },
-
-    prevSection() {
-      if (this.currentSection > 0) {
-        this.currentSection--;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    },
-
-    buildNestedResponsePath(questionId, options) {
-      const paths = [];
-      const mainValue = this.responses[questionId];
-
-      if (!mainValue) return paths;
-
-      // Add main selection
-      paths.push(mainValue);
-
-      // Recursively find selected follow-ups and build path
-      const findSelectedPath = (opts, prefix, currentPath) => {
-        if (!opts || !Array.isArray(opts)) return;
-
-        opts.forEach(opt => {
-          const key = `${prefix}-${opt.id}`;
-          const value = this.responses[key];
-
-          if (value) {
-            const newPath = `${currentPath}.${value}`;
-            paths.push(newPath);
-
-            // Continue recursively for nested follow-ups
-            if (opt.hasFollowUp && opt.followUpQuestion?.options) {
-              findSelectedPath(opt.followUpQuestion.options, key, newPath);
-            }
-          }
-        });
-      };
-
-      if (options && Array.isArray(options)) {
-        findSelectedPath(options, questionId, mainValue);
-      }
-
-      return paths;
-    },
-
-    async handleSubmit() {
-      if (!this.validateCurrentSection()) {
-        return;
-      }
-
-      const allRequiredQuestions = this.formData.questions.filter(q => q.required);
-      for (const question of allRequiredQuestions) {
-        const response = this.responses[question._id];
-        if (!response ||
-          (Array.isArray(response) && response.length === 0) ||
-          response === '') {
-          this.showToast('Please answer all required questions before submitting.', 'warning');
-          return;
-        }
-      }
-      this.isSubmitting = true;
-      try {
-        const answers = this.formData.questions
-          .filter(q => {
-            return !['title', 'image', 'video', 'divider', 'section-divider', 'title-description', 'section'].includes(q.type);
-          })
-          .map(q => {
-            let response = this.responses[q._id];
-
-            if ((q.type === 'choices' || q.type === 'choice') && q.options) {
-              const nestedPaths = this.buildNestedResponsePath(q._id, q.options);
-              if (nestedPaths.length > 0) {
-                response = nestedPaths;
-              }
-            }
-
-            if (q.type === 'file' && Array.isArray(response)) {
-              response = response.filter(item => item instanceof File);
-              if (response.length === 0) {
-                response = undefined;
-              }
-            }
-
-            return {
-              question: q._id,
-              response: response
-            };
-          })
-          .filter(answer => {
-            if (answer.response === undefined || answer.response === null) return false;
-            if (answer.response === '') return false;
-            if (Array.isArray(answer.response) && answer.response.length === 0) return false;
-            return true;
-          });
-
-        const responseData = {
-          form: this.formData.id,
-          answers
-        };
-
-        const result = await responseAPI.submit(responseData);
-
-        if (this.formSettings?.limitResponses) {
-          this.markAsSubmitted(this.formData.id);
-        }
-
-        this.showSuccessModal = true;
-      } catch (error) {
-        const errorMsg = error.response?.data?.message || 'Failed to submit form. Please try again.';
-        this.showToast(errorMsg, 'error');
-      } finally {
-        this.isSubmitting = false;
-      }
-    },
-
-    closeModal() {
-      this.showSuccessModal = false;
-      this.$router.push('/home');
-    }
-  },
-
-  computed: {
-    sections() {
-      if (!this.formData?.questions?.length) return [[]];
-
-      const result = [];
-      let currentSectionQuestions = [];
-
-      for (const question of this.formData.questions) {
-        if (question.type === 'divider') {
-          if (currentSectionQuestions.length > 0) {
-            result.push(currentSectionQuestions);
-          }
-          currentSectionQuestions = [];
-        } else {
-          currentSectionQuestions.push(question);
-        }
-      }
-
+  for (const question of formData.value.questions) {
+    if (question.type === 'divider') {
+      // เจอ divider = จบ section ปัจจุบัน เริ่ม section ใหม่
       if (currentSectionQuestions.length > 0) {
         result.push(currentSectionQuestions);
       }
-
-      return result.length > 0 ? result : [[]];
-    },
-
-    totalSections() {
-      return this.sections.length;
-    },
-
-    currentSectionQuestions() {
-      return this.sections[this.currentSection] || [];
-    },
-
-    transformedQuestions() {
-      if (!this.currentSectionQuestions || this.currentSectionQuestions.length === 0) {
-        return [];
-      }
-
-      return this.currentSectionQuestions.map(q => {
-        let frontendType = q.type;
-
-        if (q.type === 'checkbox') {
-          frontendType = 'checkbox';
-        }
-        else if (q.type === 'choices' || q.type === 'choice') {
-          frontendType = 'multiple-choice';
-        }
-        else if (q.type === 'dropdown') {
-          frontendType = 'dropdown';
-        }
-        else if (q.type === 'rating') {
-          frontendType = 'rating';
-        }
-        else if (q.type === 'file') {
-          frontendType = 'file-upload';
-        }
-        else if (q.type === 'image') {
-          frontendType = 'image';
-        }
-        else if (q.type === 'video') {
-          frontendType = 'video';
-        }
-        else if (q.type === 'title') {
-          frontendType = 'title';
-        }
-        else if (q.type === 'date') {
-          frontendType = 'date';
-        }
-        else if (q.type === 'time') {
-          frontendType = 'time';
-        }
-        else if (q.type === 'paragraph' || q.textType === 'paragraph') {
-          frontendType = 'paragraph';
-        }
-        else if (q.type === 'short' || q.type === 'text' || q.textType === 'short_answer') {
-          frontendType = 'short-answer';
-        }
-
-        const transformedOptions = q.options ? q.options.map((opt, idx) => {
-          if (typeof opt === 'string') {
-            return {
-              id: `${q._id}-opt-${idx}`,
-              text: opt
-            };
-          }
-          return {
-            id: opt.id || `${q._id}-opt-${idx}`,
-            text: opt.text || opt,
-            hasFollowUp: opt.hasFollowUp || false,
-            followUpQuestion: opt.followUpQuestion || null
-          };
-        }) : [];
-
-        const followUpData = q.config?.followUp || q.followUp;
-
-        const transformed = {
-          id: q._id,
-          _id: q._id,
-          type: frontendType,
-          title: q.label || '',
-          required: q.required || false,
-          options: transformedOptions,
-          followUp: followUpData || {},
-          maxRating: q.max || 5,
-          maxFiles: 1,
-          imageUrl: q.url || '',
-          videoUrl: q.url || '',
-          caption: q.caption || '',
-          placeholder: 'Your answer',
-          maxLength: q.maxLength || 500
-        };
-
-
-        return transformed;
-      });
-    },
-
-    isFirstSection() {
-      return this.currentSection === 0;
-    },
-
-    isLastSection() {
-      return this.currentSection === this.totalSections - 1;
-    },
-
-    progressPercent() {
-      if (this.totalSections > 1) {
-        return Math.round((this.currentSection / this.totalSections) * 100);
-      }
-
-      if (!this.formData?.questions?.length) return 0;
-      const totalQuestions = this.formData.questions.filter(q =>
-        !['title', 'divider', 'image'].includes(q.type)
-      ).length;
-      if (totalQuestions === 0) return 100;
-
-      const answeredQuestions = Object.keys(this.responses).filter(key => {
-        const value = this.responses[key];
-        if (Array.isArray(value)) return value.length > 0;
-        return value !== null && value !== undefined && value !== '';
-      }).length;
-
-      return Math.round((answeredQuestions / totalQuestions) * 100);
+      currentSectionQuestions = [];
+    } else {
+      currentSectionQuestions.push(question);
     }
-  },
-
-  watch: {
-
   }
-}
+
+  // อย่าลืม section สุดท้าย
+  if (currentSectionQuestions.length > 0) {
+    result.push(currentSectionQuestions);
+  }
+
+  return result.length > 0 ? result : [[]];
+});
+
+// จำนวน sections ทั้งหมด
+const totalSections = computed(() => sections.value.length);
+
+// Questions ที่ต้องแสดงใน section ปัจจุบัน
+const currentSectionQuestions = computed(() => sections.value[currentSection.value] || []);
+
+// Transform questions from backend format to frontend format
+const transformedQuestions = computed(() => {
+  if (!currentSectionQuestions.value || currentSectionQuestions.value.length === 0) {
+    return [];
+  }
+
+  return currentSectionQuestions.value.map(q => {
+    // Map backend type to frontend type
+    let frontendType = q.type;
+    
+    // Priority 1: Check specific backend types first (most reliable)
+    if (q.type === 'checkbox') {
+      frontendType = 'checkbox';
+    } 
+    else if (q.type === 'choices' || q.type === 'choice') {
+      frontendType = 'multiple-choice';
+    } 
+    else if (q.type === 'dropdown') {
+      frontendType = 'dropdown';
+    }
+    else if (q.type === 'rating') {
+      frontendType = 'rating';
+    }
+    else if (q.type === 'file') {
+      frontendType = 'file-upload';
+    }
+    else if (q.type === 'image') {
+      frontendType = 'image';
+    }
+    else if (q.type === 'video') {
+      frontendType = 'video';
+    }
+    else if (q.type === 'title') {
+      frontendType = 'title';
+    }
+    else if (q.type === 'date') {
+      frontendType = 'date';
+    }
+    else if (q.type === 'time') {
+      frontendType = 'time';
+    }
+    // Priority 2: For paragraph (can have type 'paragraph' or textType 'paragraph')
+    else if (q.type === 'paragraph' || q.textType === 'paragraph') {
+      frontendType = 'paragraph';
+    }
+    // Priority 3: For short/text questions - check textType or default to short-answer
+    else if (q.type === 'short' || q.type === 'text' || q.textType === 'short_answer') {
+      frontendType = 'short-answer';
+    }
+
+    // Transform options to have id and text (preserve followUp structure)
+    const transformedOptions = q.options ? q.options.map((opt, idx) => {
+      if (typeof opt === 'string') {
+        return {
+          id: `${q._id}-opt-${idx}`,
+          text: opt
+        };
+      }
+      // Option is an object with followUp
+      return {
+        id: opt.id || `${q._id}-opt-${idx}`,
+        text: opt.text || opt,
+        hasFollowUp: opt.hasFollowUp || false,
+        followUpQuestion: opt.followUpQuestion || null
+      };
+    }) : [];
+
+    // Transform follow-up questions if they exist
+    const followUpData = q.config?.followUp || q.followUp;
+
+    const transformed = {
+      id: q._id,
+      _id: q._id,
+      type: frontendType,
+      title: q.label || '',
+      required: q.required || false,
+      options: transformedOptions,
+      followUp: followUpData || {},
+      maxRating: q.max || 5,
+      maxFiles: 1,
+      imageUrl: q.url || '',
+      videoUrl: q.url || '',
+      caption: q.caption || '',
+      placeholder: 'Your answer',
+      maxLength: q.maxLength || 500
+    };
+    
+
+    return transformed;
+  });
+});
+
+// เช็คว่าเป็น section แรกหรือไม่
+const isFirstSection = computed(() => currentSection.value === 0);
+
+// เช็คว่าเป็น section สุดท้ายหรือไม่
+const isLastSection = computed(() => currentSection.value === totalSections.value - 1);
+
+// Validate เฉพาะ section ปัจจุบัน
+const validateCurrentSection = () => {
+  const requiredQuestions = currentSectionQuestions.value.filter(q => q.required);
+  for (const question of requiredQuestions) {
+    const response = responses[question._id];
+    if (!response ||
+      (Array.isArray(response) && response.length === 0) ||
+      response === '') {
+      showToast(`Please answer the required question: ${question.label}`, 'warning');
+      return false;
+    }
+  }
+  return true;
+};
+
+// ไปหน้าถัดไป
+const nextSection = () => {
+  if (!validateCurrentSection()) return;
+
+  if (currentSection.value < totalSections.value - 1) {
+    currentSection.value++;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
+// กลับหน้าก่อนหน้า
+const prevSection = () => {
+  if (currentSection.value > 0) {
+    currentSection.value--;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
+
+// เช็คว่า user เคย submit form นี้แล้วหรือยัง (ใช้ localStorage)
+const checkIfAlreadySubmitted = (formId) => {
+  const submittedForms = JSON.parse(localStorage.getItem('submittedForms') || '[]');
+  return submittedForms.includes(formId);
+};
+
+// บันทึกว่า user submit form นี้แล้ว
+const markAsSubmitted = (formId) => {
+  const submittedForms = JSON.parse(localStorage.getItem('submittedForms') || '[]');
+  if (!submittedForms.includes(formId)) {
+    submittedForms.push(formId);
+    localStorage.setItem('submittedForms', JSON.stringify(submittedForms));
+  }
+};
+
+// คำนวณ progress percent (based on sections if multi-page, otherwise based on answers)
+const progressPercent = computed(() => {
+  // ถ้ามีหลาย section ใช้ section-based progress
+  if (totalSections.value > 1) {
+    return Math.round((currentSection.value / totalSections.value) * 100);
+  }
+
+  // ถ้ามี section เดียว ใช้ answer-based progress
+  if (!formData.value?.questions?.length) return 0;
+  const totalQuestions = formData.value.questions.filter(q =>
+    !['title', 'divider', 'image'].includes(q.type)
+  ).length;
+  if (totalQuestions === 0) return 100;
+
+  const answeredQuestions = Object.keys(responses).filter(key => {
+    const value = responses[key];
+    if (Array.isArray(value)) return value.length > 0;
+    return value !== null && value !== undefined && value !== '';
+  }).length;
+
+  return Math.round((answeredQuestions / totalQuestions) * 100);
+});
+
+// Fetch form data from API
+const fetchFormData = async () => {
+  loading.value = true;
+  try {
+    const formId = route.params.id;
+
+    const response = await formAPI.getById(formId);
+    console.log('API Response:', response.data);
+
+
+    // Handle nested data structure
+    const formDataResponse = response.data.data || response.data;
+
+    // Extract title and description
+    const titleObj = formDataResponse.title?.find(t => t.key === 'en');
+    const titleThObj = formDataResponse.title?.find(t => t.key === 'th');
+    const title = titleObj?.value || titleThObj?.value || 'Untitled Form';
+
+    const descObj = formDataResponse.description?.find(d => d.key === 'en');
+    const descThObj = formDataResponse.description?.find(d => d.key === 'th');
+    const description = descObj?.value || descThObj?.value || '';
+
+    // Check if questions exist and map them
+    let questions = [];
+
+    if (formDataResponse.questions && Array.isArray(formDataResponse.questions)) {
+      questions = formDataResponse.questions.map(q => {
+        // Extract question title from multilingual array
+        const titleObj = q.title?.find(t => t.key === 'en') || q.questionTitle?.find(t => t.key === 'en');
+        const titleThObj = q.title?.find(t => t.key === 'th') || q.questionTitle?.find(t => t.key === 'th');
+        const label = titleObj?.value || titleThObj?.value || '';
+        // Parse options for checkbox and choices types
+        let options = [];
+        const optionsArray = q.config?.options || q.options;
+        if (optionsArray && Array.isArray(optionsArray)) {
+          options = optionsArray.map(opt => {
+            if (typeof opt === 'string') return opt;
+            
+            // If option is an object with text and followUp
+            if (opt.text) {
+              return {
+                id: opt.id,
+                text: opt.text,
+                hasFollowUp: opt.hasFollowUp || false,
+                followUpQuestion: opt.followUpQuestion || null
+              };
+            }
+            
+            if (opt.label) return opt.label;
+            if (opt.value) return opt.value;
+            
+            // Array of multilingual objects
+            if (Array.isArray(opt)) {
+              const enOpt = opt.find(o => o.key === 'en');
+              const thOpt = opt.find(o => o.key === 'th');
+              return enOpt?.value || thOpt?.value || '';
+            }
+            
+            // Single multilingual object
+            const optEn = opt.key === 'en' ? opt.value : null;
+            const optTh = opt.key === 'th' ? opt.value : null;
+            return optEn || optTh || '';
+          });
+        }
+        return {
+          _id: q._id,
+          type: q.type,
+          label: label,
+          required: q.required || false,
+          options: options,
+          min: q.min || 1,
+          max: q.max || 5,
+          step: q.step || 1,
+          textType: q.textType || 'short_answer',
+          maxLength: q.maxLength || 500,
+          url: q.config?.imageUrl || q.config?.videoUrl || q.url || '',
+          caption: q.config?.caption || q.caption || ''
+        };
+      });
+    }
+
+    formData.value = {
+      id: formDataResponse._id,
+      title: title,
+      description: description,
+      questions: questions
+    };
+
+    // เก็บ settings และ status
+    formStatus.value = formDataResponse.status || 'draft';
+    formSettings.value = formDataResponse.settings || {};
+    confirmationMessage.value = formSettings.value.confirmationMessage || 'Thank you for your response!';
+
+    // เช็คว่าเคย submit แล้วหรือยัง (ถ้าเปิด limitResponses)
+    if (formSettings.value.limitResponses) {
+      hasAlreadySubmitted.value = checkIfAlreadySubmitted(formDataResponse._id);
+    }
+
+    // Initialize checkbox arrays
+    questions.forEach(question => {
+      if (question.type === 'checkbox' && !responses[question._id]) {
+        responses[question._id] = [];
+      }
+    });
+
+  } catch (error) {
+    showToast('Failed to load form. Please try again.', 'error');
+    router.push('/');
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchFormData();
+});
+
+const goBack = () => {
+  router.push('/home');
+};
+
+const handleSubmit = async () => {
+  // Validate current section before submit
+  if (!validateCurrentSection()) {
+    return;
+  }
+  
+  // Final validation: check all required questions across all sections
+  const allRequiredQuestions = formData.value.questions.filter(q => q.required);
+  for (const question of allRequiredQuestions) {
+    const response = responses[question._id];
+    if (!response ||
+      (Array.isArray(response) && response.length === 0) ||
+      response === '') {
+      showToast('Please answer all required questions before submitting.', 'warning');
+      return;
+    }
+  }
+  isSubmitting.value = true;
+  try {
+    // Prepare response data matching backend Response schema
+    // Filter out follow-up responses (keys with dashes like "id-1-2") and only keep main question responses
+    const mainQuestionIds = new Set(formData.value.questions.map(q => q._id));
+    
+    const answers = formData.value.questions
+      .filter(q => {
+        // Skip non-answerable question types (title, image, video, divider, section-divider, title-description)
+        return !['title', 'image', 'video', 'divider', 'section-divider', 'title-description', 'section'].includes(q.type);
+      })
+      .map(q => {
+        let response = responses[q._id];
+        
+        // Filter out empty objects from file uploads - only for file-upload questions
+        if (q.type === 'file' && Array.isArray(response)) {
+          response = response.filter(item => item instanceof File);
+          // If array becomes empty after filtering, set to undefined
+          if (response.length === 0) {
+            response = undefined;
+          }
+        }
+        
+        return {
+          question: q._id,
+          response: response
+        };
+      })
+      .filter(answer => {
+        // Filter out undefined/null/empty responses
+        if (answer.response === undefined || answer.response === null) return false;
+        if (answer.response === '') return false;
+        if (Array.isArray(answer.response) && answer.response.length === 0) return false;
+        return true;
+      });
+    
+    const responseData = {
+      form: formData.value.id, // ObjectId of the form
+      answers
+      // responder will be set by backend from auth token
+    };
+    
+    // Submit to API
+    const result = await responseAPI.submit(responseData);
+
+    // บันทึกว่า user submit แล้ว (สำหรับ limitResponses)
+    if (formSettings.value?.limitResponses) {
+      markAsSubmitted(formData.value.id);
+    }
+
+    // Show success modal
+    showSuccessModal.value = true;
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || 'Failed to submit form. Please try again.';
+    showToast(errorMsg, 'error');
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const closeModal = () => {
+  showSuccessModal.value = false;
+  router.push('/home');
+};
+
 </script>
 
 <style scoped>
@@ -924,21 +910,21 @@ export default {
   height: 36px;
   padding: 4px 12px;
   background: rgba(229, 229, 229, 0.3);
-  border: 1px solid var(--border-color);
+  border: 1px solid #E5E5E5;
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.15px;
-  color: var(--text-primary);
+  color: #333333;
   box-sizing: border-box;
   transition: all 0.2s;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--text-primary);
+  border-color: #333333;
   background: #FFFFFF;
 }
 

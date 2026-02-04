@@ -5,9 +5,6 @@ var https = require('https');
 var fs = require('fs');
 var cfg = require('./config/config');
 
-// Import form scheduler for auto status management
-require('./server/Project/Form/service/formScheduler');
-
 /**
  * Get port from environment and store in Express.
  */

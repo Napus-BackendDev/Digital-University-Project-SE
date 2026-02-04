@@ -68,6 +68,23 @@ const visiblePages = computed(() => {
   return pages.filter(p => p !== '...' || pages.indexOf(p) === pages.lastIndexOf(p))
 })
 
+<<<<<<< HEAD
+=======
+// Date formatter
+function formatDate(dateString) {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  })
+}
+
+>>>>>>> origin/backend/merge
 // View individual response
 function viewResponse(responseId) {
   const response = props.responses.find(r => r._id === responseId)
@@ -109,6 +126,36 @@ function getAnswer(questionId) {
   return selectedResponse.value.answers.find(a => a.question?._id === questionId)
 }
 
+<<<<<<< HEAD
+=======
+// Format response value
+function formatResponse(answer, question) {
+  if (!answer || answer.response === null || answer.response === undefined) {
+    return '-'
+  }
+  
+  const value = answer.response
+  
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '-'
+    if (question.type === 'file-upload') {
+      return `${value.length} file(s) uploaded`
+    }
+    return value.join(', ')
+  }
+  
+  if (question.type === 'rating') {
+    return `${value} / ${question.maxRating || 5}`
+  }
+  
+  if (question.type === 'file-upload' && typeof value === 'string') {
+    return value
+  }
+  
+  return value
+}
+
+>>>>>>> origin/backend/merge
 // Export response
 function handleExport() {
   if (!selectedResponse.value) return
@@ -120,7 +167,10 @@ function handleExport() {
     answers: props.questions.map((q, index) => {
         const answer = getAnswer(q._id || q.id)
         return {
+<<<<<<< HEAD
           questionNumber: index + 1,
+=======
+>>>>>>> origin/backend/merge
           question: q.title,
           type: q.type,
           response: answer?.response || null
@@ -184,6 +234,7 @@ function getQuestionResponses(questionId) {
 function getChoiceChartData(questionId, options) {
   const responses = getQuestionResponses(questionId)
   const counts = {}
+<<<<<<< HEAD
 
   // Recursive function to collect all options (main + follow-up)
   function collectOptions(opts, prefix = '') {
@@ -222,13 +273,41 @@ function getChoiceChartData(questionId, options) {
     }
   })
 
+=======
+  
+  // นับจำนวนแต่ละตัวเลือก
+  options.forEach(opt => {
+    counts[opt.text] = 0
+  })
+  
+  responses.forEach(resp => {
+    // Handle checkbox (array of values)
+    if (Array.isArray(resp.value)) {
+      resp.value.forEach(val => {
+        if (counts[val] !== undefined) {
+          counts[val]++
+        }
+      })
+    } else {
+      // Handle single choice
+      if (counts[resp.value] !== undefined) {
+        counts[resp.value]++
+      }
+    }
+  })
+  
+>>>>>>> origin/backend/merge
   // สีสำหรับ chart
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', 
     '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2',
     '#F8B739', '#52B788', '#E76F51', '#2A9D8F'
   ]
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> origin/backend/merge
   return Object.entries(counts).map(([label, count], index) => ({
     label,
     count,
@@ -334,7 +413,10 @@ function getFileResponses(questionId) {
         <ResponseSummaryCard
           v-for="(question, index) in questions"
           :key="question.id || question._id"
+<<<<<<< HEAD
           :questionNumber="index + 1"
+=======
+>>>>>>> origin/backend/merge
             :title="question.title"
             :responseCount="totalResponses"
           >
@@ -633,8 +715,13 @@ function getFileResponses(questionId) {
 }
 
 .empty-responses .empty-icon svg { width: 100%; height: 100%; }
+<<<<<<< HEAD
 .empty-responses h3 { font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 0 0 8px; }
 .empty-responses p { font-size: 14px; color: var(--text-secondary); margin: 0; max-width: 400px; }
+=======
+.empty-responses h3 { font-size: 20px; font-weight: 600; color: #333; margin: 0 0 8px; }
+.empty-responses p { font-size: 14px; color: #666; margin: 0; max-width: 400px; }
+>>>>>>> origin/backend/merge
 
 /* Individual View Styles */
 .individual-view {
@@ -657,35 +744,60 @@ function getFileResponses(questionId) {
   transform: translateY(-50%);
   width: 16px;
   height: 16px;
+<<<<<<< HEAD
   color: var(--text-muted);
+=======
+  color: #999;
+>>>>>>> origin/backend/merge
 }
 
 .search-input {
   width: 100%;
   padding: 12px 16px 12px 44px;
+<<<<<<< HEAD
   border: 1.5px solid var(--border-color);
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: var(--text-primary);
   background: var(--bg-gray);
+=======
+  border: 1.5px solid #E5E5E5;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #333;
+  background: #FAFAFA;
+>>>>>>> origin/backend/merge
   transition: all 0.2s;
 }
 
 .search-input:focus {
   outline: none;
+<<<<<<< HEAD
   border-color: var(--primary);
+=======
+  border-color: #6366F1;
+>>>>>>> origin/backend/merge
   background: #FFF;
 }
 
 .search-input::placeholder {
+<<<<<<< HEAD
   color: var(--text-muted);
+=======
+  color: #999;
+>>>>>>> origin/backend/merge
 }
 
 /* Table Container */
 .table-container {
   background: #FFF;
+<<<<<<< HEAD
   border: 1.5px solid var(--border-color);
+=======
+  border: 1.5px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 16px;
   overflow: hidden;
 }
@@ -696,8 +808,13 @@ function getFileResponses(questionId) {
 }
 
 .responses-table thead {
+<<<<<<< HEAD
   background: var(--bg-gray);
   border-bottom: 1.5px solid var(--border-color);
+=======
+  background: #FAFAFA;
+  border-bottom: 1.5px solid #E5E5E5;
+>>>>>>> origin/backend/merge
 }
 
 .responses-table th {
@@ -720,14 +837,22 @@ function getFileResponses(questionId) {
 }
 
 .responses-table tbody tr:hover {
+<<<<<<< HEAD
   background: var(--bg-gray);
+=======
+  background: #FAFAFA;
+>>>>>>> origin/backend/merge
 }
 
 .responses-table td {
   padding: 16px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
+<<<<<<< HEAD
   color: var(--text-primary);
+=======
+  color: #333;
+>>>>>>> origin/backend/merge
 }
 
 .col-number {
@@ -774,18 +899,30 @@ function getFileResponses(questionId) {
   gap: 6px;
   padding: 6px 12px;
   background: transparent;
+<<<<<<< HEAD
   border: 1px solid var(--border-color);
+=======
+  border: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 500;
+<<<<<<< HEAD
   color: var(--text-primary);
+=======
+  color: #333;
+>>>>>>> origin/backend/merge
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .view-btn-action:hover {
+<<<<<<< HEAD
   background: var(--bg-gray-light);
+=======
+  background: #F5F5F5;
+>>>>>>> origin/backend/merge
   border-color: #D4D4D4;
 }
 
@@ -809,18 +946,30 @@ function getFileResponses(questionId) {
   gap: 6px;
   padding: 8px 12px;
   background: #FFF;
+<<<<<<< HEAD
   border: 1px solid var(--border-color);
+=======
+  border: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 500;
+<<<<<<< HEAD
   color: var(--text-primary);
+=======
+  color: #333;
+>>>>>>> origin/backend/merge
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .page-btn:hover:not(:disabled) {
+<<<<<<< HEAD
   background: var(--bg-gray-light);
+=======
+  background: #F5F5F5;
+>>>>>>> origin/backend/merge
   border-color: #D4D4D4;
 }
 
@@ -844,18 +993,30 @@ function getFileResponses(questionId) {
   height: 32px;
   padding: 0 8px;
   background: #FFF;
+<<<<<<< HEAD
   border: 1px solid var(--border-color);
+=======
+  border: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 500;
+<<<<<<< HEAD
   color: var(--text-primary);
+=======
+  color: #333;
+>>>>>>> origin/backend/merge
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .page-number:hover {
+<<<<<<< HEAD
   background: var(--bg-gray-light);
+=======
+  background: #F5F5F5;
+>>>>>>> origin/backend/merge
   border-color: #D4D4D4;
 }
 
@@ -878,18 +1039,30 @@ function getFileResponses(questionId) {
   gap: 8px;
   padding: 8px 12px;
   background: #FFF;
+<<<<<<< HEAD
   border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: var(--text-primary);
+=======
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #333;
+>>>>>>> origin/backend/merge
   cursor: pointer;
   transition: all 0.2s;
   align-self: flex-start;
 }
 
 .back-to-list-btn:hover {
+<<<<<<< HEAD
   background: var(--bg-gray-light);
+=======
+  background: #F5F5F5;
+>>>>>>> origin/backend/merge
   border-color: #D4D4D4;
 }
 
@@ -921,8 +1094,13 @@ function getFileResponses(questionId) {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
+<<<<<<< HEAD
   background: var(--bg-gray);
   border: 1px solid var(--border-color);
+=======
+  background: #FAFAFA;
+  border: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 12px;
 }
 
@@ -939,14 +1117,22 @@ function getFileResponses(questionId) {
   width: 32px;
   height: 32px;
   background: #FFF;
+<<<<<<< HEAD
   border: 1px solid var(--border-color);
+=======
+  border: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .nav-btn:hover:not(:disabled) {
+<<<<<<< HEAD
   background: var(--bg-gray-light);
+=======
+  background: #F5F5F5;
+>>>>>>> origin/backend/merge
   border-color: #D4D4D4;
 }
 
@@ -963,7 +1149,11 @@ function getFileResponses(questionId) {
 .nav-text {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
+<<<<<<< HEAD
   color: var(--text-primary);
+=======
+  color: #333;
+>>>>>>> origin/backend/merge
   font-weight: 500;
 }
 
@@ -979,7 +1169,11 @@ function getFileResponses(questionId) {
   gap: 6px;
   padding: 8px 12px;
   background: #FFF;
+<<<<<<< HEAD
   border: 1px solid var(--border-color);
+=======
+  border: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 8px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
@@ -989,11 +1183,19 @@ function getFileResponses(questionId) {
 }
 
 .export-btn {
+<<<<<<< HEAD
   color: var(--text-primary);
 }
 
 .export-btn:hover {
   background: var(--bg-gray-light);
+=======
+  color: #333;
+}
+
+.export-btn:hover {
+  background: #F5F5F5;
+>>>>>>> origin/backend/merge
   border-color: #D4D4D4;
 }
 
@@ -1015,8 +1217,13 @@ function getFileResponses(questionId) {
 
 .email-section {
   padding: 20px;
+<<<<<<< HEAD
   background: var(--bg-gray);
   border: 1px solid var(--border-color);
+=======
+  background: #FAFAFA;
+  border: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 12px;
 }
 
@@ -1039,7 +1246,11 @@ function getFileResponses(questionId) {
 
 .answers-section {
   background: #FFF;
+<<<<<<< HEAD
   border: 1px solid var(--border-color);
+=======
+  border: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 12px;
   overflow: hidden;
 }
@@ -1050,8 +1261,13 @@ function getFileResponses(questionId) {
 }
 
 .answers-table thead {
+<<<<<<< HEAD
   background: var(--bg-gray);
   border-bottom: 1px solid var(--border-color);
+=======
+  background: #FAFAFA;
+  border-bottom: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
 }
 
 .answers-table th {
@@ -1075,7 +1291,11 @@ function getFileResponses(questionId) {
   padding: 16px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
+<<<<<<< HEAD
   color: var(--text-primary);
+=======
+  color: #333;
+>>>>>>> origin/backend/merge
   vertical-align: top;
 }
 
@@ -1102,18 +1322,30 @@ function getFileResponses(questionId) {
 
 .question-type {
   font-size: 12px;
+<<<<<<< HEAD
   color: var(--text-muted);
+=======
+  color: #999;
+>>>>>>> origin/backend/merge
   text-transform: capitalize;
 }
 
 .response-text {
+<<<<<<< HEAD
   color: var(--text-primary);
+=======
+  color: #333;
+>>>>>>> origin/backend/merge
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .file-link {
+<<<<<<< HEAD
   color: var(--primary);
+=======
+  color: #6366F1;
+>>>>>>> origin/backend/merge
   text-decoration: underline;
   cursor: pointer;
   transition: color 0.2s;
@@ -1126,7 +1358,11 @@ function getFileResponses(questionId) {
 .all-responses-section {
   margin-top: 12px;
   padding-top: 24px;
+<<<<<<< HEAD
   border-top: 1px solid var(--border-color);
+=======
+  border-top: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
 }
 
 .section-title {
@@ -1140,14 +1376,22 @@ function getFileResponses(questionId) {
 .responses-list-table {
   width: 100%;
   border-collapse: collapse;
+<<<<<<< HEAD
   border: 1px solid var(--border-color);
+=======
+  border: 1px solid #E5E5E5;
+>>>>>>> origin/backend/merge
   border-radius: 12px;
   overflow: hidden;
   background: #FFF;
 }
 
 .responses-list-table thead {
+<<<<<<< HEAD
   background: var(--bg-gray);
+=======
+  background: #FAFAFA;
+>>>>>>> origin/backend/merge
 }
 
 .responses-list-table th {
@@ -1171,7 +1415,11 @@ function getFileResponses(questionId) {
 }
 
 .responses-list-table tbody tr:hover {
+<<<<<<< HEAD
   background: var(--bg-gray);
+=======
+  background: #FAFAFA;
+>>>>>>> origin/backend/merge
 }
 
 .responses-list-table tbody tr.active-row {
@@ -1182,7 +1430,11 @@ function getFileResponses(questionId) {
   padding: 12px;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
+<<<<<<< HEAD
   color: var(--text-primary);
+=======
+  color: #333;
+>>>>>>> origin/backend/merge
 }
 
 .responses-list-table .col-number {
@@ -1214,12 +1466,21 @@ function getFileResponses(questionId) {
 
 .view-btn-small {
   background: #FFF;
+<<<<<<< HEAD
   border: 1px solid var(--border-color);
   color: var(--text-primary);
 }
 
 .view-btn-small:hover {
   background: var(--bg-gray-light);
+=======
+  border: 1px solid #E5E5E5;
+  color: #333;
+}
+
+.view-btn-small:hover {
+  background: #F5F5F5;
+>>>>>>> origin/backend/merge
   border-color: #D4D4D4;
 }
 

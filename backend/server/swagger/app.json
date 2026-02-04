@@ -339,25 +339,78 @@
                                 "type": "object",
                                 "properties": {
                                     "title": {
-                                        "type": "string"
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
                                     },
                                     "can_duplicate": {
                                         "type": "boolean"
                                     },
                                     "status": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "enum": ["draft", "active", "closed"]
                                     },
                                     "schedule": {
                                         "type": "object",
                                         "properties": {
-                                            "mode": {
-                                                "type": "string"
-                                            },
                                             "startAt": {
-                                                "type": "date"
+                                                "type": "string",
+                                                "format": "date-time"
                                             },
                                             "endAt": {
-                                                "type": "date"
+                                                "type": "string",
+                                                "format": "date-time"
+                                            }
+                                        }
+                                    },
+                                    "form_settings": {
+                                        "type": "object",
+                                        "properties": {
+                                            "collectEmail": {
+                                                "type": "boolean"
+                                            },
+                                            "limitResponse": {
+                                                "type": "boolean"
+                                            },
+                                            "editSubmit": {
+                                                "type": "boolean"
+                                            },
+                                            "progressBar": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    },
+                                    "confirm_message": {
+                                        "type": "object",
+                                        "properties": {
+                                            "message": {
+                                                "type": "string"
+                                            },
+                                            "link": {
+                                                "type": "string"
                                             }
                                         }
                                     }
@@ -391,25 +444,78 @@
                                         "type": "string"
                                     },
                                     "title": {
-                                        "type": "string"
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "description": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
                                     },
                                     "can_duplicate": {
                                         "type": "boolean"
                                     },
                                     "status": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "enum": ["draft", "active", "closed"]
                                     },
                                     "schedule": {
                                         "type": "object",
                                         "properties": {
-                                            "mode": {
-                                                "type": "string"
-                                            },
                                             "startAt": {
-                                                "type": "date"
+                                                "type": "string",
+                                                "format": "date-time"
                                             },
                                             "endAt": {
-                                                "type": "date"
+                                                "type": "string",
+                                                "format": "date-time"
+                                            }
+                                        }
+                                    },
+                                    "form_settings": {
+                                        "type": "object",
+                                        "properties": {
+                                            "collectEmail": {
+                                                "type": "boolean"
+                                            },
+                                            "limitResponse": {
+                                                "type": "boolean"
+                                            },
+                                            "editSubmit": {
+                                                "type": "boolean"
+                                            },
+                                            "progressBar": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    },
+                                    "confirm_message": {
+                                        "type": "object",
+                                        "properties": {
+                                            "message": {
+                                                "type": "string"
+                                            },
+                                            "link": {
+                                                "type": "string"
                                             }
                                         }
                                     }
@@ -475,6 +581,39 @@
                 "responses": {
                     "200": {
                         "description": "Success"
+                    }
+                }
+            }
+        },
+        "/form/duplicate": {
+            "post": {
+                "tags": [
+                    "Form"
+                ],
+                "summary": "Duplicate a form",
+                "description": "Create a duplicate of an existing form",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "_id"
+                                ],
+                                "properties": {
+                                    "_id": {
+                                        "type": "string",
+                                        "description": "Form ID to duplicate"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Form duplicated successfully"
                     }
                 }
             }
@@ -598,7 +737,9 @@
                         "description": "Success"
                     }
                 }
-            },
+            }
+        },
+        "/response/submit": {
             "post": {
                 "tags": [
                     "Response"
@@ -620,22 +761,24 @@
                                         "type": "string",
                                         "description": "Form ID"
                                     },
+                                    "responder": {
+                                        "type": "string",
+                                        "description": "User ID (optional, auto-set from JWT)"
+                                    },
                                     "answers": {
                                         "type": "array",
                                         "items": {
                                             "type": "object",
                                             "properties": {
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "description": "Question ID"
                                                 },
-                                                "response": {}
+                                                "response": {
+                                                    "description": "Response value (type varies by question type)"
+                                                }
                                             }
                                         }
-                                    },
-                                    "submittedAt": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "description": "Optional - defaults to now"
                                     }
                                 }
                             }
@@ -643,12 +786,14 @@
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Success"
+                    "201": {
+                        "description": "Response created successfully"
                     }
                 }
-            },
-            "put": {
+            }
+        },
+        "/response/update": {
+            "patch": {
                 "tags": [
                     "Response"
                 ],
@@ -683,9 +828,6 @@
                                                 "response": {}
                                             }
                                         }
-                                    },
-                                    "submittedAt": {
-                                        "type": "date"
                                     }
                                 }
                             }
@@ -697,38 +839,33 @@
                         "description": "Updated"
                     }
                 }
-            },
+            }
+        },
+        "/response/delete": {
             "delete": {
                 "tags": [
                     "Response"
                 ],
-                "summary": "Delete a response",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "_id"
-                                ],
-                                "properties": {
-                                    "_id": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "responses": {
-                        "200": {
-                            "description": "Deleted"
-                        }
+                "summary": "Delete a response by ID",
+                "parameters": [
+                    {
+                        "name": "_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Response ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
                     }
                 }
             }
         },
-        "/response/form": {
+        "/response/getByFormId": {
             "get": {
                 "tags": [
                     "Response"
@@ -741,7 +878,8 @@
                         "required": true,
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "Form ID"
                     }
                 ],
                 "responses": {
@@ -751,7 +889,7 @@
                 }
             }
         },
-        "/response/user": {
+        "/response/getByUserId": {
             "get": {
                 "tags": [
                     "Response"
@@ -764,7 +902,8 @@
                         "required": true,
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "User ID"
                     }
                 ],
                 "responses": {
@@ -774,7 +913,7 @@
                 }
             }
         },
-        "/response/id": {
+        "/response/getById": {
             "get": {
                 "tags": [
                     "Response"
@@ -782,35 +921,13 @@
                 "summary": "Get response by ID",
                 "parameters": [
                     {
-                        "name": "response_id",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                }
-            }
-        },
-        "/response/export": {
-            "get": {
-                "tags": [
-                    "Response"
-                ],
-                "summary": "Export responses by form ID",
-                "parameters": [
-                    {
                         "name": "_id",
                         "in": "query",
                         "required": true,
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "Response ID"
                     }
                 ],
                 "responses": {
@@ -820,7 +937,129 @@
                 }
             }
         },
-        "/response/delete": {
+        "/response/download/{form_id}": {
+            "get": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Download all responses for a form as JSON",
+                "parameters": [
+                    {
+                        "name": "form_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Form ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON file download"
+                    }
+                }
+            }
+        },
+        "/response/download/{form_id}/user/{user_id}": {
+            "get": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Download a specific user's response for a form as JSON",
+                "parameters": [
+                    {
+                        "name": "form_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Form ID"
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "User ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON file download"
+                    }
+                }
+            }
+        },
+        "/response/export/{formId}/user/{userId}": {
+            "post": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Generate export link for a specific user's response",
+                "parameters": [
+                    {
+                        "name": "formId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Form ID"
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "User ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Export link generated"
+                    }
+                }
+            }
+        },
+        "/response/export/link": {
+            "post": {
+                "tags": [
+                    "Response"
+                ],
+                "summary": "Generate export link for all responses of a form",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "formId"
+                                ],
+                                "properties": {
+                                    "formId": {
+                                        "type": "string",
+                                        "description": "Form ID"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Export link generated"
+                    }
+                }
+            }
+        },
+        "/response/deleteByFormId": {
             "delete": {
                 "tags": [
                     "Response"
@@ -828,17 +1067,18 @@
                 "summary": "Delete all responses by form ID",
                 "parameters": [
                     {
-                        "name": "_id",
+                        "name": "form",
                         "in": "query",
                         "required": true,
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "description": "Form ID"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Deleted"
+                        "description": "All responses deleted"
                     }
                 }
             }
