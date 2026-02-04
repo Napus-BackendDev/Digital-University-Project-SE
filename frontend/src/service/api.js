@@ -3,7 +3,7 @@ import store from '@/store/store'
 
 const instance = axios.create();
 
-instance.defaults.baseURL = process.env.VUE_APP_API_URL;
+instance.defaults.baseURL =  'http://localhost:8081/api/v1';
 
 instance.defaults.headers = {
     "Content-Type": "application/json",
