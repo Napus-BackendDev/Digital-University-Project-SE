@@ -36,13 +36,6 @@ exports.onQuerys = async function (request, response, next) {
 exports.onCreate = async function (request, response, next) {
     try {
         const doc = await Question_Types.onCreate(request.body);
-
-        // var data = {}
-        // data.tiltle = request.body.tiltle;
-        // data.description = request.body.description;
-        // data.state = request.body.state;
-        // data.create = request.body.create;
-
         var resData = await resMsg.onMessage_Response(0,20000)
         resData.data = doc
         response.status(200).json(resData);
