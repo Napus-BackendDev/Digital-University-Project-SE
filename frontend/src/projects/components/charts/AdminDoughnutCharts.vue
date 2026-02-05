@@ -43,7 +43,7 @@ import { CChartDoughnut } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
 
 export default {
-    name: 'AdminPieCharts',
+    name: 'AdminDoughnutCharts',
     components: { CChartDoughnut },
     computed: {
         ...mapGetters('Forms', ['forms']),

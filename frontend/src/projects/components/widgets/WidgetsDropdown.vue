@@ -7,12 +7,9 @@
                     <div class="icon-box bg-danger-light text-danger">
                         <CIcon name="cil-description" size="xl" />
                     </div>
-                    <div class="change-indicator text-success">
-                        <CIcon name="cil-arrow-top" size="sm" /> 12.5%
-                    </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">7</h2>
+                    <h2 class="stat-value">{{ stats.totalForms }}</h2>
                     <div class="stat-label">Total Forms</div>
                 </div>
             </div>
@@ -25,12 +22,9 @@
                     <div class="icon-box bg-success-light text-success">
                         <CIcon name="cil-people" size="xl" />
                     </div>
-                    <div class="change-indicator text-success">
-                        <CIcon name="cil-arrow-top" size="sm" /> 8.3%
-                    </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">12</h2>
+                    <h2 class="stat-value">{{ stats.totalResponses }}</h2>
                     <div class="stat-label">Total Responses</div>
                 </div>
             </div>
@@ -43,10 +37,9 @@
                     <div class="icon-box bg-warning-light text-warning">
                         <CIcon name="cil-chart-line" size="xl" />
                     </div>
-                    <!-- No percentage for this card -->
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">5</h2>
+                    <h2 class="stat-value">{{ stats.activeForms }}</h2>
                     <div class="stat-label">Active Forms</div>
                 </div>
             </div>
@@ -59,10 +52,9 @@
                     <div class="icon-box bg-dark-light text-dark">
                         <CIcon name="cil-chart" size="xl" />
                     </div>
-                    <!-- No percentage for this card -->
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">2</h2>
+                    <h2 class="stat-value">{{ stats.avgResponses }}</h2>
                     <div class="stat-label">Avg Responses/Form</div>
                 </div>
             </div>
@@ -71,8 +63,62 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
     name: 'WidgetsDropdown',
+    computed: {
+        ...mapGetters('Forms', ['forms']),
+
+        stats() {
+            if (!this.forms) return {
+                totalForms: 0,
+                totalResponses: 0,
+                activeForms: 0,
+                avgResponses: 0
+            };
+
+            const totalForms = this.forms.length;
+            let totalResponses = 0;
+            let activeForms = 0;
+
+            this.forms.forEach(form => {
+                // Count responses
+                if (form.responses) {
+                    totalResponses += form.responses.length;
+                }
+
+                // Count active forms
+                let isActive = false;
+
+                let statusRaw = '';
+                if (form.status && form.status.title) {
+                    if (Array.isArray(form.status.title)) {
+                        const enItem = form.status.title.find(item => item.key === 'en');
+                        statusRaw = enItem ? enItem.value : (form.status.title[0]?.value || '');
+                    } else {
+                        statusRaw = form.status.title;
+                    }
+                }
+                statusRaw = statusRaw.toLowerCase();
+
+                if (statusRaw.includes('open')) {
+                    isActive = true;
+                }
+
+                if (isActive) activeForms++;
+            });
+
+            const avgResponses = totalForms > 0 ? (totalResponses / totalForms).toFixed(1) : 0;
+
+            return {
+                totalForms,
+                totalResponses,
+                activeForms,
+                avgResponses
+            };
+        }
+    }
 }
 </script>
 

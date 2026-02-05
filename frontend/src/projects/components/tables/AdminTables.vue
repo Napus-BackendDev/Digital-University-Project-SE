@@ -68,6 +68,8 @@ export default {
         ...mapGetters('Forms', ['forms']),
 
         tableData() {
+            // Force reactivity on locale change
+            const locale = this.$i18n.locale;
 
             if (!this.forms || this.forms.length === 0) return []
 
@@ -81,7 +83,7 @@ export default {
                 return {
                     title: this.getLang(form.title) || 'Untitled Form',
                     description: this.getLang(form.description) || '',
-                    status: this.getLang(form.status.title) || 'Draft',
+                    status: this.getLang(form.status.title),
                     access: form.isPublic ? 'Public' : 'Private',
                     responses: form.responses ? form.responses.length : 0,
                     created: form.createdAt ? moment(form.createdAt).format('D MMM YYYY') : '-'

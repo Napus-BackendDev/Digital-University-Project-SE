@@ -8,11 +8,13 @@ const TheContainer = () => import('@/containers/TheContainer')
 const Login = () => import('@/projects/views/Login.vue')
 
 // User
+const UserDashboard = () => import('@/projects/views/user/Dashboard.vue')
 
 // Editor
+const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
 
 // Admin
-const Dashboard = () => import('@/projects/views/admin/Dashboard.vue') 
+const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue') 
 
 
 Vue.use(Router)
@@ -30,10 +32,24 @@ export default new Router({
             children: [
 
                 {
-                    path: 'dashboard',
-                    name: 'Dashboard',
-                    component: Dashboard
+                    path: 'user/dashboard',
+                    name: 'UserDashboard',
+                    component: UserDashboard
                 },
+
+                {
+                    path: 'editor/dashboard',
+                    name: 'EditorDashboard',
+                    component: EditorDashboard
+                },
+
+                {
+                    path: 'admin/dashboard',
+                    name: 'AdminDashboard',
+                    component: AdminDashboard
+                }
+
+
             ]
         },
 
