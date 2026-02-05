@@ -9,9 +9,11 @@ const Login = () => import('@/projects/views/Login.vue')
 
 // User
 const UserDashboard = () => import('@/projects/views/user/Dashboard.vue')
+const UserFormFill = () => import('@/projects/views/user/FormFill.vue')
 
 // Editor
 const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
+const EditorCreateForm = () => import('@/projects/views/editor/CreateForm.vue')
 
 // Admin
 const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue') 
@@ -38,6 +40,13 @@ export default new Router({
                 },
 
                 {
+                    path: 'user/form-fill/:id',
+                    name: 'UserFormFill',
+                    component: UserFormFill,
+                    props: true
+                },
+
+                {
                     path: 'editor/dashboard',
                     name: 'EditorDashboard',
                     component: EditorDashboard
@@ -47,6 +56,12 @@ export default new Router({
                     path: 'admin/dashboard',
                     name: 'AdminDashboard',
                     component: AdminDashboard
+                },
+
+                {
+                    path: 'editor/create-form',
+                    name: 'EditorCreateForm',
+                    component: EditorCreateForm
                 }
 
 

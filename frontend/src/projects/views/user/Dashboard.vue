@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import UserTables from '../../components/tables/EditorTables.vue'
+import UserTables from '../../components/tables/UserTables.vue'
 
 export default {
     name: "UserDashboard",

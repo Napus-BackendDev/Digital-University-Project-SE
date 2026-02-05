@@ -31,17 +31,11 @@
                         <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
                     </CDropdown>
                 </div>
-
-                <CButton color="danger" class="d-flex align-items-center text-white px-3"
-                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c;"
-                    @click="$router.push({ name: 'EditorCreateForm' })">
-                    <CIcon name="cil-plus" size="sm" class="mr-2" />
-                    Create Form
-                </CButton>
             </div>
         </div>
 
         <div class="user-tables-container">
+
             <div class="table-responsive">
                 <table class="table table-hover custom-table align-middle mb-0">
                     <thead class="table-light">
@@ -49,12 +43,10 @@
                             <th scope="col" class="pl-4" width="40%">Form Name</th>
                             <th scope="col" width="15%">Status</th>
                             <th scope="col" width="15%">Responses</th>
-                            <th scope="col" width="20%">Last Modified</th>
-                            <th scope="col" width="10%" class="text-right pr-4">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(item, index) in paginatedData" :key="index">
+                        <tr v-for="(item, index) in paginatedData" :key="index" @click="goToForm(item._id)">
                             <td class="pl-4 py-3">
                                 <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
                                 <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
@@ -76,27 +68,11 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-3">
-                                <div class="d-flex align-items-center text-muted">
-                                    <CIcon name="cil-calendar" size="sm" class="mr-2" />
-                                    <span>{{ item.created }}</span>
-                                </div>
-                            </td>
-                            <td class="text-right pr-4 py-3">
-                                <CDropdown placement="bottom-end">
-                                    <template #toggler>
-                                        <button class="btn btn-link text-muted p-0 text-decoration-none">
-                                            <CIcon name="cil-options" />
-                                        </button>
-                                    </template>
-                                    <CDropdownItem>Edit</CDropdownItem>
-                                    <CDropdownItem>Share</CDropdownItem>
-                                    <CDropdownItem class="text-danger">Delete</CDropdownItem>
-                                </CDropdown>
-                            </td>
+
+
                         </tr>
                         <tr v-if="paginatedData.length === 0">
-                            <td colspan="5" class="text-center py-5 text-muted">
+                            <td colspan="3" class="text-center py-5 text-muted">
                                 No forms found.
                             </td>
                         </tr>
@@ -109,6 +85,7 @@
             </div>
         </div>
     </div>
+
 </template>
 
 <script>
@@ -150,6 +127,7 @@ export default {
                 }
 
                 return {
+                    _id: form._id || form.id,
                     title: this.getLang(form.title) || 'Untitled Form',
                     description: this.getLang(form.description) || '',
                     status: statusTitle,
@@ -187,6 +165,16 @@ export default {
         }
     },
     methods: {
+        goToForm(id) {
+            if (id) {
+                this.$router.push({
+                    name: 'UserFormFill',
+                    params: {
+                        id: id
+                    }
+                })
+            }
+        },
         filterStatus(status) {
             this.selectedStatus = status;
             this.currentPage = 1; // Reset pagination when filter changes
@@ -246,9 +234,10 @@ export default {
     border-top: none;
 }
 
-/* Rows */
+/* Clickable Rows */
 .custom-table tbody tr {
     transition: background-color 0.2s ease;
+    cursor: pointer;
 }
 
 .custom-table tbody tr:hover {
