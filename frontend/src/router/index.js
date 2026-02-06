@@ -14,61 +14,65 @@ const UserDashboard = () => import('@/projects/views/user/Dashboard.vue')
 const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
 
 // Admin
-const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue') 
+const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue')
 
 
 Vue.use(Router)
 
 export default new Router({
-    mode: 'history',
-    scrollBehavior: () => ({y: 0}),
-    routes: [
+  mode: 'history',
+  scrollBehavior: () => ({ y: 0 }),
+  routes: [
+    {
+      path: '/',
+      redirect: '/pages/login'
+    },
+
+    {
+      path: '/dashboard',
+      redirect: '/dashboard',
+      name: 'Home',
+      component: TheContainer,
+      children: [
 
         {
-            path: '/',
-            redirect: '/dashboard',
-            name: 'Home',
-            component: TheContainer,
-            children: [
-
-                {
-                    path: 'user/dashboard',
-                    name: 'UserDashboard',
-                    component: UserDashboard
-                },
-
-                {
-                    path: 'editor/dashboard',
-                    name: 'EditorDashboard',
-                    component: EditorDashboard
-                },
-
-                {
-                    path: 'admin/dashboard',
-                    name: 'AdminDashboard',
-                    component: AdminDashboard
-                }
-
-
-            ]
+          path: 'user/dashboard',
+          name: 'UserDashboard',
+          component: UserDashboard
         },
 
         {
-            path: '/pages',
-            redirect: '/pages/404',
-            name: 'Pages',
-            component: {
-                render(c) {
-                    return c('router-view')
-                }
-            },
-            children: [
-                {
-                    path: 'login',
-                    name: 'Login',
-                    component: Login
-                }
-            ]
+          path: 'editor/dashboard',
+          name: 'EditorDashboard',
+          component: EditorDashboard
+        },
+
+        {
+          path: 'admin/dashboard',
+          name: 'AdminDashboard',
+          component: AdminDashboard
         }
-    ]
+
+
+      ]
+    },
+
+    {
+      path: '/pages',
+      redirect: '/pages/404',
+      name: 'Pages',
+      component: {
+        render(c) {
+          return c('router-view')
+        }
+      },
+      children: [
+        {
+          path: 'login',
+          name: 'Login',
+          component: Login
+        }
+      ]
+    }
+  ]
 })
