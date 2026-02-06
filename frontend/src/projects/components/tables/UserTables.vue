@@ -1,17 +1,13 @@
 <template>
     <div>
         <!-- Filter Toolbar -->
-        <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-3">
             <div class="flex-grow-1 mr-3">
-                <div class="input-group search-input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text bg-light border-0 pl-3">
-                            <CIcon name="cil-magnifying-glass" class="text-muted" />
-                        </span>
-                    </div>
-                    <input type="text" class="form-control bg-light border-0 shadow-none" placeholder="Search forms..."
-                        v-model="searchQuery" />
-                </div>
+                <CInput v-model="searchQuery" placeholder="Search forms..." class=" mb-0">
+                    <template #prepend-content>
+                        <CIcon name="cil-magnifying-glass" class="text-muted" />
+                    </template>
+                </CInput>
             </div>
 
             <div class="d-flex align-items-center">
@@ -35,57 +31,52 @@
         </div>
 
         <div class="user-tables-container">
+            <CDataTable 
+                :items="tableData" 
+                :fields="fields" 
+                :items-per-page="5" 
+                hover 
+                sorter
+                :pagination="{ align: 'center' }" 
+                :loading="loading"  
+                clickable-rows 
+                @row-clicked="goToForm"
+                class="mb-0 custom-datatable">
+                <!-- Form Name (Title) Slot -->
+                <template #title="{ item }">
+                    <td class="pl-4 py-3">
+                        <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
+                        <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                    </td>
+                </template>
 
-            <div class="table-responsive">
-                <table class="table table-hover custom-table align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th scope="col" class="pl-4" width="40%">Form Name</th>
-                            <th scope="col" width="15%">Status</th>
-                            <th scope="col" width="15%">Responses</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(item, index) in paginatedData" :key="index" @click="goToForm(item._id)">
-                            <td class="pl-4 py-3">
-                                <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
-                                <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
-                            </td>
-                            <td class="py-3">
-                                <span class="status-badge" :class="getStatusClass(item.status)">
-                                    <span class="status-dot"></span>
-                                    {{ item.status }}
-                                </span>
-                            </td>
-                            <td class="py-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="icon-wrapper mr-2 chart-color">
-                                        <CIcon name="cil-comment-bubble" size="sm" />
-                                    </div>
-                                    <div>
-                                        <div class="font-weight-bold text-dark">{{ item.responses }}</div>
-                                        <div class="small text-muted">responses</div>
-                                    </div>
-                                </div>
-                            </td>
+                <!-- Status Slot -->
+                <template #status="{ item }">
+                    <td class="py-3">
+                        <span class="status-badge" :class="getStatusClass(item.status)">
+                            <span class="status-dot"></span>
+                            {{ item.status }}
+                        </span>
+                    </td>
+                </template>
 
-
-                        </tr>
-                        <tr v-if="paginatedData.length === 0">
-                            <td colspan="3" class="text-center py-5 text-muted">
-                                No forms found.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="d-flex justify-content-end p-3 border-top" v-if="totalPages > 1">
-                <CPagination :active-page.sync="currentPage" :pages="totalPages" size="sm" align="center" />
-            </div>
+                <!-- Responses Slot -->
+                <template #responses="{ item }">
+                    <td class="py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-wrapper mr-2 chart-color">
+                                <CIcon name="cil-comment-bubble" size="sm" />
+                            </div>
+                            <div>
+                                <div class="font-weight-bold text-dark">{{ item.responses }}</div>
+                                <div class="small text-muted">responses</div>
+                            </div>
+                        </div>
+                    </td>
+                </template>
+            </CDataTable>
         </div>
     </div>
-
 </template>
 
 <script>
@@ -93,21 +84,26 @@ import { mapGetters } from 'vuex'
 import moment from 'moment'
 
 export default {
-    name: 'EditorTables',
+    name: 'UserTables',
     data() {
         return {
-            currentPage: 1,
-            pageSize: 5,
             searchQuery: '',
-            selectedStatus: 'All Status'
+            selectedStatus: 'All Status',
+            loading: false,
+            fields: [
+                { key: 'title', label: 'Form Name', _style: 'width:40%' },
+                { key: 'status', label: 'Status', _style: 'width:15%' },
+                { key: 'responses', label: 'Responses', _style: 'width:15%' },
+            ]
         }
     },
     computed: {
         ...mapGetters('Forms', ['forms']),
+        ...mapGetters('setting', ['lang']),
 
         tableData() {
             // Force reactivity on locale change
-            const locale = this.$i18n.locale;
+            const locale = this.lang;
 
             if (!this.forms || this.forms.length === 0) return []
 
@@ -154,14 +150,6 @@ export default {
 
                 return true;
             });
-        },
-        totalPages() {
-            return Math.ceil(this.tableData.length / this.pageSize)
-        },
-        paginatedData() {
-            const start = (this.currentPage - 1) * this.pageSize
-            const end = start + this.pageSize
-            return this.tableData.slice(start, end)
         }
     },
     methods: {

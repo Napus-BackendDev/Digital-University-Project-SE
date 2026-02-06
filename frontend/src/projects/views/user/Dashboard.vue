@@ -1,7 +1,6 @@
 <template>
     <div>
-        <h1 class="mb-2 text-dark font-weight-bold">My Forms</h1>
-        <h5 class="text-muted mb-4">Fill and submit your forms</h5>
+        <Header title="My Forms" description="Fill and submit your forms" />
         <CRow>
             <CCol col="12">
                 <UserTables />
@@ -12,11 +11,13 @@
 
 <script>
 import UserTables from '../../components/tables/UserTables.vue'
+import Header from '../../components/Util/Header.vue'
 
 export default {
     name: "UserDashboard",
     components: {
-        UserTables
+        UserTables,
+        Header
     },
     data() {
         return {

@@ -28,7 +28,7 @@ export default new Router({
 
         {
             path: '/',
-            redirect: '/dashboard',
+            redirect: '/editor/dashboard',
             name: 'Home',
             component: TheContainer,
             children: [
@@ -59,7 +59,7 @@ export default new Router({
                 },
 
                 {
-                    path: 'editor/create-form',
+                    path: 'editor/create-form/:id',
                     name: 'EditorCreateForm',
                     component: EditorCreateForm
                 }

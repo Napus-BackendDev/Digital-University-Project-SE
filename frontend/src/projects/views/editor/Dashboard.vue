@@ -1,7 +1,6 @@
 <template>
     <div>
-        <h1 class="mb-2 text-dark font-weight-bold">My Forms</h1>
-        <h5 class="text-muted mb-4">Create and manage your forms</h5>
+        <Header title="My Forms" description="Create and manage your forms" />
         <CRow>
             <CCol col="12">
                 <EditorTables />
@@ -12,11 +11,13 @@
 
 <script>
 import EditorTables from '../../components/tables/EditorTables.vue'
+import Header from '../../components/Util/Header.vue'
 
 export default {
     name: "EditorDashboard",
     components: {
-        EditorTables
+        EditorTables,
+        Header
     },
     data() {
         return {

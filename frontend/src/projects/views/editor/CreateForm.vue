@@ -30,9 +30,9 @@
                                 <div class="p-4 bg-white border rounded mb-3">
                                     <div class="form-header-section">
                                         <CInput class="form-title-input mb-2" size="lg" placeholder="Form Title"
-                                            v-model="formTitle" />
+                                            v-model="formTitle" @change="triggerAutoSave" />
                                         <CTextarea class="form-desc-input" placeholder="Form Description"
-                                            v-model="formDescription" />
+                                            v-model="formDescription" @change="triggerAutoSave" />
                                     </div>
                                 </div>
 
@@ -45,7 +45,8 @@
                                             <div class="d-flex justify-content-between align-items-start mb-3">
                                                 <div class="w-75">
                                                     <CInput class="mb-2 font-weight-bold" placeholder="Question Text"
-                                                        v-model="question.text" style="background-color: #f8fafc;" />
+                                                        v-model="question.text" style="background-color: #f8fafc;"
+                                                        @change="triggerAutoSave" />
                                                 </div>
                                                 <div class="text-right">
                                                     <CButton color="danger" variant="ghost" size="sm"
@@ -79,9 +80,9 @@
                                                 class="text-right mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
                                                 <small class="text-muted font-weight-bold text-uppercase">{{
                                                     question.type.replace('_', ' ')
-                                                }}</small>
+                                                    }}</small>
                                                 <CSwitch class="mx-1" color="dark" :checked.sync="question.required"
-                                                    label-on="Req" label-off="Opt" />
+                                                    label-on="Req" label-off="Opt" @update:checked="triggerAutoSave" />
                                             </div>
                                         </div>
 
@@ -202,7 +203,7 @@
                                             <CCol md="9">
                                                 <CInput type="datetime-local" class="mb-0"
                                                     style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                                                    v-model="settings.startDateTime" />
+                                                    v-model="settings.startDateTime" @change="triggerAutoSave" />
                                             </CCol>
                                         </CRow>
                                         <CRow class="align-items-center">
@@ -213,7 +214,7 @@
                                             <CCol md="9">
                                                 <CInput type="datetime-local" class="mb-0"
                                                     style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                                                    v-model="settings.endDateTime" />
+                                                    v-model="settings.endDateTime" @change="triggerAutoSave" />
                                             </CCol>
                                         </CRow>
                                     </CCardBody>
@@ -227,7 +228,8 @@
                                         <div class="mb-4">
                                             <h6 class="font-weight-bold mb-2">Who can respond?</h6>
                                             <CSelect :options="['Anyone with the link']" v-model="settings.accessType"
-                                                style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;" />
+                                                style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
+                                                @change="triggerAutoSave" />
                                         </div>
 
                                         <hr class="my-4" />
@@ -240,12 +242,14 @@
                                                 <CCol md="6" class="mb-2 mb-md-0">
                                                     <CInput placeholder="Email address"
                                                         v-model="settings.newCollaborator.email"
-                                                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;" />
+                                                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
+                                                        @change="triggerAutoSave" />
                                                 </CCol>
                                                 <CCol md="4" class="mb-2 mb-md-0">
                                                     <CSelect :options="['Editor', 'Viewer']"
                                                         v-model="settings.newCollaborator.role"
-                                                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;" />
+                                                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
+                                                        @change="triggerAutoSave" />
                                                 </CCol>
                                                 <CCol md="2">
                                                     <CButton color="primary" block
@@ -280,7 +284,8 @@
                                                     email</small>
                                             </div>
                                             <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                                                :checked.sync="settings.collectEmails" />
+                                                :checked.sync="settings.collectEmails"
+                                                @update:checked="triggerAutoSave" />
                                         </div>
 
                                         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -289,7 +294,8 @@
                                                 <small class="text-muted">Only allow one response per person</small>
                                             </div>
                                             <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                                                :checked.sync="settings.limitOneResponse" />
+                                                :checked.sync="settings.limitOneResponse"
+                                                @update:checked="triggerAutoSave" />
                                         </div>
 
                                         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -299,7 +305,8 @@
                                                     submitting</small>
                                             </div>
                                             <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                                                :checked.sync="settings.allowEditing" />
+                                                :checked.sync="settings.allowEditing"
+                                                @update:checked="triggerAutoSave" />
                                         </div>
 
                                         <div class="d-flex justify-content-between align-items-center">
@@ -309,7 +316,8 @@
                                                     respondents</small>
                                             </div>
                                             <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                                                :checked.sync="settings.showProgressBar" />
+                                                :checked.sync="settings.showProgressBar"
+                                                @update:checked="triggerAutoSave" />
                                         </div>
                                     </CCardBody>
                                 </CCard>
@@ -360,6 +368,7 @@ export default {
             saveTimeout: null,
             formTitle: 'Untitled Form',
             formDescription: '',
+            questions: [],
             settings: {
                 startDateTime: '',
                 endDateTime: '',
@@ -373,22 +382,34 @@ export default {
                 allowEditing: false,
                 showProgressBar: false
             },
-            questions: [
-                {
-                    id: 1,
-                    text: 'What is your full name?',
-                    type: 'short_answer',
-                    required: true,
-                    options: []
-                }
-            ]
         }
     },
     created() {
         this.onInit();
     },
     methods: {
-        onInit() {
+        async onInit() {
+            const formId = this.$route.params._id;
+            if (formId) {
+                try {
+                    const formData = await this.$store.dispatch('Forms/getFormById', { _id: formId });
+                    if (formData) {
+                        this.formTitle = this.getLang(formData.title) || 'Untitled Form';
+                        this.formDescription = this.getLang(formData.description) || '';
+                    }
+                } catch (error) {
+                    console.error("Error fetching form:", error);
+                }
+            }
+        },
+        getLang(data) {
+            if (!data) return '';
+            if (typeof data === 'string') return data;
+            if (!Array.isArray(data)) return '';
+
+            // Try to find 'en' or use the first one
+            const content = data.find(item => item.key === 'en') || data[0];
+            return content ? content.value : '';
         },
         addQuestion(type) {
             const newQuestion = {
@@ -399,9 +420,11 @@ export default {
                 options: type === 'multiple_choice' || type === 'checkbox' ? ['Option 1'] : []
             };
             this.questions.push(newQuestion);
+            this.triggerAutoSave();
         },
         removeQuestion(index) {
             this.questions.splice(index, 1);
+            this.triggerAutoSave();
         },
         triggerAutoSave() {
             this.saveStatus = 'Saving...';
@@ -414,19 +437,27 @@ export default {
         },
         async saveForm() {
             try {
-                // Here you would usually make an API call
-                // const formData = {
-                //     title: this.formTitle,
-                //     description: this.formDescription,
-                //     questions: this.questions,
-                //     settings: this.settings
-                // };
-                // await api.save(formData);
+                const formData = {
+                    _id: this.$route.params._id,
+                    title: [{ key: 'en', value: this.formTitle }],
+                    description: [{ key: 'en', value: this.formDescription }],
+                    schedule: {
+                        startAt: this.settings.startDateTime || null,
+                        endAt: this.settings.endDateTime || null
+                    },
+                    settings: {
+                        // whoCanRespond: this.settings.accessType, 
+                        collectEmail: this.settings.collectEmails,
+                        limitResponse: this.settings.limitOneResponse,
+                        progressBar: this.settings.showProgressBar,
+                        // confirmMessage: 'Thank you for completing this survey. Your response has been recorded.',
+                        // showAnotherResponseLink: true
+                    },
+                };
 
-                console.log('Auto-saving form data...');
+                console.log('Auto-saving form data...', formData);
 
-                // Simulate network delay
-                await new Promise(resolve => setTimeout(resolve, 800));
+                await this.$store.dispatch('Forms/updateForm', formData);
 
                 this.saveStatus = 'Saved';
                 const now = new Date();
@@ -438,18 +469,6 @@ export default {
         }
     },
     computed: {
-    },
-    watch: {
-        formTitle: 'triggerAutoSave',
-        formDescription: 'triggerAutoSave',
-        questions: {
-            handler: 'triggerAutoSave',
-            deep: true
-        },
-        settings: {
-            handler: 'triggerAutoSave',
-            deep: true
-        }
     }
 }
 </script>

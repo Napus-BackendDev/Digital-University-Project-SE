@@ -1,17 +1,13 @@
 <template>
     <div>
         <!-- Filter Toolbar -->
-        <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-3">
             <div class="flex-grow-1 mr-3">
-                <div class="input-group search-input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text bg-light border-0 pl-3">
-                            <CIcon name="cil-magnifying-glass" class="text-muted" />
-                        </span>
-                    </div>
-                    <input type="text" class="form-control bg-light border-0 shadow-none" placeholder="Search forms..."
-                        v-model="searchQuery" />
-                </div>
+                <CInput v-model="searchQuery" placeholder="Search forms..." class=" mb-0">
+                    <template #prepend-content>
+                        <CIcon name="cil-magnifying-glass" class="text-muted" />
+                    </template>
+                </CInput>
             </div>
 
             <div class="d-flex align-items-center">
@@ -33,80 +29,77 @@
                 </div>
 
                 <CButton color="danger" class="d-flex align-items-center text-white px-3"
-                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c;"
-                    @click="$router.push({ name: 'EditorCreateForm' })">
-                    <CIcon name="cil-plus" size="sm" class="mr-2" />
+                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c;" @click="createNewForm"
+                    :disabled="isCreating">
+                    <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
+                    <CSpinner v-else size="sm" class="mr-2" />
                     Create Form
                 </CButton>
             </div>
         </div>
 
         <div class="user-tables-container">
-            <div class="table-responsive">
-                <table class="table table-hover custom-table align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th scope="col" class="pl-4" width="40%">Form Name</th>
-                            <th scope="col" width="15%">Status</th>
-                            <th scope="col" width="15%">Responses</th>
-                            <th scope="col" width="20%">Last Modified</th>
-                            <th scope="col" width="10%" class="text-right pr-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(item, index) in paginatedData" :key="index">
-                            <td class="pl-4 py-3">
-                                <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
-                                <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
-                            </td>
-                            <td class="py-3">
-                                <span class="status-badge" :class="getStatusClass(item.status)">
-                                    <span class="status-dot"></span>
-                                    {{ item.status }}
-                                </span>
-                            </td>
-                            <td class="py-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="icon-wrapper mr-2 chart-color">
-                                        <CIcon name="cil-comment-bubble" size="sm" />
-                                    </div>
-                                    <div>
-                                        <div class="font-weight-bold text-dark">{{ item.responses }}</div>
-                                        <div class="small text-muted">responses</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-3">
-                                <div class="d-flex align-items-center text-muted">
-                                    <CIcon name="cil-calendar" size="sm" class="mr-2" />
-                                    <span>{{ item.created }}</span>
-                                </div>
-                            </td>
-                            <td class="text-right pr-4 py-3">
-                                <CDropdown placement="bottom-end">
-                                    <template #toggler>
-                                        <button class="btn btn-link text-muted p-0 text-decoration-none">
-                                            <CIcon name="cil-options" />
-                                        </button>
-                                    </template>
-                                    <CDropdownItem>Edit</CDropdownItem>
-                                    <CDropdownItem>Share</CDropdownItem>
-                                    <CDropdownItem class="text-danger">Delete</CDropdownItem>
-                                </CDropdown>
-                            </td>
-                        </tr>
-                        <tr v-if="paginatedData.length === 0">
-                            <td colspan="5" class="text-center py-5 text-muted">
-                                No forms found.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <CDataTable :items="tableData" :fields="fields" :items-per-page="6" hover :pagination="{ align: 'center' }"
+                class="mb-0 custom-datatable">
+                <!-- Form Name (Title) Slot -->
+                <template #title="{ item }">
+                    <td class="pl-4 py-3">
+                        <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
+                        <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                    </td>
+                </template>
 
-            <div class="d-flex justify-content-end p-3 border-top" v-if="totalPages > 1">
-                <CPagination :active-page.sync="currentPage" :pages="totalPages" size="sm" align="center" />
-            </div>
+                <!-- Status Slot -->
+                <template #status="{ item }">
+                    <td class="py-3">
+                        <span class="status-badge" :class="getStatusClass(item.status)">
+                            <span class="status-dot"></span>
+                            {{ item.status }}
+                        </span>
+                    </td>
+                </template>
+
+                <!-- Responses Slot -->
+                <template #responses="{ item }">
+                    <td class="py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-wrapper mr-2 chart-color">
+                                <CIcon name="cil-comment-bubble" size="sm" />
+                            </div>
+                            <div>
+                                <div class="font-weight-bold text-dark">{{ item.responses }}</div>
+                                <div class="small text-muted">responses</div>
+                            </div>
+                        </div>
+                    </td>
+                </template>
+
+                <!-- Created (Last Modified) Slot -->
+                <template #created="{ item }">
+                    <td class="py-3">
+                        <div class="d-flex align-items-center text-muted">
+                            <CIcon name="cil-calendar" size="sm" class="mr-2" />
+                            <span>{{ item.created }}</span>
+                        </div>
+                    </td>
+                </template>
+
+                <!-- Actions Slot -->
+                <template #actions="{ item }">
+                    <td class="text-right pr-4 py-3">
+                        <CDropdown placement="bottom-end">
+                            <template #toggler>
+                                <button class="btn btn-link text-muted p-0 text-decoration-none">
+                                    <CIcon name="cil-options" />
+                                </button>
+                            </template>
+                            <CDropdownItem @click="goToEditForm(item)">Edit</CDropdownItem>
+                            <CDropdownItem>Duplicate</CDropdownItem>
+                            <CDropdownItem class="text-danger" @click="deleteForm(item)">Delete</CDropdownItem>
+                        </CDropdown>
+                    </td>
+                </template>
+            </CDataTable>
         </div>
     </div>
 </template>
@@ -119,20 +112,27 @@ export default {
     name: 'EditorTables',
     data() {
         return {
-            currentPage: 1,
-            pageSize: 5,
             searchQuery: '',
-            selectedStatus: 'All Status'
+            selectedStatus: 'All Status',
+            isCreating: false,
+            fields: [
+                { key: 'title', label: 'Form Name', _style: 'width:40%' },
+                { key: 'status', label: 'Status', _style: 'width:15%' },
+                { key: 'responses', label: 'Responses', _style: 'width:15%' },
+                { key: 'created', label: 'Last Modified', _style: 'width:20%' },
+                { key: 'actions', label: 'Actions', _style: 'width:10%; text-align:right' }
+            ]
         }
     },
     computed: {
         ...mapGetters('Forms', ['forms']),
+        ...mapGetters('setting', ['lang']),
 
         tableData() {
             // Force reactivity on locale change
-            const locale = this.$i18n.locale;
+            const locale = this.lang;
 
-            if (!this.forms || this.forms.length === 0) return []
+            if (!Array.isArray(this.forms) || this.forms.length === 0) return []
 
             // Sort forms by createdAt (newest first)
             const sortedForms = [...this.forms].sort((a, b) => {
@@ -150,6 +150,7 @@ export default {
                 }
 
                 return {
+                    _id: form._id,
                     title: this.getLang(form.title) || 'Untitled Form',
                     description: this.getLang(form.description) || '',
                     status: statusTitle,
@@ -176,14 +177,6 @@ export default {
 
                 return true;
             });
-        },
-        totalPages() {
-            return Math.ceil(this.tableData.length / this.pageSize)
-        },
-        paginatedData() {
-            const start = (this.currentPage - 1) * this.pageSize
-            const end = start + this.pageSize
-            return this.tableData.slice(start, end)
         }
     },
     methods: {
@@ -197,7 +190,7 @@ export default {
             if (!Array.isArray(data)) return '';
 
             // Find content matching current locale
-            const currentLang = this.$i18n.locale;
+            const currentLang = this.lang;
             let content = data.find(item => item.key === currentLang);
 
             // Fallback to 'en' if current locale not found
@@ -217,6 +210,38 @@ export default {
             if (s === 'open' || s === 'published') return 'status-open';
             if (s === 'closed') return 'status-closed';
             return 'status-draft'; // Default/Draft
+        },
+        async createNewForm() {
+            this.isCreating = true;
+            try {
+                const newFormData = {
+                    title: [
+                        { key: 'en', value: 'Untitled Form' },
+                        { key: 'th', value: 'แบบร่างฟอร์ม' }
+                    ],
+                };
+
+                const response = await this.$store.dispatch('Forms/createForm', newFormData);
+
+                this.$router.push({ name: 'EditorCreateForm', params: { _id: response.data.data._id } });
+            } catch (error) {
+                console.error("Failed to create form:", error);
+            } finally {
+                this.isCreating = false;
+            }
+        },
+        goToEditForm(item) {
+            this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
+        },
+        async deleteForm(item) {
+            if (confirm("Are you sure you want to delete this form?")) {
+                try {
+                    await this.$store.dispatch('Forms/deleteForm', { _id: item._id });
+                    await this.$store.dispatch('Forms/getForms');
+                } catch (error) {
+                    console.error("Failed to delete form:", error);
+                }
+            }
         }
     }
 }
@@ -359,12 +384,6 @@ export default {
     background-color: #0ea5e9;
     /* Sky blue or primary brand color */
     color: white;
-}
-
-.search-input-group {
-    background-color: #f8fafc;
-    border-radius: 6px;
-    overflow: hidden;
 }
 
 .search-input-group .input-group-text {
