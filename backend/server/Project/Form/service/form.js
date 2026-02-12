@@ -5,7 +5,7 @@ const ResMessage = require("../../Settings/service/message");
 exports.onQuery = async function (request, response) {
   try {
     let query = {};
-    query._id = new mongo.ObjectId(request.params.id);
+    query._id = new mongo.ObjectId(request.body._id);
 
     const doc = await Form.onAggregate([
       { $match: query },

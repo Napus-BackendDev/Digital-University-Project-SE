@@ -9,9 +9,11 @@ const Login = () => import('@/projects/views/Login.vue')
 
 // User
 const UserDashboard = () => import('@/projects/views/user/Dashboard.vue')
+const UserFormFill = () => import('@/projects/views/user/FormFill.vue')
 
 // Editor
 const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
+const EditorCreateForm = () => import('@/projects/views/editor/CreateForm.vue')
 
 // Admin
 const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue')
@@ -20,26 +22,29 @@ const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue')
 Vue.use(Router)
 
 export default new Router({
-  mode: 'history',
-  scrollBehavior: () => ({ y: 0 }),
-  routes: [
-    {
-      path: '/',
-      redirect: '/pages/login'
-    },
-
-    {
-      path: '/dashboard',
-      redirect: '/dashboard',
-      name: 'Home',
-      component: TheContainer,
-      children: [
+    mode: 'history',
+    scrollBehavior: () => ({y: 0}),
+    routes: [
 
         {
-          path: 'user/dashboard',
-          name: 'UserDashboard',
-          component: UserDashboard
-        },
+            path: '/',
+            redirect: '/editor/dashboard',
+            name: 'Home',
+            component: TheContainer,
+            children: [
+
+                {
+                    path: 'user/dashboard',
+                    name: 'UserDashboard',
+                    component: UserDashboard
+                },
+
+                {
+                    path: 'user/form-fill/:id',
+                    name: 'UserFormFill',
+                    component: UserFormFill,
+                    props: true
+                },
 
         {
           path: 'editor/dashboard',
@@ -47,11 +52,17 @@ export default new Router({
           component: EditorDashboard
         },
 
-        {
-          path: 'admin/dashboard',
-          name: 'AdminDashboard',
-          component: AdminDashboard
-        }
+                {
+                    path: 'admin/dashboard',
+                    name: 'AdminDashboard',
+                    component: AdminDashboard
+                },
+
+                {
+                    path: 'editor/create-form/:id',
+                    name: 'EditorCreateForm',
+                    component: EditorCreateForm
+                }
 
 
       ]

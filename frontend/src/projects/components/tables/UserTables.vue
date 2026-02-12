@@ -27,19 +27,20 @@
                         <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
                     </CDropdown>
                 </div>
-
-                <CButton color="danger" class="d-flex align-items-center text-white px-3"
-                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c;" @click="createNewForm"
-                    :disabled="isCreating">
-                    <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
-                    <CSpinner v-else size="sm" class="mr-2" />
-                    Create Form
-                </CButton>
             </div>
         </div>
 
         <div class="user-tables-container">
-            <CDataTable :items="tableData" :fields="fields" :items-per-page="6" hover :pagination="{ align: 'center' }"
+            <CDataTable 
+                :items="tableData" 
+                :fields="fields" 
+                :items-per-page="5" 
+                hover 
+                sorter
+                :pagination="{ align: 'center' }" 
+                :loading="loading"  
+                clickable-rows 
+                @row-clicked="goToForm"
                 class="mb-0 custom-datatable">
                 <!-- Form Name (Title) Slot -->
                 <template #title="{ item }">
@@ -73,32 +74,6 @@
                         </div>
                     </td>
                 </template>
-
-                <!-- Created (Last Modified) Slot -->
-                <template #created="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center text-muted">
-                            <CIcon name="cil-calendar" size="sm" class="mr-2" />
-                            <span>{{ item.created }}</span>
-                        </div>
-                    </td>
-                </template>
-
-                <!-- Actions Slot -->
-                <template #actions="{ item }">
-                    <td class="text-right pr-4 py-3">
-                        <CDropdown placement="bottom-end">
-                            <template #toggler>
-                                <button class="btn btn-link text-muted p-0 text-decoration-none">
-                                    <CIcon name="cil-options" />
-                                </button>
-                            </template>
-                            <CDropdownItem @click="goToEditForm(item)">Edit</CDropdownItem>
-                            <CDropdownItem>Duplicate</CDropdownItem>
-                            <CDropdownItem class="text-danger" @click="deleteForm(item)">Delete</CDropdownItem>
-                        </CDropdown>
-                    </td>
-                </template>
             </CDataTable>
         </div>
     </div>
@@ -109,18 +84,16 @@ import { mapGetters } from 'vuex'
 import moment from 'moment'
 
 export default {
-    name: 'EditorTables',
+    name: 'UserTables',
     data() {
         return {
             searchQuery: '',
             selectedStatus: 'All Status',
-            isCreating: false,
+            loading: false,
             fields: [
                 { key: 'title', label: 'Form Name', _style: 'width:40%' },
                 { key: 'status', label: 'Status', _style: 'width:15%' },
                 { key: 'responses', label: 'Responses', _style: 'width:15%' },
-                { key: 'created', label: 'Last Modified', _style: 'width:20%' },
-                { key: 'actions', label: 'Actions', _style: 'width:10%; text-align:right' }
             ]
         }
     },
@@ -132,7 +105,7 @@ export default {
             // Force reactivity on locale change
             const locale = this.lang;
 
-            if (!Array.isArray(this.forms) || this.forms.length === 0) return []
+            if (!this.forms || this.forms.length === 0) return []
 
             // Sort forms by createdAt (newest first)
             const sortedForms = [...this.forms].sort((a, b) => {
@@ -150,7 +123,7 @@ export default {
                 }
 
                 return {
-                    _id: form._id,
+                    _id: form._id || form.id,
                     title: this.getLang(form.title) || 'Untitled Form',
                     description: this.getLang(form.description) || '',
                     status: statusTitle,
@@ -180,6 +153,16 @@ export default {
         }
     },
     methods: {
+        goToForm(id) {
+            if (id) {
+                this.$router.push({
+                    name: 'UserFormFill',
+                    params: {
+                        id: id
+                    }
+                })
+            }
+        },
         filterStatus(status) {
             this.selectedStatus = status;
             this.currentPage = 1; // Reset pagination when filter changes
@@ -190,7 +173,7 @@ export default {
             if (!Array.isArray(data)) return '';
 
             // Find content matching current locale
-            const currentLang = this.lang;
+            const currentLang = this.$i18n.locale;
             let content = data.find(item => item.key === currentLang);
 
             // Fallback to 'en' if current locale not found
@@ -210,38 +193,6 @@ export default {
             if (s === 'open' || s === 'published') return 'status-open';
             if (s === 'closed') return 'status-closed';
             return 'status-draft'; // Default/Draft
-        },
-        async createNewForm() {
-            this.isCreating = true;
-            try {
-                const newFormData = {
-                    title: [
-                        { key: 'en', value: 'Untitled Form' },
-                        { key: 'th', value: 'แบบร่างฟอร์ม' }
-                    ],
-                };
-
-                const response = await this.$store.dispatch('Forms/createForm', newFormData);
-
-                this.$router.push({ name: 'EditorCreateForm', params: { _id: response.data.data._id } });
-            } catch (error) {
-                console.error("Failed to create form:", error);
-            } finally {
-                this.isCreating = false;
-            }
-        },
-        goToEditForm(item) {
-            this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
-        },
-        async deleteForm(item) {
-            if (confirm("Are you sure you want to delete this form?")) {
-                try {
-                    await this.$store.dispatch('Forms/deleteForm', { _id: item._id });
-                    await this.$store.dispatch('Forms/getForms');
-                } catch (error) {
-                    console.error("Failed to delete form:", error);
-                }
-            }
         }
     }
 }
@@ -271,9 +222,10 @@ export default {
     border-top: none;
 }
 
-/* Rows */
+/* Clickable Rows */
 .custom-table tbody tr {
     transition: background-color 0.2s ease;
+    cursor: pointer;
 }
 
 .custom-table tbody tr:hover {
@@ -384,6 +336,12 @@ export default {
     background-color: #0ea5e9;
     /* Sky blue or primary brand color */
     color: white;
+}
+
+.search-input-group {
+    background-color: #f8fafc;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .search-input-group .input-group-text {

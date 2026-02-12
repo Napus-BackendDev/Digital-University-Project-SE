@@ -1,7 +1,6 @@
 <template>
     <div>
-        <h1 class="mb-2 text-dark font-weight-bold">Admin Dashboard</h1>
-        <h5 class="text-muted mb-4">Overview of all forms and responses</h5>
+        <Header title="Admin Dashboard" description="Overview of all forms and responses" />
         <WidgetsDropdown class="mb-4" />
         <CRow class="mb-4">
             <CCol lg="8">
@@ -24,6 +23,7 @@ import WidgetsDropdown from '../../components/widgets/WidgetsDropdown.vue'
 import AdminTables from '../../components/tables/AdminTables.vue';
 import AdminDoughnutCharts from '../../components/charts/AdminDoughnutCharts.vue'
 import AdminBarCharts from '../../components/charts/AdminBarCharts.vue'
+import Header from '../../components/Util/Header.vue'
 
 export default {
     name: "Admin Dashboard",
@@ -31,7 +31,8 @@ export default {
         WidgetsDropdown,
         AdminTables,
         AdminDoughnutCharts,
-        AdminBarCharts
+        AdminBarCharts,
+        Header
     },
     data() {
         return {

@@ -26,22 +26,37 @@ const ServerModule = {
                 console.log(error);
             })
         },
-        createForm({ commit } , data ) {
-            Service.form('create', data, {})
+        getFormById({ commit } , data ) {
+            return Service.form('get', data, {})
             .then(response => {
-                commit('forms', response.data.data);
+                console.log(response.data.data)
+                return response.data.data;
             })
             .catch(error => {
                 console.log(error);
+                throw error;
+            })
+        },
+        createForm({ commit } , data ) {
+            return Service.form('create', data, {})
+            .then(response => {
+                commit('forms', response.data.data);
+                return response;
+            })
+            .catch(error => {
+                console.log(error);
+                throw error;
             })
         },
         updateForm({ commit } , data ) {
-            Service.form('update', data, {})
+            return Service.form('update', data, {})
             .then(response => {
                 commit('forms', response.data.data);
+                return response;
             })
             .catch(error => {
                 console.log(error);
+                throw error;
             })
         },
         deleteForm({ commit } , data ) {

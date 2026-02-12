@@ -12,6 +12,14 @@
 
     <CHeaderNav class="d-md-down-none ml-auto mr-4">
       <div class="d-flex align-items-center">
+        <!-- Language Switch -->
+        <div class="d-flex align-items-center mr-4">
+          <span class="mr-2 text-muted font-weight-bold" style="font-size: 0.9rem;">TH</span>
+          <CSwitch class="mx-1" shape="pill" color="info" variant="opposite" :checked="lang === 'en'"
+            @update:checked="onSwitchLang" />
+          <span class="ml-2 text-muted font-weight-bold" style="font-size: 0.9rem;">EN</span>
+        </div>
+
         <span class="mr-3 text-muted">{{ userEmail }}</span>
         <div class="d-flex align-items-center" @click="logout" style="cursor: pointer">
           <CIcon name="cil-account-logout" class="mr-2 text-dark" />

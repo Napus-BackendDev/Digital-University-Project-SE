@@ -49,15 +49,15 @@ export default {
   form(method, data, configs) {
     switch (method) {
       case 'exp':
-        return instance.get('/form')
-      // case 'get':
-      //   return instance.get('/form', data)
+        return instance.get('/form/exp', data)
+      case 'get':
+        return instance.post('/form/get', data)
       case 'create':
         return instance.post('/form', data)
       case 'update':
         return instance.put('/form', data)
       case 'delete':
-        return instance.delete('/form', data)
+        return instance.delete('/form', { data })
       default:
         break
     }
