@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const response = require('./service/response');
-const { requireAuth, requirePermission } = require('../../../middleware/auth');
+const upload = require('../../../server/middleware/upload');
 
 // Mock user middleware for anonymous submissions
 const mockUserForAnonymous = (req, res, next) => {
@@ -14,11 +14,15 @@ const mockUserForAnonymous = (req, res, next) => {
     next();
 };
 
-//export .csv file
+// export .csv file
 // router.get("/exportResponsesByFormId",function(req,res,next){
 //     req.query.apiId=0;
 //     next();
 // },response.onExportResponses);
+router.get("", function (req, res, next) {
+    req.query.apiId = 0;
+    next();
+}, response.onQuerys);
 router.get("/getByFormId", function (req, res, next) {
     req.query.apiId = 0;
     next();
@@ -31,10 +35,6 @@ router.get("/getById", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, response.onGetById);
-router.get("", function (req, res, next) {
-    req.query.apiId = 0;
-    next();
-}, response.onQuerys);
 router.get("/download/:form_id/user/:user_id", function (req, res, next) {
     req.query.apiId = 0;
     next();
@@ -43,15 +43,15 @@ router.get("/download/:form_id", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, response.publicDownloadUsersJSON);
-router.post("/submit", function (req, res, next) {
+router.post("", function (req, res, next) {
     req.query.apiId = 0;
     next();
-}, response.onCreate);
-router.patch("/update", function (req, res, next) {
+}, upload.single('file'), response.onCreate);
+router.patch("", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, response.onUpdate);
-router.delete("/delete", function (req, res, next) {
+router.delete("", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, response.onDelete);
