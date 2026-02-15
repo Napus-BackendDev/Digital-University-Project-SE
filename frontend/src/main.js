@@ -1,28 +1,45 @@
-/**
- * Main Entry Point
- * จุดเริ่มต้นของแอป Vue
- */
+import 'core-js/stable'
+import Vue from 'vue'
+import CoreuiVuePro from '@coreui/vue-pro'
+// import CoreuiVuePro from '../node_modules/@coreui/vue-pro/src/index.js'
+// import CoreuiVue from '@coreui/vue'
+import App from './App'
+import router from './router/index'
+import { iconsSet as icons } from './assets/icons/icons.js'
+import i18n from './i18n.js'
+import store from "@/store/store";
 
-// Import global styles
-import './assets/main.css'
-import 'primeicons/primeicons.css'
+import OtpInput from "@bachdgvn/vue-otp-input";
+Vue.component("v-otp-input", OtpInput);
 
-// Vue และ plugins
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+Vue.use(CoreuiVuePro)
+Vue.prototype.$log = console.log.bind(console)
 
-// App และ Router
-import App from './App.vue'
-import router from './router'
+import VueQRCodeComponent from 'vue-qrcode-component'
+Vue.component('qr-code', VueQRCodeComponent)
 
-// สร้าง Vue app
-const app = createApp(App)
+import moment from 'moment'
+Vue.prototype.moment = moment
 
-// เพิ่ม Pinia (state management)
-app.use(createPinia())
 
-// เพิ่ม Router
-app.use(router)
+import GAuth from 'vue-google-oauth2'
+const gauthOption = {
+    clientId: process.env.VUE_APP_CLIENTID,
+    scope: process.env.VUE_APP_SCOPE,
+    prompt: process.env.VUE_APP_PROMPT
+}
+Vue.use(GAuth, gauthOption)
+console.log(gauthOption)
 
-// Mount app ไปที่ #app ใน index.html
-app.mount('#app')
+new Vue({
+  el: '#app',
+  router,
+  store,
+  //CIcon component documentation: https://coreui.io/vue/docs/components/icon
+  icons,
+  i18n,
+  template: '<App/>',
+  components: {
+    App
+  }
+})

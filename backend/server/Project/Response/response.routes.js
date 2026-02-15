@@ -4,16 +4,6 @@ const router = express.Router();
 const response = require('./service/response');
 const upload = require('../../../server/middleware/upload');
 
-// Mock user middleware for anonymous submissions
-const mockUserForAnonymous = (req, res, next) => {
-    if (!req.user) {
-        req.user = {
-            id: '507f1f77bcf86cd799439011' // Mock user ID for anonymous submissions
-        };
-    }
-    next();
-};
-
 // export .csv file
 // router.get("/exportResponsesByFormId",function(req,res,next){
 //     req.query.apiId=0;

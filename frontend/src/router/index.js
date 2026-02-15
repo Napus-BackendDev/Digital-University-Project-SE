@@ -1,63 +1,89 @@
-/**
- * Vue Router Configuration
- * กำหนดเส้นทาง URL ของแอป
- */
-import { createRouter, createWebHistory } from 'vue-router'
-import UserDashboard from '../views/UserDashboard.vue'
-import LoginView from '../views/LoginView.vue'
+import Vue from 'vue'
+import Router from 'vue-router'
 
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    // หน้า Login - หน้าแรก
-    {
-      path: '/',
-      name: 'login',
-      component: LoginView,
-    },
-    
-    // หน้า Home - User Dashboard
-    {
-      path: '/home',
-      name: 'home',
-      component: UserDashboard,
-    },
+// Containers
+const TheContainer = () => import('@/containers/TheContainer')
 
-    // หน้า Editor Dashboard
-    {
-      path: '/editor',
-      name: 'editor',
-      component: () => import('../views/EditorDashboard.vue'),
-    },
+// Login
+const Login = () => import('@/projects/views/Login.vue')
 
-    // หน้าสร้างฟอร์มใหม่
-    {
-      path: '/form-builder',
-      name: 'form-builder',
-      component: () => import('../views/FormBuilderView.vue'),
-    },
+// User
+const UserDashboard = () => import('@/projects/views/user/Dashboard.vue')
+const UserFormFill = () => import('@/projects/views/user/FormFill.vue')
 
-    // หน้าแก้ไขฟอร์ม (รับ ID จาก URL)
-    {
-      path: '/form-builder/:id',
-      name: 'form-builder-edit',
-      component: () => import('../views/FormBuilderView.vue')
-    },
+// Editor
+const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
+const EditorCreateForm = () => import('@/projects/views/editor/CreateForm.vue')
 
-    // หน้า Public Form สำหรับpreviewแบบฟอร์ม (URL ที่แชร์ให้ผู้ใช้)
-    {
-      path: '/form/:id/preview',
-      name: 'public-form-preview',
-      component: () => import('../views/PreviewView.vue'),
-    },
-    
-    // หน้าแสดงฟอร์มสำหรับตอบ (Response) - internal
-    {
-      path: '/form/:id/response',
-      name: 'form-response',
-      component: () => import('../views/Response.vue'),
-    }
-  ]
+// Admin
+const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue') 
+
+
+Vue.use(Router)
+
+export default new Router({
+    mode: 'history',
+    scrollBehavior: () => ({y: 0}),
+    routes: [
+
+        {
+            path: '/',
+            redirect: '/editor/dashboard',
+            name: 'Home',
+            component: TheContainer,
+            children: [
+
+                {
+                    path: 'user/dashboard',
+                    name: 'UserDashboard',
+                    component: UserDashboard
+                },
+
+                {
+                    path: 'user/form-fill/:id',
+                    name: 'UserFormFill',
+                    component: UserFormFill,
+                    props: true
+                },
+
+                {
+                    path: 'editor/dashboard',
+                    name: 'EditorDashboard',
+                    component: EditorDashboard
+                },
+
+                {
+                    path: 'admin/dashboard',
+                    name: 'AdminDashboard',
+                    component: AdminDashboard
+                },
+
+                {
+                    path: 'editor/create-form/:id',
+                    name: 'EditorCreateForm',
+                    component: EditorCreateForm
+                }
+
+
+            ]
+        },
+
+        {
+            path: '/pages',
+            redirect: '/pages/404',
+            name: 'Pages',
+            component: {
+                render(c) {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: 'login',
+                    name: 'Login',
+                    component: Login
+                }
+            ]
+        }
+    ]
 })
-
-export default router

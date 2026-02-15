@@ -11,6 +11,7 @@ exports.onQuerys = async function (request, response) {
     try {
         let query = {};
         const doc = await responseService.onQuerys(query);
+        return ResMessage.sendResponse(response, request.body.apiid, 20000, doc);
         return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
     } catch (err) {
         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses", err.message);
