@@ -1,11 +1,7 @@
 <template>
-    <div>
+    <div class="editor-dashboard">
         <Header title="My Forms" description="Create and manage your forms" />
-        <CRow>
-            <CCol col="12">
-                <EditorTables />
-            </CCol>
-        </CRow>
+        <EditorTables />
     </div>
 </template>
 
@@ -35,3 +31,13 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.editor-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    max-width: 1216px;
+    margin: 0 auto;
+}
+</style>

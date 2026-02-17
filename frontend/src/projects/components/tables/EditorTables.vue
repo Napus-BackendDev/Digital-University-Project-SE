@@ -1,24 +1,31 @@
 <template>
     <div>
         <!-- Filter Toolbar -->
-        <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-3">
-            <div class="flex-grow-1 mr-3">
-                <CInput v-model="searchQuery" placeholder="Search forms..." class=" mb-0">
-                    <template #prepend-content>
-                        <CIcon name="cil-magnifying-glass" class="text-muted" />
-                    </template>
-                </CInput>
+        <div class="toolbar">
+            <div class="toolbar__search">
+                <div class="search-input">
+                    <svg class="search-input__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="#737373" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input v-model="searchQuery" type="text" placeholder="Search forms..." class="search-input__field" />
+                </div>
             </div>
-
-            <div class="d-flex align-items-center">
-                <div class="mr-3">
+            <div class="toolbar__actions">
+                <div class="filter-dropdown-wrapper">
                     <CDropdown class="filter-dropdown">
                         <template #toggler>
-                            <button class="btn d-flex align-items-center text-muted border bg-white"
-                                style="border-radius: 6px;">
-                                <CIcon name="cil-filter" size="sm" class="mr-2" />
+                            <button class="filter-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                                </svg>
                                 <span>{{ selectedStatus }}</span>
-                                <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
                             </button>
                         </template>
                         <CDropdownItem @click="filterStatus('All Status')">All Status</CDropdownItem>
@@ -27,33 +34,38 @@
                         <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
                     </CDropdown>
                 </div>
-
-                <CButton color="danger" class="d-flex align-items-center text-white px-3"
-                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c;" @click="createNewForm"
-                    :disabled="isCreating">
-                    <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
-                    <CSpinner v-else size="sm" class="mr-2" />
-                    Create Form
-                </CButton>
+                <button class="create-btn" @click="createNewForm" :disabled="isCreating">
+                    <CSpinner v-if="isCreating" size="sm" class="create-btn__spinner" />
+                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>Create Form</span>
+                </button>
             </div>
         </div>
 
-        <div class="user-tables-container">
-            <CDataTable :items="tableData" :fields="fields" :items-per-page="6" hover :pagination="{ align: 'center' }"
-                class="mb-0 custom-datatable">
+        <!-- Table -->
+        <div class="forms-table-container">
+            <CDataTable :items="tableData" :fields="fields" :items-per-page="7" hover
+                :pagination="{ align: 'center' }" class="mb-0 forms-datatable">
+
                 <!-- Form Name (Title) Slot -->
                 <template #title="{ item }">
-                    <td class="pl-4 py-3">
-                        <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
-                        <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                    <td class="forms-table__cell forms-table__cell--name">
+                        <div class="form-info">
+                            <div class="form-info__title">{{ item.title }}</div>
+                            <div class="form-info__description" v-if="item.description">{{ item.description }}</div>
+                        </div>
                     </td>
                 </template>
 
                 <!-- Status Slot -->
                 <template #status="{ item }">
-                    <td class="py-3">
+                    <td class="forms-table__cell">
                         <span class="status-badge" :class="getStatusClass(item.status)">
-                            <span class="status-dot"></span>
+                            <span class="status-badge__dot"></span>
                             {{ item.status }}
                         </span>
                     </td>
@@ -61,14 +73,18 @@
 
                 <!-- Responses Slot -->
                 <template #responses="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-wrapper mr-2 chart-color">
-                                <CIcon name="cil-comment-bubble" size="sm" />
+                    <td class="forms-table__cell">
+                        <div class="response-info">
+                            <div class="response-info__icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ba0c2f"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
                             </div>
-                            <div>
-                                <div class="font-weight-bold text-dark">{{ item.responses }}</div>
-                                <div class="small text-muted">responses</div>
+                            <div class="response-info__text">
+                                <div class="response-info__count">{{ item.responses }}</div>
+                                <div class="response-info__label">responses</div>
                             </div>
                         </div>
                     </td>
@@ -76,21 +92,32 @@
 
                 <!-- Created (Last Modified) Slot -->
                 <template #created="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center text-muted">
-                            <CIcon name="cil-calendar" size="sm" class="mr-2" />
-                            <span>{{ item.created }}</span>
+                    <td class="forms-table__cell">
+                        <div class="date-info">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                            <span class="date-info__text">{{ item.created }}</span>
                         </div>
                     </td>
                 </template>
 
                 <!-- Actions Slot -->
                 <template #actions="{ item }">
-                    <td class="text-right pr-4 py-3">
+                    <td class="forms-table__cell forms-table__cell--actions">
                         <CDropdown placement="bottom-end">
                             <template #toggler>
-                                <button class="btn btn-link text-muted p-0 text-decoration-none">
-                                    <CIcon name="cil-options" />
+                                <button class="actions-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737373"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="1" />
+                                        <circle cx="12" cy="5" r="1" />
+                                        <circle cx="12" cy="19" r="1" />
+                                    </svg>
                                 </button>
                             </template>
                             <CDropdownItem @click="goToEditForm(item)">Edit</CDropdownItem>
@@ -223,7 +250,7 @@ export default {
 
                 const response = await this.$store.dispatch('Forms/createForm', newFormData);
 
-                this.$router.push({ name: 'EditorCreateForm', params: { _id: response.data.data._id } });
+                this.$router.push({ name: 'EditorCreateForm', params: { id: response.data.data._id } });
             } catch (error) {
                 console.error("Failed to create form:", error);
             } finally {
@@ -231,7 +258,7 @@ export default {
             }
         },
         goToEditForm(item) {
-            this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
+            this.$router.push({ name: 'EditorCreateForm', params: { id: item._id } });
         },
         async deleteForm(item) {
             if (confirm("Are you sure you want to delete this form?")) {
@@ -248,149 +275,388 @@ export default {
 </script>
 
 <style scoped>
-.user-tables-container {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
-    overflow: hidden;
-    /* For rounded corners on child elements */
+/* ===== Toolbar ===== */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 32px;
 }
 
-/* Table Header */
-.custom-table thead th {
-    background-color: #f8fafc;
-    border-bottom: 1px solid #edf2f7;
-    color: #64748b;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    border-top: none;
+.toolbar__search {
+    flex: 1;
 }
 
-/* Rows */
-.custom-table tbody tr {
+.toolbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ===== Search Input ===== */
+.search-input {
+    position: relative;
+    width: 100%;
+}
+
+.search-input__icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.search-input__field {
+    width: 100%;
+    height: 36px;
+    padding: 4px 12px 4px 40px;
+    background: rgba(229, 229, 229, 0.3);
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: -0.1504px;
+    color: #333333;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.search-input__field::placeholder {
+    color: #a3a3a3;
+}
+
+.search-input__field:focus {
+    border-color: #ba0c2f;
+}
+
+/* ===== Filter Button ===== */
+.filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 36px;
+    padding: 1px 13px;
+    background: rgba(229, 229, 229, 0.3);
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    line-height: 20px;
+    letter-spacing: -0.1504px;
+    color: #333333;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    border-color: #d4d4d4;
+}
+
+/* ===== Create Button ===== */
+.create-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 8px 16px;
+    background-color: #ba0c2f;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: -0.1504px;
+    color: #fafafa;
+    cursor: pointer;
     transition: background-color 0.2s ease;
+    white-space: nowrap;
 }
 
-.custom-table tbody tr:hover {
-    background-color: #f8fafc;
+.create-btn:hover {
+    background-color: #9a0a27;
 }
 
-.custom-table tbody td {
-    border-top: 1px solid #edf2f7;
+.create-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.create-btn__spinner {
+    color: #fafafa;
+}
+
+/* ===== Table Container ===== */
+.forms-table-container {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 16px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+/* ===== Table Header ===== */
+::v-deep .forms-datatable .table thead th {
+    background-color: #fafafa;
+    border-bottom: 1px solid #e5e5e5;
+    border-top: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: -0.1504px;
+    color: #404040;
+    padding: 16px 24px;
+    text-transform: none;
+}
+
+/* ===== Table Body ===== */
+::v-deep .forms-datatable .table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+::v-deep .forms-datatable .table tbody tr:hover {
+    background-color: #fafafa;
+}
+
+::v-deep .forms-datatable .table tbody td {
+    border-top: none;
+    border-bottom: 1px solid #f5f5f5;
     vertical-align: middle;
+    padding: 20px 24px;
 }
 
-/* Typography */
-.text-lg {
-    font-size: 0.95rem;
+::v-deep .forms-datatable .table tbody tr:last-child td {
+    border-bottom: none;
 }
 
-.text-muted {
-    color: #94a3b8 !important;
+/* ===== Table Cells ===== */
+.forms-table__cell {
+    padding: 20px 24px !important;
 }
 
-/* Status Badges */
+.forms-table__cell--name {
+    padding-left: 24px !important;
+}
+
+.forms-table__cell--actions {
+    text-align: right;
+    padding-right: 24px !important;
+}
+
+/* ===== Form Info ===== */
+.form-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-info__title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: -0.1504px;
+    color: #1a1a1a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.form-info__description {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 22.75px;
+    letter-spacing: -0.1504px;
+    color: #525252;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ===== Status Badges ===== */
 .status-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.35em 0.8em;
-    border-radius: 50rem;
-    font-size: 0.85rem;
+    padding: 4px 12px 4px 10px;
+    border-radius: 9999px;
+    font-family: 'Inter', sans-serif;
     font-weight: 500;
+    font-size: 12px;
+    line-height: 16px;
 }
 
-.status-dot {
+.status-badge__dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     margin-right: 6px;
+    flex-shrink: 0;
 }
 
-/* Status Colors */
 .status-open {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: #ecfdf5;
+    border: 1px solid #a4f4cf;
+    color: #007a55;
 }
 
-.status-open .status-dot {
-    background-color: #059669;
+.status-open .status-badge__dot {
+    background-color: #00bc7d;
 }
 
 .status-draft {
-    background-color: #f3f4f6;
-    color: #4b5563;
+    background-color: #f5f5f5;
+    border: 1px solid #e5e5e5;
+    color: #404040;
 }
 
-.status-draft .status-dot {
-    background-color: #9ca3af;
+.status-draft .status-badge__dot {
+    background-color: #a3a3a3;
 }
 
 .status-closed {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: #fef2f2;
+    border: 1px solid #ffc9c9;
+    color: #c10007;
 }
 
-.status-closed .status-dot {
-    background-color: #dc2626;
+.status-closed .status-badge__dot {
+    background-color: #fb2c36;
 }
 
-/* Icon Wrapper */
-.icon-wrapper {
+/* ===== Response Info ===== */
+.response-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.response-info__icon {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 32px;
     height: 32px;
-    border-radius: 8px;
-    background-color: #fff1f2;
-    /* Light rose background for chart looking icon */
-    color: #be123c;
+    background-color: #fef2f2;
+    border-radius: 16px;
+    flex-shrink: 0;
 }
 
-.chart-color {
-    background-color: #fff5f5;
-    color: #e55353;
+.response-info__text {
+    display: flex;
+    flex-direction: column;
 }
 
-/* Dropdown */
-.btn-link {
-    color: #94a3b8;
+.response-info__count {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: -0.1504px;
+    color: #1a1a1a;
 }
 
-.btn-link:hover {
-    color: #64748b;
+.response-info__label {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 16px;
+    color: #737373;
 }
 
+/* ===== Date Info ===== */
+.date-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
-/* Pagination customization to match clean theme */
-::v-deep .page-link {
+.date-info__text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: -0.1504px;
+    color: #525252;
+}
+
+/* ===== Actions Button ===== */
+.actions-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
     border: none;
-    color: #64748b;
-    border-radius: 6px;
+    background: transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    margin-left: auto;
+}
+
+.actions-btn:hover {
+    background-color: #f5f5f5;
+}
+
+/* ===== Pagination ===== */
+::v-deep .forms-datatable .pagination {
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+::v-deep .forms-datatable .page-link {
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: -0.1504px;
+    color: #333333;
+    padding: 8px 14px;
     margin: 0 2px;
+    transition: all 0.15s ease;
 }
 
-::v-deep .page-link:hover {
-    background-color: #f1f5f9;
-    color: #0f172a;
+::v-deep .forms-datatable .page-link:hover {
+    background-color: #f5f5f5;
+    color: #0a0a0a;
 }
 
-::v-deep .page-item.active .page-link {
-    background-color: #0ea5e9;
-    /* Sky blue or primary brand color */
-    color: white;
+::v-deep .forms-datatable .page-item.active .page-link {
+    background: rgba(229, 229, 229, 0.3);
+    border: 1px solid #e5e5e5;
+    color: #0a0a0a;
 }
 
-.search-input-group .input-group-text {
-    background-color: #f8fafc !important;
+::v-deep .forms-datatable .page-item.disabled .page-link {
+    opacity: 0.5;
+    color: #333333;
 }
 
-.search-input-group input {
-    background-color: #f8fafc !important;
+/* ===== Dropdown Overrides ===== */
+::v-deep .dropdown-menu {
+    border-radius: 12px;
+    border: 1px solid #e5e5e5;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 4px;
+    min-width: 140px;
+}
+
+::v-deep .dropdown-item {
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 8px 12px;
+}
+
+::v-deep .dropdown-item:hover {
+    background-color: #f5f5f5;
 }
 </style>

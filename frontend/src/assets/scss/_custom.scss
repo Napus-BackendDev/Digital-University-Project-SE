@@ -1,1 +1,37 @@
 // Here you can add other styles
+
+// Match Figma design: page background
+.c-main {
+  background-color: #fafafa;
+}
+
+// Remove default CoreUI sidebar for clean layout
+.c-sidebar {
+  display: none !important;
+}
+
+// Remove CoreUI header default styles (replaced by custom header)
+.c-header {
+  display: none !important;
+}
+
+// Clean container spacing
+.c-body {
+  min-height: 100vh;
+}
+
+.c-main > .container-fluid {
+  padding: 32px 160px;
+}
+
+@media (max-width: 1200px) {
+  .c-main > .container-fluid {
+    padding: 32px 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .c-main > .container-fluid {
+    padding: 24px 16px;
+  }
+}

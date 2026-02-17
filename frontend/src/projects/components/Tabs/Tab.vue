@@ -1,36 +1,40 @@
 <template>
-    <CTabs variant="pills" :active-tab="0" class="custom-tabs-wrapper">
-        <CTab>
-            <template slot="title">
-                <span class="d-flex align-items-center">
-                    <CIcon name="cil-description" class="mr-2" />
-                    Questions
-                </span>
-            </template>
-            <TabQuestion :title="title" :description="description" :questions="questions"
-                @update:title="$emit('update:title', $event)" @update:description="$emit('update:description', $event)"
-                @auto-save="triggerAutoSave" />
-        </CTab>
-        <CTab>
-            <template slot="title">
-                <span class="d-flex align-items-center">
-                    <CIcon name="cil-chart-pie" class="mr-2" />
-                    Responses
-                    <CBadge color="secondary" shape="pill" class="ml-2">6</CBadge>
-                </span>
-            </template>
-            <TabResponses :settings="settings" @auto-save="triggerAutoSave" />
-        </CTab>
-        <CTab>
-            <template slot="title">
-                <span class="d-flex align-items-center">
-                    <CIcon name="cil-settings" class="mr-2" />
-                    Settings
-                </span>
-            </template>
-            <TabSetting :settings="settings" @auto-save="triggerAutoSave" />
-        </CTab>
-    </CTabs>
+    <div class="form-tabs">
+        <div class="form-tabs__nav">
+            <button 
+                v-for="(tab, i) in tabs" 
+                :key="tab.key"
+                class="form-tabs__nav-item"
+                :class="{ 'form-tabs__nav-item--active': activeTab === i }"
+                @click="activeTab = i"
+            >
+                {{ tab.label }}
+                <span v-if="tab.badge !== undefined" class="form-tabs__badge">{{ tab.badge }}</span>
+            </button>
+        </div>
+
+        <div class="form-tabs__content">
+            <TabQuestion 
+                v-if="activeTab === 0"
+                :title="title" 
+                :description="description" 
+                :questions="questions"
+                @update:title="$emit('update:title', $event)" 
+                @update:description="$emit('update:description', $event)"
+                @auto-save="triggerAutoSave" 
+            />
+            <TabResponses 
+                v-else-if="activeTab === 1"
+                :settings="settings" 
+                @auto-save="triggerAutoSave" 
+            />
+            <TabSetting 
+                v-else-if="activeTab === 2"
+                :settings="settings" 
+                @auto-save="triggerAutoSave" 
+            />
+        </div>
+    </div>
 </template>
 
 <script>
@@ -46,21 +50,23 @@ export default {
         TabSetting
     },
     props: {
-        title: {
-            type: String,
-            default: ''
-        },
-        description: {
-            type: String,
-            default: ''
-        },
-        questions: {
-            type: Array,
-            default: () => []
-        },
-        settings: {
-            type: Object,
-            required: true
+        title: { type: String, default: '' },
+        description: { type: String, default: '' },
+        questions: { type: Array, default: () => [] },
+        settings: { type: Object, required: true }
+    },
+    data() {
+        return {
+            activeTab: 0
+        }
+    },
+    computed: {
+        tabs() {
+            return [
+                { key: 'questions', label: 'Questions' },
+                { key: 'responses', label: 'Responses', badge: 0 },
+                { key: 'settings', label: 'Settings' }
+            ]
         }
     },
     methods: {
@@ -71,65 +77,64 @@ export default {
 }
 </script>
 
-<style lang="scss">
-.custom-tabs-wrapper {
-    width: 100%;
-}
+<style scoped lang="scss">
+.form-tabs {
+    &__nav {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        background: #f5f5f5;
+        border: 1px solid #e5e5e5;
+        border-radius: 16px;
+        padding: 4px;
+        margin-bottom: 24px;
+    }
 
-.custom-tabs-wrapper .tab-content {
-    width: 100%;
-}
+    &__nav-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 12px;
+        background: transparent;
+        color: #737373;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        line-height: 20px;
+        letter-spacing: -0.15px;
 
-/* Add min-height to the white content boxes */
-.custom-tabs-wrapper .tab-content>.active {
-    min-height: 60vh;
-    display: flex;
-    flex-direction: column;
-}
+        &:hover {
+            color: #333;
+        }
 
-.custom-tabs-wrapper .nav-pills {
-    background-color: #f1f5f9;
-    padding: 4px;
-    border-radius: 50px;
-    display: flex;
-    /* Changed from inline-flex to flex for full width */
-    width: 100%;
-    /* Force full width */
-    border: 1px solid #e2e8f0;
-    margin-bottom: 1.5rem;
-    /* Add spacing below tabs */
-}
+        &--active {
+            background: #fff;
+            color: #333;
+            font-weight: 600;
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.08);
+        }
+    }
 
-.custom-tabs-wrapper .nav-item {
-    margin-right: 0 !important;
-    flex: 1;
-    /* Distribute space equally */
-    text-align: center;
-}
+    &__badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 10px;
+        background: #e5e5e5;
+        color: #737373;
+        font-size: 12px;
+        font-weight: 600;
+    }
 
-.custom-tabs-wrapper .nav-link {
-    border-radius: 50px !important;
-    color: #64748b !important;
-    padding: 10px 0 !important;
-    /* Adjust padding */
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border: none !important;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-
-.custom-tabs-wrapper .nav-link:hover {
-    color: #334155 !important;
-}
-
-.custom-tabs-wrapper .nav-link.active {
-    background-color: white !important;
-    color: #0f172a !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    font-weight: 600;
+    &__content {
+        min-height: 60vh;
+    }
 }
 </style>
