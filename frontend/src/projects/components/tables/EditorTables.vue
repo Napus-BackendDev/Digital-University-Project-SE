@@ -223,7 +223,7 @@ export default {
 
                 const response = await this.$store.dispatch('Forms/createForm', newFormData);
 
-                this.$router.push({ name: 'EditorCreateForm', params: { _id: response.data.data._id } });
+                this.$router.push({ name: 'EditorCreateForm', params: { id: response.data.data._id } });
             } catch (error) {
                 console.error("Failed to create form:", error);
             } finally {
@@ -231,7 +231,7 @@ export default {
             }
         },
         goToEditForm(item) {
-            this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
+            this.$router.push({ name: 'EditorCreateForm', params: { id: item._id } });
         },
         async deleteForm(item) {
             if (confirm("Are you sure you want to delete this form?")) {

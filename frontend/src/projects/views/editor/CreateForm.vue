@@ -5,22 +5,16 @@
                 <ButtonBack path="/editor/dashboard" />
                 <div class="d-flex align-items-center">
                     <AutoSave :saveStatus="saveStatus" />
-                    <ButtonPreview />
+                    <ButtonPreview @click="goToPreview" />
                 </div>
             </CCol>
         </CRow>
 
         <CRow>
             <CCol col="12" class="mb-4">
-                <Tab 
-                    :title="formTitle" 
-                    :description="formDescription" 
-                    :questions="questions" 
-                    :settings="settings"
-                    @update:title="formTitle = $event" 
-                    @update:description="formDescription = $event"
-                    @auto-save="triggerAutoSave" 
-                />
+                <Tab :title="formTitle" :description="formDescription" :questions="questions" :settings="settings"
+                    @update:title="formTitle = $event" @update:description="formDescription = $event"
+                    @auto-save="triggerAutoSave" />
             </CCol>
         </CRow>
     </div>
@@ -67,7 +61,7 @@ export default {
     },
     methods: {
         async onInit() {
-            const formId = this.$route.params._id;
+            const formId = this.$route.params.id || this.$route.params._id;
             try {
                 const formData = await this.$store.dispatch('Forms/getFormById', { _id: formId });
                 if (formData) {
@@ -113,10 +107,19 @@ export default {
                 this.saveForm();
             }, 1500);
         },
+        goToPreview() {
+            // Navigate to preview page
+            const formId = this.$route.params.id
+            if (!formId) {
+                console.warn('Cannot open preview — missing form id');
+                return;
+            }
+            this.$router.push(`/editor/preview-form/${formId}`);
+        },
         async saveForm() {
             try {
                 const formData = {
-                    _id: this.$route.params._id,
+                    _id: this.$route.params.id || this.$route.params._id,
                     title: [{ key: 'en', value: this.formTitle }],
                     description: [{ key: 'en', value: this.formDescription }],
                     schedule: {
