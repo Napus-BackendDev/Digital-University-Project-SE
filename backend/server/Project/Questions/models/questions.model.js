@@ -13,19 +13,22 @@ var objSchema = new Schema({
     }],
     type: { type: mongoose.Schema.Types.ObjectId, ref: 'Question_Types', required: true },
     config: {
-        choices: [{
+        options: [{
             _id: false,
-            choice: { type: String, default: null },
-            value: [{
+            lang: [{
                 _id: false,
                 key: { type: String, default: null },
-                label: { type: String, default: null }
+                choice: [{
+                    _id: false,
+                    key: { type: String, default: null },
+                    value: { type: String, default: null }
+                }]
             }]
         }],
         allowMultipleSelect: { type: Boolean, default: false },
         maxRate: { type: Number, default: null },
         maxText: { type: Number, default: null },
-        maxFileNumber: { type: Number, default: null },
+        maxFiles: { type: Number, default: null },
         maxFileSize: { type: Number, default: null },
     },
     isRequired: { type: Boolean, default: false }

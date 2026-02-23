@@ -1,19 +1,15 @@
 <template>
-  <div class="c-app" :class="{ 'c-dark-theme': $store.state.darkMode }">
-    <TheSidebar />
-    <TheAside />
+  <div class="c-app">
     <CWrapper>
       <TheHeader />
-      <div class="c-body">
-        <main class="c-main">
-          <CContainer fluid>
-            <transition name="fade">
-              <router-view></router-view>
-            </transition>
-          </CContainer>
-        </main>
-        <TheFooter />
-      </div>
+      <main class="c-main">
+        <CContainer class="d-flex justify-content-center w-75" fluid>
+          <transition name="fade">
+            <router-view></router-view>
+          </transition>
+        </CContainer>
+      </main>
+      <TheFooter />
 
     </CWrapper>
     <CenterLoading />
@@ -27,15 +23,11 @@
 <script>
 import TheHeader from './TheHeader'
 import { mapGetters } from "vuex";
-import store from "@/store/store";
-//
-import { io } from "socket.io-client";
 import DialogMessage from "@/projects/components/dialog/DialogMessage.vue";
 import CenterLoading from "@/projects/components/dialog/CenterLoading.vue";
 import SignIn from "@/projects/components/dialog/SignIn.vue";
 import TwoFA from "@/projects/components/dialog/TwoFA.vue";
 
-//
 export default {
   name: 'TheContainer',
   components: {
