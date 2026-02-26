@@ -1,10 +1,10 @@
 <template>
-    <div>
+    <div class="flex-grow-1">
         <CRow class="mb-4">
             <CCol col="12" class="d-flex justify-content-between align-items-center">
                 <ButtonBack path="/editor/dashboard" />
                 <div class="d-flex align-items-center">
-                    <AutoSave :saveStatus="saveStatus" />
+                    <!-- <AutoSave :saveStatus="saveStatus" /> -->
                     <ButtonPreview />
                 </div>
             </CCol>

@@ -1,36 +1,34 @@
 <template>
     <div>
         <!-- Filter Toolbar -->
-        <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center py-3 mb-3">
             <div class="flex-grow-1 mr-3">
-                <CInput v-model="searchQuery" placeholder="Search forms..." class=" mb-0">
+                <CInput v-model="searchQuery" placeholder="Search..." class="mb-0">
                     <template #prepend-content>
-                        <CIcon name="cil-magnifying-glass" class="text-muted" />
+                        <CIcon name="cil-magnifying-glass" />
                     </template>
                 </CInput>
             </div>
 
             <div class="d-flex align-items-center">
-                <div class="mr-3">
-                    <CDropdown class="filter-dropdown">
-                        <template #toggler>
-                            <button class="btn d-flex align-items-center text-muted border bg-white"
-                                style="border-radius: 6px;">
-                                <CIcon name="cil-filter" size="sm" class="mr-2" />
-                                <span>{{ selectedStatus }}</span>
-                                <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
-                            </button>
-                        </template>
-                        <CDropdownItem @click="filterStatus('All Status')">All Status</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Open')">Open</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Closed')">Closed</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
-                    </CDropdown>
-                </div>
+                <CDropdown class="filter-dropdown" style="border-radius: 1rem; margin-right: 1rem;">
+                    <template #toggler>
+                        <button class="btn d-flex align-items-center text-muted border bg-white"
+                            style="border-radius: 6px;">
+                            <CIcon name="cil-filter" size="sm" class="mr-2" />
+                            <span>{{ selectedStatus }}</span>
+                            <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
+                        </button>
+                    </template>
+                    <CDropdownItem @click="filterStatus('All Status')">All Status</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Open')">Open</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Closed')">Closed</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
+                </CDropdown>
 
                 <CButton color="danger" class="d-flex align-items-center text-white px-3"
-                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c;" @click="createNewForm"
-                    :disabled="isCreating">
+                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c; border-radius: .5rem;"
+                    hover @click="createNewForm" :disabled="isCreating">
                     <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
                     <CSpinner v-else size="sm" class="mr-2" />
                     Create Form
@@ -39,9 +37,9 @@
         </div>
 
         <div class="user-tables-container">
-            <CDataTable :items="tableData" :fields="fields" :items-per-page="6" hover :pagination="{ align: 'center' }"
-                class="mb-0 custom-datatable">
-                <!-- Form Name (Title) Slot -->
+            <CDataTable :items="tableData" :fields="columns" :items-per-page="6" :pagination="{ align: 'center' }"
+                :no-items-view="{ noItems: 'No forms available' }" class="mb-0 custom-datatable">
+                <!-- Form Slot -->
                 <template #title="{ item }">
                     <td class="pl-4 py-3">
                         <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
@@ -115,8 +113,8 @@ export default {
             searchQuery: '',
             selectedStatus: 'All Status',
             isCreating: false,
-            fields: [
-                { key: 'title', label: 'Form Name', _style: 'width:40%' },
+            columns: [
+                { key: 'title', label: 'Form', _style: 'width:40%' },
                 { key: 'status', label: 'Status', _style: 'width:15%' },
                 { key: 'responses', label: 'Responses', _style: 'width:15%' },
                 { key: 'created', label: 'Last Modified', _style: 'width:20%' },
@@ -250,7 +248,7 @@ export default {
 <style scoped>
 .user-tables-container {
     background: white;
-    border-radius: 8px;
+    border-radius: 1rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
     overflow: hidden;

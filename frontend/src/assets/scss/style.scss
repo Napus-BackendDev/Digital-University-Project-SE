@@ -7,6 +7,9 @@
 // Import styles with default layout.
 @import "~@coreui/coreui-pro/scss/coreui";
 
+.header-title {
+  font-size: 1.5rem;
+}
 
 .card-header:not(.content-center) > .c-icon:first-child {
   margin-right: 0.1rem;
@@ -16,6 +19,7 @@
   height: 1.2rem;
   font-size: 1.2rem;
 }
+
 .bg-login{
   border-radius: 1rem ;
   background: linear-gradient(180deg,#8c1515 30%,#FEC260 60%);
@@ -25,13 +29,16 @@
   border-radius: 1rem ;
   //background: linear-gradient(180deg,#8c1515 30%,#FEC260 60%, #FFFF 80%);
 }
+
 .bg-style2{
   border-radius: 1rem ;
   margin-bottom: 0px;
 }
+
 .border-radius-1{
   border-radius: 1rem ;
 }
+
 .line1{
   display: block;
   white-space: nowrap;

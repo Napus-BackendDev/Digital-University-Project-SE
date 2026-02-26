@@ -1,9 +1,8 @@
 <template>
-    <CButton color="dark" variant="outline" shape="pill" class="d-flex align-items-center px-4 font-weight-bold"
-        @click="$router.push(path)">
-        <CIcon name="cil-arrow-left" class="mr-2" />
-        {{ label }}
-    </CButton>
+    <div class="back" style="cursor: pointer" @click="$router.push(path)">
+        <CIcon name="cil-chevron-left" />
+        <span class="px-1">{{ label }}</span>
+    </div>
 </template>
 
 <script>
@@ -12,11 +11,11 @@ export default {
     props: {
         path: {
             type: String,
-            default: '/user/dashboard'
+            default: '/'
         },
         label: {
             type: String,
-            default: 'Back to Forms'
+            default: 'Back'
         }
     },
     components: {
@@ -36,3 +35,18 @@ export default {
     }
 }
 </script>
+
+<style>
+.back {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.back:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+</style>

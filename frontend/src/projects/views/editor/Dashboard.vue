@@ -1,11 +1,7 @@
 <template>
-    <div>
-        <Header title="My Forms" description="Create and manage your forms" />
-        <CRow>
-            <CCol col="12">
-                <EditorTables />
-            </CCol>
-        </CRow>
+    <div class="flex-grow-1">
+        <Header title="Forms" description="Create and manage your forms" />
+        <EditorTables />
     </div>
 </template>
 

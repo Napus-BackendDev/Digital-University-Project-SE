@@ -1,5 +1,5 @@
 <template>
-    <CButton color="light" shape="pill" class="d-flex align-items-center px-4 py-2 font-weight-bold btn-preview"
+    <CButton color="light" class="d-flex align-items-center px-4 py-2 font-weight-bold btn-preview" style="border-radius: 0.5rem;"
         @click="$emit('click')">
         <CIcon name="cil-media-play" class="mr-2 text-dark" />
         <span class="text-dark">Preview</span>

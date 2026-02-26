@@ -59,7 +59,7 @@ export default new Router({
                 },
 
                 {
-                    path: 'editor/create-form/:id',
+                    path: 'editor/dashboard/:_id',
                     name: 'EditorCreateForm',
                     component: EditorCreateForm
                 }

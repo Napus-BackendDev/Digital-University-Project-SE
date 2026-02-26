@@ -5,7 +5,7 @@ const ResMessage = require("../../Settings/service/message");
 exports.onQuery = async function (request, response) {
   try {
     let query = {};
-    query._id = new mongo.ObjectId(request.body._id);
+    query._id = new mongo.ObjectId(request.query._id);
 
     const doc = await Form.onAggregate([
       { $match: query },
@@ -39,15 +39,11 @@ exports.onQuery = async function (request, response) {
 
 exports.onQuerys = async function (request, response) {
   try {
-    let query = {};
-    // if (request.body.allowAll != true) {
-    //   query.schedule = { endAt: { $gte: new Date() } };
-    // }
-
-    const doc = await Form.onQuerys(query);
-    return ResMessage.sendResponse(response, 0, 20000, doc);
+    var querys = {};
+    const doc = await Form.onQuerys(querys);
+    return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, 0, 40400, err.message);
+    return ResMessage.sendResponse(response, request.body.apiId, 40400, err.message);
   }
 };
   
