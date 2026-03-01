@@ -7,13 +7,9 @@
                     <label class="mb-0 font-weight-bold text-muted-dark">Start date time</label>
                 </CCol>
                 <CCol md="9">
-                    <CInput 
-                        type="datetime-local" 
-                        class="mb-0"
+                    <CInput type="datetime-local" class="mb-0"
                         style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        v-model="settings.startDateTime" 
-                        @change="triggerAutoSave" 
-                    />
+                        :value="formattedStart" @input="updateStart" />
                 </CCol>
             </CRow>
             <CRow class="align-items-center">
@@ -21,13 +17,9 @@
                     <label class="mb-0 font-weight-bold text-muted-dark">End date time</label>
                 </CCol>
                 <CCol md="9">
-                    <CInput 
-                        type="datetime-local" 
-                        class="mb-0"
+                    <CInput type="datetime-local" class="mb-0"
                         style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        v-model="settings.endDateTime" 
-                        @change="triggerAutoSave" 
-                    />
+                        :value="formattedEnd" @input="updateEnd" />
                 </CCol>
             </CRow>
         </CCardBody>
@@ -43,9 +35,49 @@ export default {
             required: true
         }
     },
+    computed: {
+        formattedStart() {
+            if (!this.settings || !this.settings.schedule || !this.settings.schedule.startAt) return '';
+            return this.formatDateForInput(this.settings.schedule.startAt);
+        },
+        formattedEnd() {
+            if (!this.settings || !this.settings.schedule || !this.settings.schedule.endAt) return '';
+            return this.formatDateForInput(this.settings.schedule.endAt);
+        }
+    },
     methods: {
-        triggerAutoSave() {
-            this.$emit('auto-save');
+        formatDateForInput(date) {
+            if (!date) return '';
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return '';
+            const pad = (num) => num.toString().padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        },
+        updateStart(val) {
+            if (!this.settings.schedule) {
+                this.$set(this.settings, 'schedule', {});
+            }
+            this.$set(this.settings.schedule, 'startAt', val);
+            this.triggerAutoSave();
+        },
+        updateEnd(val) {
+            if (!this.settings.schedule) {
+                this.$set(this.settings, 'schedule', {});
+            }
+            this.$set(this.settings.schedule, 'endAt', val);
+            this.triggerAutoSave();
+        },
+        async triggerAutoSave() {
+            try {
+                // Now that properties are correctly mapped in settings.schedule, just dispatch it directly
+                await this.$store.dispatch('Forms/updateForm', this.settings);
+                console.log('Form status updated successfully', this.settings.schedule);
+
+                // Keep emitting in case parent wants to trigger an overall UI feedback event
+                this.$emit('auto-save');
+            } catch (error) {
+                console.error('Error updating form status:', error);
+            }
         }
     }
 }

@@ -272,6 +272,25 @@ export default {
                         { key: 'en', value: 'Untitled Form' },
                         { key: 'th', value: 'แบบร่างฟอร์ม' }
                     ],
+                    description: [
+                        { key: 'en', value: '' },
+                        { key: 'th', value: '' }
+                    ],
+                    questions: [],
+                    responses: [],
+                    settings: {
+                        startDateTime: '',
+                        endDateTime: '',
+                        accessType: 'Anyone with the link',
+                        newCollaborator: {
+                            email: '',
+                            role: 'Editor'
+                        },
+                        collectEmails: false,
+                        limitOneResponse: false,
+                        allowEditing: false,
+                        showProgressBar: false
+                    }
                 };
 
                 const response = await this.$store.dispatch('Forms/createForm', newFormData);

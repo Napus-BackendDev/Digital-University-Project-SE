@@ -9,64 +9,62 @@ const ServerModule = {
     state: {
         forms: []
     },
-    
+
     mutations: {
         forms(state, forms) {
             state.forms = forms;
         }
     },
     actions: {
-        getForms({ commit } , data ) {
+        getForms({ commit }, data) {
             Service.form('exp', data, {})
-            .then(response => {
-                console.log(response.data.data)
-                commit('forms', response.data.data);
-            })
-            .catch(error => {
-                console.log(error);
-            })
+                .then(response => {
+                    commit('forms', response.data.data);
+                })
+                .catch(error => {
+                    console.log(error);
+                })
         },
-        getFormById({ commit } , data ) {
+        getFormById({ commit }, data) {
             return Service.form('get', data, {})
-            .then(response => {
-                console.log(response.data.data)
-                return response.data.data;
-            })
-            .catch(error => {
-                console.log(error);
-                throw error;
-            })
+                .then(response => {
+                    return response.data.data;
+                })
+                .catch(error => {
+                    console.log(error);
+                    throw error;
+                })
         },
-        createForm({ commit } , data ) {
+        createForm({ commit }, data) {
             return Service.form('create', data, {})
-            .then(response => {
-                commit('forms', response.data.data);
-                return response;
-            })
-            .catch(error => {
-                console.log(error);
-                throw error;
-            })
+                .then(response => {
+                    commit('forms', response.data.data);
+                    return response;
+                })
+                .catch(error => {
+                    console.log(error);
+                    throw error;
+                })
         },
-        updateForm({ commit } , data ) {
+        updateForm({ commit }, data) {
             return Service.form('update', data, {})
-            .then(response => {
-                commit('forms', response.data.data);
-                return response;
-            })
-            .catch(error => {
-                console.log(error);
-                throw error;
-            })
+                .then(response => {
+                    commit('forms', response.data.data);
+                    return response;
+                })
+                .catch(error => {
+                    console.log(error);
+                    throw error;
+                })
         },
-        deleteForm({ commit } , data ) {
+        deleteForm({ commit }, data) {
             Service.form('delete', data, {})
-            .then(response => {
-                commit('forms', response.data.data);
-            })
-            .catch(error => {
-                console.log(error);
-            })
+                .then(response => {
+                    commit('forms', response.data.data);
+                })
+                .catch(error => {
+                    console.log(error);
+                })
         }
     },
     getters: {

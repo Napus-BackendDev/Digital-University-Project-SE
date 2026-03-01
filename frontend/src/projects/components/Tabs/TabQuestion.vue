@@ -3,10 +3,10 @@
         <CCard class="mb-3">
             <CCardBody class="p-4">
                 <div class="form-header-section">
-                    <CInput class="form-title-input mb-2" size="lg" placeholder="Form Title" :value="title"
-                        @input="$emit('update:title', $event)" @change="triggerAutoSave" />
-                    <CTextarea class="form-desc-input" placeholder="Form Description" :value="description"
-                        @input="$emit('update:description', $event)" @change="triggerAutoSave" />
+                    <CInput class="form-title-input mb-2" size="lg" placeholder="Form Title" v-model="form.title"
+                        @change="triggerAutoSave" />
+                    <CTextarea class="form-desc-input" placeholder="Form Description" v-model="form.description"
+                        @change="triggerAutoSave" />
                 </div>
             </CCardBody>
         </CCard>
@@ -14,7 +14,7 @@
         <CRow>
             <!-- Left Column: Form Content -->
             <CCol md="9">
-                <CCard v-for="(question, index) in questions" :key="index" class="mb-3 position-relative">
+                <CCard v-for="(question, index) in form.questions" :key="index" class="mb-3 position-relative">
                     <CCardBody class="p-4">
                         <!-- Question Titles -->
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -86,19 +86,22 @@
                         </div>
 
                         <!-- Short Answer -->
-                        <div v-if="question.type === 'short_answer'">
+                        <div v-if="question.type === 'Short'">
                             <CInput disabled style="opacity: 0.55;" placeholder="Short answer text" />
                         </div>
                         <!-- Paragraph -->
-                        <div v-else-if="question.type === 'paragraph'">
+                        <div v-else-if="question.type === 'Paragraph'">
                             <CTextarea disabled style="opacity: 0.55;" placeholder="Long answer text" rows="3" />
                         </div>
                         <!-- Multiple Choice -->
-                        <div v-else-if="question.type === 'multiple_choice'">
+                        <div v-else-if="question.type === 'Multiple Choice'">
                             <div v-for="(opt, oIndex) in question.options" :key="oIndex"
                                 class="d-flex align-items-start">
                                 <div class="border rounded-circle mr-2" style="width: 40px; height: 40px;" />
-                                <CInput class="flex-grow-1" :value="opt" :placeholder="`Option ${oIndex + 1}`"
+                                <!-- Safely extract value from config structure or fallback to primitive -->
+                                <CInput class="flex-grow-1"
+                                    :value="opt && opt.lang && opt.lang[0] && opt.lang[0].choice && opt.lang[0].choice[0] ? opt.lang[0].choice[0].value : (typeof opt === 'string' ? opt : '')"
+                                    :placeholder="`Option ${oIndex + 1}`"
                                     @input="updateOption(index, oIndex, $event)" />
                                 <CButton color="danger" variant="ghost" class="ml-2" v-if="question.options.length > 1"
                                     @click="removeOption(index, oIndex)">
@@ -111,9 +114,9 @@
                                 <small>Add option</small>
                             </CButton>
                         </div>
-                        <!-- Checkboxes -->
+                        <!-- Checkboxes --> 
                         <!-- Rating -->
-                        <div v-else-if="question.type === 'rating'" class="d-flex align-items-center">
+                        <div v-else-if="question.type === 'Rating'" class="d-flex align-items-center">
                             <CDropdown class="mr-3" color="secondary" variant="outline">
                                 <template #toggler>
                                     <button class="btn d-flex align-items-center text-muted border bg-white"
@@ -150,7 +153,7 @@
                                 <CDropdown color="secondary" variant="outline">
                                     <template #toggler>
                                         <button class="btn btn-sm btn-light border">{{ question.maxFiles || 1
-                                        }}</button>
+                                            }}</button>
                                     </template>
                                     <CDropdownItem v-for="number in [1, 5, 10]" :key="number"
                                         @click="setMaxFiles(index, number)">
@@ -190,9 +193,11 @@
                                         <span class="text-capitalize">{{ question.type.split('_').join(' ') }}</span>
                                     </button>
                                 </template>
-                                <CDropdownItem v-for="type in typesAll" :key="type.key"
-                                    @click="setQuestionType(index, type.key)">
-                                    <CIcon :name="type.icon" class="mr-2" /> {{ type.label }}
+                                <CDropdownItem v-for="type in typesAll" :key="type._id || type.key"
+                                    @click="setQuestionType(index, type.type || type.key)">
+                                    <CIcon :name="getIconForType(type.type || type.key)" class="mr-2" />
+                                    <span class="text-capitalize">{{ (type.type || type.label || '').split('_').join('')
+                                    }}</span>
                                 </CDropdownItem>
                             </CDropdown>
                         </div>
@@ -208,7 +213,7 @@
                     </CCardBody>
                 </CCard>
 
-                <div v-if="questions.length === 0" class="text-center py-5 text-muted bg-white border rounded">
+                <div v-if="form.questions.length === 0" class="text-center py-5 text-muted bg-white border rounded">
                     <p>No questions yet. Add one from the sidebar!</p>
                 </div>
 
@@ -220,9 +225,10 @@
                     <CCardBody class="p-3">
                         <h5 class="font-weight-bold pb-3">Question Types</h5>
                         <div class="d-flex flex-column">
-                            <CButton v-for="type in questionTypes" :key="type.key" variant="ghost" color="dark"
-                                class="text-left mb-2 d-flex align-items-center" @click="addQuestion(type.key)">
-                                <CIcon :name="type.icon" class="mr-2" /> {{ type.label }}
+                            <CButton v-for="type in questionTypes" :key="type._id" variant="ghost" color="dark"
+                                class="text-left mb-2 d-flex align-items-center" @click="addQuestion(type.type)">
+                                <CIcon :name="getIconForType(type.type)" class="mr-2" />
+                                <span class="text-capitalize">{{ (type.type || '').split('_').join(' ') }}</span>
                             </CButton>
                         </div>
 
@@ -245,6 +251,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import NestedQuestion from './NestedQuestion.vue'
 
 export default {
@@ -253,32 +260,16 @@ export default {
         NestedQuestion
     },
     props: {
-        title: {
-            type: String,
-            default: ''
-        },
-        description: {
-            type: String,
-            default: ''
-        },
-        questions: {
-            type: Array,
-            default: () => []
+        form: {
+            type: Object,
+            default: () => ({})
         }
     },
     data() {
         return {
-            questionTypes: [
-                { key: 'short_answer', label: 'Short Answer', icon: 'cil-minus' },
-                { key: 'paragraph', label: 'Paragraph', icon: 'cil-align-left' },
-                { key: 'multiple_choice', label: 'Multiple Choice', icon: 'cil-circle' },
-                { key: 'checkboxes', label: 'Checkboxes', icon: 'cil-square' },
-                { key: 'rating', label: 'Rating', icon: 'cil-star' },
-                { key: 'file_upload', label: 'File Upload', icon: 'cil-cloud-upload' }
-            ],
             contentElements: [
                 { key: 'title_description', label: 'Title & Description', icon: 'cil-text' },
-                { key: 'image', label:  'Image', icon: 'cil-image-1' }
+                { key: 'image', label: 'Image', icon: 'cil-image-1' }
             ],
             fileTypeOptions: [
                 { key: 'img', label: 'Image' },
@@ -293,9 +284,36 @@ export default {
             ]
         };
     },
+    created() {
+        this.$store.dispatch('Setting/question_type/get');
+    },
     computed: {
+        ...mapGetters('Setting/question_type', { question_type: 'item' }),
+        questionTypes() {
+            if (!this.question_type || !Array.isArray(this.question_type)) return [];
+            return this.question_type.map(t => ({
+                _id: t._id,
+                type: t.type || '',
+            }));
+        },
         typesAll() {
             return [...this.questionTypes, ...this.contentElements];
+        }
+    },
+    watch: {
+        question_type: {
+            handler(newVal) {
+                console.log('Fetched question_type data:', newVal);
+            },
+            deep: true,
+            immediate: true
+        },
+        questionTypes: {
+            handler(newVal) {
+                console.log('Computed questionTypes data:', newVal);
+            },
+            deep: true,
+            immediate: true
         }
     },
     methods: {
@@ -325,31 +343,31 @@ export default {
                 isRequired: false,
                 config: config
             };
-            this.questions.push(newQuestion);
+            this.form.questions.push(newQuestion);
             this.triggerAutoSave();
         },
         removeQuestion(index) {
-            this.questions.splice(index, 1);
+            this.form.questions.splice(index, 1);
             this.triggerAutoSave();
         },
         setQuestionType(index, type) {
             // Guard: ensure index exists
-            if (typeof this.questions[index] === 'undefined') return;
-            this.questions[index].type = type;
+            if (typeof this.form.questions[index] === 'undefined') return;
+            this.form.questions[index].type = type;
             // ensure options array exists for multiple choice-like types
-            if (type === 'multiple_choice' && (!Array.isArray(this.questions[index].options) || this.questions[index].options.length === 0)) {
-                this.questions[index].options = ['Option 1'];
+            if (type === 'multiple_choice' && (!Array.isArray(this.form.questions[index].options) || this.form.questions[index].options.length === 0)) {
+                this.form.questions[index].options = ['Option 1'];
             }
             // initialize rating default when switching to rating
             if (type === 'rating') {
-                const q = this.questions[index];
+                const q = this.form.questions[index];
                 if (typeof q.rating !== 'number' || isNaN(q.rating)) {
                     this.$set(q, 'rating', 5);
                 }
             }
             // initialize file upload defaults when switching to file_upload
             if (type === 'file_upload') {
-                const q = this.questions[index];
+                const q = this.form.questions[index];
                 if (!Array.isArray(q.fileTypes)) this.$set(q, 'fileTypes', []);
                 if (typeof q.maxFiles !== 'number') this.$set(q, 'maxFiles', 1);
                 if (typeof q.maxFileSize !== 'number') this.$set(q, 'maxFileSize', 1);
@@ -373,7 +391,7 @@ export default {
         updateQuestionLang(index, val) {
             // normalize to uppercase string
             const v = val ? String(val).toUpperCase() : '';
-            const q = this.questions[index];
+            const q = this.form.questions[index];
             if (!q) return;
             if (!Array.isArray(q.title) || q.title.length === 0) {
                 this.$set(q, 'title', [{ lang: v || 'EN', text: q.text || 'Untitled Question' }]);
@@ -389,7 +407,7 @@ export default {
         ,
         updateTitleLang(qIndex, tIndex, val) {
             const v = val ? String(val).toUpperCase() : '';
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q) return;
             if (!Array.isArray(q.title)) {
                 this.$set(q, 'title', [{ lang: v || 'EN', text: q.text || '' }]);
@@ -402,7 +420,7 @@ export default {
         },
         updateTitleText(qIndex, tIndex, val) {
             const v = val ? String(val) : '';
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q) return;
             if (!Array.isArray(q.title)) {
                 this.$set(q, 'title', [{ lang: 'EN', text: v }]);
@@ -415,31 +433,46 @@ export default {
         },
         updateOption(qIndex, oIndex, val) {
             const v = val ? String(val) : '';
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q) return;
             if (!Array.isArray(q.options)) {
-                this.$set(q, 'options', [v]);
+                this.$set(q, 'options', [{
+                    lang: [{ key: 'EN', choice: [{ key: 'A', value: v }] }]
+                }]);
             } else {
-                this.$set(q.options, oIndex, v);
+                const opt = q.options[oIndex];
+                if (opt && opt.lang && opt.lang[0] && opt.lang[0].choice && opt.lang[0].choice[0]) {
+                    this.$set(opt.lang[0].choice[0], 'value', v);
+                } else {
+                    this.$set(q.options, oIndex, v);
+                }
             }
             this.triggerAutoSave();
         },
         addOption(qIndex) {
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q) return;
-            if (!Array.isArray(q.options)) this.$set(q, 'options', ['Option 1']);
-            else q.options.push(`Option ${q.options.length + 1}`);
+
+            const createChoice = (val) => ({
+                lang: [{ key: 'EN', choice: [{ key: 'A', value: val }] }]
+            });
+
+            if (!Array.isArray(q.options)) {
+                this.$set(q, 'options', [createChoice('Option 1')]);
+            } else {
+                q.options.push(createChoice(`Option ${q.options.length + 1}`));
+            }
             this.triggerAutoSave();
         },
         removeOption(qIndex, oIndex) {
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q || !Array.isArray(q.options)) return;
             if (q.options.length <= 1) return; // keep at least one option
             q.options.splice(oIndex, 1);
             this.triggerAutoSave();
         },
         toggleFileType(qIndex, typeKey) {
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q) return;
             if (!Array.isArray(q.fileTypes)) this.$set(q, 'fileTypes', []);
             const idx = q.fileTypes.indexOf(typeKey);
@@ -448,19 +481,19 @@ export default {
             this.triggerAutoSave();
         },
         setMaxFiles(qIndex, n) {
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q) return;
             this.$set(q, 'maxFiles', Number(n) || 1);
             this.triggerAutoSave();
         },
         setMaxFileSize(qIndex, n) {
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q) return;
             this.$set(q, 'maxFileSize', Number(n) || 1);
             this.triggerAutoSave();
         },
         addTitle(qIndex) {
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q) return;
             if (!Array.isArray(q.title)) {
                 this.$set(q, 'title', [{ lang: 'EN', text: '' }]);
@@ -470,7 +503,7 @@ export default {
             this.triggerAutoSave();
         },
         removeTitle(qIndex, tIndex) {
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q || !Array.isArray(q.title)) return;
             if (q.title.length <= 1) return; // keep at least one
             q.title.splice(tIndex, 1);
@@ -478,11 +511,20 @@ export default {
         }
         ,
         setRating(qIndex, number) {
-            const q = this.questions[qIndex];
+            const q = this.form.questions[qIndex];
             if (!q) return;
             const n = Number(number) || 0;
             this.$set(q, 'rating', n);
             this.triggerAutoSave();
+        },
+        clearField(question, field) {
+            if (question) {
+                this.$set(question, field, '');
+                this.triggerAutoSave();
+            }
+        },
+        getPlaceholder(type, lang) {
+            return 'Untitled Question';
         }
     }
 }

@@ -3,12 +3,12 @@ import store from '@/store/store'
 
 const instance = axios.create();
 
-instance.defaults.baseURL =  'http://localhost:8081/api/v1';
+instance.defaults.baseURL = 'http://localhost:8081/api/v1';
 
 instance.defaults.headers = {
-    "Content-Type": "application/json",
-    // "Api-version": "1.0",
-    // "X-Access-Token": "1a661eec9bf358b8567c3dc022146d19c69d2ceafe92f503e89391e5d9f9f739",
+  "Content-Type": "application/json",
+  // "Api-version": "1.0",
+  // "X-Access-Token": "1a661eec9bf358b8567c3dc022146d19c69d2ceafe92f503e89391e5d9f9f739",
 }
 
 //
@@ -45,7 +45,7 @@ instance.defaults.headers = {
 // );
 
 export default {
-  
+
   form(method, data, configs) {
     switch (method) {
       case 'exp':
@@ -120,7 +120,7 @@ export default {
         return instance.put('/setting/message', data)
       case 'message-delete':
         return instance.delete('/setting/message', { data })
-      
+
       // Status settings
       case 'status-get':
         return instance.get('/setting/status')
@@ -130,7 +130,7 @@ export default {
         return instance.put('/setting/status', data)
       case 'status-delete':
         return instance.delete('/setting/status', { data })
-      
+
       // Verification settings
       case 'verification-get':
         return instance.get('/setting/verification')
@@ -142,7 +142,17 @@ export default {
         return instance.put('/setting/verification', data)
       case 'verification-delete':
         return instance.delete('/setting/verification', { data })
-      
+
+      // Question Type settings
+      case 'get':
+        return instance.get('/settings/question_type')
+      case 'create':
+        return instance.post('/settings/question_type', data)
+      case 'update':
+        return instance.put('/settings/question_type', data)
+      case 'delete':
+        return instance.delete('/settings/question_type', { data })
+
       default:
         break
     }
