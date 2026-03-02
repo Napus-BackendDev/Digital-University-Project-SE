@@ -4,7 +4,6 @@
             <CCol col="12" class="d-flex justify-content-between align-items-center">
                 <ButtonBack path="/editor/dashboard" />
                 <div class="d-flex align-items-center">
-                    <!-- <AutoSave :saveStatus="saveStatus" /> -->
                     <ButtonPreview />
                 </div>
             </CCol>
@@ -21,7 +20,6 @@
 <script>
 import ButtonBack from '../../components/Button/ButtonBack.vue'
 import ButtonPreview from '../../components/Button/ButtonPreview.vue'
-import AutoSave from '../../components/Util/AutoSave.vue';
 import Tab from '../../components/Tabs/Tab.vue';
 
 export default {
@@ -29,7 +27,6 @@ export default {
     components: {
         ButtonBack,
         ButtonPreview,
-        AutoSave,
         Tab
     },
     data() {

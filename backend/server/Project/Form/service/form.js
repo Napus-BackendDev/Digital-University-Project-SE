@@ -4,34 +4,13 @@ const ResMessage = require("../../Settings/service/message");
 
 exports.onQuery = async function (request, response) {
   try {
-    let query = {};
-    query._id = new mongo.ObjectId(request.body._id);
-
-    const doc = await Form.onAggregate([
-      { $match: query },
-      {
-        $graphLookup: {
-          from: "Forms",
-          startWith: "$_id",
-          connectFromField: "_id",
-          connectToField: "originalFormId",
-          as: "childrenForms",
-          depthField: "depth",
-        },
-      },
-      {
-        $addFields: {
-          childrenForms: {
-            $sortArray: {
-              input: "$childrenForms",
-              sortBy: { depth: 1, createdAt: -1 },
-            },
-          },
-        },
-      },
-    ]);
-
-    return ResMessage.sendResponse(response, 0, 20000, doc[0]);
+    const query = { _id: new mongo.ObjectId(request.body._id) };
+    // Use onQuery so that defaultPopulate runs:
+    //   questions → { path: 'questions', populate: { path: 'type' } }
+    //   responses, status
+    const doc = await Form.onQuery(query);
+    if (!doc) return ResMessage.sendResponse(response, 0, 40400, "Form not found");
+    return ResMessage.sendResponse(response, 0, 20000, doc);
   } catch (err) {
     return ResMessage.sendResponse(response, 0, 40400, err.message);
   }

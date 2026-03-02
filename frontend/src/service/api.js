@@ -74,9 +74,9 @@ export default {
       case 'update':
         return instance.put('/question', data)
       case 'delete':
-        return instance.delete('/question', data)
+        return instance.delete('/question', { data })
       case 'delete-by-form-id':
-        return instance.delete('/question/byForm', data)
+        return instance.delete('/question/byForm', { data })
       default:
         break
     }

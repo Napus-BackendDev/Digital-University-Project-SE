@@ -58,23 +58,17 @@ export default {
                 this.$set(this.settings, 'schedule', {});
             }
             this.$set(this.settings.schedule, 'startAt', val);
-            this.triggerAutoSave();
         },
         updateEnd(val) {
             if (!this.settings.schedule) {
                 this.$set(this.settings, 'schedule', {});
             }
             this.$set(this.settings.schedule, 'endAt', val);
-            this.triggerAutoSave();
         },
         async triggerAutoSave() {
             try {
-                // Now that properties are correctly mapped in settings.schedule, just dispatch it directly
                 await this.$store.dispatch('Forms/updateForm', this.settings);
                 console.log('Form status updated successfully', this.settings.schedule);
-
-                // Keep emitting in case parent wants to trigger an overall UI feedback event
-                this.$emit('auto-save');
             } catch (error) {
                 console.error('Error updating form status:', error);
             }
