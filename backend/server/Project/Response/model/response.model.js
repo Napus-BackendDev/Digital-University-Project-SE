@@ -10,7 +10,7 @@ var objSchema = new Schema(
     answers: [
       {
         question: { type: Schema.Types.ObjectId, ref: "Questions" },
-        response: { type: Schema.Types.Mixed },
+        response: { type: Schema.Types.String, required: true },
       },
     ]
   },

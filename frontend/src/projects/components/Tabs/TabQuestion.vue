@@ -14,159 +14,228 @@
         <CRow>
             <!-- Left Column: Form Content -->
             <CCol md="9">
-                <CCard v-for="(question, index) in questions" :key="index" class="mb-3 position-relative">
-                    <CCardBody class="p-4">
-                        <!-- Question Titles -->
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="flex-grow-1">
-                                <div v-for="(type, typeIndex) in question.title" :key="typeIndex"
-                                    class="d-flex align-items-start">
-                                    <CInput style="width: 3rem;" :value="type.lang"
-                                        @input="updateTitleLang(index, typeIndex, $event)" maxlength="2" />
-                                    <CInput class="font-weight-bold flex-grow-1 px-2" :value="type.text"
-                                        @input="updateTitleText(index, typeIndex, $event)"
-                                        style="background-color: #f8fafc;" />
-                                    <CButton color="danger" variant="ghost" v-if="question.title.length > 1"
-                                        @click="removeTitle(index, typeIndex)">
-                                        <CIcon name="cil-minus" />
-                                    </CButton>
-                                </div>
-                                <CButton variant="ghost" color="dark" class="d-flex align-items-center p-1"
-                                    @click="addTitle(index)">
-                                    <CIcon name="cil-plus" class="mr-1" />
-                                    <small>Add language</small>
-                                </CButton>
-                            </div>
+                <!-- <GridLayout :layout="layout" :col-num="12" :row-height="30" :is-draggable="true" :is-resizable="true"
+                    :vertical-compact="true" @layout-updated="onLayoutUpdated">
+                    <GridItem v-for="(question, index) in questions" :key="index" :i="String(index)" :x="0"
+                        :y="index * 8" :w="12" :h="8"> -->
+                        <CCard v-for="(question, index) in questions" :key="index" class="mb-3 position-relative">
+                            <CCardBody class="p-4">
+                                <!-- Question Titles -->
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="flex-grow-1">
+                                        <div v-for="(type, typeIndex) in question.title" :key="typeIndex"
+                                            class="d-flex align-items-start">
+                                            <CInput style="width: 3rem;" :value="type.lang"
+                                                @input="updateLang(index, typeIndex, $event)" maxlength="2" />
+                                            <CInput class="font-weight-bold flex-grow-1 px-2" :value="type.text"
+                                                @input="updateTitleLang(index, typeIndex, $event)"
+                                                style="background-color: #f8fafc;" />
+                                            <CButton color="danger" variant="ghost" v-if="question.title.length > 1"
+                                                @click="removeLang(index, typeIndex)">
+                                                <CIcon name="cil-minus" />
+                                            </CButton>
+                                        </div>
+                                        <CButton variant="ghost" color="dark" class="d-flex align-items-center p-1"
+                                            @click="addLang(index)">
+                                            <CIcon name="cil-plus" class="mr-1" />
+                                            <small>Add language</small>
+                                        </CButton>
+                                    </div>
 
-                            <div class="text-right ml-3">
-                                <CButton color="danger" variant="ghost" @click="removeQuestion(index)">
-                                    <CIcon name="cil-trash" />
-                                </CButton>
-                            </div>
-                        </div>
-
-                        <!-- Short Answer -->
-                        <div v-if="question.type === 'short_answer'">
-                            <CInput disabled style="opacity: 0.55;" placeholder="Short answer text" />
-                        </div>
-                        <!-- Paragraph -->
-                        <div v-else-if="question.type === 'paragraph'">
-                            <CTextarea disabled style="opacity: 0.55;" placeholder="Long answer text" rows="3" />
-                        </div>
-                        <!-- Multiple Choice -->
-                        <div v-else-if="question.type === 'multiple_choice'">
-                            <div v-for="(opt, oIndex) in question.options" :key="oIndex"
-                                class="d-flex align-items-start">
-                                <div class="border rounded-circle mr-2" style="width: 40px; height: 40px;" />
-                                <CInput class="flex-grow-1" :value="opt" :placeholder="`Option ${oIndex + 1}`"
-                                    @input="updateOption(index, oIndex, $event)" />
-                                <CButton color="danger" variant="ghost" class="ml-2" v-if="question.options.length > 1"
-                                    @click="removeOption(index, oIndex)">
-                                    <CIcon name="cil-minus" />
-                                </CButton>
-                            </div>
-                            <CButton color="info" variant="ghost" class="d-flex align-items-center p-1"
-                                @click="addOption(index)">
-                                <CIcon name="cil-plus" class="mr-1" />
-                                <small>Add option</small>
-                            </CButton>
-                        </div>
-                        <!-- Checkboxes -->
-                        <!-- Rating -->
-                        <div v-else-if="question.type === 'rating'" class="d-flex align-items-center">
-                            <CDropdown class="mr-3" color="secondary" variant="outline">
-                                <template #toggler>
-                                    <button class="btn d-flex align-items-center text-muted border bg-white"
-                                        style="border-radius: 6px;">
-                                        <span class="mr-2">{{ question.rating || 5 }}</span>
-                                    </button>
-                                </template>
-                                <CDropdownItem v-for="number in 10" :key="number" @click="setRating(index, number)">{{
-                                    number }}</CDropdownItem>
-                            </CDropdown>
-                            <div v-for="number in (question.rating || 5)"
-                                class="d-flex flex-grow-1 flex-column align-items-center">
-                                <span :key="number">{{ number }}</span>
-                                <CIcon :key="number" name="cil-star" :height="25" />
-                            </div>
-                        </div>
-                        <!-- File Upload -->
-                        <div v-else-if="question.type === 'file_upload'">
-                            <div class="mb-3">
-                                <span class="d-block mb-2">File Type</span>
-                                <div class="d-flex">
-                                    <div v-for="type in fileTypeOptions" :key="type.key"
-                                        class="d-flex flex-column flex-grow-1 mb-2">
-                                        <CInputCheckbox :id="`filetype-${index}-${type.key}`"
-                                            :name="`filetype-${index}-${type.key}`" :label="`${type.label}`"
-                                            :value="type.key" :custom="true"
-                                            :checked="question.fileTypes && question.fileTypes.includes(type.key)"
-                                            @change="toggleFileType(index, type.key)" />
+                                    <div class="text-right ml-3">
+                                        <CButton color="danger" variant="ghost" @click="removeQuestion(index)">
+                                            <CIcon name="cil-trash" />
+                                        </CButton>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="d-flex align-items-center mb-3">
-                                <span class="mr-3">Number of max file</span>
-                                <CDropdown color="secondary" variant="outline">
-                                    <template #toggler>
-                                        <button class="btn btn-sm btn-light border">{{ question.maxFiles || 1
-                                        }}</button>
-                                    </template>
-                                    <CDropdownItem v-for="number in [1, 5, 10]" :key="number"
-                                        @click="setMaxFiles(index, number)">
-                                        {{ number }}
-                                    </CDropdownItem>
-                                </CDropdown>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <span class="mr-3">File size</span>
-                                <CDropdown color="secondary" variant="outline">
-                                    <template #toggler>
-                                        <button class="btn btn-sm btn-light border">{{ question.maxFileSize ?
-                                            question.maxFileSize + 'MB' : '1MB' }}</button>
-                                    </template>
-                                    <CDropdownItem v-for="size in fileSizeOptions" :key="size.value"
-                                        @click="setMaxFileSize(index, size.value)">
-                                        {{ size.label }}
-                                    </CDropdownItem>
-                                </CDropdown>
-                            </div>
-                        </div>
-                        <!-- Nothing -->
-                        <div v-else>
-                            <span class="text-muted font-italic">Preview not available for this type</span>
-                        </div>
 
-                        <!-- Question Type Dropdown -->
-                        <div class="text-right mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
-                            <small class="text-muted font-weight-bold text-uppercase">
-                                Question Type
-                            </small>
-                            <CDropdown class="m-2" color="light" variant="outline">
-                                <template #toggler>
-                                    <button class="btn d-flex align-items-center text-muted border bg-white"
-                                        style="border-radius: 6px;">
-                                        <CIcon :name="getIconForType(question.type)" class="mr-2" />
-                                        <span class="text-capitalize">{{ question.type.split('_').join(' ') }}</span>
-                                    </button>
-                                </template>
-                                <CDropdownItem v-for="type in typesAll" :key="type.key"
-                                    @click="setQuestionType(index, type.key)">
-                                    <CIcon :name="type.icon" class="mr-2" /> {{ type.label }}
-                                </CDropdownItem>
-                            </CDropdown>
-                        </div>
+                                <!-- Short Answer -->
+                                <div v-if="question.type === 'short_answer'">
+                                    <CInput disabled style="opacity: 0.55;" placeholder="Short answer text" />
+                                </div>
+                                <!-- Paragraph -->
+                                <div v-else-if="question.type === 'paragraph'">
+                                    <CTextarea disabled style="opacity: 0.55;" placeholder="Long answer text"
+                                        rows="3" />
+                                </div>
+                                <!-- Multiple Choice -->
+                                <div v-else-if="question.type === 'multiple_choice'">
+                                    <div v-for="(opt, oIndex) in question.options" :key="oIndex"
+                                        class="d-flex align-items-start">
+                                        <div class="border rounded-circle mr-2" style="width: 40px; height: 40px;" />
+                                        <CInput class="flex-grow-1" :value="opt" :placeholder="`Option ${oIndex + 1}`"
+                                            @input="updateOption(index, oIndex, $event)" />
+                                        <CButton color="danger" variant="ghost" class="ml-2"
+                                            v-if="question.options.length > 1" @click="removeOption(index, oIndex)">
+                                            <CIcon name="cil-minus" />
+                                        </CButton>
+                                    </div>
+                                    <CButton color="info" variant="ghost" class="d-flex align-items-center p-1"
+                                        @click="addOption(index)">
+                                        <CIcon name="cil-plus" class="mr-1" />
+                                        <small>Add option</small>
+                                    </CButton>
+                                </div>
+                                <!-- Checkboxes -->
+                                <div v-else-if="question.type === 'checkboxes'">
+                                    <div v-for="(opt, oIndex) in question.options" :key="oIndex"
+                                        class="d-flex align-items-start">
+                                        <div class="border rounded mr-2" style="width: 40px; height: 40px;" />
+                                        <CInput class="flex-grow-1" :value="opt" :placeholder="`Option ${oIndex + 1}`"
+                                            @input="updateOption(index, oIndex, $event)" />
+                                        <CButton color="danger" variant="ghost" class="ml-2"
+                                            v-if="question.options.length > 1" @click="removeOption(index, oIndex)">
+                                            <CIcon name="cil-minus" />
+                                        </CButton>
+                                    </div>
+                                    <CButton color="info" variant="ghost" class="d-flex align-items-center p-1"
+                                        @click="addOption(index)">
+                                        <CIcon name="cil-plus" class="mr-1" />
+                                        <small>Add option</small>
+                                    </CButton>
+                                </div>
+                                <!-- Rating -->
+                                <div v-else-if="question.type === 'rating'" class="d-flex align-items-center">
+                                    <CDropdown class="mr-3" color="secondary" variant="outline">
+                                        <template #toggler>
+                                            <button class="btn d-flex align-items-center text-muted border bg-white"
+                                                style="border-radius: 6px;">
+                                                <span class="mr-2">{{ question.rating || 5 }}</span>
+                                            </button>
+                                        </template>
+                                        <CDropdownItem v-for="number in 10" :key="number"
+                                            @click="setRating(index, number)">{{
+                                            number }}</CDropdownItem>
+                                    </CDropdown>
+                                    <div v-for="number in (question.rating || 5)"
+                                        class="d-flex flex-grow-1 flex-column align-items-center">
+                                        <span :key="number">{{ number }}</span>
+                                        <CIcon :key="number" name="cil-star" :height="25" />
+                                    </div>
+                                </div>
+                                <!-- File Upload -->
+                                <div v-else-if="question.type === 'file_upload'">
+                                    <div class="mb-3">
+                                        <span class="d-block mb-2">File Type</span>
+                                        <div class="d-flex">
+                                            <div v-for="type in fileTypeOptions" :key="type.key"
+                                                class="d-flex flex-column flex-grow-1 mb-2">
+                                                <CInputCheckbox :id="`filetype-${index}-${type.key}`"
+                                                    :name="`filetype-${index}-${type.key}`" :label="`${type.label}`"
+                                                    :value="type.key" :custom="true"
+                                                    :checked="question.fileTypes && question.fileTypes.includes(type.key)"
+                                                    @change="toggleFileType(index, type.key)" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <span class="mr-3">Number of max file</span>
+                                        <CDropdown color="secondary" variant="outline">
+                                            <template #toggler>
+                                                <button class="btn btn-sm btn-light border">{{ question.maxFiles || 1
+                                                    }}</button>
+                                            </template>
+                                            <CDropdownItem v-for="number in [1, 5, 10]" :key="number"
+                                                @click="setMaxFiles(index, number)">
+                                                {{ number }}
+                                            </CDropdownItem>
+                                        </CDropdown>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="mr-3">File size</span>
+                                        <CDropdown color="secondary" variant="outline">
+                                            <template #toggler>
+                                                <button class="btn btn-sm btn-light border">{{ question.maxFileSize ?
+                                                    question.maxFileSize + 'MB' : '1MB' }}</button>
+                                            </template>
+                                            <CDropdownItem v-for="size in fileSizeOptions" :key="size.value"
+                                                @click="setMaxFileSize(index, size.value)">
+                                                {{ size.label }}
+                                            </CDropdownItem>
+                                        </CDropdown>
+                                    </div>
+                                </div>
+                                <!-- Title & Description -->
+                                <div v-else-if="question.type === 'title_description'" class="d-flex flex-column">
+                                    <div v-for="(type, typeIndex) in question.title" :key="typeIndex"
+                                        class="d-flex align-items-start">
+                                        <CInput style="width: 3rem;" :value="type.lang"
+                                            @input="updateLang(index, typeIndex, $event)" maxlength="2" />
+                                        <CTextarea class="font-weight-bold flex-grow-1 px-2"
+                                            placeholder="Description text" :value="question.description || ''"
+                                            @input="updateDescriptionLang(index, $event)" rows="3" />
+                                        <CButton color="danger" variant="ghost" v-if="question.title.length > 1"
+                                            @click="removeTitle(index, typeIndex)">
+                                            <CIcon name="cil-minus" />
+                                        </CButton>
+                                    </div>
+                                    <CButton variant="ghost" color="dark" class="d-flex align-items-center p-1"
+                                        @click="addTitle(index)">
+                                        <CIcon name="cil-plus" class="mr-1" />
+                                        <small>Add language</small>
+                                    </CButton>
+                                </div>
+                                <!-- Image -->
+                                <div v-else-if="question.type === 'image'" class="d-flex flex-column">
+                                    <div class="image-placeholder mb-2"
+                                        style="min-height:120px; border:1px dashed #e6e6e6; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+                                        <div v-if="question.image"
+                                            class="w-100 h-100 d-flex align-items-center justify-content-center">
+                                            <img :src="question.image" alt="preview"
+                                                style="max-width:100%; max-height:100%; object-fit:contain;" />
+                                            <CButton color="dark" variant="ghost" class="position-absolute"
+                                                style="right:8px; top:8px;" @click="openImageModal(index)">
+                                                <CIcon name="cil-pencil" />
+                                            </CButton>
+                                        </div>
+                                        <div v-else class="text-center class">
+                                            <CButton color="info" variant="ghost" @click="openImageModal(index)">
+                                                <CIcon name="cil-image-1" class="mr-2" /> Add image
+                                            </CButton>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Nothing -->
+                                <div v-else>
+                                    <span class="text-muted font-italic">Preview not available for this type</span>
+                                </div>
 
-                        <!-- Required -->
-                        <div class="text-right pt-3 d-flex justify-content-between align-items-center">
-                            <small class="text-muted font-weight-bold text-uppercase">
-                                Required
-                            </small>
-                            <CSwitch class="mx-1" color="dark" shape="pill" :checked.sync="question.required"
-                                @update:checked="triggerAutoSave" />
-                        </div>
-                    </CCardBody>
-                </CCard>
+                                <!-- Question Type Dropdown -->
+                                <div v-if="!['title_description', 'image'].includes(question.type)">
+                                    <div
+                                        class="text-right mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+                                        <small class="text-muted font-weight-bold text-uppercase">
+                                            Question Type
+                                        </small>
+                                        <CDropdown class="m-2" color="light" variant="outline">
+                                            <template #toggler>
+                                                <button class="btn d-flex align-items-center text-muted border bg-white"
+                                                    style="border-radius: 6px;">
+                                                    <CIcon :name="getIconForType(question.type)" class="mr-2" />
+                                                    <span class="text-capitalize">{{ question.type.split('_').join(' ')
+                                                        }}</span>
+                                                </button>
+                                            </template>
+                                            <CDropdownItem v-for="type in typesAll" :key="type.key"
+                                                @click="setQuestionType(index, type.key)">
+                                                <CIcon :name="type.icon" class="mr-2" /> {{ type.label }}
+                                            </CDropdownItem>
+                                        </CDropdown>
+                                    </div>
+
+                                    <!-- Required -->
+                                    <div class="text-right pt-3 d-flex justify-content-between align-items-center">
+                                        <small class="text-muted font-weight-bold text-uppercase">
+                                            Required
+                                        </small>
+                                        <CSwitch class="mx-1" color="dark" shape="pill"
+                                            :checked.sync="question.required" @update:checked="triggerAutoSave" />
+                                    </div>
+                                </div>
+                            </CCardBody>
+                        </CCard>
+                    <!-- </GridItem>
+                </GridLayout> -->
 
                 <div v-if="questions.length === 0" class="text-center py-5 text-muted bg-white border rounded">
                     <p>No questions yet. Add one from the sidebar!</p>
@@ -201,12 +270,49 @@
                 </CCard>
             </CCol>
         </CRow>
+
+        <!-- Image picker modal -->
+        <CModal :show.sync="showImageModal" :centered="true">
+            <template #header-wrapper>
+                <div class="d-flex justify-content-between align-items-center font-weight-bold pl-3 border-bottom">
+                    <span>Choose image</span>
+                    <CButton color="secondary" variant="ghost" @click="showImageModal = false">
+                        <CIcon name="cil-x" />
+                    </CButton>
+                </div>
+            </template>
+            <template #body-wrapper>
+                <CCardBody>
+                    <input type="file" accept="image/*" multiple @change="onImageFilesSelected($event.target.files)" />
+                    <div class="d-flex flex-wrap">
+                        <div v-for="(file, index) in modalFiles" :key="index" class="m-2"
+                            style="width:100px; cursor:pointer;">
+                            <div
+                                style="border:1px solid #eee; padding:4px; height:100px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                <img :src="file.url" :alt="file.name"
+                                    style="max-width:100%; max-height:100%; object-fit:cover;"
+                                    @click="selectModalImage(file.url)" />
+                            </div>
+                            <small class="d-block text-truncate mt-1">{{ file.name }}</small>
+                        </div>
+                    </div>
+                </CCardBody>
+            </template>
+        </CModal>
     </div>
 </template>
 
 <script>
+// import { GridLayout, GridItem } from 'vue-grid-layout'
+// const layoutKey = 'CoreUI-Vue-Draggable-Layouts'
+// const storedLayout = JSON.parse(localStorage[layoutKey] || null)
+
 export default {
     name: 'TabQuestion',
+    // components: {
+    //     GridLayout,
+    //     GridItem
+    // },
     props: {
         title: {
             type: String,
@@ -233,7 +339,7 @@ export default {
             ],
             contentElements: [
                 { key: 'title_description', label: 'Title & Description', icon: 'cil-text' },
-                { key: 'image', label:  'Image', icon: 'cil-image-1' }
+                { key: 'image', label: 'Image', icon: 'cil-image-1' }
             ],
             fileTypeOptions: [
                 { key: 'img', label: 'Image' },
@@ -245,7 +351,11 @@ export default {
                 { value: 1, label: '1MB' },
                 { value: 10, label: '10MB' },
                 { value: 100, label: '100MB' }
-            ]
+            ],
+            showImageModal: false,
+            modalImageIndex: null,
+            modalFiles: [],
+            layout: []
         };
     },
     computed: {
@@ -253,10 +363,28 @@ export default {
             return [...this.questionTypes, ...this.contentElements];
         }
     },
+    // mounted() {
+    //     this.buildLayout();
+    // },
+    // watch: {
+    //     questions: {
+    //         handler() {
+    //             this.buildLayout();
+    //         },
+    //         deep: true
+    //     }
+    // },
     methods: {
         triggerAutoSave() {
             this.$emit('auto-save');
         },
+        // buildLayout() {
+        //     this.layout = this.questions.map((q, i) => ({ i: String(i), x: 0, y: i * 8, w: 12, h: 8 }));
+        // },
+        // onLayoutUpdated(newLayout) {
+        //     // keep local layout in sync; you can extend this to reorder `questions` based on layout
+        //     this.layout = Array.isArray(newLayout) ? newLayout : [];
+        // },
         addQuestion(type) {
             const config = {
                 options: (type === 'multiple_choice') ? [{
@@ -342,7 +470,7 @@ export default {
             return (question && Array.isArray(question.title) && question.title[0] && question.title[0].lang) ? question.title[0].lang : '';
         }
         ,
-        updateTitleLang(qIndex, tIndex, val) {
+        updateLang(qIndex, tIndex, val) {
             const v = val ? String(val).toUpperCase() : '';
             const q = this.questions[qIndex];
             if (!q) return;
@@ -355,7 +483,7 @@ export default {
             }
             this.triggerAutoSave();
         },
-        updateTitleText(qIndex, tIndex, val) {
+        updateTitleLang(qIndex, tIndex, val) {
             const v = val ? String(val) : '';
             const q = this.questions[qIndex];
             if (!q) return;
@@ -367,6 +495,53 @@ export default {
                 this.$set(q.title, tIndex, updated);
             }
             this.triggerAutoSave();
+        },
+        updateDescriptionLang(qIndex, val) {
+            const v = val ? String(val) : '';
+            const q = this.questions[qIndex];
+            if (!q) return;
+            this.$set(q, 'description', v);
+            this.triggerAutoSave();
+        },
+        // Image modal handlers
+        openImageModal(qIndex) {
+            this.modalImageIndex = qIndex;
+            this.modalFiles = [];
+            this.showImageModal = true;
+        },
+        onImageFilesSelected(e) {
+            const files = e.target ? e.target.files : e;
+            if (!files || files.length === 0) return;
+            const first = files[0];
+            if (first && first.type && first.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const idx = this.modalImageIndex;
+                    if (typeof this.questions[idx] === 'undefined') return;
+                    this.$set(this.questions[idx], 'image', ev.target.result);
+                    this.triggerAutoSave();
+                    this.showImageModal = false;
+                };
+                reader.readAsDataURL(first);
+            }
+            // optionally populate modalFiles for preview if needed
+            this.modalFiles = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.startsWith('image/')) continue;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    this.modalFiles.push({ name: file.name, url: ev.target.result });
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+        selectModalImage(url) {
+            const idx = this.modalImageIndex;
+            if (typeof this.questions[idx] === 'undefined') return;
+            this.$set(this.questions[idx], 'image', url);
+            this.triggerAutoSave();
+            this.showImageModal = false;
         },
         updateOption(qIndex, oIndex, val) {
             const v = val ? String(val) : '';
@@ -414,7 +589,7 @@ export default {
             this.$set(q, 'maxFileSize', Number(n) || 1);
             this.triggerAutoSave();
         },
-        addTitle(qIndex) {
+        addLang(qIndex) {
             const q = this.questions[qIndex];
             if (!q) return;
             if (!Array.isArray(q.title)) {
@@ -424,7 +599,7 @@ export default {
             }
             this.triggerAutoSave();
         },
-        removeTitle(qIndex, tIndex) {
+        removeLang(qIndex, tIndex) {
             const q = this.questions[qIndex];
             if (!q || !Array.isArray(q.title)) return;
             if (q.title.length <= 1) return; // keep at least one

@@ -1,5 +1,5 @@
 var mongo = require('mongodb');
-var Question_Types = require('../controller/question');
+var Question_Types = require('../controller/question_type');
 const resMsg = require("./message");
 
 exports.onQuery = async function (request, response, next) {
@@ -66,7 +66,7 @@ exports.onUpdate = async function (request, response, next) {
 exports.onDelete = async function (request, response, next) {
     try {
         var query = {};
-        query._id = new mongo.ObjectId(request.body.id)
+        query._id = new mongo.ObjectId(request.body._id)
         const doc = await Question_Types.onDelete(query);
 
         var resData = await resMsg.onMessage_Response(0,20000)

@@ -251,8 +251,6 @@ export default {
     border-radius: 1rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
-    overflow: hidden;
-    /* For rounded corners on child elements */
 }
 
 /* Table Header */
