@@ -9,8 +9,7 @@
                     <small class="text-muted">Require respondents to enter their
                         email</small>
                 </div>
-                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                    :checked.sync="settings.collectEmails" @update:checked="triggerAutoSave" />
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedCollectEmail"@update:checked="triggerAutoSave"/>
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,8 +17,8 @@
                     <h6 class="mb-1 font-weight-bold">Limit to one response</h6>
                     <small class="text-muted">Only allow one response per person</small>
                 </div>
-                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                    :checked.sync="settings.limitOneResponse" @update:checked="triggerAutoSave" />
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedLimitResponse" @update:checked="triggerAutoSave"
+                    />
             </div>
 
             <div class="d-flex justify-content-between align-items-center">
@@ -28,8 +27,8 @@
                     <small class="text-muted">Display completion progress to
                         respondents</small>
                 </div>
-                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                    :checked.sync="settings.showProgressBar" @update:checked="triggerAutoSave" />
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedProgressBar" @update:checked="triggerAutoSave"
+                     />
             </div>
         </CCardBody>
     </CCard>
@@ -44,9 +43,50 @@ export default {
             required: true
         }
     },
+    computed: {
+        mappedCollectEmail: {
+            get() {
+                return !!this.settings.collectEmail;
+            },
+            set(val) {
+                this.$set(this.settings, 'collectEmail', val);
+            }
+        },
+        mappedLimitResponse: {
+            get() {
+                return !!this.settings.limitResponse;
+            },
+            set(val) {
+                this.$set(this.settings, 'limitResponse', val);
+            }
+        },
+        mappedProgressBar: {
+            get() {
+                return !!this.settings.progressBar;
+            },
+            set(val) {
+                this.$set(this.settings, 'progressBar', val);
+            }
+        }
+    },
     methods: {
-        triggerAutoSave() {
-            this.$emit('auto-save');
+        async triggerAutoSave() {
+            try {
+                // Map the frontend UI structure to the backend structure expected by updateForm
+                const formData = {
+                    _id: this.$route.params._id,
+                    settings: {
+                        collectEmail: this.mappedCollectEmail,
+                        limitResponse: this.mappedLimitResponse,
+                        progressBar: this.mappedProgressBar
+                    }
+                };
+
+                await this.$store.dispatch('Forms/updateForm', formData);
+                console.log('Form response settings updated successfully', formData.settings);
+            } catch (error) {
+                console.error('Error updating form response settings:', error);
+            }
         }
     }
 }

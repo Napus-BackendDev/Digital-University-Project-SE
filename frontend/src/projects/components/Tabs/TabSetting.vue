@@ -1,17 +1,8 @@
 <template>
     <div class="mt-3">
-        <FormStatus 
-            :settings="settings" 
-            @auto-save="triggerAutoSave" 
-        />
-        <AccessControl 
-            :settings="settings" 
-            @auto-save="triggerAutoSave" 
-        />
-        <ResponseSettings 
-            :settings="settings" 
-            @auto-save="triggerAutoSave" 
-        />
+        <FormStatus :settings="settings" @auto-save="triggerAutoSave" />
+        <AccessControl :settings="settings" @auto-save="triggerAutoSave" />
+        <ResponseSettings :settings="settings" @auto-save="triggerAutoSave" />
         <SendForm />
     </div>
 </template>
@@ -39,6 +30,15 @@ export default {
     methods: {
         triggerAutoSave() {
             this.$emit('auto-save');
+        }
+    },
+    watch: {
+        settings: {
+            handler(newVal) {
+                console.log('Settings in TabSetting:', newVal);
+            },
+            deep: true,
+            immediate: true
         }
     }
 }

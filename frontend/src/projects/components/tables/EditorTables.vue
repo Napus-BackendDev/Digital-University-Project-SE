@@ -1,6 +1,5 @@
 <template>
     <div>
-        <!-- Filter Toolbar -->
         <div class="d-flex justify-content-between align-items-center py-3 mb-3">
             <div class="flex-grow-1 mr-3">
                 <CInput v-model="searchQuery" placeholder="Search..." class="mb-0">
@@ -37,67 +36,88 @@
         </div>
 
         <div class="user-tables-container">
-            <CDataTable :items="tableData" :fields="columns" :items-per-page="6" :pagination="{ align: 'center' }"
-                :no-items-view="{ noItems: 'No forms available' }" class="mb-0 custom-datatable">
-                <!-- Form Slot -->
+            <CDataTable class="custom-table mb-0" :items="tableData" :fields="columns" :items-per-page="itemsPerPage"
+                :pagination="false" hover :activePage.sync="activePage">
+
+                <!-- Under Table Pagination & Info -->
+                <template #under-table>
+                    <!-- Empty under-table intentionally to remove built-in text -->
+                </template>
+
+                <!-- Title Combo -->
                 <template #title="{ item }">
-                    <td class="pl-4 py-3">
-                        <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
-                        <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                    <td class="align-middle">
+                        <template v-if="!item.isEmpty">
+                            <strong class="text-dark form-title">{{ item.title }}</strong>
+                            <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                        </template>
                     </td>
                 </template>
 
-                <!-- Status Slot -->
+                <!-- Status Label -->
                 <template #status="{ item }">
-                    <td class="py-3">
-                        <span class="status-badge" :class="getStatusClass(item.status)">
+                    <td class="align-middle">
+                        <span v-if="!item.isEmpty" class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
                             {{ item.status }}
                         </span>
                     </td>
                 </template>
 
-                <!-- Responses Slot -->
+                <!-- Responses Combo -->
                 <template #responses="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-wrapper mr-2 chart-color">
+                    <td class="align-middle">
+                        <div v-if="!item.isEmpty" class="d-flex align-items-center">
+                            <div class="icon-wrapper mr-3 chart-color">
                                 <CIcon name="cil-comment-bubble" size="sm" />
                             </div>
-                            <div>
-                                <div class="font-weight-bold text-dark">{{ item.responses }}</div>
+                            <div class="text-left">
+                                <div class="font-weight-bold text-dark responses-value">{{ item.responses }}</div>
                                 <div class="small text-muted">responses</div>
                             </div>
                         </div>
                     </td>
                 </template>
 
-                <!-- Created (Last Modified) Slot -->
+                <!-- Last Modified -->
                 <template #created="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center text-muted">
+                    <td class="align-middle text-muted">
+                        <template v-if="!item.isEmpty">
                             <CIcon name="cil-calendar" size="sm" class="mr-2" />
-                            <span>{{ item.created }}</span>
-                        </div>
+                            {{ item.created }}
+                        </template>
                     </td>
                 </template>
 
-                <!-- Actions Slot -->
+                <!-- Actions -->
                 <template #actions="{ item }">
-                    <td class="text-right pr-4 py-3">
-                        <CDropdown placement="bottom-end">
+                    <td class="align-middle text-right">
+                        <CDropdown v-if="!item.isEmpty" placement="bottom-end">
                             <template #toggler>
-                                <button class="btn btn-link text-muted p-0 text-decoration-none">
-                                    <CIcon name="cil-options" />
+                                <button class="btn btn-link text-muted p-0 text-decoration-none shadow-none">
+                                    <CIcon name="cil-options" size="lg" />
                                 </button>
                             </template>
-                            <CDropdownItem @click="goToEditForm(item)">Edit</CDropdownItem>
-                            <CDropdownItem>Duplicate</CDropdownItem>
-                            <CDropdownItem class="text-danger" @click="deleteForm(item)">Delete</CDropdownItem>
+                            <CDropdownItem @click="goToViewForm(item)">
+                                <CIcon name="cil-eye" class="mr-2 text-info" /> View
+                            </CDropdownItem>
+                            <CDropdownItem @click="goToEditForm(item)">
+                                <CIcon name="cil-pencil" class="mr-2 text-warning" /> Edit
+                            </CDropdownItem>
+                            <CDropdownItem @click="deleteForm(item)" class="text-danger">
+                                <CIcon name="cil-trash" class="mr-2" /> Delete
+                            </CDropdownItem>
                         </CDropdown>
                     </td>
                 </template>
+
             </CDataTable>
+        </div>
+
+        <!-- External Pagination -->
+        <div class="d-flex justify-content-center mt-4 mb-5">
+            <CPagination :activePage.sync="activePage" :pages="totalPages" :doubleArrows="false" :align="'center'"
+                class="custom-pagination border-0" />
         </div>
     </div>
 </template>
@@ -113,8 +133,10 @@ export default {
             searchQuery: '',
             selectedStatus: 'All Status',
             isCreating: false,
+            activePage: 1,
+            itemsPerPage: 5,
             columns: [
-                { key: 'title', label: 'Form', _style: 'width:40%' },
+                { key: 'title', label: 'Form Name', _style: 'width:40%' },
                 { key: 'status', label: 'Status', _style: 'width:15%' },
                 { key: 'responses', label: 'Responses', _style: 'width:15%' },
                 { key: 'created', label: 'Last Modified', _style: 'width:20%' },
@@ -126,55 +148,88 @@ export default {
         ...mapGetters('Forms', ['forms']),
         ...mapGetters('setting', ['lang']),
 
+        totalPages() {
+            return Math.ceil(this.tableData.length / this.itemsPerPage) || 1;
+        },
+        tableStartItem() {
+            if (this.tableData.length === 0) return 0;
+            return (this.activePage - 1) * this.itemsPerPage + 1;
+        },
+        tableEndItem() {
+            const validItemsCount = this.tableData.filter(item => !item.isEmpty).length;
+            return Math.min(this.activePage * this.itemsPerPage, validItemsCount);
+        },
+
         tableData() {
             // Force reactivity on locale change
             const locale = this.lang;
 
-            if (!Array.isArray(this.forms) || this.forms.length === 0) return []
+            let finalData = [];
 
-            // Sort forms by createdAt (newest first)
-            const sortedForms = [...this.forms].sort((a, b) => {
-                return new Date(b.createdAt) - new Date(a.createdAt)
-            })
+            if (Array.isArray(this.forms) && this.forms.length > 0) {
+                // Sort forms by createdAt (newest first)
+                const sortedForms = [...this.forms].sort((a, b) => {
+                    return new Date(b.createdAt) - new Date(a.createdAt)
+                })
 
-            // 2. Map to display objects
-            const mappedData = sortedForms.map(form => {
-                // Safe check for status
-                let statusTitle = 'Draft';
-                if (form.status && form.status.title) {
-                    statusTitle = this.getLang(form.status.title);
-                } else if (typeof form.status === 'string') {
-                    statusTitle = form.status;
+                // 2. Map to display objects
+                const mappedData = sortedForms.map(form => {
+                    // Safe check for status
+                    let statusTitle = 'Draft';
+                    if (form.status && form.status.title) {
+                        statusTitle = this.getLang(form.status.title);
+                    } else if (typeof form.status === 'string') {
+                        statusTitle = form.status;
+                    }
+
+                    return {
+                        _id: form._id,
+                        title: this.getLang(form.title) || 'Untitled Form',
+                        description: this.getLang(form.description) || '',
+                        status: statusTitle,
+                        access: form.isPublic ? 'Public' : 'Private',
+                        responses: form.responses ? form.responses.length : 0,
+                        created: form.createdAt ? moment(form.createdAt).format('MMM D, YYYY') : '-'
+                    }
+                });
+
+                // 3. Apply filters
+                finalData = mappedData.filter(item => {
+                    // Filter by Status
+                    if (this.selectedStatus !== 'All Status' && item.status !== this.selectedStatus) {
+                        return false;
+                    }
+
+                    // Filter by Search Query
+                    if (this.searchQuery) {
+                        const query = this.searchQuery.toLowerCase();
+                        const titleMatch = item.title.toLowerCase().includes(query);
+                        const descMatch = item.description && item.description.toLowerCase().includes(query);
+                        return titleMatch || descMatch;
+                    }
+
+                    return true;
+                });
+            }
+
+            // Fill empty rows if less than Items Per Page (5)
+            const minRows = this.itemsPerPage;
+            if (finalData.length < minRows) {
+                const emptySlotCount = minRows - finalData.length;
+                for (let i = 0; i < emptySlotCount; i++) {
+                    finalData.push({
+                        _id: `empty-${i}`,
+                        isEmpty: true,
+                        title: '',
+                        description: '',
+                        status: '',
+                        responses: '',
+                        created: ''
+                    });
                 }
+            }
 
-                return {
-                    _id: form._id,
-                    title: this.getLang(form.title) || 'Untitled Form',
-                    description: this.getLang(form.description) || '',
-                    status: statusTitle,
-                    access: form.isPublic ? 'Public' : 'Private',
-                    responses: form.responses ? form.responses.length : 0,
-                    created: form.createdAt ? moment(form.createdAt).format('MMM D, YYYY') : '-'
-                }
-            })
-
-            // 3. Apply filters
-            return mappedData.filter(item => {
-                // Filter by Status
-                if (this.selectedStatus !== 'All Status' && item.status !== this.selectedStatus) {
-                    return false;
-                }
-
-                // Filter by Search Query
-                if (this.searchQuery) {
-                    const query = this.searchQuery.toLowerCase();
-                    const titleMatch = item.title.toLowerCase().includes(query);
-                    const descMatch = item.description.toLowerCase().includes(query);
-                    return titleMatch || descMatch;
-                }
-
-                return true;
-            });
+            return finalData;
         }
     },
     methods: {
@@ -217,6 +272,25 @@ export default {
                         { key: 'en', value: 'Untitled Form' },
                         { key: 'th', value: 'แบบร่างฟอร์ม' }
                     ],
+                    description: [
+                        { key: 'en', value: '' },
+                        { key: 'th', value: '' }
+                    ],
+                    questions: [],
+                    responses: [],
+                    settings: {
+                        startDateTime: '',
+                        endDateTime: '',
+                        accessType: 'Anyone with the link',
+                        newCollaborator: {
+                            email: '',
+                            role: 'Editor'
+                        },
+                        collectEmails: false,
+                        limitOneResponse: false,
+                        allowEditing: false,
+                        showProgressBar: false
+                    }
                 };
 
                 const response = await this.$store.dispatch('Forms/createForm', newFormData);
@@ -230,6 +304,9 @@ export default {
         },
         goToEditForm(item) {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
+        },
+        goToViewForm(item) {
+            this.$router.push({ name: 'UserFormFill', params: { id: item._id } });
         },
         async deleteForm(item) {
             if (confirm("Are you sure you want to delete this form?")) {
@@ -253,33 +330,6 @@ export default {
     border: 1px solid #e2e8f0;
 }
 
-/* Table Header */
-.custom-table thead th {
-    background-color: #f8fafc;
-    border-bottom: 1px solid #edf2f7;
-    color: #64748b;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    border-top: none;
-}
-
-/* Rows */
-.custom-table tbody tr {
-    transition: background-color 0.2s ease;
-}
-
-.custom-table tbody tr:hover {
-    background-color: #f8fafc;
-}
-
-.custom-table tbody td {
-    border-top: 1px solid #edf2f7;
-    vertical-align: middle;
-}
 
 /* Typography */
 .text-lg {
@@ -388,5 +438,77 @@ export default {
 
 .search-input-group input {
     background-color: #f8fafc !important;
+}
+
+
+::v-deep .custom-table table {
+    margin-bottom: 0;
+}
+
+::v-deep .custom-table thead th {
+    background-color: #f8fafc !important;
+    /* Very subtle grey background for header */
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: capitalize !important;
+    letter-spacing: normal;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 16px 24px !important;
+    vertical-align: middle;
+}
+
+::v-deep .custom-table tbody td {
+    color: #1e293b !important;
+    font-size: 14px;
+    font-weight: 500;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 18px 24px !important;
+    vertical-align: middle;
+    height: 76px;
+    /* Set a default height to prevent empty rows from shrinking */
+}
+
+::v-deep .custom-table tbody tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+::v-deep .custom-table tbody tr:last-child td {
+    border-bottom: none !important;
+    /* Remove bottom border from the last row */
+}
+
+/* Custom Pagination to match the image */
+::v-deep .custom-pagination .page-item .page-link {
+    border: none !important;
+    background-color: transparent !important;
+    color: #475569 !important;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 50%;
+    margin: 0 4px;
+}
+
+::v-deep .custom-pagination .page-item.active .page-link {
+    background-color: #f1f5f9 !important;
+    /* Extremely light grey circle */
+    color: #0f172a !important;
+    /* Darker text */
+    font-weight: 600;
+}
+
+::v-deep .custom-pagination .page-item:not(.active) .page-link:hover {
+    background-color: #f8fafc !important;
+    color: #1e293b !important;
+}
+
+::v-deep .custom-pagination .page-item.disabled .page-link {
+    color: #94a3b8 !important;
 }
 </style>

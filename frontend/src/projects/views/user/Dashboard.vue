@@ -1,11 +1,7 @@
 <template>
-    <div>
+    <div class="flex-grow-1">
         <Header title="My Forms" description="Fill and submit your forms" />
-        <CRow>
-            <CCol col="12">
-                <UserTables />
-            </CCol>
-        </CRow>
+        <UserTables />
     </div>
 </template>
 

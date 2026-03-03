@@ -7,9 +7,7 @@
                     Questions
                 </span>
             </template>
-            <TabQuestion :title="title" :description="description" :questions="questions"
-                @update:title="$emit('update:title', $event)" @update:description="$emit('update:description', $event)"
-                @auto-save="triggerAutoSave" />
+            <TabQuestion :form="form" @auto-save="triggerAutoSave" />
         </CTab>
         <CTab>
             <template slot="title">
@@ -19,7 +17,7 @@
                     <CBadge color="secondary" shape="pill" class="ml-2">6</CBadge>
                 </span>
             </template>
-            <TabResponses :settings="settings" @auto-save="triggerAutoSave" />
+            <TabResponses :responses="form" @auto-save="triggerAutoSave" />
         </CTab>
         <CTab>
             <template slot="title">
@@ -28,7 +26,7 @@
                     Settings
                 </span>
             </template>
-            <TabSetting :settings="settings" @auto-save="triggerAutoSave" />
+            <TabSetting :settings="form" @auto-save="triggerAutoSave" />
         </CTab>
     </CTabs>
 </template>
@@ -46,21 +44,9 @@ export default {
         TabSetting
     },
     props: {
-        title: {
-            type: String,
-            default: ''
-        },
-        description: {
-            type: String,
-            default: ''
-        },
-        questions: {
-            type: Array,
-            default: () => []
-        },
-        settings: {
+        form: {
             type: Object,
-            required: true
+            default: () => ({})
         }
     },
     methods: {

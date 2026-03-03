@@ -11,6 +11,11 @@ var objSchema = new Schema({
         key: { type: String, required: true },
         value: { type: String, required: true }
     }],
+    description: [{
+        _id: false,
+        key: { type: String, default: '' },
+        value: { type: String, default: '' }
+    }],
     type: { type: mongoose.Schema.Types.ObjectId, ref: 'Question_Types', required: true },
     config: {
         choices: [{
@@ -40,6 +45,24 @@ objSchema.post('save', async function (doc, next) {
     } catch (err) {
         next(err);
     }
-})
+});
+
+// Auto-remove Question from Form's questions array when a Question is deleted via query
+objSchema.pre('deleteMany', async function (next) {
+    try {
+        const query = this.getQuery();
+        if (query._id) {
+            const form = mongoose.model('Forms');
+            // Pull the Question ID from any Form's questions array
+            await form.updateMany(
+                { questions: query._id },
+                { $pull: { questions: query._id } }
+            );
+        }
+        next();
+    } catch (err) {
+        next(err);
+    }
+});
 
 module.exports = mongoose.model('Questions', objSchema, 'Questions');
