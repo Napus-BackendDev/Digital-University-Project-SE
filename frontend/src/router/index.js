@@ -15,15 +15,18 @@ const UserFormFill = () => import('@/projects/views/user/FormFill.vue')
 const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
 const EditorCreateForm = () => import('@/projects/views/editor/CreateForm.vue')
 
+// Page
+const Fillform = () => import('@/projects/views/page/Fillform.vue')
+
 // Admin
-const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue') 
+const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue')
 
 
 Vue.use(Router)
 
 export default new Router({
     mode: 'history',
-    scrollBehavior: () => ({y: 0}),
+    scrollBehavior: () => ({ y: 0 }),
     routes: [
 
         {
@@ -62,8 +65,14 @@ export default new Router({
                     path: 'editor/dashboard/:_id',
                     name: 'EditorCreateForm',
                     component: EditorCreateForm
-                }
+                },
 
+                {
+                    path: 'editor/preview/:_id',
+                    name: 'EditorPreview',
+                    component: Fillform,
+                    props: route => ({ formId: route.params._id })
+                }
 
             ]
         },

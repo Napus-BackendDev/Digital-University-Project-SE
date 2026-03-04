@@ -293,7 +293,7 @@ export default {
                     }
                 };
 
-                const response = await this.$store.dispatch('Forms/createForm', newFormData);
+                const response = await this.$store.dispatch('Forms/create', newFormData);
 
                 this.$router.push({ name: 'EditorCreateForm', params: { _id: response.data.data._id } });
             } catch (error) {
@@ -311,8 +311,8 @@ export default {
         async deleteForm(item) {
             if (confirm("Are you sure you want to delete this form?")) {
                 try {
-                    await this.$store.dispatch('Forms/deleteForm', { _id: item._id });
-                    await this.$store.dispatch('Forms/getForms');
+                    await this.$store.dispatch('Forms/delete', { _id: item._id });
+                    await this.$store.dispatch('Forms/get');
                 } catch (error) {
                     console.error("Failed to delete form:", error);
                 }

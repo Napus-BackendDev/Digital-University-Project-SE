@@ -67,7 +67,7 @@ export default {
 }
 
 /* Add min-height to the white content boxes */
-.custom-tabs-wrapper .tab-content>.active {
+.custom-tabs-wrapper .tab-content .active {
     min-height: 60vh;
     display: flex;
     flex-direction: column;

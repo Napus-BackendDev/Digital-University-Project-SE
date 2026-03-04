@@ -41,7 +41,7 @@ export default {
         async onInit() {
             const formId = this.$route.params._id;
             try {
-                this.formData = await this.$store.dispatch('Forms/getFormById', { _id: formId });
+                this.formData = await this.$store.dispatch('Forms/getById', { _id: formId });
             } catch (error) {
                 console.error("Error fetching form:", error);
             }

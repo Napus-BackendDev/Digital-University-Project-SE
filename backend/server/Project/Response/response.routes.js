@@ -9,22 +9,17 @@ const upload = require('../../../server/middleware/upload');
 //     req.query.apiId=0;
 //     next();
 // },response.onExportResponses);
-router.get("", function (req, res, next) {
-    req.query.apiId = 0;
-    next();
-}, response.onQuerys);
-router.get("/getByFormId", function (req, res, next) {
+
+router.post("/getByFormId", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, response.onGetByFormId);
-router.get("/getByUserId", function (req, res, next) {
-    req.query.apiId = 0;
-    next();
-}, response.onGetByUserId);
-router.get("/getById", function (req, res, next) {
+
+router.post("/getById", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, response.onGetById);
+
 router.get("/download/:form_id/user/:user_id", function (req, res, next) {
     req.query.apiId = 0;
     next();
@@ -33,11 +28,13 @@ router.get("/download/:form_id", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, response.publicDownloadUsersJSON);
+
 router.post("", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, upload.single('file'), response.onCreate);
-router.patch("", function (req, res, next) {
+
+router.put("", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, response.onUpdate);
@@ -45,10 +42,6 @@ router.delete("", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, response.onDelete);
-router.delete("/deleteByFormId", function (req, res, next) {
-    req.query.apiId = 0;
-    next();
-}, response.onDeleteByFormId);
 
 //Updated API
 router.post("/export/:formId/user/:userId", function (req, res, next) {

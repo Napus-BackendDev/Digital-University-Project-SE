@@ -7,42 +7,34 @@ const responseModel = require("../model/response.model");
 require("../../Questions/models/questions.model");
 require("express-validator/check");
 
-exports.onQuerys = async function (request, response) {
-    try {
-        let query = {};
-        const doc = await responseService.onQuerys(query);
-        return ResMessage.sendResponse(response, request.body.apiid, 20000, doc);
-        return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses", err.message);
-    }
-}
 
 exports.onGetByFormId = async function (request, response) {
     try {
         let query = {};
-        query.form = request.query.form_id;
+        query.form = request.body.form_id;
+        console.log("request.body", request.body);
         const doc = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
     } catch (err) {
         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses by form ID", err.message);
     }
 };
-exports.onGetByUserId = async function (request, response) {
-    try {
-        let query = {};
-        query.responder = request.user.id;
-        const doc = await responseService.onQuerys(query);
-        return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses by user ID", err.message);
-    }
-};
+
+// exports.onGetByUserId = async function (request, response) {
+//     try {
+//         let query = {};
+//         query.responder = request.user.id;
+//         const doc = await responseService.onQuerys(query);
+//         return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
+//     } catch (err) {
+//         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses by user ID", err.message);
+//     }
+// };
 
 exports.onGetById = async function (request, response) {
     try {
         let query = {};
-        query._id = new mongo.ObjectId(request.query._id);
+        query._id = new mongo.ObjectId(request.body._id);
         const doc = await responseService.onQuery(query);
         if (!doc) {
             return ResMessage.sendResponse(response, request.body.apiId, 40400, "Response not found");
@@ -368,17 +360,3 @@ exports.onDelete = async function (request, response) {
         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to delete response", err.message);
     }
 };
-exports.onDeleteByFormId = async function (request, response) {
-    try {
-        let query = {}
-        query.form = request.body.form_id;
-        const doc = await responseService.onDelete(query);
-        return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to delete responses by form ID", err.message);
-    }
-};
-
-
-
-
