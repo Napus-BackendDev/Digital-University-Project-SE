@@ -10,6 +10,7 @@ const logger = winston.createLogger({
         winston.format.json()  // บันทึก log ในรูปแบบ JSON
     ),
     transports: [
+        new winston.transports.Console(),
         // new winston.transports.MongoDB({
         //     db: 'mongodb://localhost:27017/logs',  // URL ของ MongoDB
         //     collection: 'logs',  // ชื่อ collection ที่จะเก็บ log
