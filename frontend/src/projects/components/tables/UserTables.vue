@@ -21,10 +21,9 @@
                                 <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                             </button>
                         </template>
-                        <CDropdownItem @click="filterStatus('All Status')">All Status</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Open')">Open</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Closed')">Closed</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
+                        <CDropdownItem @click="filterStatus('All')">All Status</CDropdownItem>
+                        <CDropdownItem @click="filterStatus('Pending')">Pending</CDropdownItem>
+                        <CDropdownItem @click="filterStatus('Completed')">Completed</CDropdownItem>
                     </CDropdown>
                 </div>
             </div>
@@ -32,12 +31,12 @@
 
         <div class="user-tables-container">
             <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
-                :pagination="false" hover sorter :loading="loading" clickable-rows @row-clicked="goToForm"
-                class="mb-0 custom-datatable">
-                <!-- Form Name (Title) Slot -->
-                <template #title="{ item }">
-                    <td class="pl-4 py-3">
-                        <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
+                :pagination="false" hover class="mb-0 custom-table">
+                <!-- Form Name (Title & Description) Slot -->
+                <template #form="{ item }">
+                    <td class="pl-4 py-3" :style="{ height: item.isEmptyRow ? '76px' : 'auto' }">
+                        <div class="font-weight-bold text-dark text-lg" style="font-size: 0.95rem;">{{ item.title }}
+                        </div>
                         <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
                     </td>
                 </template>
@@ -45,25 +44,22 @@
                 <!-- Status Slot -->
                 <template #status="{ item }">
                     <td class="py-3">
-                        <span class="status-badge" :class="getStatusClass(item.status)">
+                        <span v-if="!item.isEmptyRow" class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
                             {{ item.status }}
                         </span>
                     </td>
                 </template>
 
-                <!-- Responses Slot -->
-                <template #responses="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-wrapper mr-2 chart-color">
-                                <CIcon name="cil-comment-bubble" size="sm" />
-                            </div>
-                            <div>
-                                <div class="font-weight-bold text-dark">{{ item.responses }}</div>
-                                <div class="small text-muted">responses</div>
-                            </div>
-                        </div>
+                <!-- Action Slot -->
+                <template #action="{ item }">
+                    <td class="py-3 text-right pr-4">
+                        <CButton v-if="!item.isEmptyRow"
+                            :color="item.status.toLowerCase() === 'completed' ? 'success' : 'primary'"
+                            :variant="item.status.toLowerCase() === 'completed' ? 'outline' : ''" size="sm"
+                            class="font-weight-bold px-4" style="border-radius: 6px;" @click.stop="goToForm(item._id)">
+                            {{ item.status.toLowerCase() === 'completed' ? 'Continue' : 'Start' }}
+                        </CButton>
                     </td>
                 </template>
             </CDataTable>
@@ -85,14 +81,14 @@ export default {
     data() {
         return {
             searchQuery: '',
-            selectedStatus: 'All Status',
+            selectedStatus: 'All',
             loading: false,
             activePage: 1,
             itemsPerPage: 5,
             fields: [
-                { key: 'title', label: 'Form Name', _style: 'width:40%' },
-                { key: 'status', label: 'Status', _style: 'width:15%' },
-                { key: 'responses', label: 'Responses', _style: 'width:15%' },
+                { key: 'form', label: 'Questionnaire', _style: 'width:60%' },
+                { key: 'status', label: 'Status', _style: 'width:20%' },
+                { key: 'action', label: 'Action', _style: 'width:20%; text-align:right' }
             ]
         }
     },
@@ -117,29 +113,25 @@ export default {
 
             // 2. Map to display objects
             const mappedData = sortedForms.map(form => {
-                // Safe check for status
-                let statusTitle = 'Draft';
-                if (form.status && form.status.title) {
-                    statusTitle = this.getLang(form.status.title);
-                } else if (typeof form.status === 'string') {
-                    statusTitle = form.status;
-                }
+                // Determine Pending/Completed Status based on logic.
+                // For a User filling a form, we'll assume completed if they have a response, otherwise Pending.
+                // Assuming `form.responses` is available and has elements if user has completed it.
+                // NOTE: This might need fine-tuning based on actual backend relation linking user to response.
+                const hasResponses = form.responses && form.responses.length > 0;
+                const statusTitle = hasResponses ? 'Completed' : 'Pending';
 
                 return {
                     _id: form._id || form.id,
                     title: this.getLang(form.title) || 'Untitled Form',
                     description: this.getLang(form.description) || '',
-                    status: statusTitle,
-                    access: form.isPublic ? 'Public' : 'Private',
-                    responses: form.responses ? form.responses.length : 0,
-                    created: form.createdAt ? moment(form.createdAt).format('MMM D, YYYY') : '-'
+                    status: statusTitle
                 }
             })
 
             // 3. Apply filters
-            return mappedData.filter(item => {
+            let finalData = mappedData.filter(item => {
                 // Filter by Status
-                if (this.selectedStatus !== 'All Status' && item.status !== this.selectedStatus) {
+                if (this.selectedStatus !== 'All' && item.status !== this.selectedStatus) {
                     return false;
                 }
 
@@ -147,15 +139,35 @@ export default {
                 if (this.searchQuery) {
                     const query = this.searchQuery.toLowerCase();
                     const titleMatch = item.title.toLowerCase().includes(query);
-                    const descMatch = item.description.toLowerCase().includes(query);
+                    const descMatch = (item.description || '').toLowerCase().includes(query);
                     return titleMatch || descMatch;
                 }
 
                 return true;
             });
+
+            // Pad to 5 items if below 5
+            if (finalData.length < 5) {
+                const emptyCount = 5 - finalData.length;
+                for (let i = 0; i < emptyCount; i++) {
+                    finalData.push({
+                        _id: `empty-${i}`,
+                        title: '',
+                        description: '',
+                        status: '',
+                        isEmptyRow: true
+                    });
+                }
+            }
+            return finalData;
         }
     },
     methods: {
+        goToFormRecord(item) {
+            if (item && !item.isEmptyRow) {
+                this.goToForm(item._id);
+            }
+        },
         goToForm(id) {
             if (id) {
                 this.$router.push({
@@ -193,9 +205,8 @@ export default {
         },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'open' || s === 'published') return 'status-open';
-            if (s === 'closed') return 'status-closed';
-            return 'status-draft'; // Default/Draft
+            if (s === 'completed') return 'status-completed';
+            return 'status-pending';
         }
     }
 }
@@ -267,60 +278,23 @@ export default {
 }
 
 /* Status Colors */
-.status-open {
+.status-completed {
     background-color: #d1fae5;
     color: #065f46;
 }
 
-.status-open .status-dot {
+.status-completed .status-dot {
     background-color: #059669;
 }
 
-.status-draft {
-    background-color: #f3f4f6;
-    color: #4b5563;
+.status-pending {
+    background-color: #fef9c3;
+    color: #854d0e;
 }
 
-.status-draft .status-dot {
-    background-color: #9ca3af;
+.status-pending .status-dot {
+    background-color: #eab308;
 }
-
-.status-closed {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
-
-.status-closed .status-dot {
-    background-color: #dc2626;
-}
-
-/* Icon Wrapper */
-.icon-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background-color: #fff1f2;
-    /* Light rose background for chart looking icon */
-    color: #be123c;
-}
-
-.chart-color {
-    background-color: #fff5f5;
-    color: #e55353;
-}
-
-/* Dropdown */
-.btn-link {
-    color: #94a3b8;
-}
-
-.btn-link:hover {
-    color: #64748b;
-}
-
 
 /* Pagination customization to match clean theme */
 ::v-deep .page-link {
@@ -353,5 +327,56 @@ export default {
 
 .search-input-group input {
     background-color: #f8fafc !important;
+}
+
+/* Custom Table Styling matching EditorTables */
+::v-deep .custom-table table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Header Styling */
+::v-deep .custom-table thead th {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: capitalize !important;
+    letter-spacing: normal;
+    border: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 16px 24px !important;
+    vertical-align: middle;
+}
+
+::v-deep .custom-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+::v-deep .custom-table thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+/* Body Styling */
+::v-deep .custom-table tbody td {
+    color: #1e293b !important;
+    font-size: 14px;
+    font-weight: 500;
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 18px 24px !important;
+    vertical-align: middle;
+    height: 76px;
+}
+
+/* Hover Effect */
+::v-deep .custom-table tbody tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+/* Remove bottom border from the very last row */
+::v-deep .custom-table tbody tr:last-child td {
+    border-bottom: none !important;
 }
 </style>

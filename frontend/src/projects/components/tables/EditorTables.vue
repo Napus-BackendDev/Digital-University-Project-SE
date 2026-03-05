@@ -135,7 +135,7 @@ export default {
             activePage: 1,
             itemsPerPage: 5,
             columns: [
-                { key: 'title', label: 'Form Name', _style: 'width:40%' },
+                { key: 'title', label: 'Questionnaire', _style: 'width:40%' },
                 { key: 'status', label: 'Status', _style: 'width:15%' },
                 { key: 'responses', label: 'Responses', _style: 'width:15%' },
                 { key: 'created', label: 'Last Modified', _style: 'width:20%' },
@@ -305,7 +305,7 @@ export default {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
         },
         goToViewForm(item) {
-            this.$router.push({ name: 'UserFormFill', params: { id: item._id } });
+            this.$router.push({ name: 'EditorPreview', params: { id: item._id } });
         },
         async deleteForm(item) {
             if (confirm("Are you sure you want to delete this form?")) {
