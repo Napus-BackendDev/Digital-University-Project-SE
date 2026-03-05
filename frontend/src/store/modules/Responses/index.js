@@ -50,18 +50,27 @@ const module = {
             });
 
             return Service.response('submit', formData, {})
-                .then(response => response)
-                .catch(err => { throw err; });
+                .then(response => {
+                    commit('responses', response.data.data);
+                    return response;
+                })
+                .catch(err => { console.log(err); throw err; });
         },
         update({ commit }, data) {
             return Service.response('update', data, {})
-                .then(response => response)
-                .catch(err => { throw err; });
+                .then(response => {
+                    commit('responses', response.data.data);
+                    return response;
+                })
+                .catch(err => { console.log(err); throw err; });
         },
         delete({ commit }, data) {
             return Service.response('delete', data, {})
-                .then(response => response)
-                .catch(err => { throw err; });
+                .then(response => {
+                    commit('responses', response.data.data);
+                    return response;
+                })
+                .catch(err => { console.log(err); throw err; });
         }
     },
     getters: {

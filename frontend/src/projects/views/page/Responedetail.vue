@@ -100,50 +100,7 @@
                     </CCardHeader>
                     <CCardBody class="">
                         <!-- Answers Table matching Design -->
-                        <CDataTable :items="response.answers" :fields="answerFields" hover class="mb-0 custom-table">
-                            <!-- Index / # Column -->
-                            <template #id="{ item, index }">
-                                <td class="align-middle text-center" style="width: 50px;">
-                                    <div class="index-circle">{{ index + 1 }}</div>
-                                </td>
-                            </template>
-
-                            <!-- Question Column -->
-                            <template #question="{ item }">
-                                <td class="align-middle" style="width: 45%;">
-                                    <h6 class="font-weight-bold text-dark mb-1" style="font-size: 0.95rem;">
-                                        {{ getTitle(item.question && item.question.title) || 'Unknown Question' }}
-                                    </h6>
-                                    <div class="text-muted small">
-                                        {{ getQuestionTypeLabel(item.question) }}
-                                    </div>
-                                </td>
-                            </template>
-
-                            <!-- Response Column -->
-                            <template #response="{ item }">
-                                <td class="align-middle">
-                                    <template v-if="isEmpty(item.response)">
-                                        <span class="text-muted font-italic">No response</span>
-                                    </template>
-                                    <template v-else-if="Array.isArray(item.response)">
-                                        <span class="text-dark">{{ item.response.join(', ') }}</span>
-                                    </template>
-                                    <template v-else-if="isRating(item.question)">
-                                        <div class="d-flex align-items-center h6 mb-0">
-                                            <strong class="text-warning mr-2" style="font-size: 1.1rem;">{{
-                                                item.response }}</strong>
-                                            <span class="text-muted small"> / {{ getRatingMax(item.question) }}</span>
-                                        </div>
-                                    </template>
-                                    <template v-else>
-                                        <span class="text-dark" style="white-space: pre-wrap;">{{ item.response
-                                        }}</span>
-                                    </template>
-                                </td>
-                            </template>
-
-                        </CDataTable>
+                        <AnswerTable :answers="response.answers" />
                     </CCardBody>
                 </CCard>
 
@@ -166,10 +123,11 @@
 import { mapGetters } from 'vuex';
 import moment from 'moment';
 import ResponeTables from '@/projects/components/tables/ResponeTables.vue';
+import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
 
 export default {
     name: 'ResponseDetail',
-    components: { ResponeTables },
+    components: { ResponeTables, AnswerTable },
     props: {
         id: {
             type: String,
@@ -180,12 +138,7 @@ export default {
         return {
             loading: false,
             error: null,
-            response: null,
-            answerFields: [
-                { key: 'id', label: '#' },
-                { key: 'question', label: 'Question' },
-                { key: 'response', label: 'Response' }
-            ]
+            response: null
         }
     },
     computed: {
@@ -200,13 +153,7 @@ export default {
             return this.responsesList.findIndex(r => r._id === this.id);
         }
     },
-    watch: {
-        id: {
-            handler() {
-                this.fetchResponseDetail();
-            }
-        }
-    },
+
     created() {
         this.fetchResponseDetail();
     },
@@ -242,10 +189,6 @@ export default {
             if (!content) content = titleArr[0];
             return content ? content.value : '';
         },
-        formatDate(dateStr) {
-            if (!dateStr) return '-';
-            return moment(dateStr).format('D/M/YYYY, h:mm:ss');
-        },
         isEmpty(val) {
             if (val === null || val === undefined || val === '') return true;
             if (Array.isArray(val) && val.length === 0) return true;
@@ -262,25 +205,9 @@ export default {
             }
             return 5;
         },
-        getQuestionTypeLabel(question) {
-            if (!question || !question.type) return 'Unknown Type';
-            const t = question.type.type ? question.type.type.toLowerCase() : '';
-            switch (t) {
-                case 'short_answer': case 'short': return 'Short answer';
-                case 'paragraph': return 'Paragraph';
-                case 'multiple_choice': return 'Multiple choice';
-                case 'checkboxes': case 'checkbox': return 'Checkbox';
-                case 'dropdown': return 'Dropdown';
-                case 'rating': case 'rate': return 'Rating';
-                case 'date': return 'Date';
-                case 'time': return 'Time';
-                case 'file_upload': case 'file': return 'File upload';
-                case 'image': return 'Image';
-                case 'video': return 'Video';
-                default:
-                    // Capitalize first letter
-                    return t.charAt(0).toUpperCase() + t.slice(1);
-            }
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return moment(dateStr).format('D/M/YYYY, h:mm:ss');
         },
         // Placeholder methods for header buttons
         exportCsv() {
@@ -335,28 +262,13 @@ export default {
             link.click();
             document.body.removeChild(link);
         },
+
         copyApiLink() {
-            const userId
-        },
-
-
-         copyApiLink() {
-            const formId = this.responses && this.responses._id;
-            if (!formId) { alert('Form ID not available yet.'); return; }
+            const responsesID = this.responses && this.responses._id;
+            if (!responsesID) { alert('ResponsesID not available yet.'); return; }
             const BASE = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
-            const url = `${BASE}/response/download/${formId}`;
+            const url = `${BASE}/response/download/${responsesID}`;
 
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(() => this.showCopied());
-            } else {
-                const el = document.createElement('textarea');
-                el.value = url;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-                this.showCopied();
-            }
         },
 
         goToResponse(index) {
@@ -365,11 +277,19 @@ export default {
                 this.$router.push({ name: 'ResponseDetail', params: { id: targetId } });
             }
         },
-        deleteResponse() {
+
+        async deleteResponse() {
             if (confirm("Are you sure you want to delete this response?")) {
-                // TODO: Implement delete API call
-                console.log("Delete Response clicked for:", this.id);
-                alert("Delete response feature is coming soon!");
+                this.loading = true;
+                try {
+                    await this.$store.dispatch('Responses/delete', { _id: this.id });
+                    alert("Response deleted successfully.");
+                } catch (err) {
+                    console.error("Error deleting response:", err);
+                    alert("An error occurred while deleting the response.");
+                } finally {
+                    this.loading = false;
+                }
             }
         }
     }
@@ -451,70 +371,5 @@ export default {
 ::v-deep .custom-dropdown .dropdown-toggle:hover {
     background-color: #f8fafc !important;
     border-color: #cbd5e1 !important;
-}
-
-/* Custom Answers Table Styling matching ResponeTables */
-::v-deep .custom-table table {
-    margin-bottom: 0;
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-/* Header Styling */
-::v-deep .custom-table thead th {
-    background-color: #f8fafc !important;
-    color: #475569 !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    text-transform: capitalize !important;
-    letter-spacing: normal;
-    border: none !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    padding: 16px 24px !important;
-    vertical-align: middle;
-}
-
-::v-deep .custom-table thead th:first-child {
-    border-top-left-radius: 8px;
-}
-
-::v-deep .custom-table thead th:last-child {
-    border-top-right-radius: 8px;
-}
-
-/* Body Styling */
-::v-deep .custom-table tbody td {
-    color: #1e293b !important;
-    font-size: 14px;
-    font-weight: 500;
-    border: none !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    padding: 18px 24px !important;
-    vertical-align: middle;
-    height: 76px;
-}
-
-/* Hover Effect */
-::v-deep .custom-table tbody tr:hover td {
-    background-color: #f8fafc !important;
-}
-
-/* Remove bottom border from the very last row */
-::v-deep .custom-table tbody tr:last-child td {
-    border-bottom: none !important;
-}
-
-.index-circle {
-    width: 32px;
-    height: 32px;
-    background-color: #f1f5f9;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #475569;
-    margin: 0 auto;
 }
 </style>
