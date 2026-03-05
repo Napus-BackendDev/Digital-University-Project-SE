@@ -4,21 +4,29 @@ const questionRoutes = require("../Project/Questions/questions.routes");
 const responseRoutes = require("../Project/Response/response.routes");
 const settingsRoutes = require("../Project/Settings/setting.routes");
 const authRoutes = require("../Project/Auth/auth.routes");
+const roleRoutes = require("../Project/Role/role.routes");
+const userRoutes = require("../Project/User/user.routes");
+
+// Auth middleware
+const { requireAuth, requireRole } = require("../../middleware/auth");
 
 module.exports = function (app) {
-  path = "/api/v1";
+  const path = "/api/v1";
 
-  // Auth routes (no prefix needed — mounted at /auth)
+  // Auth routes — public (login, logout, /me)
   app.use('/auth', authRoutes);
 
-  app.use(path + '/form', formRoutes);
-  app.use(path + '/question', questionRoutes);
-  app.use(path + '/response', responseRoutes);
-  app.use(path + '/settings', settingsRoutes);
-  // app.get("/uploads/:filename", authMiddleware, (req, res) => {
-  //   const filePath = path.join(__dirname, "../uploads", req.params.filename);
-  //   res.sendFile(filePath);
-  // });
+  // Forms & Questions — ADMIN and STAFF can manage
+  app.use(path + '/form', requireAuth, requireRole('ADMIN', 'STAFF'), formRoutes);
+  app.use(path + '/question', requireAuth, requireRole('ADMIN', 'STAFF'), questionRoutes);
+
+  // Responses — any authenticated user (students submit, staff/admins review)
+  app.use(path + '/response', requireAuth, requireRole('ADMIN', 'STAFF', 'USER'), responseRoutes);
+
+  // Settings, Roles, Users — ADMIN only
+  app.use(path + '/settings', requireAuth, requireRole('ADMIN'), settingsRoutes);
+  app.use(path + '/role', requireAuth, requireRole('ADMIN'), roleRoutes);
+  app.use(path + '/user', requireAuth, requireRole('ADMIN'), userRoutes);
 
   // 404 handler
   app.use((req, res) => {

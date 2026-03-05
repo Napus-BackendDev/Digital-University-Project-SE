@@ -1,0 +1,251 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Role API",
+    "version": "1.0.0",
+    "description": "Role management endpoints"
+  },
+  "tags": [{ "name": "Role" }],
+  "paths": {
+    "/role/exp": {
+      "get": {
+        "tags": ["Role"],
+        "summary": "Get all roles",
+        "description": "Returns every role in the database sorted by name. No request body needed — apiId 31 is set automatically by the route middleware.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 31 for this endpoint", "example": 31 }
+                }
+              },
+              "example": { "apiId": 31 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Array of all role documents with name, description, and permissions" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/role/get": {
+      "post": {
+        "tags": ["Role"],
+        "summary": "Get a single role by ID",
+        "description": "Pass the role _id as a query parameter. Returns the role document with its permissions array.",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "MongoDB ObjectId of the role to retrieve",
+            "example": "64e1f9f32a6d1c0013a1c001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 32 for this endpoint", "example": 32 }
+                }
+              },
+              "example": { "apiId": 32 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Role document" },
+          "404": { "description": "Role not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/role": {
+      "post": {
+        "tags": ["Role"],
+        "summary": "Create a new role",
+        "description": "Creates a role with a unique name (auto-uppercased), optional description, and a list of permission strings. Use GET /role/permissions to see all available permission strings.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 33 for this endpoint", "example": 33 },
+                  "name": {
+                    "type": "string",
+                    "description": "Unique role name — stored uppercase (e.g. ADMIN, STAFF, USER, MODERATOR)",
+                    "example": "MODERATOR"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Human-readable description of what this role can do",
+                    "example": "Can moderate forms and view responses"
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "description": "List of permission strings granted to this role",
+                    "items": { "type": "string" },
+                    "example": [
+                      "VIEW_FORMS",
+                      "VIEW_QUESTIONS",
+                      "VIEW_RESPONSES",
+                      "VIEW_OWN_RESPONSES",
+                      "SUBMIT_RESPONSES"
+                    ]
+                  }
+                }
+              },
+              "example": {
+                "apiId": 33,
+                "name": "MODERATOR",
+                "description": "Can moderate forms and view responses",
+                "permissions": [
+                  "VIEW_FORMS",
+                  "VIEW_QUESTIONS",
+                  "VIEW_RESPONSES",
+                  "VIEW_OWN_RESPONSES",
+                  "SUBMIT_RESPONSES"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Role created successfully" },
+          "400": { "description": "Validation error — name is required" },
+          "409": { "description": "Role with this name already exists" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "put": {
+        "tags": ["Role"],
+        "summary": "Update an existing role",
+        "description": "Send the role _id plus any fields to change (name, description, permissions). Only supplied fields are updated.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 34 for this endpoint", "example": 34 },
+                  "_id": { "type": "string", "description": "MongoDB ObjectId of the role to update", "example": "64e1f9f32a6d1c0013a1c001" },
+                  "name": { "type": "string", "description": "Updated role name (auto-uppercased)", "example": "EDITOR" },
+                  "description": { "type": "string", "description": "Updated description", "example": "Can edit forms and questions" },
+                  "permissions": {
+                    "type": "array",
+                    "description": "Replaced permission list (full array, not a diff)",
+                    "items": { "type": "string" },
+                    "example": [
+                      "VIEW_FORMS",
+                      "CREATE_FORM",
+                      "UPDATE_FORM",
+                      "VIEW_QUESTIONS",
+                      "CREATE_QUESTION",
+                      "UPDATE_QUESTION"
+                    ]
+                  }
+                }
+              },
+              "example": {
+                "apiId": 34,
+                "_id": "64e1f9f32a6d1c0013a1c001",
+                "description": "Can edit forms and questions",
+                "permissions": [
+                  "VIEW_FORMS",
+                  "CREATE_FORM",
+                  "UPDATE_FORM",
+                  "VIEW_QUESTIONS",
+                  "CREATE_QUESTION",
+                  "UPDATE_QUESTION"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Role updated successfully" },
+          "404": { "description": "Role not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "delete": {
+        "tags": ["Role"],
+        "summary": "Delete a role by its ID",
+        "description": "Permanently removes the role document. Users who had this role will no longer have its permissions on next login.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 35 for this endpoint", "example": 35 },
+                  "_id": { "type": "string", "description": "MongoDB ObjectId of the role to delete", "example": "64e1f9f32a6d1c0013a1c001" }
+                }
+              },
+              "example": {
+                "apiId": 35,
+                "_id": "64e1f9f32a6d1c0013a1c001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Role deleted" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/role/permissions": {
+      "get": {
+        "tags": ["Role"],
+        "summary": "List all available permission strings",
+        "description": "Returns the complete list of permission strings the system recognises. Use these values when creating or updating roles.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 36 for this endpoint", "example": 36 }
+                }
+              },
+              "example": { "apiId": 36 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Array of permission strings",
+            "content": {
+              "application/json": {
+                "example": [
+                  "VIEW_USERS", "DELETE_USER",
+                  "VIEW_FORMS", "CREATE_FORM", "UPDATE_FORM", "DELETE_FORM", "DUPLICATE_FORM",
+                  "VIEW_QUESTIONS", "CREATE_QUESTION", "UPDATE_QUESTION", "DELETE_QUESTION",
+                  "VIEW_RESPONSES", "VIEW_OWN_RESPONSES", "SUBMIT_RESPONSES", "EDIT_RESPONSES", "DELETE_RESPONSES", "EXPORT_RESPONSES"
+                ]
+              }
+            }
+          },
+          "500": { "description": "Server error" }
+        }
+      }
+    }
+  }
+}

@@ -4,12 +4,20 @@ import store from '@/store/store'
 const instance = axios.create();
 
 instance.defaults.baseURL = 'http://localhost:8081/api/v1';
+instance.defaults.withCredentials = true;
 
 instance.defaults.headers = {
   "Content-Type": "application/json",
   // "Api-version": "1.0",
   // "X-Access-Token": "1a661eec9bf358b8567c3dc022146d19c69d2ceafe92f503e89391e5d9f9f739",
 }
+
+// Separate axios instance for auth routes (mounted at /auth, not /api/v1)
+const authInstance = axios.create({// I added this for backend connection
+  baseURL: 'http://localhost:8081/auth',
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" }
+});
 
 //
 // // เพิ่ม request interceptor
@@ -153,6 +161,19 @@ export default {
       case 'delete':
         return instance.delete('/settings/question_type', { data })
 
+      default:
+        break
+    }
+  },
+
+  auth(method, data) {
+    switch (method) {
+      case 'google-login':
+        return authInstance.post('/google', data)
+      case 'logout':
+        return authInstance.post('/logout')
+      case 'me':
+        return authInstance.get('/me')
       default:
         break
     }

@@ -1,0 +1,178 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "User API",
+    "version": "1.0.0",
+    "description": "User management endpoints"
+  },
+  "tags": [{ "name": "User" }],
+  "paths": {
+    "/user/exp": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get all users",
+        "description": "Returns every user in the database with their roles populated. No request body needed — apiId 41 is set automatically by the route middleware.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 41 for this endpoint", "example": 41 }
+                }
+              },
+              "example": { "apiId": 41 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Array of all user documents with populated roles" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/user/get": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Get a single user by ID",
+        "description": "Pass the user _id as a query parameter. Returns the user with populated roles.",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "MongoDB ObjectId of the user to retrieve",
+            "example": "64e1f9f32a6d1c0013a1d001"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 42 for this endpoint", "example": 42 }
+                }
+              },
+              "example": { "apiId": 42 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User document with populated roles" },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/user": {
+      "put": {
+        "tags": ["User"],
+        "summary": "Update an existing user",
+        "description": "Send the user _id plus any fields to change (name, email, picture, roles, etc.). Only supplied fields are updated. To change roles, use PUT /user/assign-roles instead.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 44 for this endpoint", "example": 44 },
+                  "_id": { "type": "string", "description": "MongoDB ObjectId of the user to update", "example": "64e1f9f32a6d1c0013a1d001" },
+                  "name": { "type": "string", "description": "Updated display name", "example": "Jane Smith" },
+                  "email": { "type": "string", "format": "email", "description": "Updated email", "example": "jane.smith@university.edu" },
+                  "givenName": { "type": "string", "description": "Updated first name", "example": "Jane" },
+                  "familyName": { "type": "string", "description": "Updated last name", "example": "Smith" },
+                  "picture": { "type": "string", "description": "Updated profile picture URL", "example": "https://lh3.googleusercontent.com/a/new-photo.jpg" }
+                }
+              },
+              "example": {
+                "apiId": 44,
+                "_id": "64e1f9f32a6d1c0013a1d001",
+                "name": "Jane Smith",
+                "givenName": "Jane",
+                "familyName": "Smith"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User updated successfully" },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "delete": {
+        "tags": ["User"],
+        "summary": "Delete a user by ID",
+        "description": "Permanently removes the user document from the database.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 45 for this endpoint", "example": 45 },
+                  "_id": { "type": "string", "description": "MongoDB ObjectId of the user to delete", "example": "64e1f9f32a6d1c0013a1d001" }
+                }
+              },
+              "example": {
+                "apiId": 45,
+                "_id": "64e1f9f32a6d1c0013a1d001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User deleted" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/user/assign-roles": {
+      "put": {
+        "tags": ["User"],
+        "summary": "Assign roles to a user",
+        "description": "Replaces the user's roles array with the provided list of Role ObjectIds. All role IDs are validated before assignment.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id", "roles"],
+                "properties": {
+                  "apiId": { "type": "integer", "description": "Always 46 for this endpoint", "example": 46 },
+                  "_id": { "type": "string", "description": "MongoDB ObjectId of the user to assign roles to", "example": "64e1f9f32a6d1c0013a1d001" },
+                  "roles": {
+                    "type": "array",
+                    "description": "Array of Role ObjectIds — replaces all current roles",
+                    "items": { "type": "string" },
+                    "example": ["64e1f9f32a6d1c0013a1c001", "64e1f9f32a6d1c0013a1c002"]
+                  }
+                }
+              },
+              "example": {
+                "apiId": 46,
+                "_id": "64e1f9f32a6d1c0013a1d001",
+                "roles": ["64e1f9f32a6d1c0013a1c001", "64e1f9f32a6d1c0013a1c002"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Roles assigned successfully — returns updated user with populated roles" },
+          "400": { "description": "Validation error — _id and roles[] are required, or one or more role IDs are invalid" },
+          "404": { "description": "User not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    }
+  }
+}

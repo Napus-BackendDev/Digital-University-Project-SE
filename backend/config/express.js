@@ -4,11 +4,16 @@ const initialize = require("../helpers/initialize");
 const middlewares = require('../middleware/middlewares');
 const swagger = require("../swagger/swagger");
 const routes = require("../server/router/app.routes");
+const cors = require('cors');
+const { corsOptions } = require('./corsAndIP');
 
 let isReady = false;
 
 module.exports = function () {
   const app = express();
+
+  // CORS must be applied before any routes/middleware that handle requests
+  app.use(cors(corsOptions));
 
   // Swagger setup
   swagger(app);
@@ -16,21 +21,6 @@ module.exports = function () {
   initialize.init(function (status) {
     if (status) {
       middlewares(app);
-      app.use(function (req, res, next) {
-        if (req.method === "OPTIONS") {
-          const headers = {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, GET, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers":
-              "X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Headers, X-Access-Token",
-          };
-          res.writeHead(200, headers);
-          res.end();
-        } else {
-          res.header("Access-Control-Allow-Origin", "*");
-          next();
-        }
-      });
 
       // Load routes
       routes(app);

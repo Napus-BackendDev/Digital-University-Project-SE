@@ -2,7 +2,7 @@
 const cors = require('cors');
 
 // กำหนดโดเมนและ IP ที่อนุญาต
-const allowedDomains = ['http://localhost:5173','https://example.com', 'https://anotherdomain.com'];
+const allowedDomains = ['http://localhost:5173','http://localhost:8080','http://localhost:8081','https://example.com', 'https://anotherdomain.com'];
 const allowedIPs = ['192.168.1.1', '203.0.113.5','127.0.0.1', '::1'];
 
 // การตั้งค่า CORS
@@ -13,7 +13,8 @@ const corsOptions = {
         } else {
             callback(new Error('Not allowed by CORS'));
         }
-    }
+    },
+    credentials: true
 };
 
 // ฟังก์ชัน middleware สำหรับการตรวจสอบ IP ที่อนุญาต

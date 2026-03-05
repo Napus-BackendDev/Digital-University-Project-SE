@@ -14,7 +14,7 @@
     </CWrapper>
     <CenterLoading />
     <!--    <DialogMessage/>-->
-    <SignIn />
+    <SignIn v-if="!isAuthenticated" />
     <TwoFA />
 
   </div>
@@ -122,6 +122,7 @@ export default {
   },
   computed: {
     ...mapGetters({
+      isAuthenticated: 'auth/isAuthenticated'
     })
   },
 

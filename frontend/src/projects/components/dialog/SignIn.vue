@@ -1,6 +1,6 @@
 <template>
   <div>
-    <CModal add-content-classes="bg-login" :show.sync="isAuthe" :centered="true" :close-on-backdrop="true">
+    <CModal add-content-classes="bg-login" :show="true" :centered="true" :close-on-backdrop="true">
       <template #header-wrapper>
         <div class="mb-5"></div>
       </template>
@@ -134,14 +134,11 @@ export default {
       try {
         console.log("onAuthenGoogle")
         const googleUser = await this.$gAuth.signIn();
-        // const profile = googleUser.getBasicProfile();
-        // const id_token = googleUser.getAuthResponse().id_token;
-        // console.log('User:', profile);
-        console.log('googleUser', googleUser)
+        const id_token = googleUser.getAuthResponse().id_token;
 
-        // var body = {}
-        // body.token = id_token
-        // this.$store.dispatch("auth/singin", body)
+        var body = {}
+        body.token = id_token
+        this.$store.dispatch("auth/singin", body)
 
       } catch (err) {
         console.error('Google sign-in error:', err);

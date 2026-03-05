@@ -33,6 +33,29 @@ msg[20023] = { code: 20023,httpcode: 200,message: [{value: "สร้างแ�
 msg[20024] = { code: 20024,httpcode: 200,message: [{value: "แก้ไขแบบฟอร์มสำเร็จ",key: "th"},{value: "Update form successfully",key: "en"}] };
 msg[20025] = { code: 20025,httpcode: 200,message: [{value: "ลบแบบฟอร์มสำเร็จ",key: "th"},{value: "Delete form successfully",key: "en"}] };
 
+//Role Section
+msg[20031] = { code: 20031,httpcode: 200,message: [{value: "ดึงรายการบทบาททั้งหมดสำเร็จ",key: "th"},{value: "Get roles successfully",key: "en"}] };
+msg[20032] = { code: 20032,httpcode: 200,message: [{value: "ดึงบทบาทตามรหัสสำเร็จ",key: "th"},{value: "Get role by ID successfully",key: "en"}] };
+msg[20033] = { code: 20033,httpcode: 200,message: [{value: "สร้างบทบาทสำเร็จ",key: "th"},{value: "Create role successfully",key: "en"}] };
+msg[20034] = { code: 20034,httpcode: 200,message: [{value: "แก้ไขบทบาทสำเร็จ",key: "th"},{value: "Update role successfully",key: "en"}] };
+msg[20035] = { code: 20035,httpcode: 200,message: [{value: "ลบบทบาทสำเร็จ",key: "th"},{value: "Delete role successfully",key: "en"}] };
+
+//User Section
+msg[20041] = { code: 20041,httpcode: 200,message: [{value: "ดึงรายการผู้ใช้ทั้งหมดสำเร็จ",key: "th"},{value: "Get users successfully",key: "en"}] };
+msg[20042] = { code: 20042,httpcode: 200,message: [{value: "ดึงผู้ใช้ตามรหัสสำเร็จ",key: "th"},{value: "Get user by ID successfully",key: "en"}] };
+msg[20044] = { code: 20044,httpcode: 200,message: [{value: "แก้ไขผู้ใช้สำเร็จ",key: "th"},{value: "Update user successfully",key: "en"}] };
+msg[20045] = { code: 20045,httpcode: 200,message: [{value: "ลบผู้ใช้สำเร็จ",key: "th"},{value: "Delete user successfully",key: "en"}] };
+msg[20046] = { code: 20046,httpcode: 200,message: [{value: "กำหนดบทบาทผู้ใช้สำเร็จ",key: "th"},{value: "Assign roles to user successfully",key: "en"}] };
+
+//Auth Section
+msg[20050] = { code: 20050,httpcode: 200,message: [{value: "เข้าสู่ระบบสำเร็จ",key: "th"},{value: "Login successful",key: "en"}] };
+msg[20051] = { code: 20051,httpcode: 200,message: [{value: "ออกจากระบบสำเร็จ",key: "th"},{value: "Logout successful",key: "en"}] };
+msg[20052] = { code: 20052,httpcode: 200,message: [{value: "ดึงข้อมูลผู้ใช้ปัจจุบันสำเร็จ",key: "th"},{value: "Get current user successfully",key: "en"}] };
+msg[40100] = { code: 40100,httpcode: 401,message: [{value: "ไม่ได้เข้าสู่ระบบ",key: "th"},{value: "Not authenticated",key: "en"}] };
+msg[40101] = { code: 40101,httpcode: 401,message: [{value: "ข้อมูลรับรองไม่ถูกต้อง",key: "th"},{value: "Invalid credential",key: "en"}] };
+msg[40102] = { code: 40102,httpcode: 401,message: [{value: "โทเค็นหมดอายุหรือไม่ถูกต้อง",key: "th"},{value: "Invalid or expired token",key: "en"}] };
+msg[40303] = { code: 40303,httpcode: 403,message: [{value: "ไม่มีสิทธิ์เข้าถึง",key: "th"},{value: "Forbidden - insufficient role",key: "en"}] };
+
 
 
 

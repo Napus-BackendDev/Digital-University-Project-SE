@@ -10,6 +10,11 @@ jest.mock('../middleware/middlewares', () => (app) => {
   app.use(express.urlencoded({ extended: true }));
 });
 
+jest.mock('../middleware/auth', () => ({
+  requireAuth: (req, res, next) => next(),
+  requireRole: () => (req, res, next) => next()
+}));
+
 jest.mock('../server/Project/Settings/service/message', () => ({
   sendResponse: (res, apiId, code, data) => res.status(200).json({
     apiId,

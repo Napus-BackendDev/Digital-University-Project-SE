@@ -21,7 +21,6 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dont-sniff-mimetype": "^1.1.0",
-    "ejs": "^4.0.1",
     "express-rate-limit": "^7.4.1",
     "google-auth-library": "^10.6.1",
     "ienoopen": "^1.1.0",

@@ -1,20 +1,8 @@
-var express = require('./config/express');
-var app = express();
-var http = require('http');
-var https = require('https');
-var fs = require('fs');
-var cfg = require('./config/config');
-
-
-// Load demo ejs for test Oauth
-app.set('view engine', 'ejs');
-
-app.get('/', (req, res) => {
-    res.render('index');
-});
-app.get('/oauth', (req, res) => {
-    res.render('login');
-});
+require('dotenv').config();
+const express = require('./config/express');
+const app = express();
+const http = require('http');
+const cfg = require('./config/config');
 
 
 /**
