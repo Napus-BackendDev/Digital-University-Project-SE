@@ -99,7 +99,7 @@
                                 </button>
                             </template>
                             <CDropdownItem @click="goToViewForm(item)">
-                                <CIcon name="cil-eye" class="mr-2 text-info" /> View
+                                <CIcon name="cil-magnifying-glass" class="mr-2 text-info" /> View
                             </CDropdownItem>
                             <CDropdownItem @click="goToEditForm(item)">
                                 <CIcon name="cil-pencil" class="mr-2 text-warning" /> Edit
@@ -269,12 +269,10 @@ export default {
             try {
                 const newFormData = {
                     title: [
-                        { key: 'en', value: 'Untitled Form' },
-                        { key: 'th', value: 'แบบร่างฟอร์ม' }
+                        { key: 'en', value: 'Untitled Form' }
                     ],
                     description: [
-                        { key: 'en', value: '' },
-                        { key: 'th', value: '' }
+                        { key: 'en', value: 'Description' }
                     ],
                     questions: [],
                     responses: [],
@@ -329,7 +327,6 @@ export default {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
 }
-
 
 /* Typography */
 .text-lg {

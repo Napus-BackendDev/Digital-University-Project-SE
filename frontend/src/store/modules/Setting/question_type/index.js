@@ -18,7 +18,6 @@ const module = {
         get({ commit }, data) {
             Service.setting('get', {}, {})
                 .then((response) => {
-                    console.log('data ไอควย', response.data.data);
                     commit("item", response.data.data);
                 }).catch((err) => {
                 });

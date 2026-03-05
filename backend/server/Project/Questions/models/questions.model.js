@@ -18,6 +18,7 @@ var objSchema = new Schema({
     }],
     type: { type: mongoose.Schema.Types.ObjectId, ref: 'Question_Types', required: true },
     config: {
+        // Multiple Choices / Checkbox
         choices: [{
             _id: false,
             key: { type: String, default: null },
@@ -27,11 +28,32 @@ var objSchema = new Schema({
                 value: { type: String, default: null }
             }]
         }],
+        // Checkbox
         allowMultipleSelect: { type: Boolean, default: null },
+        // Rating
         maxRating: { type: Number, default: null },
+        // Paragraph
         maxText: { type: Number, default: null },
+        // File Upload
         maxFiles: { type: Number, default: null },
         maxFileSize: { type: Number, default: null },
+        fileTypes: [{ type: String }],
+
+        // Title / Description
+        title: [{
+            _id: false,
+            key: { type: String, default: null },
+            value: { type: String, default: null },
+            order: { type: Number, default: 1 }
+        }],
+        description: [{
+            _id: false,
+            key: { type: String, default: null },
+            value: { type: String, default: null },
+            order: { type: Number, default: 1 }
+        }],
+        // Image
+        imageUrl: { type: String, default: null },
     },
     isRequired: { type: Boolean, default: false }
 }, { timestamps: true });

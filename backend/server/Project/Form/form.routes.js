@@ -3,17 +3,17 @@ const router = express.Router();
 
 const form = require('./service/form');
 
-// Get One by ID
-router.get("/id", function (req, res, next) {
-    req.query.apiId = 0;
-    next();
-}, form.onQuery);
-
 // Get All
-router.get("", function (req, res, next) {
+router.get("/exp", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, form.onQuerys);
+
+// Get One by ID
+router.post("/get", function (req, res, next) {
+    req.query.apiId = 0;
+    next();
+}, form.onQuery);
 
 // Create
 router.post("", function (req, res, next) {

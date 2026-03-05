@@ -4,17 +4,17 @@ const { apivalidation } = require('../../../helpers/utils');
 
 const question = require('./service/question');
 
-// Get One by ID
-router.get("/id", function (req, res, next) {
-    req.query.apiId = 0;
-    next();
-}, question.onQuery);
-
 // Get All
-router.get("", function (req, res, next) {
+router.get("/exp", function (req, res, next) {
     req.query.apiId = 0;
     next();
 }, question.onQuerys);
+
+// Get One by ID
+router.post("/get", function (req, res, next) {
+    req.query.apiId = 0;
+    next();
+}, question.onQuery);
 
 // Create
 router.post("", function (req, res, next) {
