@@ -17,6 +17,7 @@ const EditorCreateForm = () => import('@/projects/views/editor/CreateForm.vue')
 
 // Page
 const Fillform = () => import('@/projects/views/page/Fillform.vue')
+const Responedetail = () => import('@/projects/views/page/Responedetail.vue')
 
 // Admin
 const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue')
@@ -72,6 +73,13 @@ export default new Router({
                     name: 'EditorPreview',
                     component: Fillform,
                     props: route => ({ formId: route.params._id })
+                },
+
+                {
+                    path: 'user/response/:id',
+                    name: 'ResponseDetail',
+                    component: Responedetail,
+                    props: true
                 }
 
             ]

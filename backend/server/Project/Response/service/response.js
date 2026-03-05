@@ -179,21 +179,21 @@ exports.onCreate = async function (request, response) {
     }
 };
 
-// exports.onUpdate = async function (request, response) {
-//     try {
-//         let query = {}
-//         query._id = new mongo.ObjectId(request.body._id);
-//         const doc = await responseService.onUpdate(query, request.body);
-//         if (!doc) {
-//             return ResMessage.sendResponse(response, request.body.apiId, 40400, "Response not found");
-//         }
-//         return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
-//     } catch (err) {
-//         console.error("Update response error:", err);
+exports.onUpdate = async function (request, response) {
+    try {
+        let query = {}
+        query._id = new mongo.ObjectId(request.body._id);
+        const doc = await responseService.onUpdate(query, request.body);
+        if (!doc) {
+            return ResMessage.sendResponse(response, request.body.apiId, 40400, "Response not found");
+        }
+        return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
+    } catch (err) {
+        console.error("Update response error:", err);
 
-//         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to update response", err.message);
-//     }
-// };
+        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to update response", err.message);
+    }
+};
 
 exports.onDelete = async function (request, response) {
     try {
@@ -205,16 +205,7 @@ exports.onDelete = async function (request, response) {
         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to delete response", err.message);
     }
 };
-// exports.onDeleteByFormId = async function (request, response) {
-//     try {
-//         let query = {}
-//         query.form = request.body.form_id;
-//         const doc = await responseService.onDelete(query);
-//         return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
-//     } catch (err) {
-//         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to delete responses by form ID", err.message);
-//     }
-// };
+
 exports.generateExportLinkByFormAndUser = async function (request, response) {
     try {
         const { formId, userId } = request.body;
@@ -330,7 +321,7 @@ exports.publicDownloadUsersJSON = async function (request, response) {
             responses: responses.map(resp => ({
                 responseId: resp._id,
                 responderId: resp.responder || null,
-                submittedAt: resp.submittedAt,
+                submittedAt: resp.createdAt,
                 answers: resp.answers.map(answer => ({
                     question: {
                         id: answer.question?._id,
@@ -347,15 +338,5 @@ exports.publicDownloadUsersJSON = async function (request, response) {
         return ResMessage.sendResponse(response, request.body.apiId, 20000, formattedData);
     } catch (err) {
         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to download responses", err.message);
-    }
-};
-exports.onDelete = async function (request, response) {
-    try {
-        let query = {}
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await responseService.onDelete(query);
-        return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to delete response", err.message);
     }
 };

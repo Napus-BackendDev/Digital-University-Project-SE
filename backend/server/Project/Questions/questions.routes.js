@@ -18,7 +18,7 @@ router.get("", function (req, res, next) {
 
 // Create
 router.post("", function (req, res, next) {
-    req.query.apiId = 0;
+    req.query.apiId = 1;
     next();
 }, question.onCreate);
 

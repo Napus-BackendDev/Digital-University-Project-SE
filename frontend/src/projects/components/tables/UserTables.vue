@@ -31,16 +31,8 @@
         </div>
 
         <div class="user-tables-container">
-            <CDataTable 
-                :items="tableData" 
-                :fields="fields" 
-                :items-per-page="5" 
-                hover 
-                sorter
-                :pagination="{ align: 'center' }" 
-                :loading="loading"  
-                clickable-rows 
-                @row-clicked="goToForm"
+            <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
+                :pagination="false" hover sorter :loading="loading" clickable-rows @row-clicked="goToForm"
                 class="mb-0 custom-datatable">
                 <!-- Form Name (Title) Slot -->
                 <template #title="{ item }">
@@ -76,20 +68,27 @@
                 </template>
             </CDataTable>
         </div>
+
+        <!-- Pagination -->
+        <Pagination :activePage.sync="activePage" :pages="totalPages" />
     </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import moment from 'moment'
+import Pagination from '@/projects/components/Util/Pagination.vue'
 
 export default {
     name: 'UserTables',
+    components: { Pagination },
     data() {
         return {
             searchQuery: '',
             selectedStatus: 'All Status',
             loading: false,
+            activePage: 1,
+            itemsPerPage: 5,
             fields: [
                 { key: 'title', label: 'Form Name', _style: 'width:40%' },
                 { key: 'status', label: 'Status', _style: 'width:15%' },
@@ -100,6 +99,10 @@ export default {
     computed: {
         ...mapGetters('Forms', ['forms']),
         ...mapGetters('setting', ['lang']),
+
+        totalPages() {
+            return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
+        },
 
         tableData() {
             // Force reactivity on locale change

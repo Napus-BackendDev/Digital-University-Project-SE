@@ -38,9 +38,23 @@
                             <CIcon name="cil-chevron-top" size="sm" class="ml-2" />
                         </CButton>
                     </template>
-                    <CDropdownItem>Download CSV</CDropdownItem>
-                    <CDropdownItem>Download Excel</CDropdownItem>
+                    <CDropdownItem @click="exportCsv">
+                        <CIcon name="cil-data-transfer-down" size="sm" class="mr-2" />
+                        Export CSV
+                    </CDropdownItem>
+                    <CDropdownItem @click="copyApiLink">
+                        <CIcon name="cil-copy" size="sm" class="mr-2" />
+                        Copy API Link
+                    </CDropdownItem>
                 </CDropdown>
+
+                <!-- Copied toast -->
+                <transition name="fade">
+                    <span v-if="copied" class="ml-2 text-success d-inline-flex align-items-center"
+                        style="font-size:0.82rem; font-weight:600;">
+                        ✓ Copied!
+                    </span>
+                </transition>
 
             </div>
         </div>
@@ -65,24 +79,8 @@
 
                 <!-- ── SHORT / PARAGRAPH ── -->
                 <template v-if="isTextType(q.type)">
-                    <div class="table-responsive rounded border">
-                        <table class="table mb-0 custom-response-table">
-                            <thead>
-                                <tr>
-                                    <th scope="col" style="width: 60px;" class="pl-4">#</th>
-                                    <th scope="col">Response</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(resp, rIdx) in q.responses" :key="rIdx">
-                                    <td class="pl-4 align-middle">
-                                        <div class="index-circle">{{ rIdx + 1 }}</div>
-                                    </td>
-                                    <td class="align-middle text-dark">{{ resp || '—' }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <CDataTable :items="q.responses.map((r, i) => ({ '#': i + 1, Response: r || '—' }))"
+                        :fields="[{ key: '#', _style: 'width:60px' }, 'Response']" border striped hover class="mb-0" />
                 </template>
 
                 <!-- ── MULTIPLE CHOICE / CHECKBOXES ── -->
@@ -135,86 +133,15 @@
 
                 <!-- ── FALLBACK ── -->
                 <template v-else>
-                    <div class="table-responsive rounded border">
-                        <table class="table mb-0 custom-response-table">
-                            <thead>
-                                <tr>
-                                    <th scope="col" style="width: 60px;" class="pl-4">#</th>
-                                    <th scope="col">Response</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(resp, rIdx) in q.responses" :key="rIdx">
-                                    <td class="pl-4 align-middle">
-                                        <div class="index-circle">{{ rIdx + 1 }}</div>
-                                    </td>
-                                    <td class="align-middle text-dark">{{ resp || '—' }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <CDataTable :items="q.responses.map((r, i) => ({ '#': i + 1, Response: r || '—' }))"
+                        :fields="[{ key: '#', _style: 'width:60px' }, 'Response']" border striped hover class="mb-0" />
                 </template>
             </div>
         </div>
 
         <!-- INDIVIDUAL VIEW -->
         <div v-else-if="currentView === 'individual'" class="p-5 bg-white border rounded shadow-sm">
-            <!-- Empty state -->
-            <div v-if="!loading && responseList.length === 0" class="text-center py-5 text-muted">
-                <p>No responses yet for this form.</p>
-            </div>
-            <template v-else>
-                <!-- Search Bar -->
-                <div class="mb-4 custom-search">
-                    <CInput class="mb-0" placeholder="Search responses by responder or date...">
-                        <template #prepend-content>
-                            <CIcon name="cil-magnifying-glass" />
-                        </template>
-                    </CInput>
-                </div>
-
-                <div class="table-responsive rounded border mb-4">
-                    <table class="table mb-0 custom-response-table">
-                        <thead>
-                            <tr>
-                                <th scope="col" style="width: 80px;" class="pl-4">#</th>
-                                <th scope="col">Responder</th>
-                                <th scope="col">Submitted</th>
-                                <th scope="col" class="text-center">Answers</th>
-                                <th scope="col" class="text-right pr-5">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="item in individualData" :key="item.id">
-                                <td class="pl-4 align-middle">
-                                    <div class="index-circle pink-circle">{{ item.id }}</div>
-                                </td>
-                                <td class="align-middle text-dark font-weight-bold" style="font-size:0.82rem;">{{
-                                    item.responder }}</td>
-                                <td class="align-middle" style="color: #64748b;">{{ item.submitted }}</td>
-                                <td class="align-middle text-center">
-                                    <span class="badge badge-light px-3 py-2 rounded-pill font-weight-normal text-dark"
-                                        style="background-color: #f1f5f9; font-size: 0.85rem;">{{ item.answers }}
-                                        answers</span>
-                                </td>
-                                <td class="align-middle text-right pr-5">
-                                    <CButton color="link"
-                                        class="text-dark d-flex align-items-center justify-content-end w-100 px-0 text-decoration-none font-weight-bold">
-                                        <CIcon name="cil-eye" size="sm" class="mr-2" />
-                                        View
-                                    </CButton>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                <div class="d-flex justify-content-center mt-5 mb-2">
-                    <CPagination :activePage.sync="activePageIndividual" :pages="3" :doubleArrows="false"
-                        :align="'center'" class="custom-pagination border-0 mb-0" />
-                </div>
-            </template>
+            <ResponeTables />
         </div>
 
     </div>
@@ -222,8 +149,10 @@
 
 <script>
 import moment from 'moment'
+import ResponeTables from '@/projects/components/tables/ResponeTables.vue'
 export default {
     name: 'TabResponses',
+    components: { ResponeTables },
     props: {
         responses: {
             type: Object,
@@ -233,12 +162,13 @@ export default {
     data() {
         return {
             responsesCount: 0,
-            currentView: 'individual',
+            currentView: 'summary',
             activePage: 1,
             activePageParagraph: 1,
             activePageIndividual: 1,
             loading: false,
             error: null,
+            copied: false,
             responseList: [],
         }
     },
@@ -246,11 +176,94 @@ export default {
         this.fetchResponses();
     },
     watch: {
+        // form prop arrives async (parent fetches form then passes down)
+        // this catches when _id finally populates
+        'responses._id': {
+            immediate: true,
+            handler(newId) {
+                console.log('[TabResponses] responses._id changed to:', newId);
+                if (newId && this.responseList.length === 0) {
+                    this.fetchResponses();
+                }
+            }
+        }
     },
     methods: {
+        // ── Export CSV ────────────────────────────────────────────────────
+        exportCsv() {
+            if (!this.responseList.length) {
+                alert('No responses to export.');
+                return;
+            }
+
+            // Build header row from first response's answers
+            const firstAnswers = this.responseList[0].answers || [];
+            const qHeaders = firstAnswers.map((a, i) => {
+                const title = a.question && Array.isArray(a.question.title) && a.question.title.length
+                    ? a.question.title[0].value
+                    : `Q${i + 1}`;
+                return `"${title.replace(/"/g, '""')}"`;
+            });
+            const headers = ['Responder', 'Submitted', ...qHeaders].join(',');
+
+            // Build data rows
+            const rows = this.responseList.map(r => {
+                const base = [
+                    `"${(r.responder || '-').toString().replace(/"/g, '""')}"`,
+                    `"${this.formatDate(r.createdAt)}"`
+                ];
+                const answerCells = (r.answers || []).map(a => {
+                    const val = Array.isArray(a.response)
+                        ? a.response.join('; ')
+                        : (a.response === null || a.response === undefined ? '' : String(a.response));
+                    return `"${val.replace(/"/g, '""')}"`;
+                });
+                return [...base, ...answerCells].join(',');
+            });
+
+            const csv = [headers, ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `responses_${this.responses && this.responses._id || 'export'}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        },
+
+        // ── Copy API Link ─────────────────────────────────────────────────
+        copyApiLink() {
+            const formId = this.responses && this.responses._id;
+            if (!formId) { alert('Form ID not available yet.'); return; }
+            const BASE = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
+            const url = `${BASE}/response/download/${formId}`;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => this.showCopied());
+            } else {
+                const el = document.createElement('textarea');
+                el.value = url;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                this.showCopied();
+            }
+        },
+        showCopied() {
+            this.copied = true;
+            setTimeout(() => { this.copied = false; }, 2000);
+        },
+
         async fetchResponses() {
             const formId = this.responses && this.responses._id;
+            if (!formId) {
+                console.warn('[TabResponses] fetchResponses: formId not ready yet, skip');
+                return;
+            }
+            if (this.loading) return;  // prevent double fetch
 
+            console.log('[TabResponses] fetching responses for formId:', formId);
             this.loading = true;
             this.error = null;
             try {
@@ -258,6 +271,7 @@ export default {
                 const data = (result && result.data && result.data.data) || [];
                 this.responseList = data;
                 this.responsesCount = data.length;
+                console.log('[TabResponses] loaded', data.length, 'responses');
             } catch (err) {
                 console.error('[TabResponses] Failed to fetch responses:', err);
                 this.error = 'Failed to load responses.';
@@ -289,24 +303,18 @@ export default {
         choiceColor(idx) {
             const PALETTE = ['#a32a29', '#d9a036', '#723469', '#618a44', '#3d5a92', '#e55353', '#f9c74f', '#90be6d'];
             return PALETTE[idx % PALETTE.length];
+        },
+        onViewResponse(item) {
+            // TODO: open response detail modal/page
+            console.log('[TabResponses] view response:', item);
         }
     },
     computed: {
-        individualData() {
-            return this.responseList.map((r, idx) => ({
-                id: idx + 1,
-                _id: r._id,
-                responder: r.responder || '-',
-                submitted: this.formatDate(r.createdAt),
-                answers: Array.isArray(r.answers) ? r.answers.length : 0,
-                raw: r
-            }));
-        },
 
         summaryByQuestion() {
             const PALETTE = ['#a32a29', '#d9a036', '#723469', '#618a44', '#3d5a92', '#e55353', '#f9c74f', '#90be6d'];
             const map = {};
-            const order = []; 
+            const order = [];
 
             this.responseList.forEach(resp => {
                 (resp.answers || []).forEach(ans => {

@@ -3,7 +3,7 @@ import store from '@/store/store'
 
 const instance = axios.create();
 
-instance.defaults.baseURL = 'http://localhost:8081/api/v1';
+instance.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
 
 instance.defaults.headers = {
   "Content-Type": "application/json",
@@ -99,8 +99,6 @@ export default {
         return instance.get(`/response/download/${data.formId}/user/${data.userId}`)
       case 'download-form-json':
         return instance.get(`/response/download/${data.formId}`)
-      case 'generate-export-link':
-        return instance.post('/response/export/link', { formId: data.formId })
       default:
         break
     }
