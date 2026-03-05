@@ -5,14 +5,13 @@
     "version": "1.0.0",
     "description": "Form endpoints"
   },
-  "tags": [
-    { "name": "Form" }
-  ],
+  "tags": [{ "name": "Form" }],
   "paths": {
     "/form/exp": {
       "get": {
         "tags": ["Form"],
-        "summary": "Get forms (export)",
+        "summary": "Get all forms",
+        "description": "Returns every form in the database. No request body needed — apiId 21 is sent automatically by the frontend.",
         "requestBody": {
           "required": false,
           "content": {
@@ -20,7 +19,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "apiId": { "type": "integer", "example": 21 }
+                  "apiId": { "type": "integer", "description": "Always send 21 for this endpoint", "example": 21 }
                 }
               },
               "example": { "apiId": 21 }
@@ -28,7 +27,7 @@
           }
         },
         "responses": {
-          "200": { "description": "Success" },
+          "200": { "description": "Array of all form documents (populated with questions, responses, status)" },
           "500": { "description": "Server error" }
         }
       }
@@ -36,24 +35,26 @@
     "/form/get": {
       "post": {
         "tags": ["Form"],
-        "summary": "Get form by ID",
+        "summary": "Get a single form by ID (with child forms via $graphLookup)",
+        "description": "Pass the form _id as a query parameter. Returns the form and any child forms linked by originalFormId.",
         "parameters": [
           {
             "name": "_id",
             "in": "query",
             "required": true,
             "schema": { "type": "string" },
-            "description": "Form ID"
+            "description": "MongoDB ObjectId of the form to retrieve",
+            "example": "64e1f9f32a6d1c0013a1b234"
           }
         ],
         "requestBody": {
-          "required": false,
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "apiId": { "type": "integer", "example": 22 }
+                  "apiId": { "type": "integer", "description": "Always send 22 for this endpoint", "example": 22 }
                 }
               },
               "example": { "apiId": 22 }
@@ -61,8 +62,8 @@
           }
         },
         "responses": {
-          "200": { "description": "Success" },
-          "404": { "description": "Not found" },
+          "200": { "description": "Form document with populated questions, responses, status, and child forms" },
+          "404": { "description": "Form not found" },
           "500": { "description": "Server error" }
         }
       }
@@ -70,7 +71,8 @@
     "/form": {
       "post": {
         "tags": ["Form"],
-        "summary": "Create form",
+        "summary": "Create a new form",
+        "description": "Creates a form with multilingual title/description, optional schedule, settings, and status. Questions are added separately via the Question API.",
         "requestBody": {
           "required": true,
           "content": {
@@ -78,44 +80,87 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "apiId": { "type": "integer", "example": 23 },
+                  "apiId": { "type": "integer", "description": "Always send 23 for this endpoint", "example": 23 },
                   "title": {
                     "type": "array",
+                    "description": "Multilingual title — one object per language",
                     "items": {
                       "type": "object",
                       "properties": {
-                        "key": { "type": "string" },
-                        "value": { "type": "string" }
+                        "key": { "type": "string", "description": "Language code (e.g. en, th)", "example": "en" },
+                        "value": { "type": "string", "description": "Title text in that language", "example": "Customer Satisfaction Survey" }
                       }
                     }
                   },
                   "description": {
                     "type": "array",
+                    "description": "Multilingual description — one object per language",
                     "items": {
                       "type": "object",
                       "properties": {
-                        "key": { "type": "string" },
-                        "value": { "type": "string" }
+                        "key": { "type": "string", "description": "Language code", "example": "en" },
+                        "value": { "type": "string", "description": "Description text", "example": "Please rate our service" }
                       }
                     }
-                  }
+                  },
+                  "status": { "type": "string", "description": "ObjectId of Setting_Status (defaults to 689c04cb255db4e56aea88ef)", "example": "689c04cb255db4e56aea88ef" },
+                  "schedule": {
+                    "type": "object",
+                    "description": "Optional open/close schedule for the form",
+                    "properties": {
+                      "startAt": { "type": "string", "format": "date-time", "description": "When the form opens", "example": "2025-08-01T00:00:00.000Z" },
+                      "endAt": { "type": "string", "format": "date-time", "description": "When the form closes", "example": "2025-08-31T23:59:59.000Z" }
+                    }
+                  },
+                  "settings": {
+                    "type": "object",
+                    "description": "Form behaviour settings",
+                    "properties": {
+                      "whoCanRespond": { "type": "string", "description": "ObjectId of the allowed responder group", "example": "64e1f9f32a6d1c0013a1c001" },
+                      "collectEmail": { "type": "boolean", "description": "Collect respondent email", "example": true },
+                      "limitResponse": { "type": "boolean", "description": "Limit to one response per user", "example": false },
+                      "progressBar": { "type": "boolean", "description": "Show progress bar while filling", "example": true },
+                      "confirmMessage": { "type": "string", "description": "Message shown after submission", "example": "Thank you for your feedback!" },
+                      "showAnotherResponseLink": { "type": "boolean", "description": "Show link to submit another response", "example": false }
+                    }
+                  },
+                  "originalFormId": { "type": "string", "description": "ObjectId of the parent form (for duplicated/versioned forms)", "example": "64e1f9f32a6d1c0013a1b200" }
                 }
               },
               "example": {
                 "apiId": 23,
-                "title": [{ "key": "en", "value": "Form" }]
+                "title": [
+                  { "key": "en", "value": "Customer Satisfaction Survey" },
+                  { "key": "th", "value": "แบบสำรวจความพึงพอใจ" }
+                ],
+                "description": [
+                  { "key": "en", "value": "Please rate our service" },
+                  { "key": "th", "value": "กรุณาให้คะแนนบริการของเรา" }
+                ],
+                "schedule": {
+                  "startAt": "2025-08-01T00:00:00.000Z",
+                  "endAt": "2025-08-31T23:59:59.000Z"
+                },
+                "settings": {
+                  "collectEmail": true,
+                  "limitResponse": false,
+                  "progressBar": true,
+                  "confirmMessage": "Thank you for your feedback!",
+                  "showAnotherResponseLink": false
+                }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Created" },
+          "200": { "description": "Form created successfully" },
           "500": { "description": "Server error" }
         }
       },
       "put": {
         "tags": ["Form"],
-        "summary": "Update form",
+        "summary": "Update an existing form",
+        "description": "Send the form _id plus any fields you want to change. Only supplied fields are updated.",
         "requestBody": {
           "required": true,
           "content": {
@@ -124,16 +169,45 @@
                 "type": "object",
                 "required": ["_id"],
                 "properties": {
-                  "apiId": { "type": "integer", "example": 24 },
-                  "_id": { "type": "string" },
+                  "apiId": { "type": "integer", "description": "Always send 24 for this endpoint", "example": 24 },
+                  "_id": { "type": "string", "description": "MongoDB ObjectId of the form to update", "example": "64e1f9f32a6d1c0013a1b234" },
                   "title": {
                     "type": "array",
+                    "description": "Updated multilingual title",
                     "items": {
                       "type": "object",
                       "properties": {
-                        "key": { "type": "string" },
-                        "value": { "type": "string" }
+                        "key": { "type": "string", "example": "en" },
+                        "value": { "type": "string", "example": "Updated Survey Title" }
                       }
+                    }
+                  },
+                  "description": {
+                    "type": "array",
+                    "description": "Updated multilingual description",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": { "type": "string", "example": "en" },
+                        "value": { "type": "string", "example": "Updated description text" }
+                      }
+                    }
+                  },
+                  "schedule": {
+                    "type": "object",
+                    "properties": {
+                      "startAt": { "type": "string", "format": "date-time", "example": "2025-09-01T00:00:00.000Z" },
+                      "endAt": { "type": "string", "format": "date-time", "example": "2025-09-30T23:59:59.000Z" }
+                    }
+                  },
+                  "settings": {
+                    "type": "object",
+                    "properties": {
+                      "collectEmail": { "type": "boolean", "example": false },
+                      "limitResponse": { "type": "boolean", "example": true },
+                      "progressBar": { "type": "boolean", "example": true },
+                      "confirmMessage": { "type": "string", "example": "Thanks!" },
+                      "showAnotherResponseLink": { "type": "boolean", "example": true }
                     }
                   }
                 }
@@ -141,20 +215,32 @@
               "example": {
                 "apiId": 24,
                 "_id": "64e1f9f32a6d1c0013a1b234",
-                "title": [{ "key": "en", "value": "Updated" }]
+                "title": [
+                  { "key": "en", "value": "Updated Survey Title" },
+                  { "key": "th", "value": "ชื่อแบบสำรวจที่อัปเดต" }
+                ],
+                "schedule": {
+                  "startAt": "2025-09-01T00:00:00.000Z",
+                  "endAt": "2025-09-30T23:59:59.000Z"
+                },
+                "settings": {
+                  "limitResponse": true,
+                  "confirmMessage": "Thanks!"
+                }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Updated" },
-          "404": { "description": "Not found" },
+          "200": { "description": "Form updated successfully" },
+          "404": { "description": "Form not found" },
           "500": { "description": "Server error" }
         }
       },
       "delete": {
         "tags": ["Form"],
-        "summary": "Delete form",
+        "summary": "Delete a form by its ID",
+        "description": "Permanently removes the form document.",
         "requestBody": {
           "required": true,
           "content": {
@@ -163,8 +249,8 @@
                 "type": "object",
                 "required": ["_id"],
                 "properties": {
-                  "apiId": { "type": "integer", "example": 25 },
-                  "_id": { "type": "string" }
+                  "apiId": { "type": "integer", "description": "Always send 25 for this endpoint", "example": 25 },
+                  "_id": { "type": "string", "description": "MongoDB ObjectId of the form to delete", "example": "64e1f9f32a6d1c0013a1b234" }
                 }
               },
               "example": {
@@ -175,7 +261,7 @@
           }
         },
         "responses": {
-          "200": { "description": "Deleted" },
+          "200": { "description": "Form deleted" },
           "500": { "description": "Server error" }
         }
       }

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+      body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; margin-top: 80px; }
+      #user-info { margin-top: 24px; padding: 16px; border: 1px solid #ccc; border-radius: 8px; display: none; }
+      #user-info img { border-radius: 50%; width: 64px; height: 64px; }
+      #error-msg { color: red; margin-top: 12px; display: none; }
+    </style>
+</head>
+<body>
+    <h1>Login</h1>
+
+    <!-- Google Sign-In button will be rendered here -->
+    <div id="g_id_onload"
+     data-client_id="1054366553517-29t3nkamhr0p9v6f3fbiq73evkvmq855.apps.googleusercontent.com"
+     data-callback="handleCredentialResponse">
+    </div>
+    <div class="g_id_signin"
+     data-type="standard"
+     data-size="large"
+     data-theme="outline"
+     data-text="sign_in_with"
+     data-shape="rectangular">
+    </div>
+
+    <div id="error-msg"></div>
+
+    <div id="user-info">
+      <img id="user-pic" src="" alt="Profile" />
+      <p><strong>Name:</strong> <span id="user-name"></span></p>
+      <p><strong>Email:</strong> <span id="user-email"></span></p>
+    </div>
+
+    <script>
+      const CLIENT_ID = '1054366553517-29t3nkamhr0p9v6f3fbiq73evkvmq855.apps.googleusercontent.com';
+
+      google.accounts.id.initialize({
+        client_id: CLIENT_ID,
+        callback: handleCredentialResponse
+      });
+
+      // Render the button explicitly as a fallback
+      google.accounts.id.renderButton(
+        document.querySelector('.g_id_signin'),
+        { theme: 'outline', size: 'large' }
+      );
+
+      // Also show the One Tap prompt
+      google.accounts.id.prompt();
+
+      async function handleCredentialResponse(response) {
+        try {
+          const res = await fetch('/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential: response.credential })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.message || 'Login failed');
+          }
+
+          // Show user info on success
+          document.getElementById('user-info').style.display = 'block';
+          document.getElementById('error-msg').style.display = 'none';
+          document.getElementById('user-name').textContent = data.user.name;
+          document.getElementById('user-email').textContent = data.user.email;
+          document.getElementById('user-pic').src = data.user.picture;
+
+          console.log('Login successful:', data.user);
+        } catch (err) {
+          document.getElementById('error-msg').textContent = err.message;
+          document.getElementById('error-msg').style.display = 'block';
+          console.error('Login error:', err);
+        }
+      }
+    </script>
+</body>
+</html>
