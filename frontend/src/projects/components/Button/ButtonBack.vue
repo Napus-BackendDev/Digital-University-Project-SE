@@ -1,11 +1,21 @@
 <template>
-    <div class="back" style="cursor: pointer" @click="$router.push(path)">
-        <CIcon name="cil-chevron-left" />
-        <span class="px-1">{{ label }}</span>
-    </div>
+
+    <CRow class="mb-4">
+        <CCol col="12" class="d-flex justify-content-between align-items-center">
+            <div class="back" style="cursor: pointer" @click="$router.push(path)">
+                <CIcon name="cil-chevron-left" />
+                <span class="px-1">{{ label }}</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <ButtonPreview />
+            </div>
+        </CCol>
+    </CRow>
 </template>
 
 <script>
+import ButtonPreview from '@/projects/components/Button/ButtonPreview.vue'
+
 export default {
     name: "ButtonBack",
     props: {
@@ -19,6 +29,7 @@ export default {
         }
     },
     components: {
+        ButtonPreview
     },
     data() {
         return {
