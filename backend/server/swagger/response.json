@@ -1,0 +1,263 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Response API",
+    "version": "1.0.0",
+    "description": "Response endpoints"
+  },
+  "tags": [
+    { "name": "Response" }
+  ],
+  "paths": {
+    "/response": {
+      "post": {
+        "tags": ["Response"],
+        "summary": "Create response",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["form", "answers"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 0 },
+                  "form": { "type": "string" },
+                  "responder": { "type": "string" },
+                  "answers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "question": { "type": "string" },
+                        "response": {}
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "apiId": 0,
+                "form": "64e1f9f32a6d1c0013a1b234",
+                "responder": "64e1f9f32a6d1c0013a1b999",
+                "answers": [
+                  { "question": "64e1f9f32a6d1c0013a1b111", "response": "Yes" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created" },
+          "400": { "description": "Validation error" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "put": {
+        "tags": ["Response"],
+        "summary": "Update response",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 0 },
+                  "_id": { "type": "string" },
+                  "responder": { "type": "string" },
+                  "form": { "type": "string" },
+                  "answers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "question": { "type": "string" },
+                        "response": {}
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "apiId": 0,
+                "_id": "64e1f9f32a6d1c0013a1b777",
+                "answers": [
+                  { "question": "64e1f9f32a6d1c0013a1b111", "response": "No" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated" },
+          "404": { "description": "Not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "delete": {
+        "tags": ["Response"],
+        "summary": "Delete response by ID",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 0 },
+                  "_id": { "type": "string" }
+                }
+              },
+              "example": {
+                "apiId": 0,
+                "_id": "64e1f9f32a6d1c0013a1b777"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/response/getByFormId": {
+      "post": {
+        "tags": ["Response"],
+        "summary": "Get responses by form ID",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["form_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 0 },
+                  "form_id": { "type": "string" }
+                }
+              },
+              "example": {
+                "apiId": 0,
+                "form_id": "64e1f9f32a6d1c0013a1b234"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/response/getById": {
+      "post": {
+        "tags": ["Response"],
+        "summary": "Get response by ID",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 0 },
+                  "_id": { "type": "string" }
+                }
+              },
+              "example": {
+                "apiId": 0,
+                "_id": "64e1f9f32a6d1c0013a1b777"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "404": { "description": "Not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/response/deleteByFormId": {
+      "delete": {
+        "tags": ["Response"],
+        "summary": "Delete all responses by form ID",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["form_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 0 },
+                  "form_id": { "type": "string" }
+                }
+              },
+              "example": {
+                "apiId": 0,
+                "form_id": "64e1f9f32a6d1c0013a1b234"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "All responses deleted" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/response/download/{form_id}/response/{_id}": {
+      "get": {
+        "tags": ["Response"],
+        "summary": "Download a specific response JSON by form",
+        "parameters": [
+          {
+            "name": "form_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Form ID"
+          },
+          {
+            "name": "_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Response ID"
+          }
+        ],
+        "responses": {
+          "200": { "description": "JSON file download" },
+          "404": { "description": "Not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/response/download/{form_id}": {
+      "get": {
+        "tags": ["Response"],
+        "summary": "Download all responses JSON by form",
+        "parameters": [
+          {
+            "name": "form_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Form ID"
+          }
+        ],
+        "responses": {
+          "200": { "description": "JSON file download" },
+          "404": { "description": "Not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    }
+  }
+}

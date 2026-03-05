@@ -4,70 +4,44 @@ const router = express.Router();
 const response = require('./service/response');
 const upload = require('../../../server/middleware/upload');
 
-// export .csv file
-// router.get("/exportResponsesByFormId",function(req,res,next){
-//     req.query.apiId=0;
-//     next();
-// },response.onExportResponses);
-
-router.get("", function (req, res, next) {
-    req.query.apiId = 0;
-    next();
-}, response.onQuerys);
-
-router.get("/getByFormId", function (req, res, next) {
-    req.query.apiId = 0;
+router.post("/getByFormId", function (req, res, next) {
+    req.body.apiId = 1;
     next();
 }, response.onGetByFormId);
 
-// router.get("/getByUserId", function (req, res, next) {
-//     req.query.apiId = 0;
-//     next();
-// }, response.onGetByUserId);
-
-// router.get("/getById", function (req, res, next) {
-//     req.query.apiId = 0;
-//     next();
-// }, response.onGetById);
-
-router.get("/download/:form_id/user/:user_id", function (req, res, next) {
-    req.query.apiId = 0;
+router.post("/getById", function (req, res, next) {
+    req.body.apiId = 2;
     next();
-}, response.downloadUserJSON);
-
-router.get("/download/:form_id", function (req, res, next) {
-    req.query.apiId = 0;
-    next();
-}, response.publicDownloadUsersJSON);
+}, response.onGetById);
 
 router.post("", function (req, res, next) {
-    req.query.apiId = 0;
+    req.body.apiId = 3;
     next();
 }, upload.single('file'), response.onCreate);
 
-router.patch("", function (req, res, next) {
-    req.query.apiId = 0;
+router.put("", function (req, res, next) {
+    req.body.apiId = 4;
     next();
 }, response.onUpdate);
 
 router.delete("", function (req, res, next) {
-    req.query.apiId = 0;
+    req.body.apiId = 5;
     next();
 }, response.onDelete);
 
-// router.delete("/deleteByFormId", function (req, res, next) {
-//     req.query.apiId = 0;
-//     next();
-// }, response.onDeleteByFormId);
-
-router.post("/export/:formId/user/:userId", function (req, res, next) {
-    req.query.apiId = 0;
+router.delete("/deleteByFormId", function (req, res, next) {
+    req.body.apiId = 6;
     next();
-}, response.generateExportLinkByFormAndUser);
+}, response.onDeleteByFormId);
 
-router.post("/export/link", function (req, res, next) {
-    req.query.apiId = 0;
+router.get("/download/:form_id/response/:_id", function (req, res, next) {
+    req.body.apiId = 7;
     next();
-}, response.generateExportLinkFormId);
+}, response.downloadResponseJSON);
+
+router.get("/download/:form_id", function (req, res, next) {
+    req.body.apiId = 8;
+    next();
+}, response.downloadFormJSON);
 
 module.exports = router;
