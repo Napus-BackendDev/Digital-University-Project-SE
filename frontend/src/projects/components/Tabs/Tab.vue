@@ -1,34 +1,38 @@
 <template>
-    <CTabs variant="pills" :active-tab="0" class="custom-tabs-wrapper">
-        <CTab>
-            <template slot="title">
-                <span class="d-flex align-items-center">
-                    <CIcon name="cil-description" class="mr-2" />
-                    Questions
-                </span>
-            </template>
-            <TabQuestion :form="form" @auto-save="triggerAutoSave" />
-        </CTab>
-        <CTab>
-            <template slot="title">
-                <span class="d-flex align-items-center">
-                    <CIcon name="cil-chart-pie" class="mr-2" />
-                    Responses
-                    <CBadge color="secondary" shape="pill" class="ml-2">6</CBadge>
-                </span>
-            </template>
-            <TabResponses :responses="form" @auto-save="triggerAutoSave" />
-        </CTab>
-        <CTab>
-            <template slot="title">
-                <span class="d-flex align-items-center">
-                    <CIcon name="cil-settings" class="mr-2" />
-                    Settings
-                </span>
-            </template>
-            <TabSetting :settings="form" @auto-save="triggerAutoSave" />
-        </CTab>
-    </CTabs>
+    <CRow>
+        <CCol col="12" class="mb-4">
+            <CTabs variant="pills" :active-tab="0" class="custom-tabs-wrapper">
+                <CTab>
+                    <template slot="title">
+                        <span class="d-flex align-items-center">
+                            <CIcon name="cil-description" class="mr-2" />
+                            Questions
+                        </span>
+                    </template>
+                    <TabQuestion :form="form" @auto-save="triggerAutoSave" />
+                </CTab>
+                <CTab>
+                    <template slot="title">
+                        <span class="d-flex align-items-center">
+                            <CIcon name="cil-chart-pie" class="mr-2" />
+                            Responses
+                            <CBadge color="secondary" shape="pill" class="ml-2">6</CBadge>
+                        </span>
+                    </template>
+                    <TabResponses :responses="form" @auto-save="triggerAutoSave" />
+                </CTab>
+                <CTab>
+                    <template slot="title">
+                        <span class="d-flex align-items-center">
+                            <CIcon name="cil-settings" class="mr-2" />
+                            Settings
+                        </span>
+                    </template>
+                    <TabSetting :settings="form" @auto-save="triggerAutoSave" />
+                </CTab>
+            </CTabs>
+        </CCol>
+    </CRow>
 </template>
 
 <script>
@@ -67,7 +71,7 @@ export default {
 }
 
 /* Add min-height to the white content boxes */
-.custom-tabs-wrapper .tab-content>.active {
+.custom-tabs-wrapper .tab-content .active {
     min-height: 60vh;
     display: flex;
     flex-direction: column;

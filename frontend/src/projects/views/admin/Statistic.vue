@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="flex-grow-1">
         <Header title="Admin Dashboard" description="Overview of all forms and responses" />
         <WidgetsDropdown class="mb-4" />
         <CRow class="mb-4">
@@ -18,7 +18,7 @@
     </div>
 </template>
 
-<script>
+<script>    
 import WidgetsDropdown from '../../components/widgets/WidgetsDropdown.vue'
 import AdminTables from '../../components/tables/AdminTables.vue';
 import AdminDoughnutCharts from '../../components/charts/AdminDoughnutCharts.vue'
@@ -43,7 +43,7 @@ export default {
     },
     methods: {
         onInit() {
-            this.$store.dispatch('Forms/getForms');
+            this.$store.dispatch('Forms/get');
         },
     },
     computed: {

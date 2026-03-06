@@ -122,7 +122,7 @@ exports.onMessage_Response = async function (number, code, res) {
 // ================================
 exports.sendResponse =  async function (response, numbers, code, data = null) {
     const httpCode = Number(String(code).substring(0, 3)); // เอา 3 หลักแรก
-    const resData = await resMsg.onMessage_Response(numbers, code);
+    const resData = (await resMsg.onMessage_Response(numbers, code)) || {};
     if (data !== null) resData.data = data;
     return response.status(httpCode).json(resData);
 }

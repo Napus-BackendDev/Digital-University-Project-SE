@@ -24,7 +24,7 @@ export default {
     },
     methods: {
         onInit() {
-            this.$store.dispatch('Forms/getForms');
+            this.$store.dispatch('Forms/get');
         },
     },
     computed: {

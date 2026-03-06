@@ -104,7 +104,7 @@
                             <CDropdownItem @click="goToEditForm(item)">
                                 <CIcon name="cil-pencil" class="mr-2 text-warning" /> Edit
                             </CDropdownItem>
-                            <CDropdownItem @click="deleteForm(item)" class="text-danger">
+                            <CDropdownItem @click="deleteModal = true && (deleteItem = item)" class="text-danger">
                                 <CIcon name="cil-trash" class="mr-2" /> Delete
                             </CDropdownItem>
                         </CDropdown>
@@ -114,20 +114,48 @@
             </CDataTable>
         </div>
 
-        <!-- External Pagination -->
-        <div class="d-flex justify-content-center mt-4 mb-5">
-            <CPagination :activePage.sync="activePage" :pages="totalPages" :doubleArrows="false" :align="'center'"
-                class="custom-pagination border-0" />
-        </div>
+        <!-- Pagination -->
+        <Pagination :activePage.sync="activePage" :pages="totalPages" />
+
+        <!-- Confirm Delete modal -->
+        <CModal :show.sync="deleteModal" :centered="true">
+            <template #header-wrapper>
+                <div class="align-items-start p-3">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="icon-wrapper border-danger m-1">
+                            <CIcon name="cil-x" />
+                        </div>
+                        <span class="font-weight-bold">Delete Confirmation</span>
+                    </div>
+                </div>
+            </template>
+            <template #body-wrapper>
+                <div class="d-flex justify-content-center p-4">
+                    <span>Do you really need this? after deleting you can't undone</span>
+                </div>
+            </template>
+            <template #footer-wrapper>
+                <div class="d-flex justify-content-center p-3">
+                    <CButton color="secondary" @click="deleteModal = false">
+                        Cancel
+                    </CButton>
+                    <CButton color="danger" class="ml-2" @click="confirmDelete()">
+                        OK
+                    </CButton>
+                </div>
+            </template>
+        </CModal>
     </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import moment from 'moment'
+import Pagination from '@/projects/components/Util/Pagination.vue'
 
 export default {
     name: 'EditorTables',
+    components: { Pagination },
     data() {
         return {
             searchQuery: '',
@@ -135,8 +163,10 @@ export default {
             isCreating: false,
             activePage: 1,
             itemsPerPage: 5,
+            deleteModal: false,
+            deleteItem: null,
             columns: [
-                { key: 'title', label: 'Form Name', _style: 'width:40%' },
+                { key: 'title', label: 'Questionnaire', _style: 'width:40%' },
                 { key: 'status', label: 'Status', _style: 'width:15%' },
                 { key: 'responses', label: 'Responses', _style: 'width:15%' },
                 { key: 'created', label: 'Last Modified', _style: 'width:20%' },
@@ -161,9 +191,6 @@ export default {
         },
 
         tableData() {
-            // Force reactivity on locale change
-            const locale = this.lang;
-
             let finalData = [];
 
             if (Array.isArray(this.forms) && this.forms.length > 0) {
@@ -291,7 +318,7 @@ export default {
                     }
                 };
 
-                const response = await this.$store.dispatch('Forms/createForm', newFormData);
+                const response = await this.$store.dispatch('Forms/create', newFormData);
 
                 if (response && response.data && response.data.data && response.data.data._id) {
                     this.$router.push({ name: 'EditorCreateForm', params: { _id: response.data.data._id } });
@@ -309,18 +336,23 @@ export default {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
         },
         goToViewForm(item) {
-            this.$router.push({ name: 'UserFormFill', params: { id: item._id } });
+            this.$router.push({ name: 'EditorPreview', params: { id: item._id } });
+        },
+        async confirmDelete() {
+            if (this.deleteItem) {
+                await this.deleteForm(this.deleteItem);
+            }
+            this.deleteModal = false;
+            this.deleteItem = null;
         },
         async deleteForm(item) {
-            if (confirm("Are you sure you want to delete this form?")) {
-                try {
-                    await this.$store.dispatch('Forms/deleteForm', { _id: item._id });
-                    await this.$store.dispatch('Forms/getForms');
-                } catch (error) {
-                    console.error("Failed to delete form:", error);
-                }
+            try {
+                await this.$store.dispatch('Forms/delete', { _id: item._id });
+                await this.$store.dispatch('Forms/get');
+            } catch (error) {
+                console.error("Failed to delete form:", error);
             }
-        }
+        },
     }
 }
 </script>
@@ -484,33 +516,5 @@ export default {
 ::v-deep .custom-table tbody tr:last-child td {
     border-bottom: none !important;
     /* Remove bottom border from the last row */
-}
-
-/* Custom Pagination to match the image */
-::v-deep .custom-pagination .page-item .page-link {
-    border: none !important;
-    background-color: transparent !important;
-    color: #475569 !important;
-    font-weight: 500;
-    padding: 8px 14px;
-    border-radius: 50%;
-    margin: 0 4px;
-}
-
-::v-deep .custom-pagination .page-item.active .page-link {
-    background-color: #f1f5f9 !important;
-    /* Extremely light grey circle */
-    color: #0f172a !important;
-    /* Darker text */
-    font-weight: 600;
-}
-
-::v-deep .custom-pagination .page-item:not(.active) .page-link:hover {
-    background-color: #f8fafc !important;
-    color: #1e293b !important;
-}
-
-::v-deep .custom-pagination .page-item.disabled .page-link {
-    color: #94a3b8 !important;
 }
 </style>

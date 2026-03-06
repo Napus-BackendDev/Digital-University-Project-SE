@@ -9,21 +9,26 @@ const Login = () => import('@/projects/views/Login.vue')
 
 // User
 const UserDashboard = () => import('@/projects/views/user/Dashboard.vue')
-const UserFormFill = () => import('@/projects/views/user/FormFill.vue')
+const UserFormFill = () => import('@/projects/views/page/Fillform.vue')
 
 // Editor
 const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
 const EditorCreateForm = () => import('@/projects/views/editor/CreateForm.vue')
 
+// Page
+const Fillform = () => import('@/projects/views/page/Fillform.vue')
+const Responedetail = () => import('@/projects/views/page/Responedetail.vue')
+
 // Admin
-const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue') 
+// const AdminUsermanager = () => import('@/projects/views/admin/Usermanager.vue')
+const AdminStatistic = () => import('@/projects/views/admin/Statistic.vue')
 
 
 Vue.use(Router)
 
 export default new Router({
     mode: 'history',
-    scrollBehavior: () => ({y: 0}),
+    scrollBehavior: () => ({ y: 0 }),
     routes: [
 
         {
@@ -34,7 +39,7 @@ export default new Router({
             children: [
 
                 {
-                    path: 'user/dashboard',
+                    path: 'user/forms',
                     name: 'UserDashboard',
                     component: UserDashboard
                 },
@@ -43,7 +48,7 @@ export default new Router({
                     path: 'user/form-fill/:id',
                     name: 'UserFormFill',
                     component: UserFormFill,
-                    props: true
+                    props: route => ({ formId: route.params.id })
                 },
 
                 {
@@ -52,18 +57,37 @@ export default new Router({
                     component: EditorDashboard
                 },
 
+                // {
+                //     path: 'admin/usermanager',
+                //     name: 'AdminUsermanager',
+                //     component: AdminUsermanager
+                // },
+
                 {
-                    path: 'admin/dashboard',
-                    name: 'AdminDashboard',
-                    component: AdminDashboard
+                    path: 'admin/statistic',
+                    name: 'AdminStatistic',
+                    component: AdminStatistic
                 },
 
                 {
                     path: 'editor/dashboard/:_id',
                     name: 'EditorCreateForm',
                     component: EditorCreateForm
-                }
+                },
 
+                {
+                    path: 'editor/preview/:id',
+                    name: 'EditorPreview',
+                    component: Fillform,
+                    props: route => ({ formId: route.params.id })
+                },
+
+                {
+                    path: 'user/response/:id',
+                    name: 'ResponseDetail',
+                    component: Responedetail,
+                    props: true
+                }
 
             ]
         },

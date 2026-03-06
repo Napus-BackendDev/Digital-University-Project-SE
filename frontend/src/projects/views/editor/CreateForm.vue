@@ -1,19 +1,7 @@
 <template>
     <div class="flex-grow-1">
-        <CRow class="mb-4">
-            <CCol col="12" class="d-flex justify-content-between align-items-center">
-                <ButtonBack path="/editor/dashboard" />
-                <div class="d-flex align-items-center">
-                    <ButtonPreview />
-                </div>
-            </CCol>
-        </CRow>
-
-        <CRow>
-            <CCol col="12" class="mb-4">
-                <Tab :form="formData" @auto-save="triggerAutoSave" />
-            </CCol>
-        </CRow>
+        <ButtonBack path="/editor/dashboard" />
+        <Tab :form="formData" @auto-save="triggerAutoSave" />
     </div>
 </template>
 
@@ -41,7 +29,7 @@ export default {
         async onInit() {
             const formId = this.$route.params._id;
             try {
-                this.formData = await this.$store.dispatch('Forms/getFormById', { _id: formId });
+                this.formData = await this.$store.dispatch('Forms/getById', { _id: formId });
             } catch (error) {
                 console.error("Error fetching form:", error);
             }

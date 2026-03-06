@@ -8,6 +8,7 @@ msg[40300] = { code: 40300,httpcode: 403,message: [{value: "ข้อมูล�
 msg[40301] = { code: 40301,httpcode: 403,message: [{value: "มีข้อมูลนี้อยู่แล้ว",key: "th"},{value: "Data is duplicated",key: "en"}] };
 msg[40302] = { code: 40302,httpcode: 403,message: [{value: "ไม่อนุญาตให้คัดลอกแบบฟอร์มนี้",key: "th"},{value: "Not allowed to duplicate this form",key: "en"}] };
 msg[40400] = { code: 40400,httpcode: 404,message: [{value: "ไม่พบข้อมูลนี้ในระบบ",key: "th"},{value: "Data not found",key: "en"}] };
+msg[40401] = { code: 40401,httpcode: 404,message: [{value: "ข้อมูลไม่ถูกต้อง",key: "th"},{value: "invalid data",key: "en"}] };
 
 //Response Section
 msg[20001] = { code: 20001,httpcode: 200,message: [{value: "ดึงคำตอบตามแบบฟอร์มสำเร็จ",key: "th"},{value: "Get responses by form successfully",key: "en"}] };

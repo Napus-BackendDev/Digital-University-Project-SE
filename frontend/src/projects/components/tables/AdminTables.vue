@@ -8,43 +8,50 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-hover custom-table">
-                <thead>
-                    <tr>
-                        <th scope="col" width="40%">Form Title</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Access</th>
-                        <th scope="col" class="text-center">Responses</th>
-                        <th scope="col" class="text-right">Created</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(item, index) in paginatedData" :key="index">
-                        <td>
-                            <div class="font-weight-bold text-dark">{{ item.title }}</div>
-                            <div class="small text-muted" v-if="item.description">{{ item.description }}</div>
-                        </td>
-                        <td class="align-middle">
-                            <div class="d-flex align-items-center"
-                                :class="{ 'text-dark': item.status === 'Open' || item.status === 'Draft', 'text-muted': item.status === 'Closed' }">
-                                <CIcon :name="getStatusIcon(item.status)" size="sm" class="mr-1" />
-                                {{ item.status }}
-                            </div>
-                        </td>
-                        <td class="align-middle">
-                            <span class="badge badge-pill badge-light border px-3 py-1">{{ item.access }}</span>
-                        </td>
-                        <td class="align-middle text-center">
-                            <div class="response-circle">
-                                {{ item.responses }}
-                            </div>
-                        </td>
-                        <td class="align-middle text-right text-muted">
-                            {{ item.created }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <CDataTable :items="paginatedData" :fields="fields" :items-per-page="pageSize" :activePage="1"
+                :pagination="false" hover class="mb-0 custom-table">
+                <!-- Form Title Slot -->
+                <template #form="{ item }">
+                    <td class="py-3 pl-3">
+                        <div class="font-weight-bold text-dark">{{ item.title }}</div>
+                        <div class="small text-muted" v-if="item.description">{{ item.description }}</div>
+                    </td>
+                </template>
+
+                <!-- Status Slot -->
+                <template #status="{ item }">
+                    <td class="align-middle py-3">
+                        <div class="d-flex align-items-center"
+                            :class="{ 'text-dark': item.status === 'Open' || item.status === 'Draft', 'text-muted': item.status === 'Closed' }">
+                            <CIcon :name="getStatusIcon(item.status)" size="sm" class="mr-1" />
+                            {{ item.status }}
+                        </div>
+                    </td>
+                </template>
+
+                <!-- Access Slot -->
+                <template #access="{ item }">
+                    <td class="align-middle py-3">
+                        <span class="badge badge-pill badge-light border px-3 py-1">{{ item.access }}</span>
+                    </td>
+                </template>
+
+                <!-- Responses Slot -->
+                <template #responses="{ item }">
+                    <td class="align-middle py-3 text-center">
+                        <div class="response-circle">
+                            {{ item.responses }}
+                        </div>
+                    </td>
+                </template>
+
+                <!-- Created Slot -->
+                <template #created="{ item }">
+                    <td class="align-middle py-3 text-right text-muted pr-4">
+                        {{ item.created }}
+                    </td>
+                </template>
+            </CDataTable>
         </div>
         <div class="d-flex justify-content-center mt-3">
             <CPagination :active-page.sync="currentPage" :pages="totalPages" responsive />
@@ -62,6 +69,13 @@ export default {
         return {
             currentPage: 1,
             pageSize: 5,
+            fields: [
+                { key: 'form', label: 'Form Title', _style: 'width:40%' },
+                { key: 'status', label: 'Status' },
+                { key: 'access', label: 'Access' },
+                { key: 'responses', label: 'Responses', _classes: 'text-center' },
+                { key: 'created', label: 'Created', _classes: 'text-right pr-4' }
+            ]
         }
     },
     computed: {

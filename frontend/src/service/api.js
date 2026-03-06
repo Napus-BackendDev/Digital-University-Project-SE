@@ -74,7 +74,7 @@ export default {
   question(method, data, configs) {
     switch (method) {
       case 'exp':
-        return instance.get('/question', data)
+        return instance.get('/question/exp', data)
       case 'create':
         return instance.post('/question', data)
       case 'create-many':
@@ -83,8 +83,6 @@ export default {
         return instance.put('/question', data)
       case 'delete':
         return instance.delete('/question', { data })
-      case 'delete-by-form-id':
-        return instance.delete('/question/byForm', { data })
       default:
         break
     }
@@ -93,25 +91,22 @@ export default {
   response(method, data, configs) {
     switch (method) {
       case 'get-by-form-id':
-        return instance.get(`/response/getByFormId?form_id=${data.formId}`)
-      case 'get-by-user-id':
-        return instance.get(`/response/getByUserId?userId=${data.userId}`)
+        return instance.post(`/response/getByFormId`, data)
       case 'get-by-id':
-        return instance.get(`/response/getById?_id=${data._id}`)
+        return instance.post(`/response/getById`, data)
       case 'submit':
-        return instance.post('/response/submit', data)
+        return instance.post('/response', data, {
+          headers: { 'Content-Type': 'multipart/form-data' }  // let browser set multipart boundary
+        })
       case 'update':
-        return instance.patch('/response/update', data)
+        return instance.put('/response', data)
       case 'delete':
-        return instance.delete('/response/delete', { data: { _id: data._id } })
-      case 'delete-by-form-id':
-        return instance.delete('/response/deleteByFormId', { data: { formId: data.formId } })
+        return instance.delete('/response', { data })
+
       case 'download-user-json':
         return instance.get(`/response/download/${data.formId}/user/${data.userId}`)
       case 'download-form-json':
         return instance.get(`/response/download/${data.formId}`)
-      case 'generate-export-link':
-        return instance.post('/response/export/link', { formId: data.formId })
       default:
         break
     }
