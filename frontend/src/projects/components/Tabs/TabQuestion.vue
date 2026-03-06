@@ -313,8 +313,7 @@
                             <CIcon name="cil-image-1" :height="40" class="mb-2" />
                             <span>Choose Image</span>
                         </div>
-                        <img v-else :src="modalFiles"
-                            style="inset:0; width:100%; height:100%; object-fit:contain;" />
+                        <img v-else :src="modalFiles" style="inset:0; width:100%; height:100%; object-fit:contain;" />
                     </div>
                     <input ref="imageFileInput" type="file" accept="image/*" style="display:none;"
                         @change="onImageSelected($event)" />
@@ -592,7 +591,7 @@ export default {
         },
         setQuestionType(question, typeId) {
             if (!question) return;
-            
+
             const foundType = this.questionTypes.find(t => t._id === typeId);
             const isMultipleChoice = foundType.type === 'multiple_choice' || foundType.type === 'checkbox';
             const isCheckboxes = foundType.type === 'checkbox';
@@ -622,7 +621,7 @@ export default {
                 const qIndex = this.localQuestions.indexOf(question);
                 this.openImageModal(qIndex !== -1 ? qIndex : null);
             }
-            
+
             this.$set(question, 'type', typeId);
             this.putQuestion(question);
         },

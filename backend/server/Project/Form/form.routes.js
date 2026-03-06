@@ -10,7 +10,7 @@ router.get("/exp", function (req, res, next) {
 }, form.onQuerys);
 
 // Get One by ID
-router.post("/id", function (req, res, next) {
+router.post("/get", function (req, res, next) {
     req.query.apiId = 22;
     next();
 }, form.onQuery);

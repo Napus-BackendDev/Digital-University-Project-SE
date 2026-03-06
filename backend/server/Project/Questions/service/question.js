@@ -13,7 +13,7 @@ const getSuccessCode = function (request) {
 exports.onQuery = async function (request, response) {
     try {
         var query = {};
-        query._id = new mongo.ObjectId(request.query._id);
+        query._id = new mongo.ObjectId(request.body._id);
 
         const doc = await Questions.onQuery(query);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
