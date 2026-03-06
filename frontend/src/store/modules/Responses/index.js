@@ -20,7 +20,7 @@ const module = {
                 .catch(err => { throw err; });
         },
         getById({ commit }, data) {
-            return Service.response('get-by-form-id', data, {})
+            return Service.response('get-by-id', data, {})
                 .then(response => {
                     commit('responses', response.data.data || []);
                     return response.data.data;

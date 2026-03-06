@@ -37,10 +37,11 @@ const ServerModule = {
                 })
                 .catch(error => { console.log(error); throw error; });
         },
-        update({ commit }, data) {
+        update({ commit, dispatch }, data) {
             return Service.form('update', data, {})
                 .then(response => {
-                    commit('forms', response.data.data);
+
+                    dispatch('get');
                     return response;
                 })
                 .catch(error => { console.log(error); throw error; });

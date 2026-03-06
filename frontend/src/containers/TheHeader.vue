@@ -69,7 +69,7 @@ export default {
       return currentPath.includes(path)
     },
     forms() {
-      this.$router.push('/forms')
+      this.$router.push('/user/dashboard')
     },
     dashboard() {
       this.$router.push('/editor/dashboard')

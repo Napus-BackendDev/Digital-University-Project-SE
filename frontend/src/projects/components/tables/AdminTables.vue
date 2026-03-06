@@ -87,20 +87,36 @@ export default {
 
             if (!this.forms || this.forms.length === 0) return []
 
-            // Sort forms by createdAt (newest first)
+            // Sort forms by updatedAt (newest first)
             const sortedForms = [...this.forms].sort((a, b) => {
-                return new Date(b.createdAt) - new Date(a.createdAt)
+                return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
             })
 
             return sortedForms.map(form => {
+                let statusTitle = 'Draft';
+                const now = new Date();
+                const schedule = form.schedule || (form.settings && form.settings.schedule);
+
+                if (schedule && schedule.startAt) {
+                    const start = new Date(schedule.startAt);
+                    const end = new Date(schedule.endAt);
+
+                    if (!start && !end) {
+                        statusTitle = 'Draft';
+                    } else if (start <= now && now <= end) {
+                        statusTitle = 'Open';
+                    } else {
+                        statusTitle = 'Closed';
+                    }
+                }
 
                 return {
                     title: this.getLang(form.title) || 'Untitled Form',
                     description: this.getLang(form.description) || '',
-                    status: this.getLang(form.status.title),
+                    status: statusTitle,
                     access: form.isPublic ? 'Public' : 'Private',
                     responses: form.responses ? form.responses.length : 0,
-                    created: form.createdAt ? moment(form.createdAt).format('D MMM YYYY') : '-'
+                    created: form.updatedAt ? moment(form.updatedAt).format('D MMM YYYY') : '-'
                 }
             })
         },

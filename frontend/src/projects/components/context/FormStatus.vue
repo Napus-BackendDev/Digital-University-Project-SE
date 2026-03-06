@@ -9,7 +9,7 @@
                 <CCol md="9">
                     <CInput type="datetime-local" class="mb-0"
                         style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        :value="formattedStart" @input="updateStart" />
+                        :value="formattedStart" @input="updateStart" @change="triggerAutoSave" />
                 </CCol>
             </CRow>
             <CRow class="align-items-center">
@@ -19,7 +19,7 @@
                 <CCol md="9">
                     <CInput type="datetime-local" class="mb-0"
                         style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        :value="formattedEnd" @input="updateEnd" />
+                        :value="formattedEnd" @input="updateEnd" @change="triggerAutoSave" />
                 </CCol>
             </CRow>
         </CCardBody>
@@ -58,12 +58,14 @@ export default {
                 this.$set(this.settings, 'schedule', {});
             }
             this.$set(this.settings.schedule, 'startAt', val);
+            this.triggerAutoSave();
         },
         updateEnd(val) {
             if (!this.settings.schedule) {
                 this.$set(this.settings, 'schedule', {});
             }
             this.$set(this.settings.schedule, 'endAt', val);
+            this.triggerAutoSave();
         },
         async triggerAutoSave() {
             try {

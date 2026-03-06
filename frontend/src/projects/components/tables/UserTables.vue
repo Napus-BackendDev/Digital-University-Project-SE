@@ -55,10 +55,10 @@
                 <template #action="{ item }">
                     <td class="py-3 text-right pr-4">
                         <CButton v-if="!item.isEmptyRow"
-                            :color="item.status.toLowerCase() === 'completed' ? 'success' : 'primary'"
-                            :variant="item.status.toLowerCase() === 'completed' ? 'outline' : ''" size="sm"
+                            :color="item.status.toLowerCase() === 'completed' ? 'secondary' : 'primary'"
+                            :disabled="item.status.toLowerCase() === 'completed'" size="sm"
                             class="font-weight-bold px-4" style="border-radius: 6px;" @click.stop="goToForm(item._id)">
-                            {{ item.status.toLowerCase() === 'completed' ? 'Continue' : 'Start' }}
+                            {{ item.status.toLowerCase() === 'completed' ? 'Completed' : 'Start' }}
                         </CButton>
                     </td>
                 </template>
@@ -111,22 +111,36 @@ export default {
                 return new Date(b.createdAt) - new Date(a.createdAt)
             })
 
-            // 2. Map to display objects
-            const mappedData = sortedForms.map(form => {
-                // Determine Pending/Completed Status based on logic.
-                // For a User filling a form, we'll assume completed if they have a response, otherwise Pending.
-                // Assuming `form.responses` is available and has elements if user has completed it.
-                // NOTE: This might need fine-tuning based on actual backend relation linking user to response.
-                const hasResponses = form.responses && form.responses.length > 0;
-                const statusTitle = hasResponses ? 'Completed' : 'Pending';
+            // 2. Map to display objects and filter to only include 'Open' forms
+            const mappedData = [];
+            const now = new Date();
 
-                return {
-                    _id: form._id || form.id,
-                    title: this.getLang(form.title) || 'Untitled Form',
-                    description: this.getLang(form.description) || '',
-                    status: statusTitle
+            sortedForms.forEach(form => {
+                const schedule = form.schedule;
+                let isOpen = false;
+
+                if (schedule && schedule.startAt) {
+                    const start = new Date(schedule.startAt);
+                    const end = new Date(schedule.endAt);
+
+                    if (start <= now && now <= end) {
+                        isOpen = true;
+                    }
                 }
-            })
+
+                // If the form is currently open based on schedule, include it
+                if (isOpen) {
+                    const hasResponses = form.responses && form.responses.length > 0;
+                    const statusTitle = hasResponses ? 'Completed' : 'Pending';
+
+                    mappedData.push({
+                        _id: form._id || form.id,
+                        title: this.getLang(form.title) || 'Untitled Form',
+                        description: this.getLang(form.description) || '',
+                        status: statusTitle
+                    });
+                }
+            });
 
             // 3. Apply filters
             let finalData = mappedData.filter(item => {

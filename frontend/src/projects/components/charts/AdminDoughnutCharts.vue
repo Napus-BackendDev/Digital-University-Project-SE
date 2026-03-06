@@ -52,22 +52,22 @@ export default {
             const counts = { Open: 0, Draft: 0, Closed: 0 };
 
             this.forms.forEach(form => {
-                let statusRaw = ''
-                if (form.status && form.status.title) {
-                    if (Array.isArray(form.status.title)) {
-                        const enItem = form.status.title.find(item => item.key === 'en')
-                        statusRaw = enItem ? enItem.value : (form.status.title[0]?.value || '')
+                let status = 'Draft';
+                const now = new Date();
+                const schedule = form.schedule || (form.settings && form.settings.schedule);
+
+                if (schedule && schedule.startAt) {
+                    const start = new Date(schedule.startAt);
+                    const end = new Date(schedule.endAt);
+
+                    if (!start && !end) {
+                        status = 'Draft';
+                    } else if (start <= now && now <= end) {
+                        status = 'Open';
                     } else {
-                        statusRaw = form.status.title
+                        status = 'Closed';
                     }
                 }
-
-                statusRaw = statusRaw.toLowerCase()
-
-                let status = 'Draft'
-                if (statusRaw.includes('open') || statusRaw.includes('publish')) status = 'Open'
-                else if (statusRaw.includes('close')) status = 'Closed'
-                else if (statusRaw.includes('draft')) status = 'Draft'
 
                 counts[status]++
             })
