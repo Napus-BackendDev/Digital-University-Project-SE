@@ -13,33 +13,54 @@ const getSuccessCode = function (request) {
 exports.onQuery = async function (request, response) {
   try {
     let query = {};
-    query._id = new mongo.ObjectId(request.query._id);
+    query._id = new mongo.ObjectId(request.body._id);
+    const doc = await Form.onQuery(query);
+    
+    // const doc = await Form.onAggregate([
+    //   { $match: query },
+    //   {
+    //     $lookup: {
+    //       from: "Questions",
+    //       localField: "questions",
+    //       foreignField: "_id",
+    //       as: "questions",
+    //       pipeline: [
+    //         {
+    //           $lookup: {
+    //             from: "Question_Types",
+    //             localField: "type",
+    //             foreignField: "_id",
+    //             as: "type",
+    //           },
+    //         },
+    //         { $unwind: { path: "$type", preserveNullAndEmpty: true } },
+    //         { $sort: { order: 1 } },
+    //       ],
+    //     },
+    //   },
+    //   {
+    //     $graphLookup: {
+    //       from: "Forms",
+    //       startWith: "$_id",
+    //       connectFromField: "_id",
+    //       connectToField: "originalFormId",
+    //       as: "childrenForms",
+    //       depthField: "depth",
+    //     },
+    //   },
+    //   {
+    //     $addFields: {
+    //       childrenForms: {
+    //         $sortArray: {
+    //           input: "$childrenForms",
+    //           sortBy: { depth: 1, createdAt: -1 },
+    //         },
+    //       },
+    //     },
+    //   },
+    // ]);
 
-    const doc = await Form.onAggregate([
-      { $match: query },
-      {
-        $graphLookup: {
-          from: "Forms",
-          startWith: "$_id",
-          connectFromField: "_id",
-          connectToField: "originalFormId",
-          as: "childrenForms",
-          depthField: "depth",
-        },
-      },
-      {
-        $addFields: {
-          childrenForms: {
-            $sortArray: {
-              input: "$childrenForms",
-              sortBy: { depth: 1, createdAt: -1 },
-            },
-          },
-        },
-      },
-    ]);
-
-    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc[0]);
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
     return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
   }

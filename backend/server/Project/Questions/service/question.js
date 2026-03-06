@@ -22,7 +22,6 @@ exports.onQuery = async function (request, response) {
     }
 };
 
-
 exports.onQuerys = async function (request, response) {
     try {
         var querys = {};

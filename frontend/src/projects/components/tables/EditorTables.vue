@@ -191,9 +191,6 @@ export default {
         },
 
         tableData() {
-            // Force reactivity on locale change
-            const locale = this.lang;
-
             let finalData = [];
 
             if (Array.isArray(this.forms) && this.forms.length > 0) {

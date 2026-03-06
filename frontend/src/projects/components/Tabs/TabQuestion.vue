@@ -375,6 +375,7 @@ export default {
             immediate: true,
             deep: false,
             async handler(newForm) {
+                console.log(JSON.parse(JSON.stringify(newForm)));
                 if (newForm && Array.isArray(newForm.questions)) {
                     this.localQuestions = JSON.parse(JSON.stringify(newForm.questions));
                 }
@@ -385,7 +386,7 @@ export default {
                     this.$nextTick(() => this.addFormDesc());
                 }
             }
-        }
+        },
     },
     created() {
         this.$store.dispatch('Setting/question_type/get');
@@ -507,7 +508,7 @@ export default {
                 if (payload.type && typeof payload.type === 'object') {
                     payload.type = payload.type._id;
                 }
-                await this.$store.dispatch('Questions/updateQuestion', {
+                await this.$store.dispatch('Questions/update', {
                     _id: payload._id,
                     title: payload.title,
                     form: payload.form,
@@ -542,7 +543,7 @@ export default {
                 maxFiles: isFileUpload ? 1 : null,
                 maxFileSize: isFileUpload ? 1 : null,
                 image: isImage ? this.modalFiles : null,
-                description: isTitleDescription ? [{ key: 'en', value: 'Description' }] : null,
+                description: isTitleDescription ? [{ key: 'en', value: 'Description' }] : [],
             };
 
             const payload = {

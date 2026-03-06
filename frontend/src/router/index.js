@@ -20,7 +20,7 @@ const Fillform = () => import('@/projects/views/page/Fillform.vue')
 const Responedetail = () => import('@/projects/views/page/Responedetail.vue')
 
 // Admin
-const AdminUsermanager = () => import('@/projects/views/admin/Usermanager.vue')
+// const AdminUsermanager = () => import('@/projects/views/admin/Usermanager.vue')
 const AdminStatistic = () => import('@/projects/views/admin/Statistic.vue')
 
 
@@ -39,7 +39,7 @@ export default new Router({
             children: [
 
                 {
-                    path: 'user/dashboard',
+                    path: 'user/forms',
                     name: 'UserDashboard',
                     component: UserDashboard
                 },
@@ -57,11 +57,11 @@ export default new Router({
                     component: EditorDashboard
                 },
 
-                {
-                    path: 'admin/usermanager',
-                    name: 'AdminUsermanager',
-                    component: AdminUsermanager
-                },
+                // {
+                //     path: 'admin/usermanager',
+                //     name: 'AdminUsermanager',
+                //     component: AdminUsermanager
+                // },
 
                 {
                     path: 'admin/statistic',
