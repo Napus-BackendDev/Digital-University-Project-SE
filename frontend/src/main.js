@@ -22,14 +22,7 @@ import moment from 'moment'
 Vue.prototype.moment = moment
 
 
-import GAuth from 'vue-google-oauth2'
-const gauthOption = {
-    clientId: process.env.VUE_APP_CLIENTID,
-    scope: process.env.VUE_APP_SCOPE,
-    prompt: process.env.VUE_APP_PROMPT
-}
-Vue.use(GAuth, gauthOption)
-console.log(gauthOption)
+// Google Identity Services script is loaded via index.html
 
 new Vue({
   el: '#app',

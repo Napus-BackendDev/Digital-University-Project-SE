@@ -7,11 +7,14 @@ import Setting from "@/store/modules/Setting";
 import Questions from "@/store/modules/Questions/index.js";
 import Auth from "@/store/modules/Auth/index.js";
 
+import Dialog from "@/store/modules/Dialog/index.js";
+
 export default new Vuex.Store({
   modules: {
     Forms: formModel,
-    Setting: Setting,
+    setting: Setting,
     Questions: Questions,
-    auth: Auth
+    auth: Auth,
+    dialog: Dialog
   }
 });

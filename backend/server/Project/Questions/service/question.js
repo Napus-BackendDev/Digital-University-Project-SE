@@ -38,6 +38,7 @@ exports.onCreate = async function (request, response) {
         const doc = await Questions.onCreate(request.body);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
     } catch (err) {
+        console.error('Question onCreate Error:', err);
         return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
     }
 };

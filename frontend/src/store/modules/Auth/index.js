@@ -8,9 +8,13 @@ const module = {
     user: null,
     isAuthenticated: false,
     loading: false,
+    is2FA: false,
   },
 
   mutations: {
+    SET_IS_2FA(state, is2FA) {
+      state.is2FA = is2FA;
+    },
     SET_USER(state, user) {
       state.user = user;
       state.isAuthenticated = !!user;
@@ -31,7 +35,7 @@ const module = {
       try {
         const response = await Service.auth("google-login", { credential: token });
         commit("SET_USER", response.data.user);
-        router.push("/").catch(() => {});
+        router.push("/").catch(() => { });
         return response.data;
       } catch (error) {
         commit("CLEAR_USER");
@@ -64,6 +68,21 @@ const module = {
         router.push("/pages/login");
       }
     },
+
+    // Handling 2FA code submission
+    async twofaSend({ commit }, body) {
+      commit("SET_LOADING", true);
+      try {
+        // Placeholder for 2FA service call
+        console.log("Sending 2FA code:", body);
+        // await Service.auth("verify-2fa", body);
+        commit("SET_IS_2FA", false);
+      } catch (error) {
+        throw error;
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    }
   },
 
   getters: {
@@ -75,6 +94,7 @@ const module = {
     isStaff: (state) =>
       state.user && state.user.roles && state.user.roles.includes("STAFF"),
     loading: (state) => state.loading,
+    is2FA: (state) => state.is2FA,
   },
 };
 

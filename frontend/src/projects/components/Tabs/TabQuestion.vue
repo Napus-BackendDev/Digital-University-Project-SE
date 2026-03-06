@@ -356,10 +356,10 @@ export default {
         }
     },
     created() {
-        this.$store.dispatch('Setting/question_type/get');
+        this.$store.dispatch('setting/question_type/get');
     },
     computed: {
-        ...mapGetters('Setting/question_type', { question_type: 'item' }),
+        ...mapGetters('setting/question_type', { question_type: 'item' }),
         questionTypes() {
             if (!this.question_type || !Array.isArray(this.question_type)) return [];
             return JSON.parse(JSON.stringify(this.question_type)).map(type => ({
@@ -520,6 +520,7 @@ export default {
             };
 
             try {
+                console.log('Creating question with payload:', payload);
                 const res = await this.$store.dispatch('Questions/createQuestion', payload);
                 const created = res && res.data && res.data.data;
                 if (created && created._id) {

@@ -80,6 +80,8 @@ router.post('/google', async (req, res) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
+    console.log('Generated token:', token);
+
     // Set httpOnly cookie
     res.cookie('token', token, {
       httpOnly: true,

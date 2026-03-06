@@ -293,9 +293,14 @@ export default {
 
                 const response = await this.$store.dispatch('Forms/createForm', newFormData);
 
-                this.$router.push({ name: 'EditorCreateForm', params: { _id: response.data.data._id } });
+                if (response && response.data && response.data.data && response.data.data._id) {
+                    this.$router.push({ name: 'EditorCreateForm', params: { _id: response.data.data._id } });
+                } else {
+                    throw new Error("Invalid response from server");
+                }
             } catch (error) {
                 console.error("Failed to create form:", error);
+                this.$toast?.error("Failed to create form. Please try again.");
             } finally {
                 this.isCreating = false;
             }

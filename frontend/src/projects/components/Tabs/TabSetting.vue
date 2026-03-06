@@ -1,8 +1,8 @@
 <template>
-    <div class="mt-3">
+    <div class="mt-3" v-if="settings">
         <FormStatus :settings="settings" @auto-save="triggerAutoSave" />
-        <AccessControl :settings="settings" @auto-save="triggerAutoSave" />
-        <ResponseSettings :settings="settings" @auto-save="triggerAutoSave" />
+        <AccessControl :settings="settings.settings || {}" @auto-save="triggerAutoSave" />
+        <ResponseSettings :settings="settings.settings || {}" @auto-save="triggerAutoSave" />
         <SendForm />
     </div>
 </template>

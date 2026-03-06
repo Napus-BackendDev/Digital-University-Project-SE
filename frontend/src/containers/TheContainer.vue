@@ -9,7 +9,7 @@
           </transition>
         </CContainer>
       </main>
-      <TheFooter />
+      <!-- <TheFooter /> -->
 
     </CWrapper>
     <CenterLoading />

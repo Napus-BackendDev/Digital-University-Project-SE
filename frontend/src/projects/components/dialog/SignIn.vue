@@ -57,12 +57,9 @@
               <CRow>
                 <CCol class="text-center">
                   <div style="cursor: pointer">
-                    <!--                        <img class="mr-2 zoom" src="@/assets/icons/logo-facebook.png" width="50px"/>-->
                     <img class="zoom" @click="onAuthenGoogle" src="@/assets/icons/logo-google.png" width="50px" />
-                    <!--                        <CButton color="danger" @click="onAuthenGoogle" shape="pill" >-->
-                    <!--                          <samp class="pl-2 pr-2">Login with MFU Mail</samp>-->
-                    <!--                        </CButton>-->
-
+                    <!-- Hidden container for standard Google button fallback -->
+                    <div id="google-btn" class="mt-3 d-flex justify-content-center"></div>
                   </div>
                 </CCol>
               </CRow>
@@ -95,7 +92,7 @@ export default {
     }
   },
   mounted() {
-
+    this.initGoogleGIS();
   },
 
   created() {
@@ -130,16 +127,55 @@ export default {
       this.$store.dispatch("auth/onLogin", body);
     },
 
+    initGoogleGIS() {
+      if (typeof google !== 'undefined') {
+        const clientId = process.env.VUE_APP_CLIENTID;
+        console.log("Initializing GIS with Client ID:", clientId);
+        
+        google.accounts.id.initialize({
+          client_id: clientId,
+          callback: this.handleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+          itp_support: true
+        });
+
+        // Render the standard button as a fallback/alternative
+        google.accounts.id.renderButton(
+          document.getElementById("google-btn"),
+          { theme: "outline", size: "large", text: "signin_with", shape: "pill" }
+        );
+      } else {
+        // Retry if script not loaded yet
+        setTimeout(this.initGoogleGIS, 500);
+      }
+    },
+
+    handleCredentialResponse(response) {
+      if (response.credential) {
+        console.log("Google Auth Success");
+        const body = {
+          token: response.credential
+        };
+        this.$store.dispatch("auth/singin", body);
+      } else {
+        console.error("No credential returned from Google");
+      }
+    },
+
     async onAuthenGoogle() {
       try {
-        console.log("onAuthenGoogle")
-        const googleUser = await this.$gAuth.signIn();
-        const id_token = googleUser.getAuthResponse().id_token;
-
-        var body = {}
-        body.token = id_token
-        this.$store.dispatch("auth/singin", body)
-
+        console.log("onAuthenGoogle (GIS)");
+        // Prompt the user to select a Google account
+        // Note: For a custom button like this, google.accounts.id.prompt() 
+        // will show the One Tap / Selection prompt.
+        google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            console.log("Prompt not displayed or skipped:", notification.getNotDisplayedReason() || notification.getSkippedReason());
+            // Fallback: If prompt is blocked, we might need the standard button
+            // but for now we'll log it.
+          }
+        });
       } catch (err) {
         console.error('Google sign-in error:', err);
         this.$toast?.error('Google Sign-In failed. Please try again.');

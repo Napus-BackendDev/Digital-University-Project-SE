@@ -15,7 +15,7 @@
 
             <hr class="my-4" />
 
-            <div class="mb-4">
+            <div class="mb-4" v-if="settings && settings.newCollaborator">
                 <h6 class="font-weight-bold mb-1">Collaborators</h6>
                 <p class="text-muted small mb-3">Add people who can help you manage this
                     form</p>

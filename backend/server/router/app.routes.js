@@ -30,6 +30,7 @@ module.exports = function (app) {
 
   // 404 handler
   app.use((req, res) => {
+    console.warn(`[404] ${req.method} ${req.path}`);
     res.status(404).json({
       message: 'Route not found',
       path: req.path
