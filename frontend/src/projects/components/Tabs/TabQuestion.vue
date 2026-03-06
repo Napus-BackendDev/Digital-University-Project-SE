@@ -4,7 +4,7 @@
             <CCardBody class="p-4">
                 <div class="form-header-section">
 
-                    <!-- ── Form Title (multilingual) ── -->
+                    <!-- ── Form Title  ── -->
                     <div class="mb-3">
                         <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
                             class="d-flex align-items-center">
@@ -24,7 +24,7 @@
                         </CButton>
                     </div>
 
-                    <!-- ── Form Description (multilingual) ── -->
+                    <!-- ── Form Description ── -->
                     <div>
                         <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
                             class="d-flex align-items-center">
@@ -73,7 +73,7 @@
                                 <CButton variant="ghost" color="primary" class="d-flex align-items-center p-1 mt-1"
                                     @click="addTitle(question)">
                                     <CIcon name="cil-plus" class="mr-1" />
-                                    <small>Add language</small>
+                                    <small>Add New Language</small>
                                 </CButton>
                             </div>
 
@@ -114,7 +114,7 @@
                             <CButton color="primary" variant="ghost" class="d-flex align-items-center p-1 mt-1"
                                 @click="addOption(question)">
                                 <CIcon name="cil-plus" class="mr-1" />
-                                <small>Add option</small>
+                                <small>Add New Option</small>
                             </CButton>
                         </div>
 
@@ -182,13 +182,37 @@
                             </div>
                         </div>
 
-                        <div v-else-if="getQuestionTypeString(question.type).toLowerCase() === 'title_desc'">
-                            <CInput disabled style="opacity: 0.55;" placeholder="Short answer text" />
-                            <CTextarea disabled style="opacity: 0.55;" placeholder="Long answer text" rows="3" />
+                        <div v-else-if="getQuestionTypeString(question.type).toLowerCase() === 'title_description'">
+                            <div>
+                                <small class="text-muted font-weight-bold d-block mb-1">Description</small>
+                                <div v-for="(descItem, dIdx) in (question.config.description || [])" :key="'qd-' + dIdx"
+                                    class="d-flex align-items-center mb-1">
+                                    <CInput class="lang-key-input flex-shrink-0 mr-2" v-model="descItem.key"
+                                        @change="putQuestion(question)" maxlength="3" style="width: 3.2rem;" />
+                                    <CInput class="flex-grow-1" v-model="descItem.value"
+                                        @change="putQuestion(question)" rows="2" />
+                                    <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                        v-if="question.config.description && question.config.description.length > 1"
+                                        @click="removeConfigDesc(question, dIdx)">
+                                        <CIcon name="cil-minus" />
+                                    </CButton>
+                                </div>
+                                <CButton variant="ghost" color="primary" class="d-flex align-items-center"
+                                    @click="addConfigDesc(question)">
+                                    <CIcon name="cil-plus" class="mr-1" />
+                                    <small>Add New Language</small>
+                                </CButton>
+                            </div>
                         </div>
 
                         <div v-else-if="getQuestionTypeString(question.type).toLowerCase() === 'image'">
-                            <!-- <CTextarea disabled style="opacity: 0.55;" placeholder="Long answer text" rows="3" /> -->
+                            <div class="image-drop-zone" @click="openImageModal(index)">
+                                <div v-if="!question.config || !question.config.image" class="image-placeholder">
+                                    <CIcon name="cil-image-1" :height="40" class="mb-2" />
+                                    <span>Click to choose image</span>
+                                </div>
+                                <img v-else :src="question.config.image" class="image-preview" />
+                            </div>
                         </div>
 
                         <div v-else>
@@ -200,7 +224,7 @@
                         <!-- ── Footer: Question Type dropdown + Required toggle ── -->
                         <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
-                                <small class="text-muted font-weight-bold text-uppercase mr-2">Type</small>
+                                <span class="text-muted font-weight-bold mr-2">Type</span>
                                 <CDropdown color="light" variant="outline">
                                     <template #toggler>
                                         <button class="btn d-flex align-items-center text-muted border bg-white"
@@ -211,11 +235,11 @@
                                             </span>
                                         </button>
                                     </template>
-                                    <CDropdownItem v-for="type in typesAll" :key="type._id || type.key"
-                                        @click="setQuestionType(question, type._id || type.type || type.key)">
-                                        <CIcon :name="getIconForType(type.type || type.key)" class="mr-2" />
+                                    <CDropdownItem v-for="type in typesAll" :key="type._id"
+                                        @click="setQuestionType(question, type._id)">
+                                        <CIcon :name="getIconForType(type._id)" class="mr-2" />
                                         <span class="text-capitalize">
-                                            {{ (type.type || type.label || '').split('_').join(' ') }}
+                                            {{ (type.type || '').split('_').join(' ') }}
                                         </span>
                                     </CDropdownItem>
                                 </CDropdown>
@@ -245,8 +269,10 @@
                     <CCardBody class="p-3">
                         <h5 class="font-weight-bold">Question Types</h5>
                         <div class="d-flex flex-column">
-                            <CButton v-for="type in questionTypes" :key="type._id" variant="ghost" color="dark"
-                                class="text-left mb-2 d-flex align-items-center" @click="addQuestion(type._id)">
+                            <CButton v-for="type in questionTypes"
+                                v-if="type.type !== 'title_description' && type.type !== 'image'" :key="type._id"
+                                variant="ghost" color="dark" class="text-left mb-2 d-flex align-items-center"
+                                @click="addQuestion(type._id)">
                                 <CIcon :name="getIconForType(type.type)" class="mr-2" />
                                 <span class="text-capitalize">{{ (type.type || '').split('_').join(' ') }}</span>
                             </CButton>
@@ -255,11 +281,11 @@
                         <h5 class="font-weight-bold pt-3 border-top">Content Elements</h5>
                         <div class="d-flex flex-column">
                             <CButton variant="ghost" color="dark" class="text-left mb-2 d-flex align-items-center"
-                                @click="addQuestion('title_desc')">
+                                @click="addQuestion('title_description')">
                                 <CIcon name="cil-text" class="mr-2" /> Title & Description
                             </CButton>
                             <CButton variant="ghost" color="dark" class="text-left mb-2 d-flex align-items-center"
-                                @click="addQuestion('image')">
+                                @click="modalImageIndex = null; modalFiles = ''; showImageModal = true">
                                 <CIcon name="cil-image-1" class="mr-2" /> Image
                             </CButton>
                         </div>
@@ -268,34 +294,44 @@
             </CCol>
         </CRow>
 
-        <!-- Image picker modal -->
+        <!-- Image Select modal -->
         <CModal :show.sync="showImageModal" :centered="true">
             <template #header-wrapper>
                 <div class="d-flex justify-content-between align-items-center font-weight-bold pl-3 border-bottom">
-                    <span>Choose image</span>
+                    <span>Choose Image</span>
                     <CButton color="secondary" variant="ghost" @click="showImageModal = false">
                         <CIcon name="cil-x" />
                     </CButton>
                 </div>
             </template>
             <template #body-wrapper>
-                <CCardBody>
-                    <input type="file" accept="image/*" multiple @change="onImageFilesSelected($event.target.files)" />
-                    <div class="d-flex flex-wrap">
-                        <div v-for="(file, index) in modalFiles" :key="index" class="m-2"
-                            style="width:100px; cursor:pointer;">
-                            <div
-                                style="border:1px solid #eee; padding:4px; height:100px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                                <img :src="file.url" :alt="file.name"
-                                    style="max-width:100%; max-height:100%; object-fit:cover;"
-                                    @click="selectModalImage(file.url)" />
-                            </div>
-                            <small class="d-block text-truncate mt-1">{{ file.name }}</small>
+                <CCardBody class="p-3">
+                    <div style="position:relative; width:100%; padding-bottom:100%; cursor:pointer; border:2px dashed #adb5bd; border-radius:8px; overflow:hidden; background:#f8fafc;"
+                        @click="$refs.imageFileInput.click()">
+                        <div v-if="!modalFiles"
+                            style="inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#adb5bd;">
+                            <CIcon name="cil-image-1" :height="40" class="mb-2" />
+                            <span>Choose Image</span>
                         </div>
+                        <img v-else :src="modalFiles"
+                            style="inset:0; width:100%; height:100%; object-fit:contain;" />
                     </div>
+                    <input ref="imageFileInput" type="file" accept="image/*" style="display:none;"
+                        @change="onImageSelected($event)" />
                 </CCardBody>
             </template>
+            <template #footer-wrapper>
+                <div class="d-flex justify-content-end p-2 border-top">
+                    <CButton color="danger" variant="ghost" @click="showImageModal = false">
+                        Cancel
+                    </CButton>
+                    <CButton color="primary" class="ml-2" @click="confirmImageQuestion()">
+                        OK
+                    </CButton>
+                </div>
+            </template>
         </CModal>
+
     </div>
 </template>
 
@@ -317,10 +353,6 @@ export default {
     data() {
         return {
             localQuestions: [],
-            contentElements: [
-                { key: 'title_description', label: 'Title & Description', icon: 'cil-text' },
-                { key: 'image', label: 'Image', icon: 'cil-image-1' }
-            ],
             fileTypeOptions: [
                 { key: 'img', label: 'Image' },
                 { key: 'pdf', label: 'PDF' },
@@ -334,8 +366,8 @@ export default {
             ],
             showImageModal: false,
             modalImageIndex: null,
-            modalFiles: [],
-            layout: []
+            modalFiles: '',
+            layout: [],
         };
     },
     watch: {
@@ -368,7 +400,7 @@ export default {
             }));
         },
         typesAll() {
-            return [...this.questionTypes, ...this.contentElements];
+            return [...this.questionTypes];
         },
         formTitleEn: {
             get() {
@@ -462,7 +494,6 @@ export default {
                 if (payload.type && typeof payload.type === 'object') {
                     payload.type = payload.type._id;
                 }
-                console.log(payload)
                 await this.$store.dispatch('Questions/updateQuestion', payload);
             } catch (err) {
                 console.error('Failed to update question', err);
@@ -498,6 +529,8 @@ export default {
             const isCheckboxes = foundType.type === 'checkbox';
             const isRating = foundType.type === 'rating';
             const isFileUpload = foundType.type === 'file_upload';
+            const isImage = foundType.type === 'image';
+            const isTitleDescription = foundType.type === 'title_description';
 
             const config = {
                 choices: (isMultipleChoice || isCheckboxes)
@@ -508,13 +541,15 @@ export default {
                 maxText: isParagraph ? 300 : null,
                 maxFiles: isFileUpload ? 1 : null,
                 maxFileSize: isFileUpload ? 1 : null,
+                image: isImage ? this.modalFiles : null,
+                description: isTitleDescription ? [{ key: 'en', value: 'Description' }] : null,
             };
 
             const payload = {
                 form: this.form._id,
                 title: [{ key: 'en', value: 'Untitled Question' }],
                 order: this.localQuestions.length + 1,
-                type: foundType._id || typeId,
+                type: foundType._id,
                 isRequired: false,
                 config,
             };
@@ -556,12 +591,13 @@ export default {
         },
         setQuestionType(question, typeId) {
             if (!question) return;
-            this.$set(question, 'type', typeId);
-
+            
             const foundType = this.questionTypes.find(t => t._id === typeId);
-            const isMultipleChoice = foundType && foundType.type === 'Multiple Choice';
-            const isRating = foundType && foundType.type === 'Rating';
-            const isFileUpload = foundType && foundType.type === 'file_upload';
+            const isMultipleChoice = foundType.type === 'multiple_choice' || foundType.type === 'checkbox';
+            const isCheckboxes = foundType.type === 'checkbox';
+            const isRating = foundType.type === 'rating';
+            const isFileUpload = foundType.type === 'file_upload';
+            const isImage = foundType.type === 'image';
 
             if (!question.config) this.$set(question, 'config', {});
 
@@ -575,6 +611,18 @@ export default {
                 if (typeof question.config.maxFiles !== 'number') this.$set(question.config, 'maxFiles', 1);
                 if (typeof question.config.maxFileSize !== 'number') this.$set(question.config, 'maxFileSize', 1);
             }
+            const isTitleDescription = foundType.type === 'title_description';
+            if (isTitleDescription) {
+                if (!Array.isArray(question.config.description) || question.config.description.length === 0)
+                    this.$set(question.config, 'description', [{ key: 'en', value: 'Description' }]);
+            }
+
+            if (isImage) {
+                const qIndex = this.localQuestions.indexOf(question);
+                this.openImageModal(qIndex !== -1 ? qIndex : null);
+            }
+            
+            this.$set(question, 'type', typeId);
             this.putQuestion(question);
         },
         getQuestionTypeString(typeObjOrId) {
@@ -586,7 +634,7 @@ export default {
         getIconForType(typeObjOrId) {
             const typeStr = (this.getQuestionTypeString(typeObjOrId) || '').toLowerCase().replace(/ /g, '_');
             switch (typeStr) {
-                case 'short': case 'short_answer': return 'cil-minus';
+                case 'short_answer': return 'cil-minus';
                 case 'paragraph': return 'cil-align-left';
                 case 'multiple_choice': return 'cil-circle';
                 case 'checkbox': return 'cil-square';
@@ -627,31 +675,33 @@ export default {
                 this.putQuestion(question);
             }
         },
+        onImageSelected(event) {
+            const file = event.target && event.target.files && event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                this.modalFiles = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        },
         openImageModal(qIndex) {
             this.modalImageIndex = qIndex;
-            this.modalFiles = [];
+            this.modalFiles = (this.localQuestions[qIndex] && this.localQuestions[qIndex].config && this.localQuestions[qIndex].config.image) || '';
             this.showImageModal = true;
         },
-        onImageFilesSelected(e) {
-            const files = e.target ? e.target.files : e;
-            if (!files || files.length === 0) return;
-            this.modalFiles = [];
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                if (!file.type.startsWith('image/')) continue;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    this.modalFiles.push({ name: file.name, url: ev.target.result });
-                };
-                reader.readAsDataURL(file);
+        async confirmImageQuestion() {
+            if (!this.modalFiles) return;
+            if (this.modalImageIndex !== null) {
+                const q = this.localQuestions[this.modalImageIndex];
+                if (q) {
+                    if (!q.config) this.$set(q, 'config', {});
+                    this.$set(q.config, 'image', this.modalFiles);
+                    await this.putQuestion(q);
+                }
+            } else {
+                await this.addQuestion('image');
             }
-        },
-        selectModalImage(url) {
-            const idx = this.modalImageIndex;
-            const q = this.localQuestions[idx];
-            if (!q) return;
-            this.$set(q, 'image', url);
-            this.putQuestion(q);
             this.showImageModal = false;
         },
         addOption(question) {
@@ -709,6 +759,38 @@ export default {
             this.$set(question.config, 'maxFileSize', Number(n) || 1);
             this.putQuestion(question);
         },
+        addConfigTitle(question) {
+            if (!question) return;
+            if (!question.config) this.$set(question, 'config', {});
+            if (!Array.isArray(question.config.title)) {
+                this.$set(question.config, 'title', [{ key: 'en', value: '' }]);
+            } else {
+                question.config.title.push({ key: '', value: '' });
+            }
+            this.putQuestion(question);
+        },
+        removeConfigTitle(question, idx) {
+            if (!question || !Array.isArray(question.config.title)) return;
+            if (question.config.title.length <= 1) return;
+            question.config.title.splice(idx, 1);
+            this.putQuestion(question);
+        },
+        addConfigDesc(question) {
+            if (!question) return;
+            if (!question.config) this.$set(question, 'config', {});
+            if (!Array.isArray(question.config.description)) {
+                this.$set(question.config, 'description', [{ key: 'en', value: '' }]);
+            } else {
+                question.config.description.push({ key: '', value: '' });
+            }
+            this.putQuestion(question);
+        },
+        removeConfigDesc(question, idx) {
+            if (!question || !Array.isArray(question.config.description)) return;
+            if (question.config.description.length <= 1) return;
+            question.config.description.splice(idx, 1);
+            this.putQuestion(question);
+        },
         getPlaceholder(type, lang) {
             return 'Untitled Question';
         }
@@ -717,6 +799,35 @@ export default {
 </script>
 
 <style scoped>
+.image-drop-zone {
+    position: relative;
+    width: 100%;
+    padding: 20%;
+    cursor: pointer;
+    border: 2px dashed #adb5bd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.image-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+}
+
+.image-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 .lang-key-input>>>input {
     text-align: center;
     text-transform: uppercase;
