@@ -3,14 +3,8 @@ const router = express.Router();
 
 const question = require('./service/question');
 
-// Get One by ID
-router.get("/id", function (req, res, next) {
-    req.body.apiId = 11;
-    next();
-}, question.onQuery);
-
 // Get All
-router.get("", function (req, res, next) {
+router.post("/exp", function (req, res, next) {
     req.body.apiId = 12;
     next();
 }, question.onQuerys);

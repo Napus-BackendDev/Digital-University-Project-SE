@@ -102,7 +102,8 @@
                 <CCardBody class="p-3 d-flex justify-content-end">
                     <CButton color="primary" @click="submitForm" :disabled="submitting" class="px-5">
                         <CSpinner v-if="submitting" size="sm" class="mr-1" />
-                        {{ submitting ? 'Submitting...' : 'Submit' }}
+                        {{ submitting ? (isDuplicate ? 'Duplicating...' : 'Submitting...') : (isDuplicate ? 'Duplicate'
+                            : 'Submit') }}
                     </CButton>
                 </CCardBody>
             </CCard>
@@ -115,7 +116,8 @@
 export default {
     name: 'Fillform',
     props: {
-        formId: { type: String, required: true }
+        formId: { type: String, required: true },
+        isDuplicate: { type: Boolean, default: false }
     },
     data() {
         return {
@@ -176,6 +178,17 @@ export default {
         },
 
         async submitForm() {
+            if (this.isDuplicate) {
+                this.submitting = true;
+                try {
+                    console.log(this.form);
+
+                } finally {
+                    this.submitting = false;
+                }
+                return;
+            }
+
             const missing = (this.form.questions || []).filter(q => {
                 if (!q.isRequired) return false;
                 const a = this.answers[q._id];

@@ -189,8 +189,8 @@
                                     class="d-flex align-items-center mb-1">
                                     <CInput class="lang-key-input flex-shrink-0 mr-2" v-model="descItem.key"
                                         @change="putQuestion(question)" maxlength="3" style="width: 3.2rem;" />
-                                    <CInput class="flex-grow-1" v-model="descItem.value"
-                                        @change="putQuestion(question)" rows="2" />
+                                    <CInput class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
+                                        rows="2" />
                                     <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
                                         v-if="question.config.description && question.config.description.length > 1"
                                         @click="removeConfigDesc(question, dIdx)">
@@ -313,8 +313,7 @@
                             <CIcon name="cil-image-1" :height="40" class="mb-2" />
                             <span>Choose Image</span>
                         </div>
-                        <img v-else :src="modalFiles"
-                            style="inset:0; width:100%; height:100%; object-fit:contain;" />
+                        <img v-else :src="modalFiles" style="inset:0; width:100%; height:100%; object-fit:contain;" />
                     </div>
                     <input ref="imageFileInput" type="file" accept="image/*" style="display:none;"
                         @change="onImageSelected($event)" />
@@ -369,23 +368,6 @@ export default {
             modalFiles: '',
             layout: [],
         };
-    },
-    watch: {
-        form: {
-            immediate: true,
-            deep: false,
-            async handler(newForm) {
-                if (newForm && Array.isArray(newForm.questions)) {
-                    this.localQuestions = JSON.parse(JSON.stringify(newForm.questions));
-                }
-                if (newForm && (!Array.isArray(newForm.title) || newForm.title.length === 0)) {
-                    this.$nextTick(() => this.addFormTitle());
-                }
-                if (newForm && (!Array.isArray(newForm.description) || newForm.description.length === 0)) {
-                    this.$nextTick(() => this.addFormDesc());
-                }
-            }
-        }
     },
     created() {
         this.$store.dispatch('Setting/question_type/get');
@@ -442,6 +424,11 @@ export default {
     methods: {
         triggerAutoSave() {
             this.$emit('auto-save');
+        },
+        question() {
+            const a = this.$store.dispatch('Questions/get', { form: this.form._id });
+            console.log(a);
+            return this.a;
         },
         async updateFormMeta() {
             if (!this.form || !this.form._id) return;
@@ -553,6 +540,7 @@ export default {
                 isRequired: false,
                 config,
             };
+            console.log(payload);
 
             try {
                 const res = await this.$store.dispatch('Questions/create', payload);
@@ -591,7 +579,7 @@ export default {
         },
         setQuestionType(question, typeId) {
             if (!question) return;
-            
+
             const foundType = this.questionTypes.find(t => t._id === typeId);
             const isMultipleChoice = foundType.type === 'multiple_choice' || foundType.type === 'checkbox';
             const isCheckboxes = foundType.type === 'checkbox';
@@ -621,7 +609,7 @@ export default {
                 const qIndex = this.localQuestions.indexOf(question);
                 this.openImageModal(qIndex !== -1 ? qIndex : null);
             }
-            
+
             this.$set(question, 'type', typeId);
             this.putQuestion(question);
         },

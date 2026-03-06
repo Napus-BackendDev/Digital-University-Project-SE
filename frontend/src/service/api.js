@@ -66,7 +66,7 @@ export default {
   question(method, data, configs) {
     switch (method) {
       case 'exp':
-        return instance.get('/question', data)
+        return instance.post('/question/exp', data)
       case 'create':
         return instance.post('/question', data)
       case 'create-many':
