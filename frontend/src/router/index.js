@@ -9,7 +9,7 @@ const Login = () => import('@/projects/views/Login.vue')
 
 // User
 const UserDashboard = () => import('@/projects/views/user/Dashboard.vue')
-const UserFormFill = () => import('@/projects/views/user/FormFill.vue')
+const UserFormFill = () => import('@/projects/views/page/Fillform.vue')
 
 // Editor
 const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
@@ -20,7 +20,8 @@ const Fillform = () => import('@/projects/views/page/Fillform.vue')
 const Responedetail = () => import('@/projects/views/page/Responedetail.vue')
 
 // Admin
-const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue')
+const AdminUsermanager = () => import('@/projects/views/admin/Usermanager.vue')
+const AdminStatistic = () => import('@/projects/views/admin/Statistic.vue')
 
 
 Vue.use(Router)
@@ -47,7 +48,7 @@ export default new Router({
                     path: 'user/form-fill/:id',
                     name: 'UserFormFill',
                     component: UserFormFill,
-                    props: true
+                    props: route => ({ formId: route.params.id })
                 },
 
                 {
@@ -57,9 +58,15 @@ export default new Router({
                 },
 
                 {
-                    path: 'admin/dashboard',
-                    name: 'AdminDashboard',
-                    component: AdminDashboard
+                    path: 'admin/usermanager',
+                    name: 'AdminUsermanager',
+                    component: AdminUsermanager
+                },
+
+                {
+                    path: 'admin/statistic',
+                    name: 'AdminStatistic',
+                    component: AdminStatistic
                 },
 
                 {
@@ -69,10 +76,10 @@ export default new Router({
                 },
 
                 {
-                    path: 'editor/preview/:_id',
+                    path: 'editor/preview/:id',
                     name: 'EditorPreview',
                     component: Fillform,
-                    props: route => ({ formId: route.params._id })
+                    props: route => ({ formId: route.params.id })
                 },
 
                 {

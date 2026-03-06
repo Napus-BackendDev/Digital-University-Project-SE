@@ -170,12 +170,7 @@ export default {
         },
         goToForm(id) {
             if (id) {
-                this.$router.push({
-                    name: 'UserFormFill',
-                    params: {
-                        id: id
-                    }
-                })
+                this.$router.push({ name: 'UserFormFill', params: { id: id } })
             }
         },
         filterStatus(status) {
