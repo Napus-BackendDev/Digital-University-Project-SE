@@ -9,6 +9,33 @@ msg[40301] = { code: 40301,httpcode: 403,message: [{value: "มีข้อม�
 msg[40302] = { code: 40302,httpcode: 403,message: [{value: "ไม่อนุญาตให้คัดลอกแบบฟอร์มนี้",key: "th"},{value: "Not allowed to duplicate this form",key: "en"}] };
 msg[40400] = { code: 40400,httpcode: 404,message: [{value: "ไม่พบข้อมูลนี้ในระบบ",key: "th"},{value: "Data not found",key: "en"}] };
 
+//Response Section
+msg[20001] = { code: 20001,httpcode: 200,message: [{value: "ดึงคำตอบตามแบบฟอร์มสำเร็จ",key: "th"},{value: "Get responses by form successfully",key: "en"}] };
+msg[20002] = { code: 20002,httpcode: 200,message: [{value: "ดึงคำตอบตามรหัสสำเร็จ",key: "th"},{value: "Get response by ID successfully",key: "en"}] };
+msg[20003] = { code: 20003,httpcode: 200,message: [{value: "บันทึกคำตอบสำเร็จ",key: "th"},{value: "Create response successfully",key: "en"}] };
+msg[20004] = { code: 20004,httpcode: 200,message: [{value: "แก้ไขคำตอบสำเร็จ",key: "th"},{value: "Update response successfully",key: "en"}] };
+msg[20005] = { code: 20005,httpcode: 200,message: [{value: "ลบคำตอบสำเร็จ",key: "th"},{value: "Delete response successfully",key: "en"}] };
+msg[20006] = { code: 20006,httpcode: 200,message: [{value: "ลบคำตอบตามแบบฟอร์มสำเร็จ",key: "th"},{value: "Delete responses by form successfully",key: "en"}] };
+msg[20007] = { code: 20007,httpcode: 200,message: [{value: "ดาวน์โหลดคำตอบผู้ใช้สำเร็จ",key: "th"},{value: "Download user response successfully",key: "en"}] };
+msg[20008] = { code: 20008,httpcode: 200,message: [{value: "ดาวน์โหลดคำตอบทั้งหมดสำเร็จ",key: "th"},{value: "Download all responses successfully",key: "en"}] };
+
+//Question Section
+msg[20011] = { code: 20011,httpcode: 200,message: [{value: "ดึงคำถามตามรหัสสำเร็จ",key: "th"},{value: "Get question by ID successfully",key: "en"}] };
+msg[20012] = { code: 20012,httpcode: 200,message: [{value: "ดึงคำถามทั้งหมดสำเร็จ",key: "th"},{value: "Get questions successfully",key: "en"}] };
+msg[20013] = { code: 20013,httpcode: 200,message: [{value: "สร้างคำถามสำเร็จ",key: "th"},{value: "Create question successfully",key: "en"}] };
+msg[20014] = { code: 20014,httpcode: 200,message: [{value: "แก้ไขคำถามสำเร็จ",key: "th"},{value: "Update question successfully",key: "en"}] };
+msg[20015] = { code: 20015,httpcode: 200,message: [{value: "ลบคำถามสำเร็จ",key: "th"},{value: "Delete question successfully",key: "en"}] };
+
+//Form Section
+msg[20021] = { code: 20021,httpcode: 200,message: [{value: "ดึงรายการแบบฟอร์มสำเร็จ",key: "th"},{value: "Get forms successfully",key: "en"}] };
+msg[20022] = { code: 20022,httpcode: 200,message: [{value: "ดึงแบบฟอร์มตามรหัสสำเร็จ",key: "th"},{value: "Get form by ID successfully",key: "en"}] };
+msg[20023] = { code: 20023,httpcode: 200,message: [{value: "สร้างแบบฟอร์มสำเร็จ",key: "th"},{value: "Create form successfully",key: "en"}] };
+msg[20024] = { code: 20024,httpcode: 200,message: [{value: "แก้ไขแบบฟอร์มสำเร็จ",key: "th"},{value: "Update form successfully",key: "en"}] };
+msg[20025] = { code: 20025,httpcode: 200,message: [{value: "ลบแบบฟอร์มสำเร็จ",key: "th"},{value: "Delete form successfully",key: "en"}] };
+
+
+
+
 var responseMsg = {};
 responseMsg.getMsg = function (code) {
     return msg[code];

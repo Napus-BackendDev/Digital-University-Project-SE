@@ -1,6 +1,7 @@
 const mongo = require("mongodb");
 var infomation_messages = require('../controller/message')
 var resMsg = require('./message');
+var configMsg = require('../../../../config/message');
 
 exports.onQuery = async function (request, response, next) {
     try {
@@ -98,6 +99,9 @@ exports.onMessage_Response = async function (number, code, res) {
         (code != null)? query.code = code : null;
 
         var doc =  await infomation_messages.onQuery(query);
+        if (!doc) {
+            return configMsg.getMsg(code);
+        }
         delete doc._id;
         delete doc.create;
         delete doc.update;
