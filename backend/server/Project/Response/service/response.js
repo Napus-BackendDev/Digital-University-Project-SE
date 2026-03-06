@@ -5,6 +5,23 @@ const responseModel = require("../model/response.model");
 require("../../Questions/models/questions.model");
 require("express-validator/check");
 
+const getApiId = function (request) {
+    return Number(request.body.apiId) || 0;
+};
+
+const getSuccessCode = function (request) {
+    return 20000 + getApiId(request);
+};
+
+exports.onQuerys = async function (request, response) {
+    try {
+        var querys = {};
+        const doc = await responseService.onQuerys(querys);
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+    } catch (err) {
+        return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    }
+}
 
 exports.onGetByFormId = async function (request, response) {
     try {

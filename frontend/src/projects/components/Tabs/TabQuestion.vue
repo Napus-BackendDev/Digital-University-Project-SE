@@ -306,7 +306,7 @@
             </template>
             <template #body-wrapper>
                 <CCardBody class="p-3">
-                    <div style="position:relative; width:100%; padding-bottom:100%; cursor:pointer; border:2px dashed #adb5bd; border-radius:8px; overflow:hidden; background:#f8fafc;"
+                    <div style="position:relative; width:100%; cursor:pointer; border:2px dashed #adb5bd; border-radius:8px; overflow:hidden; background:#f8fafc;"
                         @click="$refs.imageFileInput.click()">
                         <div v-if="!modalFiles"
                             style="inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#adb5bd;">

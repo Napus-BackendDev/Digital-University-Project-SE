@@ -90,6 +90,8 @@ export default {
         return instance.post('/response', data, {
           headers: { 'Content-Type': 'multipart/form-data' }  // let browser set multipart boundary
         })
+      case 'create':
+        return instance.post('/response', data)
       case 'update':
         return instance.put('/response', data)
       case 'delete':

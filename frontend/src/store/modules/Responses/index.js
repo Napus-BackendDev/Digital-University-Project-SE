@@ -28,28 +28,42 @@ const module = {
                 .catch(err => { throw err; });
         },
         create({ commit }, data) {
-            const formData = new FormData();
-            formData.append('responder', data.responder);
-            formData.append('form', data.form);
+            const hasFile = (data.answers || []).some(ans =>
+                ans.response instanceof File ||
+                (Array.isArray(ans.response) && ans.response.some(r => r instanceof File))
+            );
 
-            (data.answers || []).forEach((ans, idx) => {
-                if (ans.response instanceof File) {
+            let payload;
+            if (hasFile) {
+                const formData = new FormData();
+                formData.append('responder', data.responder);
+                formData.append('form', data.form);
+                (data.answers || []).forEach((ans, idx) => {
                     formData.append(`answers[${idx}][question]`, ans.question);
-                    formData.append(`answers[${idx}][response]`, ans.response);
-                } else if (Array.isArray(ans.response) && ans.response.some(r => r instanceof File)) {
-                    formData.append(`answers[${idx}][question]`, ans.question);
-                    ans.response.forEach(file => formData.append(`answers[${idx}][response]`, file));
-                } else {
-                    formData.append(`answers[${idx}][question]`, ans.question);
-                    formData.append(`answers[${idx}][response]`,
-                        ans.response === null || ans.response === undefined ? '' :
-                            Array.isArray(ans.response) ? JSON.stringify(ans.response) :
-                                String(ans.response)
-                    );
-                }
-            });
+                    if (ans.response instanceof File) {
+                        formData.append('file', ans.response, ans.response.name);
+                        formData.append(`answers[${idx}][response]`, ans.response.name);
+                    } else {
+                        formData.append(`answers[${idx}][response]`,
+                            Array.isArray(ans.response) ? JSON.stringify(ans.response) : String(ans.response ?? '')
+                        );
+                    }
+                });
+                payload = formData;
+            } else {
+                payload = {
+                    responder: data.responder,
+                    form: data.form,
+                    answers: (data.answers || []).map(ans => ({
+                        question: ans.question,
+                        response: Array.isArray(ans.response)
+                            ? JSON.stringify(ans.response)
+                            : String(ans.response ?? '')
+                    }))
+                };
+            }
 
-            return Service.response('submit', formData, {})
+            return Service.response(hasFile ? 'submit' : 'create', payload, {})
                 .then(response => {
                     commit('responses', response.data.data);
                     return response;

@@ -4,6 +4,11 @@ const router = express.Router();
 const response = require('./service/response');
 const upload = require('../../../server/middleware/upload');
 
+router.get("/exp", function (req, res, next) {
+    req.query.apiId = 12;
+    next();
+}, response.onQuerys);
+
 router.post("/getByFormId", function (req, res, next) {
     req.body.apiId = 1;
     next();

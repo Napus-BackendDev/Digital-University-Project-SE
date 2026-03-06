@@ -2,9 +2,9 @@
 
     <CRow class="mb-4">
         <CCol col="12" class="d-flex justify-content-between align-items-center">
-            <div class="back" style="cursor: pointer" @click="$router.push(path)">
+            <div class="back" style="cursor: pointer" @click="$router.back()">
                 <CIcon name="cil-chevron-left" />
-                <span class="px-1">{{ label }}</span>
+                <span class="px-1">Back</span>
             </div>
             <div class="d-flex align-items-center">
                 <ButtonPreview />
@@ -18,16 +18,6 @@ import ButtonPreview from '@/projects/components/Button/ButtonPreview.vue'
 
 export default {
     name: "ButtonBack",
-    props: {
-        path: {
-            type: String,
-            default: '/'
-        },
-        label: {
-            type: String,
-            default: 'Back'
-        }
-    },
     components: {
         ButtonPreview
     },

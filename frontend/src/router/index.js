@@ -17,7 +17,7 @@ const EditorCreateForm = () => import('@/projects/views/editor/CreateForm.vue')
 
 // Page
 const Fillform = () => import('@/projects/views/page/Fillform.vue')
-const Responedetail = () => import('@/projects/views/page/Responedetail.vue')
+const Responsedetail = () => import('@/projects/views/page/Responsedetail.vue')
 
 // Admin
 // const AdminUsermanager = () => import('@/projects/views/admin/Usermanager.vue')
@@ -45,7 +45,7 @@ export default new Router({
                 },
 
                 {
-                    path: 'user/form-fill/:id',
+                    path: 'user/forms/:id',
                     name: 'UserFormFill',
                     component: UserFormFill,
                     props: route => ({ formId: route.params.id })
@@ -85,7 +85,7 @@ export default new Router({
                 {
                     path: 'user/response/:id',
                     name: 'ResponseDetail',
-                    component: Responedetail,
+                    component: Responsedetail,
                     props: true
                 }
 

@@ -1,6 +1,6 @@
 <template>
     <div class="flex-grow-1">
-        <ButtonBack path="/editor/dashboard" />
+        <ButtonBack />
         <Tab :form="formData" @auto-save="triggerAutoSave" />
     </div>
 </template>
