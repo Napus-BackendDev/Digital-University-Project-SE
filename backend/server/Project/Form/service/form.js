@@ -16,6 +16,32 @@ exports.onQuery = async function (request, response) {
     query._id = new mongo.ObjectId(request.body._id);
     const doc = await Form.onQuery(query);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+
+    // const doc = await Form.onAggregate([
+    //   { $match: query },
+    //   {
+    //     $graphLookup: {
+    //       from: "Forms",
+    //       startWith: "$_id",
+    //       connectFromField: "_id",
+    //       connectToField: "originalFormId",
+    //       as: "childrenForms",
+    //       depthField: "depth",
+    //     },
+    //   },
+    //   {
+    //     $addFields: {
+    //       childrenForms: {
+    //         $sortArray: {
+    //           input: "$childrenForms",
+    //           sortBy: { depth: 1, createdAt: -1 },
+    //         },
+    //       },
+    //     },
+    //   },
+    // ]);
+    
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
     return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
   }

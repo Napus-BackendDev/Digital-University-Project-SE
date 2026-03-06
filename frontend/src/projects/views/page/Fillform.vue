@@ -141,7 +141,13 @@ export default {
             this.error = null;
             try {
                 const data = await this.$store.dispatch('Forms/getById', { _id: this.formId });
-                if (!data) throw new Error('Form not found');
+                const questionsRes = await this.$store.dispatch('Questions/get', { form: this.formId });
+                if (questionsRes && questionsRes.data && Array.isArray(questionsRes.data.data)) {
+                    data.questions = questionsRes.data.data;
+                } else {
+                    data.questions = [];
+                }
+
                 this.form = data;
                 const init = {};
                 (data.questions || []).forEach(q => {

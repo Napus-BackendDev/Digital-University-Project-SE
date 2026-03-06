@@ -194,19 +194,29 @@ export default {
             let finalData = [];
 
             if (Array.isArray(this.forms) && this.forms.length > 0) {
-                // Sort forms by createdAt (newest first)
+                // Sort forms by updatedAt (newest first)
                 const sortedForms = [...this.forms].sort((a, b) => {
-                    return new Date(b.createdAt) - new Date(a.createdAt)
+                    return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)
                 })
 
                 // 2. Map to display objects
                 const mappedData = sortedForms.map(form => {
-                    // Safe check for status
+                    // Determine status based on schedule
                     let statusTitle = 'Draft';
-                    if (form.status && form.status.title) {
-                        statusTitle = this.getLang(form.status.title);
-                    } else if (typeof form.status === 'string') {
-                        statusTitle = form.status;
+                    const now = new Date();
+                    const schedule = form.schedule;
+
+                    if (schedule && schedule.startAt) {
+                        const start = new Date(schedule.startAt);
+                        const end = new Date(schedule.endAt);
+
+                        if (!start && !end) {
+                            statusTitle = 'Draft';
+                        } else if (start <= now && now <= end) {
+                            statusTitle = 'Open';
+                        } else {
+                            statusTitle = 'Closed';
+                        }
                     }
 
                     return {
@@ -216,7 +226,7 @@ export default {
                         status: statusTitle,
                         access: form.isPublic ? 'Public' : 'Private',
                         responses: form.responses ? form.responses.length : 0,
-                        created: form.createdAt ? moment(form.createdAt).format('MMM D, YYYY') : '-'
+                        created: form.updatedAt ? moment(form.updatedAt).format('MMM D, YYYY') : '-'
                     }
                 });
 
@@ -287,9 +297,9 @@ export default {
         },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'open' || s === 'published') return 'status-open';
+            if (s === 'open') return 'status-open';
             if (s === 'closed') return 'status-closed';
-            return 'status-draft'; // Default/Draft
+            return 'status-draft';
         },
         async createNewForm() {
             this.isCreating = true;

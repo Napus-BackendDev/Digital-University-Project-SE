@@ -28,6 +28,7 @@ exports.onGetByFormId = async function (request, response) {
         let query = {};
         query.form = request.body.form_id;
         const doc = await responseService.onQuerys(query);
+        console.log(doc);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
     } catch (err) {
         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses by form ID", err.message);
