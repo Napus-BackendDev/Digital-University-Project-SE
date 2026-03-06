@@ -67,7 +67,7 @@ export default {
         },
         async triggerAutoSave() {
             try {
-                await this.$store.dispatch('Forms/updateForm', this.settings);
+                await this.$store.dispatch('Forms/update', this.settings);
                 console.log('Form status updated successfully', this.settings.schedule);
             } catch (error) {
                 console.error('Error updating form status:', error);

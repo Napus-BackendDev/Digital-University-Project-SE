@@ -448,7 +448,7 @@ export default {
             try {
                 const payload = JSON.parse(JSON.stringify(this.form));
                 // Send only the fields the API needs to update
-                await this.$store.dispatch('Forms/updateForm', {
+                await this.$store.dispatch('Forms/update', {
                     _id: payload._id,
                     title: payload.title,
                     description: payload.description,
@@ -494,7 +494,7 @@ export default {
                 if (payload.type && typeof payload.type === 'object') {
                     payload.type = payload.type._id;
                 }
-                await this.$store.dispatch('Questions/updateQuestion', payload);
+                await this.$store.dispatch('Questions/update', payload);
             } catch (err) {
                 console.error('Failed to update question', err);
             }
@@ -555,7 +555,7 @@ export default {
             };
 
             try {
-                const res = await this.$store.dispatch('Questions/createQuestion', payload);
+                const res = await this.$store.dispatch('Questions/create', payload);
                 const created = res && res.data && res.data.data;
                 if (created && created._id) {
                     if (!created.type || typeof created.type === 'string') {
@@ -583,7 +583,7 @@ export default {
                 return;
             }
             try {
-                await this.$store.dispatch('Questions/deleteQuestion', { _id: qId });
+                await this.$store.dispatch('Questions/delete', { _id: qId });
                 this.localQuestions.splice(index, 1);
             } catch (e) {
                 console.error('removeQuestion failed:', e);
