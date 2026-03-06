@@ -556,7 +556,7 @@ export default {
 
             try {
                 console.log('Creating question with payload:', payload);
-                const res = await this.$store.dispatch('Questions/createQuestion', payload);
+                const res = await this.$store.dispatch('Questions/create', payload); // createQuestion to create
                 const created = res && res.data && res.data.data;
                 if (created && created._id) {
                     if (!created.type || typeof created.type === 'string') {
@@ -629,7 +629,7 @@ export default {
         getQuestionTypeString(typeObjOrId) {
             if (!typeObjOrId) return '';
             if (typeof typeObjOrId === 'object') return typeObjOrId.type || typeObjOrId.label || '';
-            const found = this.questionTypes.find(t => t._id === typeObjOrId);
+                const found = this.questionTypes.find(t => t._id === typeObjOrId);
             return found ? (found.type || '') : typeObjOrId;
         },
         getIconForType(typeObjOrId) {
