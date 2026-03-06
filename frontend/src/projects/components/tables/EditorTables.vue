@@ -104,7 +104,7 @@
                             <CDropdownItem @click="goToEditForm(item)">
                                 <CIcon name="cil-pencil" class="mr-2 text-warning" /> Edit
                             </CDropdownItem>
-                            <CDropdownItem @click="deleteForm(item)" class="text-danger">
+                            <CDropdownItem @click="deleteModal = true && (deleteItem = item)" class="text-danger">
                                 <CIcon name="cil-trash" class="mr-2" /> Delete
                             </CDropdownItem>
                         </CDropdown>
@@ -116,6 +116,35 @@
 
         <!-- Pagination -->
         <Pagination :activePage.sync="activePage" :pages="totalPages" />
+
+        <!-- Confirm Delete modal -->
+        <CModal :show.sync="deleteModal" :centered="true">
+            <template #header-wrapper>
+                <div class="align-items-start p-3">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="icon-wrapper border-danger m-1">
+                            <CIcon name="cil-x" />
+                        </div>
+                        <span class="font-weight-bold">Delete Confirmation</span>
+                    </div>
+                </div>
+            </template>
+            <template #body-wrapper>
+                <div class="d-flex justify-content-center p-4">
+                    <span>Do you really need this? after deleting you can't undone</span>
+                </div>
+            </template>
+            <template #footer-wrapper>
+                <div class="d-flex justify-content-center p-3">
+                    <CButton color="secondary" @click="deleteModal = false">
+                        Cancel
+                    </CButton>
+                    <CButton color="danger" class="ml-2" @click="confirmDelete()">
+                        OK
+                    </CButton>
+                </div>
+            </template>
+        </CModal>
     </div>
 </template>
 
@@ -134,6 +163,8 @@ export default {
             isCreating: false,
             activePage: 1,
             itemsPerPage: 5,
+            deleteModal: false,
+            deleteItem: null,
             columns: [
                 { key: 'title', label: 'Questionnaire', _style: 'width:40%' },
                 { key: 'status', label: 'Status', _style: 'width:15%' },
@@ -305,16 +336,21 @@ export default {
         goToViewForm(item) {
             this.$router.push({ name: 'EditorPreview', params: { id: item._id } });
         },
-        async deleteForm(item) {
-            if (confirm("Are you sure you want to delete this form?")) {
-                try {
-                    await this.$store.dispatch('Forms/delete', { _id: item._id });
-                    await this.$store.dispatch('Forms/get');
-                } catch (error) {
-                    console.error("Failed to delete form:", error);
-                }
+        async confirmDelete() {
+            if (this.deleteItem) {
+                await this.deleteForm(this.deleteItem);
             }
-        }
+            this.deleteModal = false;
+            this.deleteItem = null;
+        },
+        async deleteForm(item) {
+            try {
+                await this.$store.dispatch('Forms/delete', { _id: item._id });
+                await this.$store.dispatch('Forms/get');
+            } catch (error) {
+                console.error("Failed to delete form:", error);
+            }
+        },
     }
 }
 </script>

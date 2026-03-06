@@ -29,11 +29,6 @@ router.delete("", function (req, res, next) {
     next();
 }, response.onDelete);
 
-router.delete("/deleteByFormId", function (req, res, next) {
-    req.body.apiId = 6;
-    next();
-}, response.onDeleteByFormId);
-
 router.get("/download/:form_id/response/:_id", function (req, res, next) {
     req.body.apiId = 7;
     next();
