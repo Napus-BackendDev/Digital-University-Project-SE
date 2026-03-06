@@ -369,11 +369,43 @@ export default {
             layout: [],
         };
     },
+    watch: {
+        form: {
+            immediate: true,
+            deep: true,
+            handler(newForm) {
+                if (newForm && newForm._id) {
+                    this.$store.dispatch('Questions/get', { form: newForm._id });
+                }
+                if (newForm && (!Array.isArray(newForm.title) || newForm.title.length === 0)) {
+                    this.$nextTick(() => this.addFormTitle());
+                }
+                if (newForm && (!Array.isArray(newForm.description) || newForm.description.length === 0)) {
+                    this.$nextTick(() => this.addFormDesc());
+                }
+            }
+        },
+        questions: {
+            immediate: true,
+            deep: true,
+            handler(val) {
+                if (Array.isArray(val)) {
+                    this.localQuestions = JSON.parse(JSON.stringify(val)).map(q => {
+                        if (this.form && this.form._id) {
+                            q.form = this.form;
+                        }
+                        return q;
+                    });
+                }
+            }
+        }
+    },
     created() {
         this.$store.dispatch('Setting/question_type/get');
     },
     computed: {
         ...mapGetters('Setting/question_type', { question_type: 'item' }),
+        ...mapGetters('Questions', { questions: 'questions' }),
         questionTypes() {
             if (!this.question_type || !Array.isArray(this.question_type)) return [];
             return JSON.parse(JSON.stringify(this.question_type)).map(type => ({
@@ -424,11 +456,6 @@ export default {
     methods: {
         triggerAutoSave() {
             this.$emit('auto-save');
-        },
-        question() {
-            const a = this.$store.dispatch('Questions/get', { form: this.form._id });
-            console.log(a);
-            return this.a;
         },
         async updateFormMeta() {
             if (!this.form || !this.form._id) return;
