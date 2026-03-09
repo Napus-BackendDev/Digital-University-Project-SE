@@ -12,7 +12,8 @@ var objSchema = new Schema(
         question: { type: Schema.Types.ObjectId, ref: "Questions" },
         response: { type: Schema.Types.String, required: true },
       },
-    ]
+    ],
+    submit: { type: Schema.Types.Boolean, default: false },
   },
   { timestamps: true }
 );
