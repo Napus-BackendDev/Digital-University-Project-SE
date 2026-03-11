@@ -169,7 +169,7 @@ export default {
             modalMessage: '',
             modalType: '',
             draftResponseId: null,
-            autoSaveTimer: null,
+            submit: false,
             loading: false,
             submitting: false,
             error: null,
@@ -243,7 +243,7 @@ export default {
                     responder: this.responder,
                     form: this.form._id,
                     answers: Object.entries(this.answers).map(([question, response]) => ({ question, response })),
-                    submit: false
+                    submit: this.submit
                 };
                 if (this.draftResponseId) {
                     await this.$store.dispatch('Responses/update', Object.assign({ _id: this.draftResponseId }, payload));
@@ -268,8 +268,12 @@ export default {
         },
 
         scheduleAutoSave() {
-            if (this.autoSaveTimer) clearTimeout(this.autoSaveTimer);
-            this.autoSaveTimer = setTimeout(() => this.saveDraftResponse(), 800);
+            console.log('submitting:', this.submitting);
+            console.log('submit:', this.submit);
+
+            this.saveDraftResponse().catch(err => {
+                console.error('Auto-save failed:', err);
+            });
         },
 
         onRate(questionId, n) {
@@ -431,6 +435,7 @@ export default {
                 return;
             }
 
+            this.submit = true;
             this.submitting = true;
             try {
                 const createPayload = {
@@ -441,7 +446,7 @@ export default {
 
                 if (!this.draftResponseId) {
                     try {
-                        const res = await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: false }));
+                        const res = await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: this.submit }));
                         const created = res && res.data && res.data.data;
                         let id = null;
                         if (created) {
@@ -455,10 +460,12 @@ export default {
                     }
                 }
 
+                const payload = Object.assign({ _id: this.draftResponseId }, createPayload, { submit: this.submit });
+
                 if (this.draftResponseId) {
-                    await this.$store.dispatch('Responses/update', Object.assign({ _id: this.draftResponseId }, { ...createPayload, submit: true }));
+                    await this.$store.dispatch('Responses/update', payload);
                 } else {
-                    await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: true }));
+                    await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: this.submit }));
                 }
 
                 this.modalTitle = 'Success';

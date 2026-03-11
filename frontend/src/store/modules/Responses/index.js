@@ -131,7 +131,7 @@ const module = {
                     formData.append('answers', JSON.stringify(answersPayload));
                     files.forEach((file, idx) => {
                         formData.append('answers[question]', fileQuestions[idx]);
-                        formData.append('file', file, file.name);
+                        formData.append('answers[response]', file, file.name);
                     });
                     payload = formData;
                 }
