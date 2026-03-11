@@ -500,8 +500,7 @@ export default {
         async updateQuestionTitle(question) {
             if (!question || !question._id) return;
             try {
-                const payload = JSON.parse(JSON.stringify(question));
-                // Normalize type field if it's a populated object
+                const payload = JSON.parse(JSON.stringify(question));                
                 if (payload.type && typeof payload.type === 'object') {
                     payload.type = payload.type._id;
                 }

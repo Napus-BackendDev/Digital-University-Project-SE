@@ -154,7 +154,7 @@ export default {
             modalMessage: '',
             modalType: '',
             draftResponseId: null,
-            autoSaveTimer: null,
+            submit: false,
             loading: false,
             submitting: false,
             error: null,
@@ -221,7 +221,7 @@ export default {
                     responder: this.responder,
                     form: this.form._id,
                     answers: Object.entries(this.answers).map(([question, response]) => ({ question, response })),
-                    submit: false
+                    submit: this.submit
                 };
                 if (this.draftResponseId) {
                     await this.$store.dispatch('Responses/update', Object.assign({ _id: this.draftResponseId }, payload));
@@ -246,8 +246,12 @@ export default {
         },
 
         scheduleAutoSave() {
-            if (this.autoSaveTimer) clearTimeout(this.autoSaveTimer);
-            this.autoSaveTimer = setTimeout(() => this.saveDraftResponse(), 800);
+            console.log('submitting:', this.submitting);
+            console.log('submit:', this.submit);
+
+            this.saveDraftResponse().catch(err => {
+                console.error('Auto-save failed:', err);
+            });
         },
 
         onRate(questionId, n) {
@@ -355,6 +359,7 @@ export default {
                 return;
             }
 
+            this.submit = true;
             this.submitting = true;
             try {
                 const createPayload = {
@@ -365,7 +370,7 @@ export default {
 
                 if (!this.draftResponseId) {
                     try {
-                        const res = await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: false }));
+                        const res = await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: this.submit }));
                         const created = res && res.data && res.data.data;
                         let id = null;
                         if (created) {
@@ -379,10 +384,12 @@ export default {
                     }
                 }
 
+                const payload = Object.assign({ _id: this.draftResponseId }, createPayload, { submit: this.submit });
+
                 if (this.draftResponseId) {
-                    await this.$store.dispatch('Responses/update', Object.assign({ _id: this.draftResponseId }, { ...createPayload, submit: true }));
+                    await this.$store.dispatch('Responses/update', payload);
                 } else {
-                    await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: true }));
+                    await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: this.submit }));
                 }
 
                 this.modalTitle = 'Success';
@@ -566,13 +573,15 @@ export default {
 .success-modal .modal-dialog {
     max-width: 420px;
 }
+
 .success-modal-card {
     background: #fff;
     border-radius: 16px;
     padding: 28px 28px 20px;
     position: relative;
-    box-shadow: 0 10px 30px rgba(60,64,67,0.15);
+    box-shadow: 0 10px 30px rgba(60, 64, 67, 0.15);
 }
+
 .success-modal-card .modal-close {
     position: absolute;
     right: 12px;
@@ -583,9 +592,11 @@ export default {
     color: #9aa0a6;
     cursor: pointer;
 }
+
 .success-content {
     padding-top: 6px;
 }
+
 .success-icon {
     width: 72px;
     height: 72px;
@@ -596,26 +607,31 @@ export default {
     align-items: center;
     justify-content: center;
 }
+
 .success-icon svg {
     color: #fff;
     width: 36px;
     height: 36px;
 }
+
 .success-title {
     margin: 8px 0 6px;
     font-size: 1.6rem;
     font-weight: 700;
     color: #202124;
 }
+
 .success-message {
     color: #5f6368;
     font-size: 0.98rem;
     margin-bottom: 18px;
 }
+
 .success-actions {
     display: flex;
     justify-content: center;
 }
+
 .success-ok-button {
     min-width: 160px;
     background-color: #34A853 !important;
