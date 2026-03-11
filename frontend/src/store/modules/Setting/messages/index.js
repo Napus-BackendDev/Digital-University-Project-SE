@@ -22,28 +22,28 @@ const module = {
 
     actions: {
         get({commit}, data) {
-            Service.message('get', {}, {})
+            Service.setting('message-get', {}, {})
                 .then((response) => {
-                    store.commit("setting/messages/item", response.data.data)
+                    commit("item", response.data.data)
                 }).catch((err) => {
             });
         },
         post({commit}, data) {
-            Service.message('post', data, {})
+            Service.setting('message-create', data, {})
                 .then((response) => {
 
                 }).catch((err) => {
             });
         },
         put({commit}, data) {
-            Service.message('put', data, {})
+            Service.setting('message-update', data, {})
                 .then((response) => {
 
                 }).catch((err) => {
             });
         },
         delete({commit}, data) {
-            Service.message('delete', data, {})
+            Service.setting('message-delete', data, {})
                 .then((response) => {
 
                 }).catch((err) => {

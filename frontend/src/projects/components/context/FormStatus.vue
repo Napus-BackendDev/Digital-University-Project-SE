@@ -68,11 +68,7 @@ export default {
             this.triggerAutoSave();
         },
         async triggerAutoSave() {
-            try {
-                await this.$store.dispatch('Forms/update', this.settings);
-            } catch (error) {
-                console.error('Error updating form status:', error);
-            }
+            this.$emit('auto-save');
         }
     }
 }

@@ -79,13 +79,12 @@
                     </td>
                 </template>
 
-                <!-- Last Modified -->
-                <template #created="{ item }">
-                    <td class="align-middle text-muted">
-                        <template v-if="!item.isEmpty">
-                            <CIcon name="cil-calendar" size="sm" class="mr-2" />
-                            {{ item.created }}
-                        </template>
+                <!-- Vision/Visibility Status Badge -->
+                <template #visibility="{ item }">
+                    <td class="align-middle">
+                        <span v-if="!item.isEmpty" class="visibility-badge" :class="getVisibilityClass(item.visibility)">
+                            {{ item.visibility }}
+                        </span>
                     </td>
                 </template>
 
@@ -172,14 +171,14 @@ export default {
                 { key: 'title', label: 'Questionnaire', _style: 'width:40%' },
                 { key: 'status', label: 'Status', _style: 'width:15%' },
                 { key: 'responses', label: 'Responses', _style: 'width:15%' },
-                { key: 'created', label: 'Last Modified', _style: 'width:20%' },
+                { key: 'visibility', label: 'Vision', _style: 'width:20%' },
                 { key: 'actions', label: 'Actions', _style: 'width:10%; text-align:right' }
             ]
         }
     },
     computed: {
         ...mapGetters('Forms', ['forms']),
-        ...mapGetters('setting', ['lang']),
+        ...mapGetters('Setting', ['lang']),
 
         totalPages() {
             return Math.ceil(this.tableData.length / this.itemsPerPage) || 1;
@@ -228,6 +227,7 @@ export default {
                         description: this.getLang(form.description) || '',
                         status: statusTitle,
                         access: form.isPublic ? 'Public' : 'Private',
+                        visibility: form.status ? this.getLang(form.status.title) : '-',
                         responses: form.responses ? form.responses.length : 0,
                         created: form.updatedAt ? moment(form.updatedAt).format('MMM D, YYYY') : '-'
                     }
@@ -263,6 +263,7 @@ export default {
                         title: '',
                         description: '',
                         status: '',
+                        visibility: '',
                         responses: '',
                         created: ''
                     });
@@ -304,6 +305,13 @@ export default {
             if (s === 'closed') return 'status-closed';
             return 'status-draft';
         },
+        getVisibilityClass(visibility) {
+            if (!visibility) return 'visi-default';
+            const v = visibility.toLowerCase();
+            if (v.includes('public') || v.includes('สาธารณะ')) return 'visi-public';
+            if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
+            return 'visi-default';
+        },
         async createNewForm() {
             this.isCreating = true;
             try {
@@ -344,10 +352,10 @@ export default {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
         },
         goToDuplicationForm(item) {
-            this.$router.push({ name: 'EditorDuplicationForm', params: { _id: item._id } });
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'duplicate' } });
         },
         goToViewForm(item) {
-            this.$router.push({ name: 'Preview', params: { id: item._id } });
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'preview' } });
         },
         async confirmDelete() {
             if (this.deleteItem) {
@@ -428,6 +436,34 @@ export default {
 
 .status-closed .status-dot {
     background-color: #dc2626;
+}
+
+/* Visibility Badges */
+.visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25em 0.75em;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.visi-public {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.visi-private {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+    border: 1px solid #e9d5ff;
+}
+
+.visi-default {
+    background-color: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
 }
 
 /* Icon Wrapper */

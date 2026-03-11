@@ -3,15 +3,20 @@
         <CCardBody class="p-4">
             <h5 class="mb-4 font-weight-bold text-dark">Access Control</h5>
 
-            <div class="mb-4">
-                <h6 class="font-weight-bold mb-2">Who can respond?</h6>
-                <CSelect 
-                    :options="accessTypeOptions" 
-                    v-model="settings.accessType"
-                    style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                    @change="triggerAutoSave" 
-                />
-            </div>
+            <CRow class="mb-4">
+                <CCol md="6">
+                    <h6 class="font-weight-bold mb-2">Who can respond?</h6>
+                    <CSelect :options="accessTypeOptions" :value="settings.settings.whoCanRespond"
+                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
+                        @update:value="(val) => { settings.settings.whoCanRespond = val; triggerAutoSave(); }" />
+                </CCol>
+                <CCol md="6">
+                    <h6 class="font-weight-bold mb-2">Vision</h6>
+                    <CSelect :options="visionOptions" :value.sync="settings.status"
+                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
+                        @update:value="onVisionChange" @input="onVisionChange" />
+                </CCol>
+            </CRow>
 
             <hr class="my-4" />
 
@@ -21,27 +26,16 @@
                     form</p>
                 <CRow>
                     <CCol md="6" class="mb-2 mb-md-0">
-                        <CInput 
-                            placeholder="Email address" 
-                            v-model="newCollaborator.email"
-                            style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        />
+                        <CInput placeholder="Email address" v-model="newCollaborator.email"
+                            style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;" />
                     </CCol>
                     <CCol md="4" class="mb-2 mb-md-0">
-                        <CSelect 
-                            :options="roleOptions" 
-                            v-model="newCollaborator.role"
-                            style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        />
+                        <CSelect :options="roleOptions" v-model="newCollaborator.role"
+                            style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;" />
                     </CCol>
                     <CCol md="2">
-                        <CButton 
-                            color="primary" 
-                            block 
-                            style="height: 45px; border-radius: 8px;"
-                            class="font-weight-bold"
-                            @click="addCollaborator"
-                        >
+                        <CButton color="primary" block style="height: 45px; border-radius: 8px;"
+                            class="font-weight-bold" @click="addCollaborator">
                             Add
                         </CButton>
                     </CCol>
@@ -63,6 +57,8 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
     name: 'AccessControl',
     props: {
@@ -87,34 +83,68 @@ export default {
             ]
         }
     },
+    created() {
+        this.$store.dispatch('Setting/status/get');
+    },
+    computed: {
+        ...mapGetters('Setting', ['lang']),
+        ...mapGetters('Setting/status', { statusItems: 'item' }),
+
+        visionOptions() {
+            if (!this.statusItems || !Array.isArray(this.statusItems)) return [];
+            return this.statusItems.map(item => ({
+                value: item._id,
+                label: this.getLang(item.title)
+            }));
+        }
+    },
     methods: {
+        getLang(data) {
+            if (!data) return '';
+            if (typeof data === 'string') return data;
+            if (!Array.isArray(data)) return '';
+
+            const currentLang = this.lang;
+            let content = data.find(item => item.key === currentLang);
+
+            if (!content) {
+                content = data.find(item => item.key === 'en');
+            }
+
+            if (!content && data.length > 0) {
+                content = data[0];
+            }
+
+            return content ? content.value : '';
+        },
+        onVisionChange(val) {
+            // Handle both object and string value cases from initial fetch
+            const newId = typeof val === 'object' && val !== null ? val._id : val;
+            this.$set(this.settings, 'status', newId);
+            this.triggerAutoSave();
+        },
         addCollaborator() {
             if (!this.newCollaborator.email) {
                 alert('Please enter an email address');
                 return;
             }
-            
+
             if (!this.settings.collaborators) {
                 this.$set(this.settings, 'collaborators', []);
             }
-            
+
             this.settings.collaborators.push({
                 email: this.newCollaborator.email,
                 role: this.newCollaborator.role
             });
-            
+
             this.newCollaborator.email = '';
             this.newCollaborator.role = 'Editor';
-            
+
             this.triggerAutoSave();
         },
         async triggerAutoSave() {
-            try {
-                await this.$store.dispatch('Forms/update', this.settings);
-                console.log('AccessControl settings updated successfully', this.settings);
-            } catch (error) {
-                console.error('Error updating AccessControl settings:', error);
-            }
+            this.$emit('auto-save');
         }
     }
 }

@@ -72,21 +72,7 @@ export default {
     },
     methods: {
         async triggerAutoSave() {
-            try {
-                // Map the frontend UI structure to the backend structure expected by updateForm
-                const formData = {
-                    _id: this.$route.params._id,
-                    settings: {
-                        collectEmail: this.mappedCollectEmail,
-                        limitResponse: this.mappedLimitResponse,
-                        progressBar: this.mappedProgressBar
-                    }
-                };
-
-                await this.$store.dispatch('Forms/update', formData);
-            } catch (error) {
-                console.error('Error updating form response settings:', error);
-            }
+            this.$emit('auto-save');
         }
     }
 }

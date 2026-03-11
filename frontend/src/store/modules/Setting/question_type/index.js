@@ -16,28 +16,28 @@ const module = {
 
     actions: {
         get({ commit }, data) {
-            Service.setting('get', {}, {})
+            Service.setting('question-type-get', {}, {})
                 .then((response) => {
                     commit("item", response.data.data);
                 }).catch((err) => {
                 });
         },
         post({ commit }, data) {
-            Service.setting('create', data, {})
+            Service.setting('question-type-create', data, {})
                 .then((response) => {
 
                 }).catch((err) => {
                 });
         },
         put({ commit }, data) {
-            Service.setting('update', data, {})
+            Service.setting('question-type-update', data, {})
                 .then((response) => {
 
                 }).catch((err) => {
                 });
         },
         delete({ commit }, data) {
-            Service.setting('delete', data, {})
+            Service.setting('question-type-delete', data, {})
                 .then((response) => {
 
                 }).catch((err) => {

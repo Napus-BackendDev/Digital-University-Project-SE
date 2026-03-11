@@ -13,6 +13,7 @@ const defaultPopulate = [
         },
     },
     { path: 'responses' },
+    { path: 'status' }
 ]
 
 module.exports = createBaseService(objSchema, defaultPopulate);

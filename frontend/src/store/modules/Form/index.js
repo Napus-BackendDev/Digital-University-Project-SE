@@ -40,7 +40,6 @@ const ServerModule = {
         update({ commit, dispatch }, data) {
             return Service.form('update', data, {})
                 .then(response => {
-
                     dispatch('get');
                     return response;
                 })

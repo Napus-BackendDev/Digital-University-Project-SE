@@ -19,6 +19,14 @@
 
             <!-- Header Card -->
             <CCard class="mb-3 header-card">
+                <div v-if="isPreviewMode" class="preview-banner p-2 text-center text-white font-weight-bold">
+                    <CIcon name="cil-magnifying-glass" class="mr-2" />
+                    Preview Mode - Read Only
+                </div>
+                <div v-if="isDuplicateMode" class="preview-banner p-2 text-center text-white font-weight-bold">
+                    <CIcon name="cil-copy" class="mr-2" />
+                    Duplicate Mode - Copy Form
+                </div>
                 <CCardBody class="p-4">
                     <h1 class="form-main-title">{{ getTitle(form.title) }}</h1>
                     <p v-if="getTitle(form.description)" class="form-main-desc mb-0">
@@ -45,12 +53,12 @@
 
                     <!-- Short Answer -->
                     <CInput v-if="isType(question, 'short', 'short_answer')" v-model="answers[question._id]"
-                        placeholder="Your answer" class="mb-0"
+                        placeholder="Your answer" class="mb-0" :disabled="isPreviewMode"
                         @input="(e) => { clearError(question._id); scheduleAutoSave(); }" />
 
                     <!-- Paragraph -->
                     <CTextarea v-else-if="isType(question, 'paragraph')" v-model="answers[question._id]"
-                        placeholder="Your answer" rows="4" class="mb-0"
+                        placeholder="Your answer" rows="4" class="mb-0" :disabled="isPreviewMode"
                         @input="(e) => { clearError(question._id); scheduleAutoSave(); }" />
 
                     <!-- Multiple Choice / Checkboxes -->
@@ -61,7 +69,7 @@
                             <input
                                 :type="(question.config && question.config.allowMultipleSelect) ? 'checkbox' : 'radio'"
                                 :name="'q_' + question._id" :value="getOptionLabel(opt)" v-model="answers[question._id]"
-                                class="option-input"
+                                class="option-input" :disabled="isPreviewMode"
                                 @change="(e) => { clearError(question._id); scheduleAutoSave(); }" />
                             <span>{{ getOptionLabel(opt) }}</span>
                         </label>
@@ -72,7 +80,7 @@
                         <div class="rating-container">
                             <button v-for="n in (question.config && question.config.maxRating || 5)" :key="n"
                                 class="star-btn" :class="{ 'star-active': answers[question._id] >= n }"
-                                @click="onRate(question._id, n)" type="button">★</button>
+                                @click="onRate(question._id, n)" type="button" :disabled="isPreviewMode">★</button>
                         </div>
                         <small v-if="answers[question._id]" class="d-block text-center text-muted mt-1">
                             {{ answers[question._id] }} / {{ question.config && question.config.maxRating || 5 }}
@@ -82,7 +90,7 @@
                     <!-- File Upload -->
                     <div v-else-if="isType(question, 'file_upload')">
                         <input type="file" :multiple="(question.config && Number(question.config.maxFiles) > 1)"
-                            :accept="getAcceptString(question)" class="text-muted"
+                            :accept="getAcceptString(question)" class="text-muted" :disabled="isPreviewMode"
                             @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); scheduleAutoSave(); }" />
                     </div>
 
@@ -102,11 +110,18 @@
                 </CCardBody>
             </CCard>
 
-            <!-- Submit -->
-            <div class="p-3 d-flex justify-content-end">
-                <CButton color="primary" @click="submitForm" :disabled="submitting" class="px-5">
+            <!-- Submit / Duplicate Button -->
+            <div v-if="!isPreviewMode" class="p-3 d-flex justify-content-end">
+                <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm" :disabled="submitting"
+                    class="px-5">
                     <CSpinner v-if="submitting" size="sm" class="mr-1" />
                     {{ submitting ? 'Submitting' : 'Submit' }}
+                </CButton>
+                <CButton v-else color="info" @click="duplicateForm" :disabled="submitting"
+                    class="px-5 text-white font-weight-bold">
+                    <CSpinner v-if="submitting" size="sm" class="mr-1" />
+                    <CIcon name="cil-copy" class="mr-2" />
+                    {{ submitting ? 'Processing...' : 'Copy Form' }}
                 </CButton>
             </div>
 
@@ -173,6 +188,13 @@ export default {
                 const data = await this.$store.dispatch('Forms/getById', { _id: this.formId });
 
                 this.form = data;
+
+                // If duplicating or previewing, we don't need to load answers
+                if (this.isDuplicateMode || this.isPreviewMode) {
+                    this.loading = false;
+                    return;
+                }
+
                 const init = {};
                 (data.questions || []).forEach(q => {
                     if (this.isType(q, 'title_description', 'image')) return;
@@ -215,7 +237,7 @@ export default {
         },
 
         async saveDraftResponse() {
-            if (!this.form || !this.form._id) return;
+            if (!this.form || !this.form._id || this.isPreviewMode) return;
             try {
                 const payload = {
                     responder: this.responder,
@@ -330,6 +352,59 @@ export default {
                 this.errorIds = next;
             }
         },
+        async duplicateForm() {
+            this.submitting = true;
+            try {
+                // 1. Create a new form without questions
+                const formPayload = {
+                    title: this.form.title.map(t => ({ ...t, value: t.value + ' (Copy)' })),
+                    description: [...this.form.description],
+                    settings: { ...this.form.settings },
+                    status: this.form.status ? (typeof this.form.status === 'object' ? this.form.status._id : this.form.status) : '69b0e3adf864c1088c19da36'
+                };
+
+                const formRes = await this.$store.dispatch('Forms/create', formPayload);
+                const newFormId = formRes.data.data._id;
+
+                // 2. Clone each question
+                // Since the Questions model has a post-save hook that updates the Form, 
+                // creating them one-by-one is sufficient.
+                if (this.form.questions && this.form.questions.length > 0) {
+                    for (const q of this.form.questions) {
+                        const questionPayload = {
+                            form: newFormId,
+                            title: q.title.map(t => ({ ...t })),
+                            description: q.description ? q.description.map(d => ({ ...d })) : [],
+                            type: q.type ? (typeof q.type === 'object' ? q.type._id : q.type) : null,
+                            config: JSON.parse(JSON.stringify(q.config || {})),
+                            isRequired: !!q.isRequired,
+                            order: q.order || 1
+                        };
+                        await this.$store.dispatch('Questions/create', questionPayload);
+                    }
+                }
+
+                this.modalTitle = 'Success';
+                this.modalMessage = "Form has been duplicated successfully!";
+                this.modalType = 'success';
+                this.showModal = true;
+
+                // Set custom OK handler to go to editor
+                this.onModalOk = () => {
+                    this.showModal = false;
+                    this.$router.push({ name: 'EditorCreateForm', params: { _id: newFormId } });
+                };
+
+            } catch (err) {
+                console.error('Duplication failed:', err);
+                this.modalTitle = 'Error';
+                this.modalMessage = 'Failed to duplicate form. Please try again.';
+                this.modalType = 'error';
+                this.showModal = true;
+            } finally {
+                this.submitting = false;
+            }
+        },
 
         async submitForm() {
             const missing = (this.form.questions || []).filter(q => {
@@ -405,6 +480,14 @@ export default {
             this.$router.back();
         }
     },
+    computed: {
+        isDuplicateMode() {
+            return this.$route.query.mode === 'duplicate';
+        },
+        isPreviewMode() {
+            return this.$route.query.mode === 'preview' || this.$route.name === 'Preview';
+        }
+    },
     watch: {
         answers: {
             handler() {
@@ -451,6 +534,14 @@ export default {
 .form-main-desc {
     font-size: 0.95rem;
     color: #5f6368;
+}
+
+.preview-banner {
+    background-color: #6366f1;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
 }
 
 .form-divider {
@@ -566,13 +657,15 @@ export default {
 .success-modal .modal-dialog {
     max-width: 420px;
 }
+
 .success-modal-card {
     background: #fff;
     border-radius: 16px;
     padding: 28px 28px 20px;
     position: relative;
-    box-shadow: 0 10px 30px rgba(60,64,67,0.15);
+    box-shadow: 0 10px 30px rgba(60, 64, 67, 0.15);
 }
+
 .success-modal-card .modal-close {
     position: absolute;
     right: 12px;
@@ -583,9 +676,11 @@ export default {
     color: #9aa0a6;
     cursor: pointer;
 }
+
 .success-content {
     padding-top: 6px;
 }
+
 .success-icon {
     width: 72px;
     height: 72px;
@@ -596,26 +691,31 @@ export default {
     align-items: center;
     justify-content: center;
 }
+
 .success-icon svg {
     color: #fff;
     width: 36px;
     height: 36px;
 }
+
 .success-title {
     margin: 8px 0 6px;
     font-size: 1.6rem;
     font-weight: 700;
     color: #202124;
 }
+
 .success-message {
     color: #5f6368;
     font-size: 0.98rem;
     margin-bottom: 18px;
 }
+
 .success-actions {
     display: flex;
     justify-content: center;
 }
+
 .success-ok-button {
     min-width: 160px;
     background-color: #34A853 !important;

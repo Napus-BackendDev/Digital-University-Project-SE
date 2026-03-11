@@ -442,18 +442,7 @@ export default {
             this.$emit('auto-save');
         },
         async updateFormMeta() {
-            if (!this.form || !this.form._id) return;
-            try {
-                const payload = JSON.parse(JSON.stringify(this.form));
-                // Send only the fields the API needs to update
-                await this.$store.dispatch('Forms/update', {
-                    _id: payload._id,
-                    title: payload.title,
-                    description: payload.description,
-                });
-            } catch (err) {
-                console.error('Failed to update form meta', err);
-            }
+            this.triggerAutoSave();
         },
         addFormTitle() {
             if (!this.form) return;

@@ -9,13 +9,13 @@
                 <CRow>
                     <CCol md="5" class="mb-3">
                         <label class="mb-2 font-weight-bold small">Organization Name</label>
-                        <CSelect :options="organizationOptions" v-model="orgData.name" placeholder="Select organization"
-                            class="form-select-custom" @change="triggerAutoSave" />
+                        <CSelect :options="organizationOptions" :value="orgData.name" placeholder="Select organization"
+                            class="form-select-custom" @update:value="(val) => { orgData.name = val; triggerAutoSave(); }" />
                     </CCol>
                     <CCol md="5" class="mb-3">
                         <label class="mb-2 font-weight-bold small">Select Department</label>
-                        <CSelect :options="departmentOptions" v-model="selectedDepartment"
-                            placeholder="Choose a department" class="form-select-custom" @change="selectDepartment" />
+                        <CSelect :options="departmentOptions" :value="selectedDepartment"
+                            placeholder="Choose a department" class="form-select-custom" @update:value="selectDepartment" />
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block class="btn-custom font-weight-bold mt-4"
@@ -34,13 +34,13 @@
                 <CRow>
                     <CCol md="5" class="mb-3">
                         <label class="mb-2 font-weight-bold small">Organization Name</label>
-                        <CSelect :options="organizationOptions" v-model="orgData.name" placeholder="Select organization"
-                            class="form-select-custom" @change="triggerAutoSave" />
+                        <CSelect :options="organizationOptions" :value="orgData.name" placeholder="Select organization"
+                            class="form-select-custom" @update:value="(val) => { orgData.name = val; triggerAutoSave(); }" />
                     </CCol>
                     <CCol md="5" class="mb-3">
                         <label class="mb-2 font-weight-bold small">Departments</label>
-                        <CSelect :options="departmentOptions" v-model="selectedDepartment"
-                            placeholder="Choose a department" class="form-select-custom" @change="selectDepartment" />
+                        <CSelect :options="departmentOptions" :value="selectedDepartment"
+                            placeholder="Choose a department" class="form-select-custom" @update:value="selectDepartment" />
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
@@ -135,13 +135,7 @@ export default {
             this.triggerAutoSave();
         },
         async triggerAutoSave() {
-            try {
-                // ส่งข้อมูล organization ไปเก็บ
-                await this.$store.dispatch('Forms/updateOrganization', this.orgData);
-                console.log('Organization settings updated successfully', this.orgData);
-            } catch (error) {
-                console.error('Error updating organization settings:', error);
-            }
+            this.$emit('auto-save');
         }
     },
     mounted() {
