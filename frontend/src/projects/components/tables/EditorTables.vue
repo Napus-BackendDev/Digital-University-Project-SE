@@ -101,6 +101,9 @@
                             <CDropdownItem @click="goToViewForm(item)">
                                 <CIcon name="cil-magnifying-glass" class="mr-2 text-info" /> View
                             </CDropdownItem>
+                            <CDropdownItem @click="goToDuplicationForm(item)">
+                                <CIcon name="cil-copy" class="mr-2 text-info" /> Duplication
+                            </CDropdownItem>
                             <CDropdownItem @click="goToEditForm(item)">
                                 <CIcon name="cil-pencil" class="mr-2 text-warning" /> Edit
                             </CDropdownItem>
@@ -339,6 +342,9 @@ export default {
         },
         goToEditForm(item) {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
+        },
+        goToDuplicationForm(item) {
+            this.$router.push({ name: 'EditorDuplicationForm', params: { _id: item._id } });
         },
         goToViewForm(item) {
             this.$router.push({ name: 'EditorPreview', params: { id: item._id } });
