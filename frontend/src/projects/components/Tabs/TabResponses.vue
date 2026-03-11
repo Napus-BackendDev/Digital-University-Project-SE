@@ -38,9 +38,9 @@
                             <CIcon name="cil-chevron-top" size="sm" class="ml-2" />
                         </CButton>
                     </template>
-                    <CDropdownItem @click="exportCsv">
+                    <CDropdownItem @click="exportXlsx">
                         <CIcon name="cil-data-transfer-down" size="sm" class="mr-2" />
-                        Export CSV
+                        Export Excel
                     </CDropdownItem>
                     <CDropdownItem @click="copyApiLink">
                         <CIcon name="cil-copy" size="sm" class="mr-2" />
@@ -149,6 +149,7 @@
 
 <script>
 import moment from 'moment'
+import * as XLSX from 'xlsx'
 import ResponeTables from '@/projects/components/tables/ResponeTables.vue'
 export default {
     name: 'TabResponses',
@@ -176,20 +177,10 @@ export default {
         this.fetchResponses();
     },
     watch: {
-        // form prop arrives async (parent fetches form then passes down)
-        // this catches when _id finally populates
-        'responses._id': {
-            immediate: true,
-            handler(newId) {
-                if (newId && this.responseList.length === 0) {
-                    this.fetchResponses();
-                }
-            }
-        }
     },
     methods: {
-        // ── Export CSV ────────────────────────────────────────────────────
-        exportCsv() {
+        // ── Export XLSX ───────────────────────────────────────────────────
+        exportXlsx() {
             if (!this.responseList.length) {
                 alert('No responses to export.');
                 return;
@@ -197,37 +188,39 @@ export default {
 
             // Build header row from first response's answers
             const firstAnswers = this.responseList[0].answers || [];
-            const qHeaders = firstAnswers.map((a, i) => {
+            const headers = ['Responder', 'Submitted'];
+            firstAnswers.forEach((a, i) => {
                 const title = a.question && Array.isArray(a.question.title) && a.question.title.length
-                    ? a.question.title[0].value
-                    : `Q${i + 1}`;
-                return `"${title.replace(/"/g, '""')}"`;
+                    ? this.getTitle(a.question.title)
+                    : `Question ${i + 1}`;
+                headers.push(title);
             });
-            const headers = ['Responder', 'Submitted', ...qHeaders].join(',');
 
             // Build data rows
             const rows = this.responseList.map(r => {
-                const base = [
-                    `"${(r.responder || '-').toString().replace(/"/g, '""')}"`,
-                    `"${this.formatDate(r.createdAt)}"`
+                const row = [
+                    (r.responder || '-').toString(),
+                    this.formatDate(r.createdAt)
                 ];
-                const answerCells = (r.answers || []).map(a => {
+                (r.answers || []).forEach(a => {
                     const val = Array.isArray(a.response)
-                        ? a.response.join('; ')
+                        ? a.response.join(', ')
                         : (a.response === null || a.response === undefined ? '' : String(a.response));
-                    return `"${val.replace(/"/g, '""')}"`;
+                    row.push(val);
                 });
-                return [...base, ...answerCells].join(',');
+                return row;
             });
 
-            const csv = [headers, ...rows].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `responses_${this.responses && this.responses._id || 'export'}.csv`;
-            link.click();
-            URL.revokeObjectURL(url);
+            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Responses");
+
+            // Set column widths (optional but nice)
+            const wscols = headers.map(h => ({ wch: Math.max(h.length, 15) }));
+            worksheet['!cols'] = wscols;
+
+            const filename = `responses_${this.responses && this.responses._id || 'export'}.xlsx`;
+            XLSX.writeFile(workbook, filename);
         },
 
         // ── Copy API Link ─────────────────────────────────────────────────

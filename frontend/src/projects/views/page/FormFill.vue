@@ -360,7 +360,8 @@ export default {
                     title: this.form.title.map(t => ({ ...t, value: t.value + ' (Copy)' })),
                     description: [...this.form.description],
                     settings: { ...this.form.settings },
-                    status: this.form.status ? (typeof this.form.status === 'object' ? this.form.status._id : this.form.status) : '69b0e3adf864c1088c19da36'
+                    status: this.form.status ? (typeof this.form.status === 'object' ? this.form.status._id : this.form.status) : '69b0e3adf864c1088c19da36',
+                    originalFormId: this.form._id
                 };
 
                 const formRes = await this.$store.dispatch('Forms/create', formPayload);

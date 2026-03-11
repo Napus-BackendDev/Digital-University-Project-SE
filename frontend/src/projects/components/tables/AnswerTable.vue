@@ -98,7 +98,7 @@ export default {
             if (!question || !question.type) return 'Unknown Type';
             const t = question.type.type ? question.type.type.toLowerCase() : '';
             switch (t) {
-                case 'short_answer': case 'short': return 'Short answer';
+                case 'short_answer': case 'short': return 'Short Paragraph';
                 case 'paragraph': return 'Paragraph';
                 case 'multiple_choice': return 'Multiple choice';
                 case 'checkboxes': case 'checkbox': return 'Checkbox';

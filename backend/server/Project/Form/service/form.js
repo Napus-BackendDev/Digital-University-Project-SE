@@ -14,32 +14,41 @@ exports.onQuery = async function (request, response) {
   try {
     let query = {};
     query._id = new mongo.ObjectId(request.body._id);
-    const doc = await Form.onQuery(query);
-    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
 
-    // const doc = await Form.onAggregate([
-    //   { $match: query },
-    //   {
-    //     $graphLookup: {
-    //       from: "Forms",
-    //       startWith: "$_id",
-    //       connectFromField: "_id",
-    //       connectToField: "originalFormId",
-    //       as: "childrenForms",
-    //       depthField: "depth",
-    //     },
-    //   },
-    //   {
-    //     $addFields: {
-    //       childrenForms: {
-    //         $sortArray: {
-    //           input: "$childrenForms",
-    //           sortBy: { depth: 1, createdAt: -1 },
-    //         },
-    //       },
-    //     },
-    //   },
-    // ]);
+    const results = await Form.onAggregate([
+      { $match: query },
+      {
+        $graphLookup: {
+          from: "Forms",
+          startWith: "$_id",
+          connectFromField: "_id",
+          connectToField: "originalFormId",
+          as: "childrenForms",
+          depthField: "depth",
+        },
+      },
+      {
+        $addFields: {
+          childrenForms: {
+            $sortArray: {
+              input: "$childrenForms",
+              sortBy: { depth: 1, createdAt: -1 },
+            },
+          },
+        },
+      },
+    ]);
+
+    // Use onQuery for population instead of custom onPopulate
+    const doc = await Form.onQuery({ _id: query._id }, [
+      { path: 'questions', populate: { path: 'type', select: 'type' } },
+      { path: 'responses' },
+      { path: 'status', select: 'title' }
+    ]);
+
+    if (doc && results.length > 0) {
+      doc.childrenForms = results[0].childrenForms;
+    }
 
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {

@@ -86,7 +86,7 @@
 
                         <!-- ── Question Type ── -->
                         <div v-if="getQuestionType(question.type).toLowerCase() === 'short_answer'">
-                            <CInput disabled style="opacity: 0.55;" placeholder="Short answer text" />
+                            <CInput disabled style="opacity: 0.55;" placeholder="Short paragraph text" />
                         </div>
 
                         <div v-else-if="getQuestionType(question.type).toLowerCase() === 'paragraph'">
@@ -231,7 +231,7 @@
                                             style="border-radius: 6px;">
                                             <CIcon :name="getIconForType(question.type)" class="mr-2" />
                                             <span class="text-capitalize">
-                                                {{ getQuestionType(question.type).split('_').join(' ') }}
+                                                {{ formatTypeLabel(getQuestionType(question.type)) }}
                                             </span>
                                         </button>
                                     </template>
@@ -239,7 +239,7 @@
                                         @click="setQuestionType(question, type._id)">
                                         <CIcon :name="getIconForType(type._id)" class="mr-2" />
                                         <span class="text-capitalize">
-                                            {{ (type.type || '').split('_').join(' ') }}
+                                            {{ formatTypeLabel(type.type) }}
                                         </span>
                                     </CDropdownItem>
                                 </CDropdown>
@@ -274,7 +274,7 @@
                                 variant="ghost" color="dark" class="text-left mb-2 d-flex align-items-center"
                                 @click="addQuestion(type._id)">
                                 <CIcon :name="getIconForType(type.type)" class="mr-2" />
-                                <span class="text-capitalize">{{ (type.type || '').split('_').join(' ') }}</span>
+                                <span class="text-capitalize">{{ formatTypeLabel(type.type) }}</span>
                             </CButton>
                         </div>
 
@@ -617,6 +617,12 @@ export default {
             if (typeof typeObjOrId === 'object') return typeObjOrId.type || typeObjOrId.label || '';
             const found = this.questionTypes.find(t => t._id === typeObjOrId);
             return found ? (found.type || '') : typeObjOrId;
+        },
+        formatTypeLabel(rawType) {
+            if (!rawType) return '';
+            const type = rawType.toLowerCase();
+            if (type === 'short_answer') return 'Short Paragraph';
+            return type.split('_').join(' ');
         },
         getIconForType(typeObjOrId) {
             const typeStr = (this.getQuestionType(typeObjOrId) || '').toLowerCase().replace(/ /g, '_');

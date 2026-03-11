@@ -64,9 +64,9 @@
                                             <CIcon name="cil-chevron-bottom" size="sm" class="ml-2 text-muted" />
                                         </CButton>
                                     </template>
-                                    <CDropdownItem @click="exportCsv">
+                                    <CDropdownItem @click="exportXlsx">
                                         <CIcon name="cil-data-transfer-down" size="sm" class="mr-2" />
-                                        Export CSV
+                                        Export Excel
                                     </CDropdownItem>
                                     <CDropdownItem @click="copyApiLink">
                                         <CIcon name="cil-copy" size="sm" class="mr-2" />
@@ -119,6 +119,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import moment from 'moment';
+import * as XLSX from 'xlsx';
 import ResponeTables from '@/projects/components/tables/ResponeTables.vue';
 import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
 import ButtonBack from '@/projects/components/Button/ButtonBack.vue';
@@ -207,24 +208,18 @@ export default {
             if (!dateStr) return '-';
             return moment(dateStr).format('D/M/YYYY, h:mm:ss');
         },
-        // Placeholder methods for header buttons
-        exportCsv() {
+        // ── Export XLSX ───────────────────────────────────────────────────
+        exportXlsx() {
             if (!this.response || !this.response.answers) {
                 alert("No data available to export.");
                 return;
             }
 
-            // Create CSV Headers
-            let csvContent = "Question,Response\n";
-
-            // Loop through answers and append to CSV string
-            this.response.answers.forEach(item => {
-                // Get question text safely
-                let questionText = this.getTitle(item.question && item.question.title) || 'Unknown Question';
-                // Escape quotes in question text
-                questionText = questionText.replace(/"/g, '""');
-
-                // Get response content safely
+            // Create Rows
+            const headers = ["Question", "Response"];
+            const rows = this.response.answers.map(item => {
+                const questionText = this.getTitle(item.question && item.question.title) || 'Unknown Question';
+                
                 let responseText = '';
                 if (this.isEmpty(item.response)) {
                     responseText = '';
@@ -235,30 +230,26 @@ export default {
                 } else {
                     responseText = String(item.response);
                 }
-                // Escape quotes and newlines in response text
-                responseText = responseText.replace(/"/g, '""');
-
-                // Add row to CSV content, enclosing fields in quotes to handle commas
-                csvContent += `"${questionText}","${responseText}"\n`;
+                
+                return [questionText, responseText];
             });
 
-            // Create Blob and trigger download
-            const blob = new Blob(["\ufeff", csvContent], { type: 'text/csv;charset=utf-8;' }); // \ufeff adds BOM for Excel UTF-8 support
+            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Response Details");
+
+            // Set column widths
+            worksheet['!cols'] = [
+                { wch: 50 }, // Question
+                { wch: 60 }  // Response
+            ];
 
             // Format filename with responder info and date
             const dateStr = moment(this.response.form.createdAt).format('YYYYMMDD');
             const responderName = this.response.user && this.response.user.email ? this.response.user.email.split('@')[0] : 'Anonymous';
-            const filename = `response_${responderName}_${dateStr}.csv`;
+            const filename = `response_${responderName}_${dateStr}.xlsx`;
 
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename);
-            link.style.visibility = 'hidden';
-            // Append link, click, and clean up
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            XLSX.writeFile(workbook, filename);
         },
 
         copyApiLink() {
