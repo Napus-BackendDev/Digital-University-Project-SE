@@ -37,6 +37,14 @@ export default {
                 console.error("Error fetching form:", error);
             }
         },
+        async triggerAutoSave() {
+            try {
+                await this.$store.dispatch('Forms/update', this.formData);
+                console.log("Form auto-saved successfully");
+            } catch (error) {
+                console.error("Error auto-saving form:", error);
+            }
+        }
     },
     computed: {
     }

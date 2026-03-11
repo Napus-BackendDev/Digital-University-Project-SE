@@ -40,7 +40,7 @@ exports.onQuery = async function (request, response) {
     //     },
     //   },
     // ]);
-    
+
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
     return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);

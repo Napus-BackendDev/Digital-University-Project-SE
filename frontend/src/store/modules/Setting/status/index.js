@@ -5,7 +5,7 @@ import store from "@/store/store";
 const module = {
     namespaced: true,
     state: {
-        item : []
+        item: []
     },
 
     mutations: {
@@ -21,33 +21,33 @@ const module = {
     // router.delete("/message", message.onDelete);
 
     actions: {
-        get({commit}, data) {
-            Service.status('get', {}, {})
+        get({ commit }, data) {
+            Service.setting('vision-get', {}, {})
                 .then((response) => {
-                    store.commit("setting/status/item", response.data.data)
+                    commit("item", response.data.data)
                 }).catch((err) => {
-            });
+                });
         },
-        post({commit}, data) {
-            Service.status('post', data, {})
+        post({ commit }, data) {
+            Service.setting('vision-create', data, {})
                 .then((response) => {
 
                 }).catch((err) => {
-            });
+                });
         },
-        put({commit}, data) {
-            Service.status('put', data, {})
+        put({ commit }, data) {
+            Service.setting('vision-update', data, {})
                 .then((response) => {
 
                 }).catch((err) => {
-            });
+                });
         },
-        delete({commit}, data) {
-            Service.status('delete', data, {})
+        delete({ commit }, data) {
+            Service.setting('vision-delete', data, {})
                 .then((response) => {
 
                 }).catch((err) => {
-            });
+                });
         },
     },
 

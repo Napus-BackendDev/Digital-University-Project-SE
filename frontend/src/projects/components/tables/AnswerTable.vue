@@ -67,7 +67,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('setting', ['lang'])
+        ...mapGetters('Setting', ['lang'])
     },
     methods: {
         getTitle(titleArr) {

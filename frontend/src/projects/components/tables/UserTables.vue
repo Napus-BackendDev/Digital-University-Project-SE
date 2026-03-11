@@ -94,7 +94,7 @@ export default {
     },
     computed: {
         ...mapGetters('Forms', ['forms']),
-        ...mapGetters('setting', ['lang']),
+        ...mapGetters('Setting', ['lang']),
 
         totalPages() {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))

@@ -140,7 +140,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters('setting', ['lang']),
+        ...mapGetters('Setting', ['lang']),
         responsesList() {
             return this.$store.getters['Responses/responses'] || [];
         },

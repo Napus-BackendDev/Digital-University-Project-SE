@@ -6,10 +6,10 @@ const instance = axios.create();
 instance.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
 
 
- // Do not force Content-Type globally so axios can set multipart/form-data when sending FormData
- instance.defaults.headers = {
-   Accept: "application/json"
- }
+// Do not force Content-Type globally so axios can set multipart/form-data when sending FormData
+instance.defaults.headers = {
+  Accept: "application/json"
+}
 export default {
 
   form(method, data, configs) {
@@ -78,45 +78,54 @@ export default {
     switch (method) {
       // Message settings
       case 'message-get':
-        return instance.get('/setting/message')
+        return instance.get('/settings/message')
       case 'message-create':
-        return instance.post('/setting/message', data)
+        return instance.post('/settings/message', data)
       case 'message-update':
-        return instance.put('/setting/message', data)
+        return instance.put('/settings/message', data)
       case 'message-delete':
-        return instance.delete('/setting/message', { data })
+        return instance.delete('/settings/message', { data })
 
       // Status settings
       case 'status-get':
-        return instance.get('/setting/status')
+        return instance.get('/settings/status')
       case 'status-create':
-        return instance.post('/setting/status', data)
+        return instance.post('/settings/status', data)
       case 'status-update':
-        return instance.put('/setting/status', data)
+        return instance.put('/settings/status', data)
       case 'status-delete':
-        return instance.delete('/setting/status', { data })
+        return instance.delete('/settings/status', { data })
 
       // Verification settings
       case 'verification-get':
-        return instance.get('/setting/verification')
+        return instance.get('/settings/verification')
       case 'verification-create':
-        return instance.post('/setting/verification', data)
+        return instance.post('/settings/verification', data)
       case 'verification-explorers':
-        return instance.post('/setting/verification/explorers', data)
+        return instance.post('/settings/verification/explorers', data)
       case 'verification-update':
-        return instance.put('/setting/verification', data)
+        return instance.put('/settings/verification', data)
       case 'verification-delete':
-        return instance.delete('/setting/verification', { data })
+        return instance.delete('/settings/verification', { data })
 
       // Question Type settings
-      case 'get':
+      case 'question-type-get':
         return instance.get('/settings/question_type')
-      case 'create':
+      case 'question-type-create':
         return instance.post('/settings/question_type', data)
-      case 'update':
+      case 'question-type-update':
         return instance.put('/settings/question_type', data)
-      case 'delete':
+      case 'question-type-delete':
         return instance.delete('/settings/question_type', { data })
+
+      case 'vision-get':
+        return instance.get('/settings/status', data)
+      case 'vision-create':
+        return instance.post('/settings/status', data)
+      case 'vision-update':
+        return instance.put('/settings/status', data)
+      case 'vision-delete':
+        return instance.delete('/settings/status', { data })
 
       default:
         break
