@@ -10,7 +10,7 @@
                         email</small>
                 </div>
                 <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedCollectEmail"
-                    @update:checked="triggerAutoSave" />
+                    @update:checked="val => { mappedCollectEmail = val; triggerAutoSave(); }" />
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -19,17 +19,26 @@
                     <small class="text-muted">Only allow one response per person</small>
                 </div>
                 <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedLimitResponse"
-                    @update:checked="triggerAutoSave" />
+                    @update:checked="val => { mappedLimitResponse = val; triggerAutoSave(); }" />
             </div>
 
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h6 class="mb-1 font-weight-bold">Show progress bar</h6>
                     <small class="text-muted">Display completion progress to
                         respondents</small>
                 </div>
                 <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedProgressBar"
-                    @update:checked="triggerAutoSave" />
+                    @update:checked="val => { mappedProgressBar = val; triggerAutoSave(); }" />
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1 font-weight-bold">Require all responses</h6>
+                    <small class="text-muted">Ensure all questions have a response before submission</small>
+                </div>
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedRequireResponse"
+                    @update:checked="val => { mappedRequireResponse = val; triggerAutoSave(); }" />
             </div>
         </CCardBody>
     </CCard>
@@ -67,6 +76,14 @@ export default {
             },
             set(val) {
                 this.$set(this.settings, 'progressBar', val);
+            }
+        },
+        mappedRequireResponse: {
+            get() {
+                return !!this.settings.requireResponse;
+            },
+            set(val) {
+                this.$set(this.settings, 'requireResponse', val);
             }
         }
     },

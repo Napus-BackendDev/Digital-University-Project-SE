@@ -42,7 +42,13 @@ exports.onQuery = async function (request, response) {
     // Use onQuery for population instead of custom onPopulate
     const doc = await Form.onQuery({ _id: query._id }, [
       { path: 'questions', populate: { path: 'type', select: 'type' } },
-      { path: 'responses' },
+      { 
+        path: 'responses', 
+        populate: { 
+          path: 'answers.question',
+          populate: { path: 'type', select: 'type' }
+        } 
+      },
       { path: 'status', select: 'title' }
     ]);
 
