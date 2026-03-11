@@ -267,7 +267,7 @@ export default {
             try {
                 const result = await this.$store.dispatch('Responses/get', { form_id: formId });
                 const data = (result && result.data && result.data.data) || [];
-                const filtered = data.filter(r => r && (r.responsed === true || r.responsed === 'true'));
+                const filtered = data.filter(r => r && (r.submit === true || r.submit === 'true'));
                 this.responseList = filtered;
                 this.responsesCount = filtered.length;
             } catch (err) {

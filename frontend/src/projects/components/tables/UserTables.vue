@@ -136,7 +136,7 @@ export default {
                             if (typeof r === 'object') {
                                 try {
                                     if (String(r.responder) === String(responder)) {
-                                        if (r.responsed === true || r.responsed === 'true') hasCompleted = true;
+                                        if (r.submit === true || r.submit === 'true') hasCompleted = true;
                                         else hasDraft = true;
                                     }
                                 } catch (e) {

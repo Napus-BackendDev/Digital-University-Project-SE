@@ -185,7 +185,7 @@ export default {
                     await this.$store.dispatch('Responses/get', { form_id: this.form._id });
                     const responses = this.$store.getters['Responses/responses'] || [];
 
-                    const draft = (responses || []).find(r => String(r.form) === String(this.form._id) && String(r.responder) === String(this.responder) && !r.responsed);
+                    const draft = (responses || []).find(r => String(r.form) === String(this.form._id) && String(r.responder) === String(this.responder) && !r.submit);
 
                     if (draft && draft._id && Array.isArray(draft.answers)) {
                         this.draftResponseId = draft._id;
@@ -221,7 +221,7 @@ export default {
                     responder: this.responder,
                     form: this.form._id,
                     answers: Object.entries(this.answers).map(([question, response]) => ({ question, response })),
-                    responsed: false
+                    submit: false
                 };
                 if (this.draftResponseId) {
                     await this.$store.dispatch('Responses/update', Object.assign({ _id: this.draftResponseId }, payload));
@@ -365,7 +365,7 @@ export default {
 
                 if (!this.draftResponseId) {
                     try {
-                        const res = await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { responsed: false }));
+                        const res = await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: false }));
                         const created = res && res.data && res.data.data;
                         let id = null;
                         if (created) {
@@ -380,9 +380,9 @@ export default {
                 }
 
                 if (this.draftResponseId) {
-                    await this.$store.dispatch('Responses/update', Object.assign({ _id: this.draftResponseId }, { ...createPayload, responsed: true }));
+                    await this.$store.dispatch('Responses/update', Object.assign({ _id: this.draftResponseId }, { ...createPayload, submit: true }));
                 } else {
-                    await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { responsed: true }));
+                    await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: true }));
                 }
 
                 this.modalTitle = 'Success';

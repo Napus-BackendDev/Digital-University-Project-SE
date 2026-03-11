@@ -103,7 +103,7 @@ export default {
         },
 
         tableItems() {
-            const visible = (this.responses || []).filter(r => r && (r.responsed === true || r.responsed === 'true'));
+            const visible = (this.responses || []).filter(r => r && (r.submit === true || r.submit === 'true'));
             return visible.map((r, idx) => ({
                 id: idx + 1,
                 _id: r._id,

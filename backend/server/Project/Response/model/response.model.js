@@ -13,7 +13,7 @@ var objSchema = new Schema(
         response: { type: Schema.Types.Mixed },
       },
     ],
-    responsed: { type: Boolean, default: false }
+    submit: { type: Schema.Types.Boolean, default: false },
   },
   { timestamps: true }
 );
