@@ -6,8 +6,8 @@
 </template>
 
 <script>
-import EditorTables from '../../components/tables/EditorTables.vue'
-import Header from '../../components/Util/Header.vue'
+import EditorTables from '../components/tables/EditorTables.vue'
+import Header from '../components/Util/Header.vue'
 
 export default {
     name: "EditorDashboard",

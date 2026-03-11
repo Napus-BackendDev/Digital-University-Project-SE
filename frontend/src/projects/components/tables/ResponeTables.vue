@@ -103,7 +103,8 @@ export default {
         },
 
         tableItems() {
-            return this.responses.map((r, idx) => ({
+            const visible = (this.responses || []).filter(r => r && (r.submit === true || r.submit === 'true'));
+            return visible.map((r, idx) => ({
                 id: idx + 1,
                 _id: r._id,
                 responder: r.responder || '-',
@@ -133,7 +134,7 @@ export default {
 
         // ── View a single response ────────────────────────────────────────
         viewResponse(item) {
-            this.$router.push({ name: 'ResponseDetail', params: { id: item._id } })
+            this.$router.push({ name: 'Response', params: { id: item._id } })
         },
 
         // ── Title helper for multilingual title array ─────────────────────

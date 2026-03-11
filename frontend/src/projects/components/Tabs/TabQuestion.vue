@@ -85,20 +85,20 @@
                         </div>
 
                         <!-- ── Question Type ── -->
-                        <div v-if="getQuestionTypeString(question.type).toLowerCase() === 'short_answer'">
+                        <div v-if="getQuestionType(question.type).toLowerCase() === 'short_answer'">
                             <CInput disabled style="opacity: 0.55;" placeholder="Short answer text" />
                         </div>
 
-                        <div v-else-if="getQuestionTypeString(question.type).toLowerCase() === 'paragraph'">
+                        <div v-else-if="getQuestionType(question.type).toLowerCase() === 'paragraph'">
                             <CTextarea disabled style="opacity: 0.55;" placeholder="Long answer text" rows="3" />
                         </div>
 
                         <div v-else-if="
-                            getQuestionTypeString(question.type).toLowerCase() === 'multiple_choice' ||
-                            getQuestionTypeString(question.type).toLowerCase() === 'checkbox'">
+                            getQuestionType(question.type).toLowerCase() === 'multiple_choice' ||
+                            getQuestionType(question.type).toLowerCase() === 'checkbox'">
                             <div v-for="(choice, choiceIndex) in question.config.choices"
                                 class="d-flex align-items-center mb-2">
-                                <div v-if="getQuestionTypeString(question.type).toLowerCase() === 'multiple_choice'"
+                                <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
                                     class="border rounded-circle mr-2 flex-shrink-0"
                                     style="width: 30px; height: 30px;" />
                                 <div v-else class="border rounded mr-2 flex-shrink-0"
@@ -118,7 +118,7 @@
                             </CButton>
                         </div>
 
-                        <div v-else-if="getQuestionTypeString(question.type).toLowerCase() === 'rating'"
+                        <div v-else-if="getQuestionType(question.type).toLowerCase() === 'rating'"
                             class="d-flex align-items-center">
                             <CDropdown class="mr-3" color="secondary" variant="outline">
                                 <template #toggler>
@@ -138,7 +138,7 @@
                             </div>
                         </div>
 
-                        <div v-else-if="getQuestionTypeString(question.type).toLowerCase() === 'file_upload'">
+                        <div v-else-if="getQuestionType(question.type).toLowerCase() === 'file_upload'">
                             <div class="mb-3">
                                 <span class="d-block mb-2 small text-muted">File Type</span>
                                 <div class="d-flex flex-wrap">
@@ -182,7 +182,7 @@
                             </div>
                         </div>
 
-                        <div v-else-if="getQuestionTypeString(question.type).toLowerCase() === 'title_description'">
+                        <div v-else-if="getQuestionType(question.type).toLowerCase() === 'title_description'">
                             <div>
                                 <small class="text-muted font-weight-bold d-block mb-1">Description</small>
                                 <div v-for="(descItem, dIdx) in (question.config.description || [])" :key="'qd-' + dIdx"
@@ -205,7 +205,7 @@
                             </div>
                         </div>
 
-                        <div v-else-if="getQuestionTypeString(question.type).toLowerCase() === 'image'">
+                        <div v-else-if="getQuestionType(question.type).toLowerCase() === 'image'">
                             <div class="image-drop-zone" @click="openImageModal(index)">
                                 <div v-if="!question.config || !question.config.image" class="image-placeholder">
                                     <CIcon name="cil-image-1" :height="40" class="mb-2" />
@@ -231,7 +231,7 @@
                                             style="border-radius: 6px;">
                                             <CIcon :name="getIconForType(question.type)" class="mr-2" />
                                             <span class="text-capitalize">
-                                                {{ getQuestionTypeString(question.type).split('_').join(' ') }}
+                                                {{ getQuestionType(question.type).split('_').join(' ') }}
                                             </span>
                                         </button>
                                     </template>
@@ -245,7 +245,7 @@
                                 </CDropdown>
                             </div>
 
-                            <div class="d-flex align-items-center">
+                            <div v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'" class="d-flex align-items-center">
                                 <small class="text-muted font-weight-bold text-uppercase mr-2">Required</small>
                                 <CSwitch class="mx-1" color="dark" shape="pill" :checked="question.isRequired"
                                     @update:checked="val => { question.isRequired = val; putQuestion(question); }" />
@@ -306,14 +306,13 @@
             </template>
             <template #body-wrapper>
                 <CCardBody class="p-3">
-                    <div style="position:relative; width:100%; cursor:pointer; border:2px dashed #adb5bd; border-radius:8px; overflow:hidden; background:#f8fafc;"
-                        @click="$refs.imageFileInput.click()">
+                    <div class="image-drop-zone" @click="$refs.imageFileInput.click()">
                         <div v-if="!modalFiles"
-                            style="inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#adb5bd;">
+                            class="image-placeholder">
                             <CIcon name="cil-image-1" :height="40" class="mb-2" />
                             <span>Choose Image</span>
                         </div>
-                        <img v-else :src="modalFiles" style="inset:0; width:100%; height:100%; object-fit:contain;" />
+                        <img v-else :src="modalFiles" class="image-preview" />
                     </div>
                     <input ref="imageFileInput" type="file" accept="image/*" style="display:none;"
                         @change="onImageSelected($event)" />
@@ -374,7 +373,6 @@ export default {
             immediate: true,
             deep: false,
             async handler(newForm) {
-                console.log(JSON.parse(JSON.stringify(newForm)));
                 if (newForm && Array.isArray(newForm.questions)) {
                     this.localQuestions = JSON.parse(JSON.stringify(newForm.questions));
                 }
@@ -625,14 +623,14 @@ export default {
             this.$set(question, 'type', typeId);
             this.putQuestion(question);
         },
-        getQuestionTypeString(typeObjOrId) {
+        getQuestionType(typeObjOrId) {
             if (!typeObjOrId) return '';
             if (typeof typeObjOrId === 'object') return typeObjOrId.type || typeObjOrId.label || '';
             const found = this.questionTypes.find(t => t._id === typeObjOrId);
             return found ? (found.type || '') : typeObjOrId;
         },
         getIconForType(typeObjOrId) {
-            const typeStr = (this.getQuestionTypeString(typeObjOrId) || '').toLowerCase().replace(/ /g, '_');
+            const typeStr = (this.getQuestionType(typeObjOrId) || '').toLowerCase().replace(/ /g, '_');
             switch (typeStr) {
                 case 'short_answer': return 'cil-minus';
                 case 'paragraph': return 'cil-align-left';
@@ -802,18 +800,20 @@ export default {
 .image-drop-zone {
     position: relative;
     width: 100%;
-    padding: 20%;
     cursor: pointer;
     border: 2px dashed #adb5bd;
     border-radius: 8px;
     overflow: hidden;
     background: #f8fafc;
+    aspect-ratio: 1 / 1;
+    min-height: 220px;
 }
 
 .image-placeholder {
     position: absolute;
-    inset: 0;
     display: flex;
+    width: 100%;
+    height: 100%;
     flex-direction: column;
     align-items: center;
     justify-content: center;

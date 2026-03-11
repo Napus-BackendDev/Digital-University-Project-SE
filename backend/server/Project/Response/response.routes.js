@@ -14,7 +14,7 @@ router.post("/getByFormId", function (req, res, next) {
     next();
 }, response.onGetByFormId);
 
-router.post("/getById", function (req, res, next) {
+router.post("/get", function (req, res, next) {
     req.body.apiId = 2;
     next();
 }, response.onGetById);
@@ -22,12 +22,12 @@ router.post("/getById", function (req, res, next) {
 router.post("", function (req, res, next) {
     req.body.apiId = 3;
     next();
-}, upload.single('file'), response.onCreate);
+}, upload.any(), response.onCreate);
 
 router.put("", function (req, res, next) {
     req.body.apiId = 4;
     next();
-}, response.onUpdate);
+}, upload.any(), response.onUpdate);
 
 router.delete("", function (req, res, next) {
     req.body.apiId = 5;

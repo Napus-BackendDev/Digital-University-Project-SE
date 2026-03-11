@@ -181,7 +181,6 @@ export default {
         'responses._id': {
             immediate: true,
             handler(newId) {
-                console.log('[TabResponses] responses._id changed to:', newId);
                 if (newId && this.responseList.length === 0) {
                     this.fetchResponses();
                 }
@@ -263,15 +262,14 @@ export default {
             }
             if (this.loading) return;  // prevent double fetch
 
-            console.log('[TabResponses] fetching responses for formId:', formId);
             this.loading = true;
             this.error = null;
             try {
                 const result = await this.$store.dispatch('Responses/get', { form_id: formId });
                 const data = (result && result.data && result.data.data) || [];
-                this.responseList = data;
-                this.responsesCount = data.length;
-                console.log('[TabResponses] loaded', data.length, 'responses');
+                const filtered = data.filter(r => r && (r.submit === true || r.submit === 'true'));
+                this.responseList = filtered;
+                this.responsesCount = filtered.length;
             } catch (err) {
                 console.error('[TabResponses] Failed to fetch responses:', err);
                 this.error = 'Failed to load responses.';
@@ -304,10 +302,6 @@ export default {
             const PALETTE = ['#a32a29', '#d9a036', '#723469', '#618a44', '#3d5a92', '#e55353', '#f9c74f', '#90be6d'];
             return PALETTE[idx % PALETTE.length];
         },
-        onViewResponse(item) {
-            // TODO: open response detail modal/page
-            console.log('[TabResponses] view response:', item);
-        }
     },
     computed: {
 

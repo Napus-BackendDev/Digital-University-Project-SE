@@ -38,7 +38,6 @@ export default {
     watch: {
         settings: {
             handler(newVal) {
-                console.log('Settings in TabSetting:', newVal);
             },
             deep: true,
             immediate: true

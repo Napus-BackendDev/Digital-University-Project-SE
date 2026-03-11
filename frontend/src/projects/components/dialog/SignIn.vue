@@ -132,12 +132,9 @@ export default {
 
     async onAuthenGoogle() {
       try {
-        console.log("onAuthenGoogle")
         const googleUser = await this.$gAuth.signIn();
         // const profile = googleUser.getBasicProfile();
         // const id_token = googleUser.getAuthResponse().id_token;
-        // console.log('User:', profile);
-        console.log('googleUser', googleUser)
 
         // var body = {}
         // body.token = id_token
@@ -154,10 +151,8 @@ export default {
     },
 
     handleOnComplete(value) {
-      console.log('OTP completed: ', value);
     },
     handleOnChange(value) {
-      console.log('OTP changed: ', value);
     },
     handleClearInput() {
       this.$refs.otpInput.clearInput();

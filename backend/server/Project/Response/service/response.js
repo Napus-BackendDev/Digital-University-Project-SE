@@ -35,18 +35,6 @@ exports.onGetByFormId = async function (request, response) {
     }
 };
 
-// exports.onGetByUserId = async function (request, response) {
-//     try {
-//         let query = {};
-//         query.responder = request.user.id;
-//         const doc = await responseService.onQuerys(query);
-//         return ResMessage.sendResponse(response, request.body.apiId, 20000, doc);
-//     } catch (err) {
-//         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses by user ID", err.message);
-//     }
-// };
-
-
 exports.onGetById = async function (request, response) {
     try {
         let query = {};
@@ -61,133 +49,62 @@ exports.onGetById = async function (request, response) {
     }
 };
 
-// exports.onExportResponses = async function (request, response) {
-//     try {
-//         const { form_id } = request.query;
-//         if (!form_id || !mongo.ObjectId.isValid(form_id)) {
-//             console.log("Invalid form_id");
-//             return ResMessage.sendResponse(response, request.body.apiId, 40000, "Invalid form ID");
-//         }
-
-//         // Get form
-//         const form = await formModel.findById(form_id).lean();
-//         if (!form) {
-//             console.log("Form not found");
-//             return ResMessage.sendResponse(response, request.body.apiId, 40400, "Form not found");
-//         }
-
-//         // Get responses with populated questions and sub-questions
-//         const responses = await responseModel.find({ form: form_id })
-//             .populate({
-//                 path: 'answers.question',
-//                 populate: {
-//                     path: 'subQuestion'
-//                 }
-//             })
-//             .lean();
-
-//         if (!responses || responses.length === 0) {
-//             return ResMessage.sendResponse(response, request.body.apiId, 40400, "No responses found for this form");
-//         }
-
-//         // Collect all unique questions (including sub-questions) from responses
-//         const questionMap = new Map();
-//         responses.forEach(resp => {
-//             resp.answers.forEach(answer => {
-//                 if (answer.question && answer.question._id) {
-//                     const qId = answer.question._id.toString();
-//                     if (!questionMap.has(qId)) {
-//                         questionMap.set(qId, answer.question);
-//                     }
-
-//                     // Add sub-questions if they exist
-//                     if (answer.question.subQuestion && Array.isArray(answer.question.subQuestion)) {
-//                         answer.question.subQuestion.forEach(subQ => {
-//                             if (subQ && subQ._id) {
-//                                 const subQId = subQ._id.toString();
-//                                 if (!questionMap.has(subQId)) {
-//                                     questionMap.set(subQId, subQ);
-//                                 }
-//                             }
-//                         });
-//                     }
-//                 }
-//             });
-//         });
-
-//         const questions = Array.from(questionMap.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
-
-//         if (questions.length === 0) {
-//             return ResMessage.sendResponse(response, request.body.apiId, 40400, "No questions found for this form");
-//         }
-
-//         // Prepare CSV headers
-//         const questionHeaders = questions.map(q => q.questionText || 'Question');
-//         const fields = ['Response ID', 'Responder ID', ...questionHeaders, mongo.getTimestamp('Submitted At')];
-
-//         // Build CSV rows
-//         const rows = responses.map(resp => {
-//             const answerMap = {};
-//             resp.answers.forEach(a => {
-//                 if (a.question && a.question._id) {
-//                     answerMap[a.question._id.toString()] = a.response;
-//                 }
-//             });
-
-//             const row = {
-//                 'Response ID': resp._id.toString(),
-//                 'Responder ID': resp.responder_id ? resp.responder_id.toString() : 'N/A',
-//                 'Submitted At': resp.submittedAt || 'N/A'
-//             };
-
-//             questions.forEach(q => {
-//                 const raw = answerMap[q._id.toString()];
-//                 let value = null;
-//                 if (raw !== undefined && raw !== null) {
-//                     if (Array.isArray(raw)) {
-//                         value = raw.join('; ');
-//                     } else if (typeof raw === 'object') {
-//                         value = JSON.stringify(raw);
-//                     } else {
-//                         value = String(raw);
-//                     }
-//                 }
-//                 row[q.questionText || 'Question'] = value;
-//             });
-
-//             return row;
-//         });
-
-//         const parser = new Parser({ fields });
-//         const csv = parser.parse(rows);
-
-//         const formTitle = Array.isArray(form.title) && form.title.length > 0
-//             ? (form.title.find(t => t.key === 'en')?.value || form.title[0].value || 'form')
-//             : 'form';
-//         const safeTitle = formTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-
-//         response.header('Content-Type', 'text/csv; charset=UTF-8');
-//         response.setHeader('Content-Disposition', `attachment; filename="${safeTitle}_responses.csv"`);
-//         response.status(200).send(csv);
-
-//     } catch (error) {
-//         console.error('Export responses error:', error);
-//         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Error exporting responses", error.message);
-//     }
-// };
-
 exports.onCreate = async function (request, response) {
     try {
-        let { answers } = request.body;
+        let answers = request.body.answers || request.body['answers'];
+
+        if (typeof answers === 'string') {
+            try { answers = JSON.parse(answers); } catch (e) { }
+        }
+
         if (!Array.isArray(answers)) {
-            answers = [answers];
+            const singleQ = request.body['answers[question]'] || request.body['answers[0][question]'];
+            const singleR = request.body['answers[response]'] || request.body['answers[0][response]'];
+            if (singleQ || singleR) {
+                answers = [{ question: singleQ || null, response: singleR || null }];
+            } else if (answers && typeof answers === 'object') {
+                answers = [answers];
+            } else {
+                answers = [];
+            }
         }
-        if (request.file) {
-            answers = answers.map(ans => ({
-                ...ans,
-                response: request.file.path
-            }));
+
+        if (request.files && request.files.length) {
+            let fileQuestions = request.body['answers[question]'] || request.body['answers[0][question]'];
+            if (fileQuestions === undefined) fileQuestions = [];
+            if (!Array.isArray(fileQuestions)) fileQuestions = [fileQuestions];
+
+            for (let i = 0; i < request.files.length; i++) {
+                const file = request.files[i];
+                const questionForFile = fileQuestions[i] || null;
+                let attached = false;
+
+                if (questionForFile) {
+                    for (let ans of answers) {
+                        if (ans && String(ans.question) === String(questionForFile)) {
+                            ans.response = file.path;
+                            attached = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!attached) {
+                    for (let ans of answers) {
+                        if (!ans || ans.response === null || ans.response === undefined || ans.response === '') {
+                            ans.response = file.path;
+                            attached = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!attached) {
+                    answers.push({ question: questionForFile || null, response: file.path });
+                }
+            }
         }
+
         request.body.answers = answers;
         const doc = await responseService.onCreate(request.body);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
@@ -201,9 +118,79 @@ exports.onUpdate = async function (request, response) {
     try {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
+        
+        // Fetch existing response to merge answers instead of replacing
+        const existingResponse = await responseService.onQuery(query);
+        if (!existingResponse) {
+            return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found");
+        }
+
+        let answers = request.body.answers || request.body['answers'];
+        if (typeof answers === 'string') {
+            try { answers = JSON.parse(answers); } catch (e) { answers = []; }
+        }
+        if (!Array.isArray(answers)) answers = answers && typeof answers === 'object' ? [answers] : [];
+
+        // Attach uploaded files to answers
+        if (request.files && request.files.length) {
+            let fileQuestions = request.body['answers[question]'] || request.body['answers[0][question]'];
+            if (fileQuestions === undefined) fileQuestions = [];
+            if (!Array.isArray(fileQuestions)) fileQuestions = [fileQuestions];
+
+            for (let i = 0; i < request.files.length; i++) {
+                const file = request.files[i];
+                const questionForFile = fileQuestions[i] || null;
+                let attached = false;
+
+                if (questionForFile) {
+                    for (let ans of answers) {
+                        if (ans && String(ans.question) === String(questionForFile)) {
+                            ans.response = file.path;
+                            attached = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!attached) {
+                    for (let ans of answers) {
+                        if (!ans || ans.response === null || ans.response === undefined || ans.response === '') {
+                            ans.response = file.path;
+                            attached = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!attached) {
+                    answers.push({ question: questionForFile || null, response: file.path });
+                }
+            }
+        }
+
+        // Merge answers: update existing answers or add new ones
+        const existingAnswers = existingResponse.answers || [];
+        const mergedAnswers = [...existingAnswers];
+
+        answers.forEach(newAns => {
+            const existingIndex = mergedAnswers.findIndex(
+                oldAns => oldAns.question && newAns.question && String(oldAns.question._id || oldAns.question) === String(newAns.question)
+            );
+
+            if (existingIndex !== -1) {
+                // Update existing answer
+                mergedAnswers[existingIndex].response = newAns.response;
+            } else {
+                // Add new answer
+                mergedAnswers.push({ question: newAns.question, response: newAns.response });
+            }
+        });
+
+        request.body.answers = mergedAnswers;
+
         const doc = await responseService.onUpdate(query, request.body);
         if (!doc) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found");
+            return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found after update");
         }
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
     } catch (err) {
@@ -244,45 +231,7 @@ exports.generateExportLinkByFormAndUser = async function (request, response) {
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
     }
 };
-// exports.generateExportLinkByFormAndResponse = async function (request, response) {
-//     try {
-//         const { formId, _id } = request.body;
-//         if (!formId || !mongo.ObjectId.isValid(formId)) {
-//             return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid form ID");
-//         }
-//         //Need to uncomment for production
-//         if (_id && !mongo.ObjectId.isValid(_id)) {
-//             return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid response ID");
-//         }
-//         let exportLink = `${request.protocol}://${request.get('host')}/api/v1/response/export/${formId}/user/${_id}`;
-//         return ResMessage.sendResponse(response, getApiId(request), 20000, {
-//             downloadLink: exportLink,
-//             formId: formId,
-//             responseId: _id
-//         });
 
-//     }
-//     catch (err) {
-//         return ResMessage.sendResponse(response, getApiId(request), 50000, "Failed to generate export link", err.message);
-//     }
-// };
-// exports.generateExportLinkFormId = async function (request, response) {
-//     try {
-//         const { form_id } = request.body;
-//         if (!form_id || !mongo.ObjectId.isValid(form_id)) {
-//             return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid form ID");
-//         }
-
-//         const exportLink = `${request.protocol}://${request.get('host')}/api/v1/response/download/${form_id}`;
-
-//         return ResMessage.sendResponse(response, getApiId(request), 20000, {
-//             downloadLink: exportLink,
-//             formId: form_id
-//         });
-//     } catch (err) {
-//         return ResMessage.sendResponse(response, getApiId(request), 50000, "Failed to generate export link", err.message);
-//     }
-// };
 exports.downloadResponseJSON = async function (request, response) {
     try {
         const { form_id, _id } = request.params;

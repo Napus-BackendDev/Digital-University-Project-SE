@@ -38,17 +38,38 @@ const module = {
                 const formData = new FormData();
                 formData.append('responder', data.responder);
                 formData.append('form', data.form);
-                (data.answers || []).forEach((ans, idx) => {
-                    formData.append(`answers[${idx}][question]`, ans.question);
+
+                const files = [];
+                const fileQuestions = [];
+                (data.answers || []).forEach(ans => {
                     if (ans.response instanceof File) {
-                        formData.append('file', ans.response, ans.response.name);
-                        formData.append(`answers[${idx}][response]`, ans.response.name);
-                    } else {
-                        formData.append(`answers[${idx}][response]`,
-                            Array.isArray(ans.response) ? JSON.stringify(ans.response) : String(ans.response ?? '')
-                        );
+                        files.push(ans.response);
+                        fileQuestions.push(ans.question);
+                    } else if (Array.isArray(ans.response)) {
+                        ans.response.forEach(r => {
+                            if (r instanceof File) {
+                                files.push(r);
+                                fileQuestions.push(ans.question);
+                            }
+                        });
                     }
                 });
+
+                const answersPayload = (data.answers || []).map(ans => ({
+                    question: ans.question,
+                    response: Array.isArray(ans.response)
+                        ? JSON.stringify(ans.response.map(r => r instanceof File ? (r.name || '') : r))
+                        : (ans.response instanceof File ? (ans.response.name || '') : String(ans.response ?? ''))
+                }));
+
+                formData.append('answers', JSON.stringify(answersPayload));
+
+                // attach files as repeated 'file' fields and append matching answers[question] entries
+                files.forEach((file, idx) => {
+                    formData.append('answers[question]', fileQuestions[idx]);
+                    formData.append('answers[response]', file, file.name);
+                });
+
                 payload = formData;
             } else {
                 payload = {
@@ -68,15 +89,59 @@ const module = {
                     commit('responses', response.data.data);
                     return response;
                 })
-                .catch(err => { console.log(err); throw err; });
+                .catch(err => { throw err; });
         },
         update({ commit }, data) {
-            return Service.response('update', data, {})
-                .then(response => {
-                    commit('responses', response.data.data);
-                    return response;
-                })
-                .catch(err => { console.log(err); throw err; });
+                const hasFile = (data.answers || []).some(ans =>
+                    ans.response instanceof File ||
+                    (Array.isArray(ans.response) && ans.response.some(r => r instanceof File))
+                );
+
+                let payload = data;
+                if (hasFile) {
+                    const formData = new FormData();
+                    formData.append('responder', data.responder);
+                    formData.append('form', data.form);
+                    if (data._id) formData.append('_id', data._id);
+
+                    // collect all files and their question ids
+                    const files = [];
+                    const fileQuestions = [];
+                    (data.answers || []).forEach(ans => {
+                        if (ans.response instanceof File) {
+                            files.push(ans.response);
+                            fileQuestions.push(ans.question);
+                        } else if (Array.isArray(ans.response)) {
+                            ans.response.forEach(r => {
+                                if (r instanceof File) {
+                                    files.push(r);
+                                    fileQuestions.push(ans.question);
+                                }
+                            });
+                        }
+                    });
+
+                    const answersPayload = (data.answers || []).map(ans => ({
+                        question: ans.question,
+                        response: Array.isArray(ans.response)
+                            ? JSON.stringify(ans.response.map(r => r instanceof File ? (r.name || '') : r))
+                            : (ans.response instanceof File ? (ans.response.name || '') : String(ans.response ?? ''))
+                    }));
+
+                    formData.append('answers', JSON.stringify(answersPayload));
+                    files.forEach((file, idx) => {
+                        formData.append('answers[question]', fileQuestions[idx]);
+                        formData.append('file', file, file.name);
+                    });
+                    payload = formData;
+                }
+
+                return Service.response(hasFile ? 'update-multipart' : 'update', payload, {})
+                    .then(response => {
+                        commit('responses', response.data.data);
+                        return response;
+                    })
+                    .catch(err => { throw err; });
         },
         delete({ commit }, data) {
             return Service.response('delete', data, {})
@@ -84,7 +149,7 @@ const module = {
                     commit('responses', response.data.data);
                     return response;
                 })
-                .catch(err => { console.log(err); throw err; });
+                .catch(err => { throw err; });
         }
     },
     getters: {

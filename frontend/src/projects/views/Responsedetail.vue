@@ -2,10 +2,7 @@
     <div class="flex-grow-1">
 
         <!-- Back Button -->
-        <CButton variant="ghost" color="dark" class="mb-4 d-inline-flex align-items-center" @click="$router.back()">
-            <CIcon name="cil-arrow-left" class="mr-2" />
-            Back to Responses
-        </CButton>
+        <ButtonBack />
 
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-5 text-muted">
@@ -124,10 +121,11 @@ import { mapGetters } from 'vuex';
 import moment from 'moment';
 import ResponeTables from '@/projects/components/tables/ResponeTables.vue';
 import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
+import ButtonBack from '@/projects/components/Button/ButtonBack.vue';
 
 export default {
-    name: 'ResponseDetail',
-    components: { ResponeTables, AnswerTable },
+    name: 'Response',
+    components: { ResponeTables, AnswerTable, ButtonBack },
     props: {
         id: {
             type: String,
@@ -274,7 +272,7 @@ export default {
         goToResponse(index) {
             if (index >= 0 && index < this.totalResponses) {
                 const targetId = this.responsesList[index]._id;
-                this.$router.push({ name: 'ResponseDetail', params: { id: targetId } });
+                this.$router.push({ name: 'Response', params: { id: targetId } });
             }
         },
 

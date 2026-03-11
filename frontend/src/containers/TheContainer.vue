@@ -57,7 +57,6 @@ export default {
     //       socket.emit('campus',{"sos":1122});
     //
     //       socket.on("campus", (reason) => {
-    //         console.log(reason)
     //       })
     //
     //
@@ -67,7 +66,6 @@ export default {
     //
     // // กรณีการเชื่อมต่อถูกตัดขาด
     //     socket.on("disconnect", (reason) => {
-    //       console.log("[socket disconnected]: ", reason);
     //     });
     // // กรณีการเชื่อมต่อเกิดความผิดพลาด
     //     socket.on("connect_error", (error) => {
@@ -78,12 +76,9 @@ export default {
     // localStorage.setItem('test','123444')
 
     // socket.on("connect", () => {
-    //   console.log(12)
     // });
     //
     // socket.on("disconnect", () => {
-    //   console.log(13)
-    //
     // });
   },
 
