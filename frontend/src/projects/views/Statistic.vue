@@ -24,12 +24,12 @@
 </template>
 
 <script>
-import WidgetsDropdown from '../../components/widgets/WidgetsDropdown.vue'
-import AdminTables from '../../components/tables/AdminTables.vue';
-import AdminDoughnutCharts from '../../components/charts/AdminDoughnutCharts.vue'
-import AdminBarCharts from '../../components/charts/AdminBarCharts.vue'
-import Header from '../../components/Util/Header.vue'
-import AdminLineCharts from '../../components/charts/AdminLineCharts.vue';
+import WidgetsDropdown from '../components/widgets/WidgetsDropdown.vue'
+import AdminTables from '../components/tables/AdminTables.vue';
+import AdminDoughnutCharts from '../components/charts/AdminDoughnutCharts.vue'
+import AdminBarCharts from '../components/charts/AdminBarCharts.vue'
+import Header from '../components/Util/Header.vue'
+import AdminLineCharts from '../components/charts/AdminLineCharts.vue';
 
 export default {
     name: "Admin Dashboard",
@@ -58,7 +58,6 @@ export default {
     watch: {
         forms: {
             handler(val) {
-                console.log('Forms:', val)
             },
             deep: true,
             immediate: true

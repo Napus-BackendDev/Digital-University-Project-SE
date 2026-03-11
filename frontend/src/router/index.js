@@ -7,22 +7,20 @@ const TheContainer = () => import('@/containers/TheContainer')
 // Login
 const Login = () => import('@/projects/views/Login.vue')
 
-// User
-const UserDashboard = () => import('@/projects/views/user/Dashboard.vue')
-const UserFormFill = () => import('@/projects/views/page/Fillform.vue')
+// Page (actual files)
+const Forms = () => import('@/projects/views/Forms.vue')
+const FormFill = () => import('@/projects/views/page/FormFill.vue')
 
 // Editor
-const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
-const EditorCreateForm = () => import('@/projects/views/editor/CreateForm.vue')
+const ManageForms = () => import('@/projects/views/ManageForms.vue')
+const CreateForm = () => import('@/projects/views/page/CreateForm.vue')
 
-// Page
-const Fillform = () => import('@/projects/views/page/Fillform.vue')
-const Responsedetail = () => import('@/projects/views/page/Responsedetail.vue')
+// Page details
+const Response = () => import('@/projects/views/Responsedetail.vue')
 
 // Admin
-// const AdminUsermanager = () => import('@/projects/views/admin/Usermanager.vue')
-const AdminStatistic = () => import('@/projects/views/admin/Statistic.vue')
-
+const Analytics = () => import('@/projects/views/Statistic.vue')
+const Permissions = () => import('@/projects/views/Permissions.vue')
 
 Vue.use(Router)
 
@@ -33,62 +31,53 @@ export default new Router({
 
         {
             path: '/',
-            redirect: '/editor/dashboard',
+            redirect: 'forms',
             name: 'Home',
             component: TheContainer,
             children: [
-
                 {
-                    path: 'user/forms',
-                    name: 'UserDashboard',
-                    component: UserDashboard
+                    path: 'forms',
+                    name: 'Forms',
+                    component: Forms
                 },
-
                 {
-                    path: 'user/forms/:id',
-                    name: 'UserFormFill',
-                    component: UserFormFill,
+                    path: 'forms/:id',
+                    name: 'FormFill',
+                    component: FormFill,
                     props: route => ({ formId: route.params.id })
                 },
-
                 {
-                    path: 'editor/dashboard',
-                    name: 'EditorDashboard',
-                    component: EditorDashboard
+                    path: 'manage',
+                    name: 'ManageForms',
+                    component: ManageForms
                 },
-
-                // {
-                //     path: 'admin/usermanager',
-                //     name: 'AdminUsermanager',
-                //     component: AdminUsermanager
-                // },
-
                 {
-                    path: 'admin/statistic',
-                    name: 'AdminStatistic',
-                    component: AdminStatistic
-                },
-
-                {
-                    path: 'editor/dashboard/:_id',
+                    path: 'manage/:_id',
                     name: 'EditorCreateForm',
-                    component: EditorCreateForm
+                    component: CreateForm
                 },
-
                 {
-                    path: 'editor/preview/:id',
-                    name: 'EditorPreview',
-                    component: Fillform,
+                    path: 'preview/:id',
+                    name: 'Preview',
+                    component: FormFill,
                     props: route => ({ formId: route.params.id })
                 },
-
                 {
-                    path: 'user/response/:id',
-                    name: 'ResponseDetail',
-                    component: Responsedetail,
+                    path: 'response/:id',
+                    name: 'Response',
+                    component: Response,
                     props: true
+                },
+                {
+                    path: 'analytics',
+                    name: 'Analytics',
+                    component: Analytics
+                },
+                {
+                    path: 'permissions',
+                    name: 'Permissions',
+                    component: Permissions
                 }
-
             ]
         },
 

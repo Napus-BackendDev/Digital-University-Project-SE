@@ -84,7 +84,6 @@ export default {
                 };
 
                 await this.$store.dispatch('Forms/update', formData);
-                console.log('Form response settings updated successfully', formData.settings);
             } catch (error) {
                 console.error('Error updating form response settings:', error);
             }

@@ -5,45 +5,11 @@ const instance = axios.create();
 
 instance.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
 
-instance.defaults.headers = {
-  "Content-Type": "application/json",
-  // "Api-version": "1.0",
-  // "X-Access-Token": "1a661eec9bf358b8567c3dc022146d19c69d2ceafe92f503e89391e5d9f9f739",
-}
 
-//
-// // เพิ่ม request interceptor
-// instance.interceptors.request.use(
-//     (config) => {
-//       const token = `${store.state.XAccessToken}`;
-//       if (token) {
-//         config.headers.Authorization = `Bearer ${store.state.XAccessToken}`;
-//       }
-//
-//       config.headers.lang  = `${store.getters['setting/lang']}`;
-//       return config;
-//     },
-//     (error) => {
-//       return Promise.reject(error);
-//     }
-// );
-//
-// // เพิ่ม Interceptor สำหรับ Response
-// instance.interceptors.response.use(
-//     (response) => {
-//       // คืนค่าปกติหาก response สำเร็จ
-//       return response;
-//     },
-//     (error) => {
-//       // ตรวจสอบสถานะ 401
-//       if (error.response && error.response.status === 401) {
-//         // แสดง Dialog หรือ Popup
-//         router.push('/login');
-//       }
-//       return Promise.reject(error);
-//     }
-// );
-
+ // Do not force Content-Type globally so axios can set multipart/form-data when sending FormData
+ instance.defaults.headers = {
+   Accept: "application/json"
+ }
 export default {
 
   form(method, data, configs) {
@@ -67,6 +33,8 @@ export default {
     switch (method) {
       case 'exp':
         return instance.get('/question/exp', data)
+      case 'get':
+        return instance.post('/question/get', data)
       case 'create':
         return instance.post('/question', data)
       case 'create-many':
@@ -84,15 +52,15 @@ export default {
     switch (method) {
       case 'get-by-form-id':
         return instance.post(`/response/getByFormId`, data)
-      case 'get-by-id':
-        return instance.post(`/response/getById`, data)
+      case 'get':
+        return instance.post(`/response/get`, data)
       case 'submit':
-        return instance.post('/response', data, {
-          headers: { 'Content-Type': 'multipart/form-data' }  // let browser set multipart boundary
-        })
+        return instance.post('/response', data)
       case 'create':
         return instance.post('/response', data)
       case 'update':
+        return instance.put('/response', data)
+      case 'update-multipart':
         return instance.put('/response', data)
       case 'delete':
         return instance.delete('/response', { data })

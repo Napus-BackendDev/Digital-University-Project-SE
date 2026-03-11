@@ -101,17 +101,14 @@ export default {
         },
 
         tableData() {
-            // Force reactivity on locale change
             const locale = this.lang;
-
+            
             if (!this.forms || this.forms.length === 0) return []
 
-            // Sort forms by createdAt (newest first)
             const sortedForms = [...this.forms].sort((a, b) => {
                 return new Date(b.createdAt) - new Date(a.createdAt)
             })
 
-            // 2. Map to display objects and filter to only include 'Open' forms
             const mappedData = [];
             const now = new Date();
 
@@ -128,10 +125,28 @@ export default {
                     }
                 }
 
-                // If the form is currently open based on schedule, include it
                 if (isOpen) {
-                    const hasResponses = form.responses && form.responses.length > 0;
-                    const statusTitle = hasResponses ? 'Completed' : 'Pending';
+                    const responder = '69a50fcc5f1adf15e09b2d86';
+
+                    let hasCompleted = false;
+                    let hasDraft = false;
+                    if (form.responses && Array.isArray(form.responses)) {
+                        form.responses.forEach(r => {
+                            if (!r) return;
+                            if (typeof r === 'object') {
+                                try {
+                                    if (String(r.responder) === String(responder)) {
+                                        if (r.responsed === true || r.responsed === 'true') hasCompleted = true;
+                                        else hasDraft = true;
+                                    }
+                                } catch (e) {
+                                    // ignore
+                                }
+                            }
+                        });
+                    }
+
+                    const statusTitle = hasCompleted ? 'Completed' : 'Pending';
 
                     mappedData.push({
                         _id: form._id || form.id,
@@ -142,14 +157,11 @@ export default {
                 }
             });
 
-            // 3. Apply filters
             let finalData = mappedData.filter(item => {
-                // Filter by Status
                 if (this.selectedStatus !== 'All' && item.status !== this.selectedStatus) {
                     return false;
                 }
 
-                // Filter by Search Query
                 if (this.searchQuery) {
                     const query = this.searchQuery.toLowerCase();
                     const titleMatch = item.title.toLowerCase().includes(query);
@@ -160,20 +172,7 @@ export default {
                 return true;
             });
 
-            // Pad to 5 items if below 5
-            if (finalData.length < 5) {
-                const emptyCount = 5 - finalData.length;
-                for (let i = 0; i < emptyCount; i++) {
-                    finalData.push({
-                        _id: `empty-${i}`,
-                        title: '',
-                        description: '',
-                        status: '',
-                        isEmptyRow: true
-                    });
-                }
-            }
-            return finalData;
+            return JSON.parse(JSON.stringify(finalData));
         }
     },
     methods: {
@@ -184,7 +183,7 @@ export default {
         },
         goToForm(id) {
             if (id) {
-                this.$router.push({ name: 'UserFormFill', params: { id: id } })
+                this.$router.push({ name: 'FormFill', params: { id: id } })
             }
         },
         filterStatus(status) {

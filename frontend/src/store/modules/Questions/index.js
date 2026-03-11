@@ -19,7 +19,7 @@ const ServerModule = {
                     commit('questions', response.data.data);
                     return response;
                 })
-                .catch(error => { console.log(error); throw error; });
+                .catch(error => { throw error; });
         },
         create({ commit }, data) {
             return Service.question('create', data, {})
@@ -27,7 +27,7 @@ const ServerModule = {
                     commit('questions', response.data.data);
                     return response;
                 })
-                .catch(error => { console.log(error); throw error; });
+                .catch(error => { throw error; });
         },
         update({ commit }, data) {
             return Service.question('update', data, {})
@@ -35,7 +35,7 @@ const ServerModule = {
                     commit('questions', response.data.data);
                     return response;
                 })
-                .catch(error => { console.log(error); throw error; });
+                .catch(error => { throw error; });
         },
         delete({ commit }, data) {
             return Service.question('delete', data, {})
@@ -43,7 +43,7 @@ const ServerModule = {
                     commit('questions', response.data.data);
                     return response;
                 })
-                .catch(error => { console.log(error); throw error; });
+                .catch(error => { throw error; });
         }
     },
     getters: {

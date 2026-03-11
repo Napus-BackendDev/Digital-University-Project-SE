@@ -191,7 +191,6 @@ export default {
 
     selectStyle(opt) {
       this.select = opt;
-      console.log(opt)
     }
   },
 

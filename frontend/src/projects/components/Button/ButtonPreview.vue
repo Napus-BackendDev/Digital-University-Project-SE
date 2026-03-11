@@ -13,7 +13,7 @@ export default {
         goToPreview() {
             const formId = this.$route.params._id;
             if (!formId) return;
-            this.$router.push({ name: 'EditorPreview', params: { _id: formId } });
+            this.$router.push({ name: 'Preview', params: { id: formId } });
         }
     }
 }

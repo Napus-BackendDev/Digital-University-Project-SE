@@ -1,26 +1,18 @@
 <template>
 
-    <CRow class="mb-4">
+    <CRow>
         <CCol col="12" class="d-flex justify-content-between align-items-center">
             <div class="back" style="cursor: pointer" @click="$router.back()">
                 <CIcon name="cil-chevron-left" />
                 <span class="px-1">Back</span>
-            </div>
-            <div class="d-flex align-items-center">
-                <ButtonPreview />
             </div>
         </CCol>
     </CRow>
 </template>
 
 <script>
-import ButtonPreview from '@/projects/components/Button/ButtonPreview.vue'
-
 export default {
     name: "ButtonBack",
-    components: {
-        ButtonPreview
-    },
     data() {
         return {
         }

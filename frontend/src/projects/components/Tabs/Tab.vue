@@ -16,7 +16,6 @@
                         <span class="d-flex align-items-center">
                             <CIcon name="cil-chart-pie" class="mr-2" />
                             Responses
-                            <CBadge color="secondary" shape="pill" class="ml-2">6</CBadge>
                         </span>
                     </template>
                     <TabResponses :responses="form" @auto-save="triggerAutoSave" />
@@ -66,11 +65,6 @@ export default {
     width: 100%;
 }
 
-.custom-tabs-wrapper .tab-content {
-    width: 100%;
-}
-
-/* Add min-height to the white content boxes */
 .custom-tabs-wrapper .tab-content .active {
     min-height: 60vh;
     display: flex;
@@ -82,18 +76,14 @@ export default {
     padding: 4px;
     border-radius: 50px;
     display: flex;
-    /* Changed from inline-flex to flex for full width */
     width: 100%;
-    /* Force full width */
     border: 1px solid #e2e8f0;
     margin-bottom: 1.5rem;
-    /* Add spacing below tabs */
 }
 
 .custom-tabs-wrapper .nav-item {
     margin-right: 0 !important;
     flex: 1;
-    /* Distribute space equally */
     text-align: center;
 }
 
@@ -101,7 +91,6 @@ export default {
     border-radius: 50px !important;
     color: #64748b !important;
     padding: 10px 0 !important;
-    /* Adjust padding */
     font-weight: 500;
     transition: all 0.2s ease;
     border: none !important;

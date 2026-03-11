@@ -127,9 +127,7 @@ export default {
       const marker = {
         lat: event.latLng.lat(),
         lng: event.latLng.lng(),
-
       };
-      console.log(marker);
       // this.markers.push({ position: marker });
       // this.$refs.mmm.panTo(marker);
       //this.center = marker;

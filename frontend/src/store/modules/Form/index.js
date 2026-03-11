@@ -22,12 +22,12 @@ const ServerModule = {
                     commit('forms', response.data.data);
                     return response;
                 })
-                .catch(error => { console.log(error); throw error; });
+                .catch(error => { throw error; });
         },
         getById({ commit }, data) {
             return Service.form('get', data, {})
                 .then(response => response.data.data)
-                .catch(error => { console.log(error); throw error; });
+                .catch(error => { throw error; });
         },
         create({ commit }, data) {
             return Service.form('create', data, {})
@@ -35,7 +35,7 @@ const ServerModule = {
                     commit('forms', response.data.data);
                     return response;
                 })
-                .catch(error => { console.log(error); throw error; });
+                .catch(error => { throw error; });
         },
         update({ commit, dispatch }, data) {
             return Service.form('update', data, {})
@@ -44,7 +44,7 @@ const ServerModule = {
                     dispatch('get');
                     return response;
                 })
-                .catch(error => { console.log(error); throw error; });
+                .catch(error => { throw error; });
         },
         delete({ commit }, data) {
             return Service.form('delete', data, {})
@@ -52,7 +52,7 @@ const ServerModule = {
                     commit('forms', response.data.data);
                     return response;
                 })
-                .catch(error => { console.log(error); throw error; });
+                .catch(error => { throw error; });
         }
     },
     getters: {

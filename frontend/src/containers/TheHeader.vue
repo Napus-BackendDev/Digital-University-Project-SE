@@ -26,13 +26,17 @@
               <CIcon class="mx-2" name="cil-description" />
               <span class="mx-2">Forms</span>
             </div>
-            <div @click="dashboard" :class="['nav-link-item', { 'nav-link-active': isActive('dashboard') }]">
+            <div @click="formBuilder" :class="['nav-link-item', { 'nav-link-active': isActive('manage') }]">
               <CIcon class="mx-2" name="cib-ghost" />
-              <span class="mx-2">Dashboard</span>
+              <span class="mx-2">Manage Forms</span>
             </div>
-            <div @click="statistic" :class="['nav-link-item', { 'nav-link-active': isActive('statistic') }]">
+            <div @click="analytics" :class="['nav-link-item', { 'nav-link-active': isActive('analytics') }]">
               <CIcon class="mx-2" name="cil-chart" />
-              <span class="mx-2">Statistic</span>
+              <span class="mx-2">Analytics</span>
+            </div>
+            <div @click="permissions" :class="['nav-link-item', { 'nav-link-active': isActive('permissions') }]">
+              <CIcon class="mx-2" name="cil-lock-locked" />
+              <span class="mx-2">Permissions</span>
             </div>
           </div>
         </div>
@@ -69,13 +73,16 @@ export default {
       return currentPath.includes(path)
     },
     forms() {
-      this.$router.push('/user/forms')
+      this.$router.push('/forms')
     },
-    dashboard() {
-      this.$router.push('/editor/dashboard')
+    formBuilder() {
+      this.$router.push('/manage')
     },
-    statistic() {
-      this.$router.push('/admin/statistic')
+    analytics() {
+      this.$router.push('/analytics')
+    },
+    permissions() {
+      this.$router.push('/permissions')
     },
     logout() {
       this.$router.push('/pages/login')

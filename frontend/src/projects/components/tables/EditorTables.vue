@@ -341,7 +341,7 @@ export default {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
         },
         goToViewForm(item) {
-            this.$router.push({ name: 'EditorPreview', params: { id: item._id } });
+            this.$router.push({ name: 'Preview', params: { id: item._id } });
         },
         async confirmDelete() {
             if (this.deleteItem) {

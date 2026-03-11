@@ -1,6 +1,9 @@
 <template>
     <div class="flex-grow-1">
-        <ButtonBack />
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <ButtonBack />
+            <ButtonPreview />
+        </div>
         <Tab :form="formData" @auto-save="triggerAutoSave" />
     </div>
 </template>
