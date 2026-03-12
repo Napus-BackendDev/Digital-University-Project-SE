@@ -141,7 +141,7 @@
 
         <!-- INDIVIDUAL VIEW -->
         <div v-else-if="currentView === 'individual'" class="p-5 bg-white border rounded shadow-sm">
-            <ResponeTables />
+            <ResponeTables :responseList="responseList" />
         </div>
 
     </div>
@@ -162,7 +162,6 @@ export default {
     },
     data() {
         return {
-            responsesCount: 0,
             currentView: 'summary',
             activePage: 1,
             activePageParagraph: 1,
@@ -170,11 +169,7 @@ export default {
             loading: false,
             error: null,
             copied: false,
-            responseList: [],
         }
-    },
-    created() {
-        this.fetchResponses();
     },
     watch: {
         responses: {
@@ -301,6 +296,14 @@ export default {
         },
     },
     computed: {
+        responseList() {
+            // responses prop is the form object which has responses populated from backend
+            const list = this.responses.responses || [];
+            return list.filter(r => r && (r.submit === true || r.submit === 'true'));
+        },
+        responsesCount() {
+            return this.responseList.length;
+        },
 
         summaryByQuestion() {
             const PALETTE = ['#a32a29', '#d9a036', '#723469', '#618a44', '#3d5a92', '#e55353', '#f9c74f', '#90be6d'];

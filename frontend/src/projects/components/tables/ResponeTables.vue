@@ -78,6 +78,12 @@ import Pagination from '@/projects/components/Util/Pagination.vue'
 export default {
     name: 'ResponeTables',
     components: { Pagination },
+    props: {
+        responseList: {
+            type: Array,
+            default: null
+        }
+    },
     data() {
         return {
             loading: false,
@@ -103,8 +109,12 @@ export default {
         },
 
         tableItems() {
-            const visible = (this.responses || []).filter(r => r && (r.submit === true || r.submit === 'true'));
-            return visible.map((r, idx) => ({
+            // Use prop if provided, otherwise fallback to store responses (and filter them)
+            const source = this.responseList !== null
+                ? this.responseList
+                : (this.responses || []).filter(r => r && (r.submit === true || r.submit === 'true'));
+
+            return source.map((r, idx) => ({
                 id: idx + 1,
                 _id: r._id,
                 responder: r.responder || '-',

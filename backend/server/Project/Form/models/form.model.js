@@ -17,6 +17,7 @@ var objSchema = new Schema({
         collectEmail: { type: Boolean, default: false },
         limitResponse: { type: Boolean, default: false },
         progressBar: { type: Boolean, default: false },
+        requireResponse: { type: Boolean, default: false },
         confirmMessage: { type: String, default: 'Thank you for completing this survey. Your response has been recorded.' },
         showAnotherResponseLink: { type: Boolean, default: true }
     },

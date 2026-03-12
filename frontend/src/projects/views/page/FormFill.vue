@@ -410,7 +410,8 @@ export default {
 
         async submitForm() {
             const missing = (this.form.questions || []).filter(q => {
-                if (!q.isRequired) return false;
+                const isGlobalRequired = this.form && this.form.requireResponse;
+                if (!isGlobalRequired && !q.isRequired) return false;
                 const a = this.answers[q._id];
                 return Array.isArray(a) ? a.length === 0 : (a === null || a === '' || a === undefined);
             });
