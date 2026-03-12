@@ -29,6 +29,7 @@
             </div>
         </div>
 
+        <!-- Table -->
         <div class="user-tables-container">
             <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
                 :pagination="false" hover class="mb-0 custom-table">

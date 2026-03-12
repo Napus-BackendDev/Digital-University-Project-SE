@@ -7,6 +7,7 @@
             <div class="text-muted small ">Daily responses over the last week</div>
         </div>
 
+        <!-- Table -->
         <div class="table-responsive">
             <CDataTable :items="paginatedData" :fields="fields" :items-per-page="pageSize" :activePage="1"
                 :pagination="false" hover class="mb-0 custom-table">
@@ -53,6 +54,8 @@
                 </template>
             </CDataTable>
         </div>
+        
+        <!-- Pagination -->
         <div class="d-flex justify-content-center mt-3">
             <CPagination :active-page.sync="currentPage" :pages="totalPages" responsive />
         </div>

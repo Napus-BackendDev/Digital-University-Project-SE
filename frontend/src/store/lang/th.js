@@ -16,6 +16,7 @@ const th = {
 
     table: {
         title: "ฟอร์มทั้งหมด",
+        access: "การเข้าถึง",
         questionnaire: "ชื่อแบบสอบถาม",
         status: "สถานะ",
         action: "การดำเนินการ",
@@ -29,6 +30,7 @@ const th = {
         delete: "ลบ",
         search: "ค้นหา...",
         allStatus: "สถานะทั้งหมด",
+        visibility: "การเข้าถึง"
     },
 
     modal: {

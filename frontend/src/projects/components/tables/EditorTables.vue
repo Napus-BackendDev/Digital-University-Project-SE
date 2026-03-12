@@ -1,5 +1,6 @@
 <template>
     <div>
+        <!-- Filter Toolbar -->
         <div class="d-flex justify-content-between align-items-center py-3 mb-3">
             <div class="flex-grow-1 mr-3">
                 <CInput v-model="searchQuery" :placeholder="$t('table.search')" class="mb-0">
@@ -35,6 +36,7 @@
             </div>
         </div>
 
+        <!-- Table -->
         <div class="user-tables-container">
             <CDataTable class="custom-table mb-0" :items="tableData" :fields="columns" :items-per-page="itemsPerPage"
                 :pagination="false" hover :activePage.sync="activePage">

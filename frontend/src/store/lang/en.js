@@ -16,6 +16,7 @@ const en = {
 
     table: {
         title: "All Forms",
+        access: "Access",
         questionnaire: "Questionnaire",
         status: "Status",
         action: "Action",
@@ -30,6 +31,7 @@ const en = {
         search: "Search...",
         searchPlaceholder: "Search forms...",
         allStatus: "All Status",
+        visibility: "Visibility",
     },
 
     modal: {
