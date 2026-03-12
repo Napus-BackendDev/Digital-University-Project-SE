@@ -11,9 +11,9 @@
         </div>
       </CToggler>
 
-      <CHeaderNav class="d-flex align-items-center d-md-down-none ml-auto">
+      <CHeaderNav class="d-flex align-items-center ml-auto">
         <!-- Language Switch -->
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center mr-3">
           <span class="mr-2 text-muted font-weight-bold" style="font-size: 0.9rem;">TH</span>
           <CSwitch class="mx-1" shape="pill" color="info" variant="opposite" :checked="lang === 'en'"
             @update:checked="onSwitchLang" />

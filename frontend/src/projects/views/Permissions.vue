@@ -12,42 +12,53 @@
       </div>
 
       <div class="permissions-matrix bg-white rounded shadow-sm p-3">
-        <div class="matrix-grid">
-          <!-- Left header blank -->
-          <div class="matrix-cell header-cell left-col"></div>
+        <div class="matrix-grid" :style="{ gridTemplateColumns: '260px repeat(' + pages.length + ', 1fr)' }">
+
+          <!-- Left header: Organization -->
+          <div class="matrix-cell header-cell left-col org-header">
+            <div class="org-title">
+              <span class="icon">👥</span>
+              <span>Organization</span>
+            </div>
+          </div>
 
           <!-- Top headers: pages and actions -->
           <div v-for="page in pages" :key="page.key" class="matrix-cell header-cell page-header">
-            <div class="page-title">{{ page.title }}</div>
-            <div class="actions">
-              <span v-for="action in page.actions" :key="action" class="action-pill">{{ action }}</span>
+            <div class="page-title"><span class="page-dot"></span>{{ page.title }}</div>
+            <div class="actions" :style="{ gridTemplateColumns: 'repeat(' + page.actions.length + ', 1fr)' }">
+              <div v-for="action in page.actions" :key="action" class="action-pill">{{ action }}</div>
             </div>
           </div>
 
           <!-- Rows: organizations -->
-          <template v-for="org in filteredOrgs" :key="org._id || org.value || org.key">
+          <template v-for="org in filteredOrgs">
             <!-- org cell -->
             <div class="matrix-cell role-cell">
-              <div class="role-row d-flex align-items-center">
-                <div class="avatar mr-3">{{ getInitial(org) }}</div>
-                <div>
-                  <div class="font-weight-bold">{{ getLabel(org) }}</div>
-                  <div class="text-muted small">{{ getMeta(org) }}</div>
+              <div class="role-row d-flex align-items-center justify-content-between w-100">
+                <div class="d-flex align-items-center">
+                  <div class="avatar mr-3">{{ getInitial(org) }}</div>
+                  <div>
+                    <div class="font-weight-bold">{{ getLabel(org) }}</div>
+                    <div class="text-muted small">{{ getMeta(org) }}</div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- permission toggles per page -->
-            <div v-for="page in pages" :key="(org._id || org.value || org.key) + '-' + page.key"
+            <div v-for="page in pages" :key="(getOrgKey(org)) + '-' + page.key"
               class="matrix-cell permissions-cell">
-              <div class="d-flex justify-content-between align-items-center w-100">
-                <label v-for="action in page.actions" :key="action" class="switch" :title="action">
-                  <input type="checkbox" v-model="permissions[getOrgKey(org)][page.key][action]" />
-                  <span class="slider"></span>
-                </label>
+              <div class="actions-grid" :style="{ gridTemplateColumns: 'repeat(' + page.actions.length + ', 1fr)' }">
+                <div v-for="action in page.actions" :key="action" class="action-switch">
+                  <label class="switch" :title="action">
+                    <input type="checkbox" v-model="permissions[getOrgKey(org)][page.key][action]" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
               </div>
             </div>
           </template>
+
         </div>
       </div>
     </div>
@@ -63,9 +74,10 @@ export default {
   components: { Header },
   data() {
     const pages = [
-      { key: 'forms', title: 'Forms Page', actions: ['Create', 'Edit', 'Delete', 'View'] },
-      { key: 'manage', title: 'Manage Forms Page', actions: ['Create', 'Edit', 'Delete', 'View'] },
-      { key: 'analytics', title: 'Analytics Page', actions: ['Create', 'Edit', 'Delete', 'View'] }
+      { key: 'forms', title: 'Forms Page', actions: ['Access', 'Create', 'Edit', 'Delete', 'View'] },
+      { key: 'manage', title: 'Manage Forms Page', actions: ['Access', 'Create', 'View', 'Duplicate', 'Edit', 'Delete',] },
+      { key: 'analytics', title: 'Analytics Page', actions: ['Access'] },
+      { key: 'permission', title: 'Permission Page', actions: ['Access'] }
     ];
 
     return {
@@ -106,6 +118,19 @@ export default {
     getInitial(org) {
       const label = this.getLabel(org) || '';
       return label.charAt(0).toUpperCase();
+    },
+    permissionCounts(org) {
+      const k = this.getOrgKey(org);
+      const map = this.permissions[k] || {};
+      let granted = 0;
+      let total = 0;
+      Object.keys(map).forEach(pageKey => {
+        Object.keys(map[pageKey] || {}).forEach(action => {
+          total += 1;
+          if (map[pageKey][action]) granted += 1;
+        });
+      });
+      return { granted, total };
     },
     initFromStore() {
       const data = this.orgStore || [];
@@ -157,7 +182,6 @@ export default {
 
 .matrix-grid {
   display: grid;
-  grid-template-columns: 260px repeat(3, 1fr);
   gap: 12px;
   align-items: start;
 }
@@ -254,5 +278,68 @@ export default {
 
 .switch input:checked+.slider:before {
   transform: translateX(20px)
+}
+
+/* New layout helpers */
+.org-header .org-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #111827;
+}
+.org-header .icon {
+  font-size: 16px;
+}
+.page-header .page-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.page-dot {
+  width: 10px;
+  height: 10px;
+  background: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+}
+.actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+.action-pill {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px 8px;
+  text-align: center;
+  font-size: 12px;
+}
+.actions-grid {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  align-items: center;
+}
+.action-switch {
+  display: flex;
+  justify-content: center;
+}
+.role-progress {
+  width: 120px;
+}
+.progress-bar {
+  height: 6px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: #ef4444;
 }
 </style>
