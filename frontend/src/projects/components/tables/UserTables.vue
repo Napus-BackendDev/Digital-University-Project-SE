@@ -183,7 +183,7 @@ export default {
         },
         goToForm(id) {
             if (id) {
-                this.$router.push({ name: 'FormFill', params: { id: id } })
+                this.$router.push({ name: 'FormFill', params: { id: id }, query: { source: 'internal' } })
             }
         },
         filterStatus(status) {

@@ -1,7 +1,7 @@
 <template>
     <div class="flex-grow-1">
 
-        <ButtonBack />
+        <ButtonBack v-if="!isPublicForm" />
 
         <!-- Loading -->
         <div v-if="loading" class="fillform-center text-muted">
@@ -495,6 +495,13 @@ export default {
         },
         isPreviewMode() {
             return this.$route.query.mode === 'preview' || this.$route.name === 'Preview';
+        },
+        isPublicForm() {
+            const isInternalMode = ['preview', 'duplicate'].includes(this.$route.query.mode);
+            const isInternalSource = this.$route.query.source === 'internal';
+            const isPreviewRoute = this.$route.name === 'Preview';
+
+            return this.$route.name === 'FormFill' && !isInternalMode && !isInternalSource && !isPreviewRoute;
         }
     },
     watch: {

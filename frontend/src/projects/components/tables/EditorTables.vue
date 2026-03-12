@@ -352,10 +352,10 @@ export default {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
         },
         goToDuplicationForm(item) {
-            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'duplicate' } });
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'duplicate', source: 'internal' } });
         },
         goToViewForm(item) {
-            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'preview' } });
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'preview', source: 'internal' } });
         },
         async confirmDelete() {
             if (this.deleteItem) {
