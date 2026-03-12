@@ -56,34 +56,38 @@ export default {
     computed: {
         mappedCollectEmail: {
             get() {
-                return !!this.settings.collectEmail;
+                return !!(this.settings.settings && this.settings.settings.collectEmail);
             },
             set(val) {
-                this.$set(this.settings, 'collectEmail', val);
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'collectEmail', val);
             }
         },
         mappedLimitResponse: {
             get() {
-                return !!this.settings.limitResponse;
+                return !!(this.settings.settings && this.settings.settings.limitResponse);
             },
             set(val) {
-                this.$set(this.settings, 'limitResponse', val);
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'limitResponse', val);
             }
         },
         mappedProgressBar: {
             get() {
-                return !!this.settings.progressBar;
+                return !!(this.settings.settings && this.settings.settings.progressBar);
             },
             set(val) {
-                this.$set(this.settings, 'progressBar', val);
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'progressBar', val);
             }
         },
         mappedRequireResponse: {
             get() {
-                return !!this.settings.requireResponse;
+                return !!(this.settings.settings && this.settings.settings.requireResponse);
             },
             set(val) {
-                this.$set(this.settings, 'requireResponse', val);
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'requireResponse', val);
             }
         }
     },

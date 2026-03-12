@@ -25,7 +25,7 @@
           </div>
 
           <!-- Rows: organizations -->
-          <template v-for="org in filteredOrgs" :key="org._id || org.value || org.key">
+          <div v-for="org in filteredOrgs" :key="getOrgKey(org)" style="display: contents">
             <!-- org cell -->
             <div class="matrix-cell role-cell">
               <div class="role-row d-flex align-items-center">
@@ -38,7 +38,7 @@
             </div>
 
             <!-- permission toggles per page -->
-            <div v-for="page in pages" :key="(org._id || org.value || org.key) + '-' + page.key"
+            <div v-for="page in pages" :key="getOrgKey(org) + '-' + page.key"
               class="matrix-cell permissions-cell">
               <div class="d-flex justify-content-between align-items-center w-100">
                 <label v-for="action in page.actions" :key="action" class="switch" :title="action">
@@ -47,7 +47,7 @@
                 </label>
               </div>
             </div>
-          </template>
+          </div>
         </div>
       </div>
     </div>

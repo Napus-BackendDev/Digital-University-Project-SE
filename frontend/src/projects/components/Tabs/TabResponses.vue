@@ -11,7 +11,7 @@
             <div v-else-if="error" class="text-center py-4 text-danger">{{ error }}</div>
 
             <div class="text-muted" style="font-size: 1.1rem; font-weight: 500; color: #475569 !important;">
-                {{ responsesCount }} responses
+                {{ allSubmittedResponses.length }} responses
             </div>
 
             <div class="d-flex align-items-center gap-2">
@@ -63,7 +63,7 @@
         <div v-if="currentView === 'summary'">
 
             <!-- Empty state -->
-            <div v-if="responseList.length === 0" class="text-center py-5 text-muted">
+            <div v-if="allSubmittedResponses.length === 0" class="text-center py-5 text-muted">
                 <p>No responses yet for this form.</p>
             </div>
 
@@ -141,13 +141,14 @@
 
         <!-- INDIVIDUAL VIEW -->
         <div v-else-if="currentView === 'individual'" class="p-5 bg-white border rounded shadow-sm">
-            <ResponeTables :responseList="responseList" />
+            <ResponeTables :responseList="allSubmittedResponses" />
         </div>
 
     </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import moment from 'moment'
 import * as XLSX from 'xlsx'
 import ResponeTables from '@/projects/components/tables/ResponeTables.vue'
@@ -183,12 +184,12 @@ export default {
     },
     methods: {
         exportXlsx() {
-            if (!this.responseList.length) {
+            if (!this.allSubmittedResponses.length) {
                 alert('No responses to export.');
                 return;
             }
 
-            const firstAnswers = this.responseList[0].answers || [];
+            const firstAnswers = this.allSubmittedResponses[0].answers || [];
             const headers = ['Responder', 'Submitted'];
             firstAnswers.forEach((a, i) => {
                 const title = a.question && Array.isArray(a.question.title) && a.question.title.length
@@ -197,7 +198,7 @@ export default {
                 headers.push(title);
             });
 
-            const rows = this.responseList.map(r => {
+            const rows = this.allSubmittedResponses.map(r => {
                 const row = [
                     (r.responder || '-').toString(),
                     this.formatDate(r.createdAt)
@@ -258,11 +259,7 @@ export default {
             this.loading = true;
             this.error = null;
             try {
-                const result = await this.$store.dispatch('Responses/get', { form_id: formId });
-                const data = JSON.parse(JSON.stringify(result.data.data)) || [];
-                const filtered = data.filter(r => r && r.submit === true);
-                this.responseList = filtered;
-                this.responsesCount = filtered.length;
+                await this.$store.dispatch('Responses/get', { form_id: formId });
             } catch (err) {
                 console.error('[TabResponses] Failed to fetch responses:', err);
                 this.error = 'Failed to load responses.';
@@ -296,13 +293,28 @@ export default {
         },
     },
     computed: {
-        responseList() {
-            // responses prop is the form object which has responses populated from backend
-            const list = this.responses.responses || [];
-            return list.filter(r => r && (r.submit === true || r.submit === 'true'));
-        },
-        responsesCount() {
-            return this.responseList.length;
+        ...mapGetters({
+            storeResponses: 'Responses/responses'
+        }),
+        allSubmittedResponses() {
+            // this.responses prop is the form object which has responses array
+            // Combine with responses fetched from store and stored in Responses module.
+            const listFromProp = (this.responses && this.responses.responses) || [];
+            const listFromStore = this.storeResponses || [];
+            const combined = [...listFromProp, ...listFromStore];
+            
+            // Remove duplicates by _id and filter by submit status
+            const unique = [];
+            const seen = new Set();
+            combined.forEach(r => {
+                if (r && r._id && !seen.has(r._id)) {
+                    if (r.submit === true || r.submit === 'true') {
+                        unique.push(r);
+                        seen.add(r._id);
+                    }
+                }
+            });
+            return unique;
         },
 
         summaryByQuestion() {
@@ -310,7 +322,7 @@ export default {
             const map = {};
             const order = [];
 
-            this.responseList.forEach(resp => {
+            this.allSubmittedResponses.forEach(resp => {
                 (resp.answers || []).forEach(ans => {
                     const q = ans.question;
                     if (!q || !q._id) return;
