@@ -73,7 +73,7 @@
                             </div>
                             <div class="text-left">
                                 <div class="font-weight-bold text-dark responses-value">{{ item.responses }}</div>
-                                <div class="small text-muted">responses</div>
+                                <div class="small text-muted">Responses</div>
                             </div>
                         </div>
                     </td>

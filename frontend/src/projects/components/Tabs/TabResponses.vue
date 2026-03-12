@@ -177,16 +177,22 @@ export default {
         this.fetchResponses();
     },
     watch: {
+        responses: {
+            handler(newVal) {
+                if (newVal && newVal._id) {
+                    this.fetchResponses();
+                }
+            },
+            immediate: true
+        }
     },
     methods: {
-        // ── Export XLSX ───────────────────────────────────────────────────
         exportXlsx() {
             if (!this.responseList.length) {
                 alert('No responses to export.');
                 return;
             }
 
-            // Build header row from first response's answers
             const firstAnswers = this.responseList[0].answers || [];
             const headers = ['Responder', 'Submitted'];
             firstAnswers.forEach((a, i) => {
@@ -196,7 +202,6 @@ export default {
                 headers.push(title);
             });
 
-            // Build data rows
             const rows = this.responseList.map(r => {
                 const row = [
                     (r.responder || '-').toString(),
@@ -253,14 +258,14 @@ export default {
                 console.warn('[TabResponses] fetchResponses: formId not ready yet, skip');
                 return;
             }
-            if (this.loading) return;  // prevent double fetch
+            if (this.loading) return;
 
             this.loading = true;
             this.error = null;
             try {
                 const result = await this.$store.dispatch('Responses/get', { form_id: formId });
-                const data = (result && result.data && result.data.data) || [];
-                const filtered = data.filter(r => r && (r.submit === true || r.submit === 'true'));
+                const data = JSON.parse(JSON.stringify(result.data.data)) || [];
+                const filtered = data.filter(r => r && r.submit === true);
                 this.responseList = filtered;
                 this.responsesCount = filtered.length;
             } catch (err) {
@@ -275,7 +280,6 @@ export default {
             return dateStr ? moment(dateStr).format('DD/MM/YYYY, HH:mm:ss') : '-';
         },
 
-        // Title helper (multilingual [{key, value}] array)
         getTitle(arr) {
             if (!arr || !arr.length) return '';
             const lang = (navigator.language || 'en').substring(0, 2).toUpperCase();
