@@ -54,12 +54,12 @@
                     <!-- Short Answer -->
                     <CInput v-if="isType(question, 'short', 'short_answer')" v-model="answers[question._id]"
                         placeholder="Your answer" class="mb-0" :disabled="isPreviewMode"
-                        @input="(e) => { clearError(question._id); scheduleAutoSave(); }" />
+                        @input="(e) => { clearError(question._id); autoSave(); }" />
 
                     <!-- Paragraph -->
                     <CTextarea v-else-if="isType(question, 'paragraph')" v-model="answers[question._id]"
                         placeholder="Your answer" rows="4" class="mb-0" :disabled="isPreviewMode"
-                        @input="(e) => { clearError(question._id); scheduleAutoSave(); }" />
+                        @input="(e) => { clearError(question._id); autoSave(); }" />
 
                     <!-- Multiple Choice / Checkboxes -->
                     <div v-else-if="isType(question, 'multiple_choice', 'checkboxes', 'checkbox')"
@@ -70,7 +70,7 @@
                                 :type="(question.config && question.config.allowMultipleSelect) ? 'checkbox' : 'radio'"
                                 :name="'q_' + question._id" :value="getOptionLabel(opt)" v-model="answers[question._id]"
                                 class="option-input" :disabled="isPreviewMode"
-                                @change="(e) => { clearError(question._id); scheduleAutoSave(); }" />
+                                @change="(e) => { clearError(question._id); autoSave(); }" />
                             <span>{{ getOptionLabel(opt) }}</span>
                         </label>
                     </div>
@@ -91,7 +91,7 @@
                     <div v-else-if="isType(question, 'file_upload')">
                         <input type="file" :multiple="(question.config && Number(question.config.maxFiles) > 1)"
                             :accept="getAcceptString(question)" class="text-muted" :disabled="isPreviewMode"
-                            @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); scheduleAutoSave(); }" />
+                            @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); autoSave(); }" />
                     </div>
 
                     <!-- Title & Description -->
@@ -189,7 +189,6 @@ export default {
 
                 this.form = data;
 
-                // If duplicating or previewing, we don't need to load answers
                 if (this.isDuplicateMode || this.isPreviewMode) {
                     this.loading = false;
                     return;
@@ -237,7 +236,7 @@ export default {
         },
 
         async saveDraftResponse() {
-            if (!this.form || !this.form._id || this.isPreviewMode) return;
+            if (!this.form || !this.form._id || this.isPreviewMode || this.submit) return;
             try {
                 const payload = {
                     responder: this.responder,
@@ -267,10 +266,8 @@ export default {
             }
         },
 
-        scheduleAutoSave() {
-            console.log('submitting:', this.submitting);
-            console.log('submit:', this.submit);
-
+        autoSave() {
+            if (this.submit) return;
             this.saveDraftResponse().catch(err => {
                 console.error('Auto-save failed:', err);
             });
@@ -279,7 +276,7 @@ export default {
         onRate(questionId, n) {
             this.$set(this.answers, questionId, n);
             this.clearError(questionId);
-            this.scheduleAutoSave();
+            this.autoSave();
         },
 
         getTitle(arr) {
@@ -482,6 +479,7 @@ export default {
             } finally {
                 this.submitting = false;
             }
+            this.autoSave();
         },
 
         onModalOk() {
@@ -507,7 +505,7 @@ export default {
     watch: {
         answers: {
             handler() {
-                this.scheduleAutoSave();
+                this.autoSave();
             },
             deep: true
         }
