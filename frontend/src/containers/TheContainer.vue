@@ -1,7 +1,7 @@
 <template>
   <div class="c-app">
     <CWrapper>
-      <TheHeader />
+      <TheHeader v-if="!isPublicForm" />
       <main class="c-main">
         <CContainer class="d-flex justify-content-center w-75" fluid>
           <transition name="fade">
@@ -9,7 +9,7 @@
           </transition>
         </CContainer>
       </main>
-      <TheFooter />
+      <TheFooter v-if="!isPublicForm" />
 
     </CWrapper>
     <CenterLoading />
@@ -117,7 +117,15 @@ export default {
   },
   computed: {
     ...mapGetters({
-    })
+    }),
+    isPublicForm() {
+      const isFormFillRoute = this.$route.name === 'FormFill';
+      const isInternalSource = this.$route.query.source === 'internal';
+      const isInternalMode = ['preview', 'duplicate'].includes(this.$route.query.mode);
+      const isPreviewRoute = this.$route.name === 'Preview';
+
+      return isFormFillRoute && !isInternalSource && !isInternalMode && !isPreviewRoute;
+    }
   },
 
   watch: {

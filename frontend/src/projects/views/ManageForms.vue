@@ -1,6 +1,6 @@
 <template>
     <div class="flex-grow-1">
-        <Header title="Forms" description="Create and manage your forms" />
+        <Header :title="$t('nav.manage')" :description="$t('description')" />
         <EditorTables />
     </div>
 </template>

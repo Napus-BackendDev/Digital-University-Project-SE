@@ -12,9 +12,9 @@
                 </CCol>
                 <CCol md="6">
                     <h6 class="font-weight-bold mb-2">Vision</h6>
-                    <CSelect :options="visionOptions" :value.sync="settings.status"
+                    <CSelect :options="visionOptions" :value="currentStatusId"
                         style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        @update:value="onVisionChange" @input="onVisionChange" />
+                        @update:value="onVisionChange" />
                 </CCol>
             </CRow>
 
@@ -87,7 +87,7 @@ export default {
         this.$store.dispatch('Setting/status/get');
     },
     computed: {
-        ...mapGetters('Setting', ['lang']),
+        ...mapGetters('Setting', ['visionOptions']),
         ...mapGetters('Setting/status', { statusItems: 'item' }),
 
         visionOptions() {
@@ -96,32 +96,23 @@ export default {
                 value: item._id,
                 label: this.getLang(item.title)
             }));
+        },
+        currentStatusId() {
+            if (!this.settings || !this.settings.status) return '';
+            const status = this.settings.status;
+            return typeof status === 'object' ? status._id : status;
         }
     },
     methods: {
-        getLang(data) {
-            if (!data) return '';
-            if (typeof data === 'string') return data;
-            if (!Array.isArray(data)) return '';
-
-            const currentLang = this.lang;
-            let content = data.find(item => item.key === currentLang);
-
-            if (!content) {
-                content = data.find(item => item.key === 'en');
-            }
-
-            if (!content && data.length > 0) {
-                content = data[0];
-            }
-
-            return content ? content.value : '';
-        },
         onVisionChange(val) {
             // Handle both object and string value cases from initial fetch
             const newId = typeof val === 'object' && val !== null ? val._id : val;
-            this.$set(this.settings, 'status', newId);
-            this.triggerAutoSave();
+            
+            // Only trigger update if the value actually changed
+            if (newId && newId !== this.currentStatusId) {
+                this.$set(this.settings, 'status', newId);
+                this.triggerAutoSave();
+            }
         },
         addCollaborator() {
             if (!this.newCollaborator.email) {

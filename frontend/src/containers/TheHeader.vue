@@ -13,30 +13,30 @@
 
       <CHeaderNav class="d-flex align-items-center d-md-down-none ml-auto">
         <!-- Language Switch -->
-        <!-- <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center">
           <span class="mr-2 text-muted font-weight-bold" style="font-size: 0.9rem;">TH</span>
           <CSwitch class="mx-1" shape="pill" color="info" variant="opposite" :checked="lang === 'en'"
             @update:checked="onSwitchLang" />
           <span class="ml-2 text-muted font-weight-bold" style="font-size: 0.9rem;">EN</span>
-        </div> -->
+        </div>
 
         <div class="container">
           <div class="row">
             <div @click="forms" :class="['nav-link-item', { 'nav-link-active': isActive('forms') }]">
               <CIcon class="mx-2" name="cil-description" />
-              <span class="mx-2">Forms</span>
+              <span class="mx-2">{{ $t('nav.forms') }}</span>
             </div>
             <div @click="formBuilder" :class="['nav-link-item', { 'nav-link-active': isActive('manage') }]">
               <CIcon class="mx-2" name="cib-ghost" />
-              <span class="mx-2">Manage Forms</span>
+              <span class="mx-2">{{ $t('nav.manage') }}</span>
             </div>
             <div @click="analytics" :class="['nav-link-item', { 'nav-link-active': isActive('analytics') }]">
               <CIcon class="mx-2" name="cil-chart" />
-              <span class="mx-2">Analytics</span>
+              <span class="mx-2">{{ $t('nav.analytics') }}</span>
             </div>
             <div @click="permissions" :class="['nav-link-item', { 'nav-link-active': isActive('permissions') }]">
               <CIcon class="mx-2" name="cil-lock-locked" />
-              <span class="mx-2">Permissions</span>
+              <span class="mx-2">{{ $t('nav.permissions') }}</span>
             </div>
           </div>
         </div>
@@ -46,7 +46,7 @@
         </div>
         <div class="d-flex align-items-center" @click="logout" style="cursor: pointer">
           <CIcon name="cil-account-logout" class="text-dark mx-2" />
-          <span class="text-dark">Logout</span>
+          <span class="text-dark">{{ $t('nav.logout') }}</span>
         </div>
       </CHeaderNav>
     </div>
@@ -88,20 +88,15 @@ export default {
       this.$router.push('/pages/login')
     },
     onSwitchLang() {
-      switch (this.lang) {
-        case "th":
-          this.$store.commit("setting/lang", "en")
-          break;
-        case "en":
-          this.$store.commit("setting/lang", "th")
-          break;
-      }
+      const newLang = this.lang === 'th' ? 'en' : 'th';
+      this.$store.commit("Setting/lang", newLang);
+      this.$i18n.locale = newLang;
     }
   },
 
   computed: {
     ...mapGetters({
-      lang: "setting/lang",
+      lang: "Setting/lang",
     })
   },
 }

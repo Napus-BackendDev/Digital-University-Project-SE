@@ -21,6 +21,9 @@ Vue.component('qr-code', VueQRCodeComponent)
 import moment from 'moment'
 Vue.prototype.moment = moment
 
+import localeMixin from './mixins/localeMixin'
+Vue.mixin(localeMixin)
+
 
 import GAuth from 'vue-google-oauth2'
 const gauthOption = {

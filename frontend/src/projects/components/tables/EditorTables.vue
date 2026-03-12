@@ -1,8 +1,9 @@
 <template>
     <div>
+        <!-- Filter Toolbar -->
         <div class="d-flex justify-content-between align-items-center py-3 mb-3">
             <div class="flex-grow-1 mr-3">
-                <CInput v-model="searchQuery" placeholder="Search..." class="mb-0">
+                <CInput v-model="searchQuery" :placeholder="$t('table.search')" class="mb-0">
                     <template #prepend-content>
                         <CIcon name="cil-magnifying-glass" />
                     </template>
@@ -15,14 +16,14 @@
                         <button class="btn d-flex align-items-center text-muted border bg-white"
                             style="border-radius: 6px;">
                             <CIcon name="cil-filter" size="sm" class="mr-2" />
-                            <span>{{ selectedStatus }}</span>
+                            <span>{{ selectedStatus === 'All Status' ? $t('table.allStatus') : $t(`status.${selectedStatus.toLowerCase()}`) }}</span>
                             <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                         </button>
                     </template>
-                    <CDropdownItem @click="filterStatus('All Status')">All Status</CDropdownItem>
-                    <CDropdownItem @click="filterStatus('Open')">Open</CDropdownItem>
-                    <CDropdownItem @click="filterStatus('Closed')">Closed</CDropdownItem>
-                    <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('All Status')">{{ $t('table.allStatus') }}</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Open')">{{ $t('status.open') }}</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Closed')">{{ $t('status.closed') }}</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Draft')">{{ $t('status.draft') }}</CDropdownItem>
                 </CDropdown>
 
                 <CButton color="danger" class="d-flex align-items-center text-white px-3"
@@ -30,11 +31,12 @@
                     hover @click="createNewForm" :disabled="isCreating">
                     <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
                     <CSpinner v-else size="sm" class="mr-2" />
-                    Create Form
+                    {{ $t('button.create') }}
                 </CButton>
             </div>
         </div>
 
+        <!-- Table -->
         <div class="user-tables-container">
             <CDataTable class="custom-table mb-0" :items="tableData" :fields="columns" :items-per-page="itemsPerPage"
                 :pagination="false" hover :activePage.sync="activePage">
@@ -59,7 +61,7 @@
                     <td class="align-middle">
                         <span v-if="!item.isEmpty" class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
-                            {{ item.status }}
+                            {{ $t(`status.${item.status.toLowerCase()}`) }}
                         </span>
                     </td>
                 </template>
@@ -73,7 +75,7 @@
                             </div>
                             <div class="text-left">
                                 <div class="font-weight-bold text-dark responses-value">{{ item.responses }}</div>
-                                <div class="small text-muted">Responses</div>
+                                <div class="small text-muted">{{ $t('table.responses') }}</div>
                             </div>
                         </div>
                     </td>
@@ -98,16 +100,16 @@
                                 </button>
                             </template>
                             <CDropdownItem @click="goToViewForm(item)">
-                                <CIcon name="cil-magnifying-glass" class="mr-2 text-info" /> View
+                                <CIcon name="cil-magnifying-glass" class="mr-2 text-info" /> {{ $t('table.view') }}
                             </CDropdownItem>
                             <CDropdownItem @click="goToDuplicationForm(item)">
-                                <CIcon name="cil-copy" class="mr-2 text-info" /> Duplication
+                                <CIcon name="cil-copy" class="mr-2 text-info" /> {{ $t('table.duplicate') }}
                             </CDropdownItem>
                             <CDropdownItem @click="goToEditForm(item)">
-                                <CIcon name="cil-pencil" class="mr-2 text-warning" /> Edit
+                                <CIcon name="cil-pencil" class="mr-2 text-warning" /> {{ $t('table.edit') }}
                             </CDropdownItem>
                             <CDropdownItem @click="deleteModal = true && (deleteItem = item)" class="text-danger">
-                                <CIcon name="cil-trash" class="mr-2" /> Delete
+                                <CIcon name="cil-trash" class="mr-2" /> {{ $t('table.delete') }}
                             </CDropdownItem>
                         </CDropdown>
                     </td>
@@ -127,22 +129,22 @@
                         <div class="icon-wrapper border-danger m-1">
                             <CIcon name="cil-x" />
                         </div>
-                        <span class="font-weight-bold">Delete Confirmation</span>
+                        <span class="font-weight-bold">{{ $t('modal.deleteTitle') }}</span>
                     </div>
                 </div>
             </template>
             <template #body-wrapper>
                 <div class="d-flex justify-content-center p-4">
-                    <span>Do you really need this? after deleting you can't undone</span>
+                    <span>{{ $t('modal.deleteMessage') }}</span>
                 </div>
             </template>
             <template #footer-wrapper>
                 <div class="d-flex justify-content-center p-3">
                     <CButton color="secondary" @click="deleteModal = false">
-                        Cancel
+                        {{ $t('modal.cancel') }}
                     </CButton>
                     <CButton color="danger" class="ml-2" @click="confirmDelete()">
-                        OK
+                        {{ $t('modal.confirm') }}
                     </CButton>
                 </div>
             </template>
@@ -167,18 +169,19 @@ export default {
             itemsPerPage: 5,
             deleteModal: false,
             deleteItem: null,
-            columns: [
-                { key: 'title', label: 'Questionnaire', _style: 'width:40%' },
-                { key: 'status', label: 'Status', _style: 'width:15%' },
-                { key: 'responses', label: 'Responses', _style: 'width:15%' },
-                { key: 'visibility', label: 'Vision', _style: 'width:20%' },
-                { key: 'actions', label: 'Actions', _style: 'width:10%; text-align:right' }
-            ]
         }
     },
     computed: {
+        columns() {
+            return [
+                { key: 'title', label: this.$t('table.title'), _style: 'width:40%' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:15%' },
+                { key: 'responses', label: this.$t('table.responses'), _style: 'width:15%' },
+                { key: 'visibility', label: this.$t('table.visibility'), _style: 'width:20%' },
+                { key: 'actions', label: this.$t('table.actions'), _style: 'width:10%; text-align:right' }
+            ]
+        },
         ...mapGetters('Forms', ['forms']),
-        ...mapGetters('Setting', ['lang']),
 
         totalPages() {
             return Math.ceil(this.tableData.length / this.itemsPerPage) || 1;
@@ -228,7 +231,7 @@ export default {
                         status: statusTitle,
                         access: form.isPublic ? 'Public' : 'Private',
                         visibility: form.status ? this.getLang(form.status.title) : '-',
-                        responses: form.responses ? form.responses.length : 0,
+                        responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
                         created: form.updatedAt ? moment(form.updatedAt).format('MMM D, YYYY') : '-'
                     }
                 });
@@ -277,27 +280,6 @@ export default {
         filterStatus(status) {
             this.selectedStatus = status;
             this.currentPage = 1; // Reset pagination when filter changes
-        },
-        getLang(data) {
-            if (!data) return '';
-            if (typeof data === 'string') return data;
-            if (!Array.isArray(data)) return '';
-
-            // Find content matching current locale
-            const currentLang = this.lang;
-            let content = data.find(item => item.key === currentLang);
-
-            // Fallback to 'en' if current locale not found
-            if (!content) {
-                content = data.find(item => item.key === 'en');
-            }
-
-            // Fallback to first available if 'en' not found
-            if (!content && data.length > 0) {
-                content = data[0];
-            }
-
-            return content ? content.value : '';
         },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
@@ -352,10 +334,10 @@ export default {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
         },
         goToDuplicationForm(item) {
-            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'duplicate' } });
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'duplicate', source: 'internal' } });
         },
         goToViewForm(item) {
-            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'preview' } });
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'preview', source: 'internal' } });
         },
         async confirmDelete() {
             if (this.deleteItem) {

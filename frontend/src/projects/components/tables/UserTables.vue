@@ -3,7 +3,7 @@
         <!-- Filter Toolbar -->
         <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-3">
             <div class="flex-grow-1 mr-3">
-                <CInput v-model="searchQuery" placeholder="Search forms..." class=" mb-0">
+                <CInput v-model="searchQuery" :placeholder="$t('table.searchPlaceholder')" class=" mb-0">
                     <template #prepend-content>
                         <CIcon name="cil-magnifying-glass" class="text-muted" />
                     </template>
@@ -17,18 +17,19 @@
                             <button class="btn d-flex align-items-center text-muted border bg-white"
                                 style="border-radius: 6px;">
                                 <CIcon name="cil-filter" size="sm" class="mr-2" />
-                                <span>{{ selectedStatus }}</span>
+                                <span>{{ selectedStatus === 'All' ? $t('status.all') : $t('status.' + selectedStatus.toLowerCase()) }}</span>
                                 <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                             </button>
                         </template>
-                        <CDropdownItem @click="filterStatus('All')">All Status</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Pending')">Pending</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Completed')">Completed</CDropdownItem>
+                        <CDropdownItem @click="filterStatus('All')">{{ $t('status.all') }}</CDropdownItem>
+                        <CDropdownItem @click="filterStatus('Pending')">{{ $t('status.pending') }}</CDropdownItem>
+                        <CDropdownItem @click="filterStatus('Completed')">{{ $t('status.completed') }}</CDropdownItem>
                     </CDropdown>
                 </div>
             </div>
         </div>
 
+        <!-- Table -->
         <div class="user-tables-container">
             <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
                 :pagination="false" hover class="mb-0 custom-table">
@@ -46,7 +47,7 @@
                     <td class="py-3">
                         <span v-if="!item.isEmptyRow" class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
-                            {{ item.status }}
+                            {{ $t('status.' + item.status.toLowerCase()) }}
                         </span>
                     </td>
                 </template>
@@ -58,7 +59,7 @@
                             :color="item.status.toLowerCase() === 'completed' ? 'secondary' : 'primary'"
                             :disabled="item.status.toLowerCase() === 'completed'" size="sm"
                             class="font-weight-bold px-4" style="border-radius: 6px;" @click.stop="goToForm(item._id)">
-                            {{ item.status.toLowerCase() === 'completed' ? 'Completed' : 'Start' }}
+                            {{ item.status.toLowerCase() === 'completed' ? $t('status.completed') : $t('button.start') }}
                         </CButton>
                     </td>
                 </template>
@@ -84,25 +85,24 @@ export default {
             selectedStatus: 'All',
             loading: false,
             activePage: 1,
-            itemsPerPage: 5,
-            fields: [
-                { key: 'form', label: 'Questionnaire', _style: 'width:60%' },
-                { key: 'status', label: 'Status', _style: 'width:20%' },
-                { key: 'action', label: 'Action', _style: 'width:20%; text-align:right' }
-            ]
+            itemsPerPage: 5
         }
     },
     computed: {
+        fields() {
+            return [
+                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:60%' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:20%' },
+                { key: 'action', label: this.$t('table.action'), _style: 'width:20%; text-align:right' }
+            ]
+        },
         ...mapGetters('Forms', ['forms']),
-        ...mapGetters('Setting', ['lang']),
 
         totalPages() {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
         },
 
         tableData() {
-            const locale = this.lang;
-            
             if (!this.forms || this.forms.length === 0) return []
 
             const sortedForms = [...this.forms].sort((a, b) => {
@@ -150,7 +150,7 @@ export default {
 
                     mappedData.push({
                         _id: form._id || form.id,
-                        title: this.getLang(form.title) || 'Untitled Form',
+                        title: this.getLang(form.title) || this.$t('common.untitled'),
                         description: this.getLang(form.description) || '',
                         status: statusTitle
                     });
@@ -183,33 +183,12 @@ export default {
         },
         goToForm(id) {
             if (id) {
-                this.$router.push({ name: 'FormFill', params: { id: id } })
+                this.$router.push({ name: 'FormFill', params: { id: id }, query: { source: 'internal' } })
             }
         },
         filterStatus(status) {
             this.selectedStatus = status;
             this.currentPage = 1; // Reset pagination when filter changes
-        },
-        getLang(data) {
-            if (!data) return '';
-            if (typeof data === 'string') return data;
-            if (!Array.isArray(data)) return '';
-
-            // Find content matching current locale
-            const currentLang = this.$i18n.locale;
-            let content = data.find(item => item.key === currentLang);
-
-            // Fallback to 'en' if current locale not found
-            if (!content) {
-                content = data.find(item => item.key === 'en');
-            }
-
-            // Fallback to first available if 'en' not found
-            if (!content && data.length > 0) {
-                content = data[0];
-            }
-
-            return content ? content.value : '';
         },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
