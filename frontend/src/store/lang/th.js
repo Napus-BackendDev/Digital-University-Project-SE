@@ -1,19 +1,91 @@
-const en = {
-
-    campus : "ชื่อสถาบันอุดมศึกษา",
+const th = {
+    campus: "ชื่อสถาบันอุดมศึกษา",
     faculty: "สำนักวิชา",
     department: "สาขาวิชา",
-    academicYear:"ปีการศึกษา",
-    semester:"ภาคการศึกษา",
-    course:"เลือกรายวิชา",
+    academicYear: "ปีการศึกษา",
+    semester: "ภาคการศึกษา",
+    course: "เลือกรายวิชา",
 
-
-    button: {
-        setting:"ตั้งค่า",
-        create :"สร้าง",
+    nav: {
+        forms: "ฟอร์ม",
+        manage: "จัดการฟอร์ม",
+        analytics: "การวิเคราะห์",
+        permissions: "สิทธิ์การเข้าถึง",
+        logout: "ออกจากระบบ"
     },
 
-    description : "รายละเอียด"
-}
-export default en
+    table: {
+        title: "ฟอร์มทั้งหมด",
+        questionnaire: "ชื่อแบบสอบถาม",
+        status: "สถานะ",
+        action: "การดำเนินการ",
+        header: "แนวโน้มการตอบกลับ",
+        responses: "การตอบกลับ",
+        lastUpdated: "แก้ไขล่าสุด",
+        actions: "เครื่องมือ",
+        view: "ดู",
+        duplicate: "คัดลอก",
+        edit: "แก้ไข",
+        delete: "ลบ",
+        search: "ค้นหา...",
+        allStatus: "สถานะทั้งหมด",
+    },
 
+    modal: {
+        deleteTitle: "ยืนยันการลบ",
+        deleteMessage: "คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้? เมื่อลบแล้วจะไม่สามารถย้อนคืนได้",
+        confirm: "ตกลง",
+        cancel: "ยกเลิก"
+    },
+
+    common: {
+        refresh: "รีเฟรช",
+        error: "เกิดข้อผิดพลาด",
+        success: "สำเร็จ",
+        loading: "กำลังโหลด...",
+        submitting: "กำลังส่งข้อมูล...",
+        ok: "ตกลง",
+        untitled: "ไม่มีชื่อฟอร์ม"
+    },
+
+    form: {
+        yourAnswer: "คำตอบของคุณ",
+        submit: "ส่งฟอร์ม",
+        copyForm: "คัดลอกฟอร์ม",
+        previewBanner: "โหมดตัวอย่าง - อ่านอย่างเดียว",
+        duplicateBanner: "โหมดคัดลอก - คัดลอกฟอร์ม",
+        successMessage: "ขอบคุณสำหรับการส่งข้อมูล!",
+        duplicateSuccess: "คัดลอกฟอร์มเรียบร้อยแล้ว!",
+        question: "คำถามที่",
+        notAuthenticated: "ยังไม่ได้เข้าสู่ระบบ",
+        loginRequired: "คุณต้องเข้าสู่ระบบเพื่อส่งฟอร์มนี้",
+    },
+
+    chart: {
+        formsByStatus: "ฟอร์มแบ่งตามสถานะ",
+        distribution: "สัดส่วนของฟอร์มในปัจจุบัน"
+    },
+
+    button: {
+        setting: "ตั้งค่า",
+        create: "สร้าง",
+        start: "เริ่ม",
+        edit: "แก้ไข",
+        save: "บันทึก",
+        cancel: "ยกเลิก",
+        back: "ย้อนกลับ",
+        preview: "ตัวอย่าง"
+    },
+
+    status: {
+        open: "เปิด",
+        closed: "ปิด",
+        draft: "ร่าง",
+        pending: "รอดำเนินการ",
+        completed: "เสร็จสิ้น",
+        all: "ทุกสถานะ"
+    },
+
+    description: "รายละเอียด"
+}
+export default th

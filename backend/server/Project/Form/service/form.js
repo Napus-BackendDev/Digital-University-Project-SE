@@ -65,7 +65,10 @@ exports.onQuery = async function (request, response) {
 exports.onQuerys = async function (request, response) {
   try {
     var querys = {};
-    const doc = await Form.onQuerys(querys);
+    const doc = await Form.onQuerys(querys, [
+      { path: 'status', select: 'title' },
+      { path: 'responses', match: { submit: true } }
+    ]);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
     return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);

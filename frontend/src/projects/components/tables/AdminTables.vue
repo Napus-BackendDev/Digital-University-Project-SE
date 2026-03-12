@@ -2,7 +2,7 @@
     <div class="response-trends-container">
         <div class="header mb-4">
             <div class="d-flex align-items-center mb-1">
-                <h4 class="m-0 font-weight-bold">Response Trends</h4>
+                <h4 class="m-0 font-weight-bold">{{ $t('nav.analytics') }}</h4>
             </div>
             <div class="text-muted small ">Daily responses over the last week</div>
         </div>
@@ -24,7 +24,7 @@
                         <div class="d-flex align-items-center"
                             :class="{ 'text-dark': item.status === 'Open' || item.status === 'Draft', 'text-muted': item.status === 'Closed' }">
                             <CIcon :name="getStatusIcon(item.status)" size="sm" class="mr-1" />
-                            {{ item.status }}
+                            {{ $t(`status.${item.status.toLowerCase()}`) }}
                         </div>
                     </td>
                 </template>
@@ -69,22 +69,21 @@ export default {
         return {
             currentPage: 1,
             pageSize: 5,
-            fields: [
-                { key: 'form', label: 'Form Title', _style: 'width:40%' },
-                { key: 'status', label: 'Status' },
-                { key: 'access', label: 'Access' },
-                { key: 'responses', label: 'Responses', _classes: 'text-center' },
-                { key: 'created', label: 'Created', _classes: 'text-right pr-4' }
-            ]
         }
     },
     computed: {
+        fields() {
+            return [
+                { key: 'form', label: this.$t('table.title'), _style: 'width:40%' },
+                { key: 'status', label: this.$t('table.status') },
+                { key: 'access', label: this.$t('table.access') },
+                { key: 'responses', label: this.$t('table.responses'), _classes: 'text-center' },
+                { key: 'created', label: this.$t('table.created'), _classes: 'text-right pr-4' }
+            ]
+        },
         ...mapGetters('Forms', ['forms']),
 
         tableData() {
-            // Force reactivity on locale change
-            const locale = this.$i18n.locale;
-
             if (!this.forms || this.forms.length === 0) return []
 
             // Sort forms by updatedAt (newest first)
@@ -115,7 +114,7 @@ export default {
                     description: this.getLang(form.description) || '',
                     status: statusTitle,
                     access: form.isPublic ? 'Public' : 'Private',
-                    responses: form.responses ? form.responses.length : 0,
+                    responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
                     created: form.updatedAt ? moment(form.updatedAt).format('D MMM YYYY') : '-'
                 }
             })
@@ -130,25 +129,6 @@ export default {
         }
     },
     methods: {
-        getLang(data) {
-            if (!data || !Array.isArray(data)) return data;
-
-            // Find content matching current locale
-            const currentLang = this.$i18n.locale;
-            let content = data.find(item => item.key === currentLang);
-
-            // Fallback to 'en' if current locale not found
-            if (!content) {
-                content = data.find(item => item.key === 'en');
-            }
-
-            // Fallback to first available if 'en' not found
-            if (!content && data.length > 0) {
-                content = data[0];
-            }
-
-            return content ? content.value : '';
-        },
         getStatusIcon(status) {
             switch (status) {
                 case 'Open': return 'cil-check-circle';

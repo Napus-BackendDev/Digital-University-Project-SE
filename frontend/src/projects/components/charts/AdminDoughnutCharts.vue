@@ -2,13 +2,13 @@
     <div class="chart-wrapper-container">
         <div class="header mb-4">
             <div class="d-flex align-items-center mb-1">
-                <h4 class="m-0 font-weight-bold">Forms by Status</h4>
+                <h4 class="m-0 font-weight-bold">{{ $t('chart.formsByStatus') }}</h4>
             </div>
-            <div class="text-muted small ">Current form distribution</div>
+            <div class="text-muted small ">{{ $t('chart.distribution') }}</div>
         </div>
 
         <div class="chart-container mb-4">
-            <CChartDoughnut :datasets="defaultDatasets" :labels="['Open', 'Draft', 'Closed']"
+            <CChartDoughnut :datasets="defaultDatasets" :labels="[$t('status.open'), $t('status.draft'), $t('status.closed')]"
                 :options="defaultOptions" />
         </div>
 
@@ -16,21 +16,21 @@
             <div class="legend-item d-flex justify-content-between align-items-center mb-2">
                 <div class="d-flex align-items-center">
                     <span class="legend-dot bg-success"></span>
-                    <span class="text-muted">Open</span>
+                    <span class="text-muted">{{ $t('status.open') }}</span>
                 </div>
                 <span class="font-weight-bold">{{ statusCounts.Open }}</span>
             </div>
             <div class="legend-item d-flex justify-content-between align-items-center mb-2">
                 <div class="d-flex align-items-center">
                     <span class="legend-dot bg-warning"></span>
-                    <span class="text-muted">Draft</span>
+                    <span class="text-muted">{{ $t('status.draft') }}</span>
                 </div>
                 <span class="font-weight-bold">{{ statusCounts.Draft }}</span>
             </div>
             <div class="legend-item d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <span class="legend-dot" style="background-color: #6c757d;"></span>
-                    <span class="text-muted">Closed</span>
+                    <span class="text-muted">{{ $t('status.closed') }}</span>
                 </div>
                 <span class="font-weight-bold">{{ statusCounts.Closed }}</span>
             </div>
@@ -106,14 +106,6 @@ export default {
         }
     },
     methods: {
-        getLang(data) {
-            if (!data || !Array.isArray(data)) return data;
-            const currentLang = this.$i18n.locale;
-            let content = data.find(item => item.key === currentLang);
-            if (!content) content = data.find(item => item.key === 'en');
-            if (!content && data.length > 0) content = data[0];
-            return content ? content.value : '';
-        }
     }
 }
 </script>

@@ -15,19 +15,26 @@ const module = {
         question_type
     },
     state: {
-        lang: "en",
+        lang: localStorage.getItem("lang") || "en",
     },
-
-
 
     mutations: {
         lang(state, obj) {
             state.lang = obj;
+            localStorage.setItem("lang", obj);
+            // Dynamic import to avoid circular dependency if possible, 
+            // but since i18n is exported we can just import it or use root instance if available.
+            // For now, we will handle the i18n.locale update in the action or component if needed,
+            // but usually, it's safer to do it where the state changes.
         },
     },
 
     actions: {
-
+        setLang({ commit }, lang) {
+            commit("lang", lang);
+            // We'll need a way to reach the i18n instance. 
+            // In many Vue 2 projects, it's attached to the root.
+        }
     },
 
     getters: {

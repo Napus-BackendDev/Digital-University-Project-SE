@@ -6,7 +6,7 @@
         <!-- Loading -->
         <div v-if="loading" class="fillform-center text-muted">
             <CSpinner color="secondary" />
-            <p class="mt-3">Loading...</p>
+            <p class="mt-3">{{ $t('common.loading') }}</p>
         </div>
 
         <!-- Error -->
@@ -21,16 +21,16 @@
             <CCard class="mb-3 header-card">
                 <div v-if="isPreviewMode" class="preview-banner p-2 text-center text-white font-weight-bold">
                     <CIcon name="cil-magnifying-glass" class="mr-2" />
-                    Preview Mode - Read Only
+                    {{ $t('form.previewBanner') }}
                 </div>
                 <div v-if="isDuplicateMode" class="preview-banner p-2 text-center text-white font-weight-bold">
                     <CIcon name="cil-copy" class="mr-2" />
-                    Duplicate Mode - Copy Form
+                    {{ $t('form.duplicateBanner') }}
                 </div>
                 <CCardBody class="p-4">
-                    <h1 class="form-main-title">{{ getTitle(form.title) }}</h1>
-                    <p v-if="getTitle(form.description)" class="form-main-desc mb-0">
-                        {{ getTitle(form.description) }}
+                    <h1 class="form-main-title">{{ getLang(form.title) || $t('common.untitled') }}</h1>
+                    <p v-if="getLang(form.description)" class="form-main-desc mb-0">
+                        {{ getLang(form.description) }}
                     </p>
                 </CCardBody>
             </CCard>
@@ -40,20 +40,21 @@
                 :id="'question-card-' + question._id" class="mb-3"
                 :class="{ 'card-error': errorIds.has(question._id) }">
                 <CCardBody class="p-4">
-                    <p v-if="!isType(question, 'title_description', 'image')" class="question-index">Question {{ index +
-                        1 }}</p>
+                    <p v-if="!isType(question, 'title_description', 'image')" class="question-index">
+                        {{ $t('form.question') }} {{ index + 1 }}
+                    </p>
                     <p v-if="!isType(question, 'title_description', 'image')" class="question-title mb-1">
-                        {{ getTitle(question.title) }}
+                        {{ getLang(question.title) }}
                         <span v-if="question.isRequired" class="text-danger ml-1">*</span>
                     </p>
-                    <p v-if="!isType(question, 'title_description', 'image') && question.description && question.description.length && getTitle(question.description)"
+                    <p v-if="!isType(question, 'title_description', 'image') && question.description && question.description.length && getLang(question.description)"
                         class="text-muted small mb-3">
-                        {{ getTitle(question.description) }}
+                        {{ getLang(question.description) }}
                     </p>
 
                     <!-- Short Answer -->
                     <CInput v-if="isType(question, 'short', 'short_answer')" v-model="answers[question._id]"
-                        placeholder="Your answer" class="mb-0" :disabled="isPreviewMode"
+                        :placeholder="$t('form.yourAnswer')" class="mb-0" :disabled="isPreviewMode"
                         @input="(e) => { clearError(question._id); autoSave(); }" />
 
                     <!-- Paragraph -->
@@ -96,9 +97,9 @@
 
                     <!-- Title & Description -->
                     <div v-else-if="isType(question, 'title_description')">
-                        <h2 class="section-display-title">{{ getTitle(question.title) }}</h2>
+                        <h2 class="section-display-title">{{ getLang(question.title) }}</h2>
                         <p v-if="question.config && question.config.description && question.config.description.length"
-                            class="section-display-desc mb-0">{{ getTitle(question.config.description) }}</p>
+                            class="section-display-desc mb-0">{{ getLang(question.config.description) }}</p>
                     </div>
 
                     <!-- Image -->
@@ -106,7 +107,7 @@
                         :src="question.config.image" class="question-full-image" alt="" />
 
                     <!-- Fallback -->
-                    <CInput v-else v-model="answers[question._id]" placeholder="Your answer" class="mb-0" />
+                    <CInput v-else v-model="answers[question._id]" :placeholder="$t('form.yourAnswer')" class="mb-0" />
                 </CCardBody>
             </CCard>
 
@@ -115,13 +116,13 @@
                 <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm" :disabled="submitting"
                     class="px-5">
                     <CSpinner v-if="submitting" size="sm" class="mr-1" />
-                    {{ submitting ? 'Submitting' : 'Submit' }}
+                    {{ submitting ? $t('common.submitting') : $t('form.submit') }}
                 </CButton>
                 <CButton v-else color="info" @click="duplicateForm" :disabled="submitting"
                     class="px-5 text-white font-weight-bold">
                     <CSpinner v-if="submitting" size="sm" class="mr-1" />
                     <CIcon name="cil-copy" class="mr-2" />
-                    {{ submitting ? 'Processing...' : 'Copy Form' }}
+                    {{ submitting ? $t('common.submitting') : $t('form.copyForm') }}
                 </CButton>
             </div>
 
@@ -140,7 +141,7 @@
                         <p class="success-message">{{ modalMessage }}</p>
 
                         <div class="success-actions">
-                            <CButton color="success" class="success-ok-button" @click="onModalOk">OK</CButton>
+                            <CButton color="success" class="success-ok-button" @click="onModalOk">{{ $t('common.ok') }}</CButton>
                         </div>
                     </div>
                 </div>
@@ -298,9 +299,7 @@ export default {
 
         getOptionLabel(opt) {
             if (!opt || !opt.lang || !opt.lang.length) return '';
-            const lang = (navigator.language || 'en').substring(0, 2).toUpperCase();
-            const match = opt.lang.find(l => l.key && l.key.toUpperCase() === lang);
-            return (match || opt.lang[0]).value || '';
+            return this.getLang(opt.lang);
         },
 
         getAcceptString(question) {
@@ -386,8 +385,8 @@ export default {
                     }
                 }
 
-                this.modalTitle = 'Success';
-                this.modalMessage = "Form has been duplicated successfully!";
+                this.modalTitle = this.$t('common.success');
+                this.modalMessage = this.$t('form.duplicateSuccess');
                 this.modalType = 'success';
                 this.showModal = true;
 
@@ -399,8 +398,8 @@ export default {
 
             } catch (err) {
                 console.error('Duplication failed:', err);
-                this.modalTitle = 'Error';
-                this.modalMessage = 'Failed to duplicate form. Please try again.';
+                this.modalTitle = this.$t('common.error');
+                this.modalMessage = this.$t('common.error'); // Or a more specific key if I add it
                 this.modalType = 'error';
                 this.showModal = true;
             } finally {
@@ -426,8 +425,8 @@ export default {
             this.errorIds = new Set();
 
             if (!this.responder) {
-                this.modalTitle = 'Not authenticated';
-                this.modalMessage = 'You must be logged in to submit this form.';
+                this.modalTitle = this.$t('form.notAuthenticated');
+                this.modalMessage = this.$t('form.loginRequired');
                 this.modalType = 'error';
                 this.showModal = true;
                 return;
@@ -466,13 +465,13 @@ export default {
                     await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: this.submit }));
                 }
 
-                this.modalTitle = 'Success';
-                this.modalMessage = "Thank you for your submission!";
+                this.modalTitle = this.$t('common.success');
+                this.modalMessage = this.$t('form.successMessage');
                 this.modalType = 'success';
                 this.showModal = true;
             } catch (err) {
-                this.modalTitle = 'Error';
-                this.modalMessage = 'Submission failed. Please try again.';
+                this.modalTitle = this.$t('common.error');
+                this.modalMessage = this.$t('common.error');
                 this.modalType = 'error';
                 this.showModal = true;
                 console.error('submitForm error:', err);
