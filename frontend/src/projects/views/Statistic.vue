@@ -32,7 +32,7 @@ import Header from '../components/Util/Header.vue'
 import AdminLineCharts from '../components/charts/AdminLineCharts.vue';
 
 export default {
-    name: "Admin Dashboard",
+    name: "Dashboard",
     components: {
         AdminLineCharts,
         WidgetsDropdown,
