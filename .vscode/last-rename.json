@@ -1,0 +1,12 @@
+{
+    "timestamp": "2026-03-13T17:34:29+07:00",
+    "type": "rename",
+    "count": 5,
+    "files": [
+        {"old": "backend/server/Project/Settings/controller/question.js", "new": "backend/server/Project/Settings/controller/question_type.js"},
+        {"old": "backend/server/Project/Settings/service/question.js", "new": "backend/server/Project/Settings/service/question_type.js"},
+        {"old": "backend/node_modules/@popperjs/core/dist/esm/types.js", "new": "backend/test_require.js"},
+        {"old": "frontend/src/projects/views/user/Dashboard.vue", "new": "frontend/src/projects/views/Forms.vue"},
+        {"old": "frontend/src/projects/views/admin/Dashboard.vue", "new": "frontend/src/projects/views/Statistic.vue"}
+    ]
+}
