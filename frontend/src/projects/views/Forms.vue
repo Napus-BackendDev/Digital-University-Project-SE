@@ -1,18 +1,21 @@
 <template>
     <div class="flex-grow-1">
-        <Header title="My Forms" description="Fill and submit your forms" />
+        <Header :title="$t('nav.forms')" :description="$t('table.header')" />
+        <WidgetsDropdownUser />
         <UserTables />
     </div>
 </template>
 
 <script>
 import UserTables from '../components/tables/UserTables.vue'
+import WidgetsDropdownUser from '../components/widgets/WidgetsDropdownUser.vue'
 import Header from '../components/Util/Header.vue'
 
 export default {
     name: "Forms",
     components: {
         UserTables,
+        WidgetsDropdownUser,
         Header
     },
     data() {
@@ -27,7 +30,7 @@ export default {
             this.$store.dispatch('Forms/get');
         },
     },
-    computed: {
-    }
 }
 </script>
+
+<style scoped></style>

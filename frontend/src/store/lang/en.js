@@ -19,6 +19,9 @@ const en = {
         access: "Access",
         questionnaire: "Questionnaire",
         status: "Status",
+        timeRange: "Time Range",
+        progress: "Progress",
+        createdBy: "Created By",
         action: "Action",
         header: "Response Trends",
         responses: "Responses",
@@ -32,6 +35,15 @@ const en = {
         searchPlaceholder: "Search forms...",
         allStatus: "All Status",
         visibility: "Visibility",
+        dateFrom: "From",
+        dateTo: "To",
+        rangeShortcuts: "Quick Range",
+        quickDate: {
+            all: "All",
+            today: "Today",
+            thisWeek: "This Week",
+            last30Days: "Last 30 Days"
+        }
     },
 
     modal: {
@@ -85,10 +97,17 @@ const en = {
         closed: "Closed",
         draft: "Draft",
         pending: "Pending",
+        inprogress: "In Progress",
         completed: "Completed",
         all: "All Status"
     },
 
+    widget: {
+        total: "Total Form",
+        pending: "Pending",
+        finish: "Finish",
+        late: "Late"
+    },
     description: "Description"
 }
 export default en
