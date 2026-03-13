@@ -19,6 +19,9 @@ const th = {
         access: "การเข้าถึง",
         questionnaire: "ชื่อแบบสอบถาม",
         status: "สถานะ",
+        timeRange: "ช่วงเวลา",
+        progress: "ความคืบหน้า",
+        createdBy: "จัดทำโดย",
         action: "การดำเนินการ",
         header: "แนวโน้มการตอบกลับ",
         responses: "การตอบกลับ",
@@ -30,7 +33,16 @@ const th = {
         delete: "ลบ",
         search: "ค้นหา...",
         allStatus: "สถานะทั้งหมด",
-        visibility: "การเข้าถึง"
+        visibility: "การเข้าถึง",
+        dateFrom: "จากวันที่",
+        dateTo: "ถึงวันที่",
+        rangeShortcuts: "ช่วงเวลาด่วน",
+        quickDate: {
+            all: "ทั้งหมด",
+            today: "วันนี้",
+            thisWeek: "อาทิตย์นี้",
+            last30Days: "30 วันก่อน"
+        }
     },
 
     modal: {
@@ -84,10 +96,17 @@ const th = {
         closed: "ปิด",
         draft: "ร่าง",
         pending: "รอดำเนินการ",
+        inprogress: "กำลังดำเนินการ",
         completed: "เสร็จสิ้น",
         all: "ทุกสถานะ"
     },
 
+    widget: {
+        total: "ฟอร์มทั้งหมด",
+        pending: "รอดำเนินการ",
+        finish: "เสร็จสิ้น",
+        late: "เกินกำหนด"
+    },
     description: "รายละเอียด"
 }
 export default th

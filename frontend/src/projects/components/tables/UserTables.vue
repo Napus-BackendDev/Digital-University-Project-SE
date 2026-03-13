@@ -1,43 +1,19 @@
 <template>
     <div>
-        <!-- Filter Toolbar -->
-        <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-3">
-            <div class="flex-grow-1 mr-3">
-                <CInput v-model="searchQuery" :placeholder="$t('table.searchPlaceholder')" class=" mb-0">
-                    <template #prepend-content>
-                        <CIcon name="cil-magnifying-glass" class="text-muted" />
-                    </template>
-                </CInput>
-            </div>
+        <!-- Filter Toolbar Refactored -->
+        <FilterTable 
+            :searchQuery.sync="searchQuery" 
+            :selectedStatus.sync="selectedStatus" 
+            :startDate.sync="startDate" 
+            :endDate.sync="endDate" 
+        />
 
-            <div class="d-flex align-items-center">
-                <div class="mr-3">
-                    <CDropdown class="filter-dropdown">
-                        <template #toggler>
-                            <button class="btn d-flex align-items-center text-muted border bg-white"
-                                style="border-radius: 6px;">
-                                <CIcon name="cil-filter" size="sm" class="mr-2" />
-                                <span>{{ selectedStatus === 'All' ? $t('status.all') : $t('status.' + selectedStatus.toLowerCase()) }}</span>
-                                <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
-                            </button>
-                        </template>
-                        <CDropdownItem @click="filterStatus('All')">{{ $t('status.all') }}</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Pending')">{{ $t('status.pending') }}</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Completed')">{{ $t('status.completed') }}</CDropdownItem>
-                    </CDropdown>
-                </div>
-            </div>
-        </div>
-
-        <!-- Table -->
-        <div class="user-tables-container">
-            <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
+        <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
                 :pagination="false" hover class="mb-0 custom-table">
                 <!-- Form Name (Title & Description) Slot -->
                 <template #form="{ item }">
-                    <td class="pl-4 py-3" :style="{ height: item.isEmptyRow ? '76px' : 'auto' }">
-                        <div class="font-weight-bold text-dark text-lg" style="font-size: 0.95rem;">{{ item.title }}
-                        </div>
+                    <td class="py-3">
+                        <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
                         <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
                     </td>
                 </template>
@@ -45,44 +21,87 @@
                 <!-- Status Slot -->
                 <template #status="{ item }">
                     <td class="py-3">
-                        <span v-if="!item.isEmptyRow" class="status-badge" :class="getStatusClass(item.status)">
+                        <span class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
                             {{ $t('status.' + item.status.toLowerCase()) }}
                         </span>
                     </td>
                 </template>
 
+                <!-- Time Range Slot -->
+                <template #timeRange="{ item }">
+                    <td class="py-3">
+                        <div class="small text-dark font-weight-bold">{{ item.timeRange }}</div>
+                        <div class="small text-muted mt-1">{{ item.daysLeft }}</div>
+                    </td>
+                </template>
+
+                <!-- Progress Slot -->
+                <template #progress="{ item }">
+                    <td class="py-3" style="min-width: 140px;">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1 mr-3">
+                                <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px" class="progress-xs" />
+                            </div>
+                            <div class="small font-weight-bold text-dark">{{ item.progress }}%</div>
+                        </div>
+                    </td>
+                </template>
+
+                <!-- Create By Slot -->
+                <template #createBy="{ item }">
+                    <td class="py-3">
+                        <div class="small text-dark">{{ item.organization }}</div>
+                    </td>
+                </template>
+
                 <!-- Action Slot -->
                 <template #action="{ item }">
                     <td class="py-3 text-right pr-4">
-                        <CButton v-if="!item.isEmptyRow"
-                            :color="item.status.toLowerCase() === 'completed' ? 'secondary' : 'primary'"
-                            :disabled="item.status.toLowerCase() === 'completed'" size="sm"
-                            class="font-weight-bold px-4" style="border-radius: 6px;" @click.stop="goToForm(item._id)">
-                            {{ item.status.toLowerCase() === 'completed' ? $t('status.completed') : $t('button.start') }}
-                        </CButton>
+                        <div class="d-flex align-items-center justify-content-end">
+                            <CIcon 
+                                v-if="item.requireEmail" 
+                                name="cil-warning" 
+                                class="text-danger mr-2" 
+                                style="width: 20px;"
+                                v-c-tooltip="'Email required'"
+                            />
+                            <CButton
+                                :color="getActionColor(item.status)"
+                                variant="ghost"
+                                class="p-2 action-icon-btn"
+                                @click.stop="goToForm(item._id)"
+                                v-c-tooltip="getActionTooltip(item.status)"
+                            >
+                                <CIcon :name="getActionIcon(item.status)" size="lg" />
+                            </CButton>
+                        </div>
                     </td>
                 </template>
             </CDataTable>
-        </div>
 
         <!-- Pagination -->
         <Pagination :activePage.sync="activePage" :pages="totalPages" />
-    </div>
+        </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import moment from 'moment'
 import Pagination from '@/projects/components/Util/Pagination.vue'
+import FilterTable from '@/projects/components/Filter/FilterTable.vue'
+import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'UserTables',
-    components: { Pagination },
+    components: { Pagination, FilterTable },
+    mixins: [localeMixin],
     data() {
         return {
             searchQuery: '',
             selectedStatus: 'All',
+            startDate: '',
+            endDate: '',
             loading: false,
             activePage: 1,
             itemsPerPage: 5
@@ -91,9 +110,12 @@ export default {
     computed: {
         fields() {
             return [
-                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:60%' },
-                { key: 'status', label: this.$t('table.status'), _style: 'width:20%' },
-                { key: 'action', label: this.$t('table.action'), _style: 'width:20%; text-align:right' }
+                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:25%' },
+                { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:15%' },
+                { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:18%' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:12%' },
+                { key: 'progress', label: this.$t('table.progress'), _style: 'width:15%' }, 
+                { key: 'action', label: this.$t('table.action'), _style: 'width:15%; text-align:right' }
             ]
         },
         ...mapGetters('Forms', ['forms']),
@@ -103,81 +125,70 @@ export default {
         },
 
         tableData() {
-            if (!this.forms || this.forms.length === 0) return []
-
-            const sortedForms = [...this.forms].sort((a, b) => {
-                return new Date(b.createdAt) - new Date(a.createdAt)
-            })
-
-            const mappedData = [];
-            const now = new Date();
-
-            sortedForms.forEach(form => {
-                const schedule = form.schedule;
-                let isOpen = false;
-
-                if (schedule && schedule.startAt) {
-                    const start = new Date(schedule.startAt);
-                    const end = new Date(schedule.endAt);
-
-                    if (start <= now && now <= end) {
-                        isOpen = true;
-                    }
+            // Mockup data as requested by the user
+            return [
+                {
+                    _id: '1',
+                    title: '2024 Faculty Satisfaction Survey',
+                    description: 'Collecting feedback from all faculty members on facilities and resources.',
+                    status: 'InProgress',
+                    timeRange: 'Mar 1, 2024 - Mar 31, 2024',
+                    daysLeft: '18 days left',
+                    progress: 65,
+                    organization: 'Faculty of Engineering',
+                    createdAt: '2024-03-01T08:00:00Z'
+                },
+                {
+                    _id: '2',
+                    title: 'Course Evaluation - Semester 2',
+                    description: 'Standard end-of-semester evaluation for GE courses.',
+                    status: 'Completed',
+                    timeRange: 'Feb 15, 2024 - Mar 15, 2024',
+                    daysLeft: 'Closed',
+                    progress: 100,
+                    organization: 'Department of Computer Science',
+                    createdAt: '2024-02-15T10:00:00Z'
+                },
+                {
+                    _id: '3',
+                    title: 'Research Proposal Feedback',
+                    description: 'Optional survey for graduate students to provide feedback on proposal process.',
+                    status: 'Pending',
+                    timeRange: 'Mar 10, 2024 - Apr 10, 2024',
+                    daysLeft: '28 days left',
+                    progress: 0,
+                    organization: 'Graduate School',
+                    createdAt: '2024-03-05T09:00:00Z'
+                },
+                {
+                    _id: '4',
+                    title: 'Library Services Annual Review',
+                    description: 'Help us improve our library services by sharing your experience.',
+                    status: 'InProgress',
+                    timeRange: 'Feb 20, 2024 - Apr 20, 2024',
+                    daysLeft: '38 days left',
+                    progress: 35,
+                    organization: 'Central Library',
+                    createdAt: '2024-02-10T11:00:00Z'
+                },
+                {
+                    _id: '5',
+                    title: 'IT Infrastructure Survey',
+                    description: 'Feedback on campus WiFi and computing facilities.',
+                    status: 'Pending',
+                    timeRange: 'Mar 15, 2024 - Apr 15, 2024',
+                    daysLeft: '33 days left',
+                    progress: 0,
+                    organization: 'IT Center',
+                    requireEmail: true,
+                    createdAt: '2024-03-12T14:00:00Z'
                 }
-
-                if (isOpen) {
-                    const responder = '69a50fcc5f1adf15e09b2d86';
-
-                    let hasCompleted = false;
-                    let hasDraft = false;
-                    if (form.responses && Array.isArray(form.responses)) {
-                        form.responses.forEach(r => {
-                            if (!r) return;
-                            if (typeof r === 'object') {
-                                try {
-                                    if (String(r.responder) === String(responder)) {
-                                        if (r.submit === true || r.submit === 'true') hasCompleted = true;
-                                        else hasDraft = true;
-                                    }
-                                } catch (e) {
-                                    // ignore
-                                }
-                            }
-                        });
-                    }
-
-                    const statusTitle = hasCompleted ? 'Completed' : 'Pending';
-
-                    mappedData.push({
-                        _id: form._id || form.id,
-                        title: this.getLang(form.title) || this.$t('common.untitled'),
-                        description: this.getLang(form.description) || '',
-                        status: statusTitle
-                    });
-                }
-            });
-
-            let finalData = mappedData.filter(item => {
-                if (this.selectedStatus !== 'All' && item.status !== this.selectedStatus) {
-                    return false;
-                }
-
-                if (this.searchQuery) {
-                    const query = this.searchQuery.toLowerCase();
-                    const titleMatch = item.title.toLowerCase().includes(query);
-                    const descMatch = (item.description || '').toLowerCase().includes(query);
-                    return titleMatch || descMatch;
-                }
-
-                return true;
-            });
-
-            return JSON.parse(JSON.stringify(finalData));
+            ];
         }
     },
     methods: {
         goToFormRecord(item) {
-            if (item && !item.isEmptyRow) {
+            if (item) {
                 this.goToForm(item._id);
             }
         },
@@ -188,26 +199,49 @@ export default {
         },
         filterStatus(status) {
             this.selectedStatus = status;
-            this.currentPage = 1; // Reset pagination when filter changes
+            this.activePage = 1; 
         },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
             if (s === 'completed') return 'status-completed';
+            if (s === 'inprogress') return 'status-inprogress';
             return 'status-pending';
+        },
+        getProgressColor(progress) {
+            if (progress >= 100) return 'success';
+            if (progress >= 40) return 'info';
+            if (progress > 0) return 'warning';
+            return 'secondary';
+        },
+        getProgressColor(progress) {
+            if (progress >= 100) return 'success';
+            if (progress >= 40) return 'info';
+            if (progress > 0) return 'warning';
+            return 'secondary';
+        },
+        getActionColor(status) {
+            const s = status ? status.toLowerCase() : '';
+            if (s === 'completed') return 'success';
+            if (s === 'pending') return 'warning';
+            return 'primary';
+        },
+        getActionIcon(status) {
+            const s = status ? status.toLowerCase() : '';
+            if (s === 'completed') return 'cil-check-circle';
+            if (s === 'inprogress') return 'cil-pencil';
+            return 'cil-input';
+        },
+        getActionTooltip(status) {
+            const s = status ? status.toLowerCase() : '';
+            if (s === 'completed') return 'View summary';
+            if (s === 'inprogress') return 'Continue form';
+            return 'Start Form';
         }
     }
 }
 </script>
 
 <style scoped>
-.user-tables-container {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
-    overflow: hidden;
-    /* For rounded corners on child elements */
-}
 
 /* Table Header */
 .custom-table thead th {
@@ -283,6 +317,15 @@ export default {
     background-color: #eab308;
 }
 
+.status-inprogress {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-inprogress .status-dot {
+    background-color: #2563eb;
+}
+
 /* Pagination customization to match clean theme */
 ::v-deep .page-link {
     border: none;
@@ -325,7 +368,7 @@ export default {
 
 /* Header Styling */
 ::v-deep .custom-table thead th {
-    background-color: #f8fafc !important;
+    background-color: #ffffff !important;
     color: #475569 !important;
     font-size: 13px !important;
     font-weight: 600 !important;
@@ -347,6 +390,7 @@ export default {
 
 /* Body Styling */
 ::v-deep .custom-table tbody td {
+    background-color: #ffffff !important;
     color: #1e293b !important;
     font-size: 14px;
     font-weight: 500;
@@ -359,7 +403,24 @@ export default {
 
 /* Hover Effect */
 ::v-deep .custom-table tbody tr:hover td {
-    background-color: #f8fafc !important;
+    background-color: #ffffff !important;
+}
+
+.action-icon-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    transition: all 0.2s ease;
+}
+
+.action-icon-btn:hover {
+    background-color: #f1f5f9 !important;
+    color: #3c4b64 !important;
+    transform: translateY(-1px);
 }
 
 /* Remove bottom border from the very last row */
