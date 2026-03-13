@@ -1,7 +1,7 @@
 <template>
     <div>
         <h1 class="mb-2 text-dark font-weight-bold">{{ title }}</h1>
-        <h5 class="text-muted mb-4">{{ description }}</h5>
+        <p class="mb-4">{{ description }}</p>
     </div>
 </template>
 

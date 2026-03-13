@@ -13,13 +13,16 @@ import OtpInput from "@bachdgvn/vue-otp-input";
 Vue.component("v-otp-input", OtpInput);
 
 Vue.use(CoreuiVuePro)
-Vue.prototype.$log = console.log.bind(console)
+Vue.prototype.$log = function() {}
 
 import VueQRCodeComponent from 'vue-qrcode-component'
 Vue.component('qr-code', VueQRCodeComponent)
 
 import moment from 'moment'
 Vue.prototype.moment = moment
+
+import localeMixin from './mixins/localeMixin'
+Vue.mixin(localeMixin)
 
 
 import GAuth from 'vue-google-oauth2'
@@ -29,7 +32,7 @@ const gauthOption = {
     prompt: process.env.VUE_APP_PROMPT
 }
 Vue.use(GAuth, gauthOption)
-console.log(gauthOption)
+// debug: gauthOption removed from console output
 
 new Vue({
   el: '#app',

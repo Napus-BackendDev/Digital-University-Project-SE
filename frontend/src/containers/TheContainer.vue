@@ -1,19 +1,15 @@
 <template>
-  <div class="c-app" :class="{ 'c-dark-theme': $store.state.darkMode }">
-    <TheSidebar />
-    <TheAside />
+  <div class="c-app">
     <CWrapper>
-      <TheHeader />
-      <div class="c-body">
-        <main class="c-main">
-          <CContainer fluid>
-            <transition name="fade">
-              <router-view></router-view>
-            </transition>
-          </CContainer>
-        </main>
-        <TheFooter />
-      </div>
+      <TheHeader v-if="!isPublicForm" />
+      <main class="c-main">
+        <CContainer class="d-flex justify-content-center w-75" fluid>
+          <transition name="fade">
+            <router-view></router-view>
+          </transition>
+        </CContainer>
+      </main>
+      <TheFooter v-if="!isPublicForm" />
 
     </CWrapper>
     <CenterLoading />
@@ -27,15 +23,11 @@
 <script>
 import TheHeader from './TheHeader'
 import { mapGetters } from "vuex";
-import store from "@/store/store";
-//
-import { io } from "socket.io-client";
 import DialogMessage from "@/projects/components/dialog/DialogMessage.vue";
 import CenterLoading from "@/projects/components/dialog/CenterLoading.vue";
 import SignIn from "@/projects/components/dialog/SignIn.vue";
 import TwoFA from "@/projects/components/dialog/TwoFA.vue";
 
-//
 export default {
   name: 'TheContainer',
   components: {
@@ -65,7 +57,6 @@ export default {
     //       socket.emit('campus',{"sos":1122});
     //
     //       socket.on("campus", (reason) => {
-    //         console.log(reason)
     //       })
     //
     //
@@ -75,7 +66,6 @@ export default {
     //
     // // กรณีการเชื่อมต่อถูกตัดขาด
     //     socket.on("disconnect", (reason) => {
-    //       console.log("[socket disconnected]: ", reason);
     //     });
     // // กรณีการเชื่อมต่อเกิดความผิดพลาด
     //     socket.on("connect_error", (error) => {
@@ -86,12 +76,9 @@ export default {
     // localStorage.setItem('test','123444')
 
     // socket.on("connect", () => {
-    //   console.log(12)
     // });
     //
     // socket.on("disconnect", () => {
-    //   console.log(13)
-    //
     // });
   },
 
@@ -130,7 +117,15 @@ export default {
   },
   computed: {
     ...mapGetters({
-    })
+    }),
+    isPublicForm() {
+      const isFormFillRoute = this.$route.name === 'FormFill';
+      const isInternalSource = this.$route.query.source === 'internal';
+      const isInternalMode = ['preview', 'duplicate'].includes(this.$route.query.mode);
+      const isPreviewRoute = this.$route.name === 'Preview';
+
+      return isFormFillRoute && !isInternalSource && !isInternalMode && !isPreviewRoute;
+    }
   },
 
   watch: {

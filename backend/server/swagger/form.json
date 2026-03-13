@@ -1,0 +1,184 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Form API",
+    "version": "1.0.0",
+    "description": "Form endpoints"
+  },
+  "tags": [
+    { "name": "Form" }
+  ],
+  "paths": {
+    "/form/exp": {
+      "get": {
+        "tags": ["Form"],
+        "summary": "Get forms (export)",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiId": { "type": "integer", "example": 21 }
+                }
+              },
+              "example": { "apiId": 21 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/form/get": {
+      "post": {
+        "tags": ["Form"],
+        "summary": "Get form by ID",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Form ID"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiId": { "type": "integer", "example": 22 }
+                }
+              },
+              "example": { "apiId": 22 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "404": { "description": "Not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/form": {
+      "post": {
+        "tags": ["Form"],
+        "summary": "Create form",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiId": { "type": "integer", "example": 23 },
+                  "title": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": { "type": "string" },
+                        "value": { "type": "string" }
+                      }
+                    }
+                  },
+                  "description": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": { "type": "string" },
+                        "value": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "apiId": 23,
+                "title": [{ "key": "en", "value": "Form" }]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "put": {
+        "tags": ["Form"],
+        "summary": "Update form",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 24 },
+                  "_id": { "type": "string" },
+                  "title": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": { "type": "string" },
+                        "value": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "apiId": 24,
+                "_id": "64e1f9f32a6d1c0013a1b234",
+                "title": [{ "key": "en", "value": "Updated" }]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated" },
+          "404": { "description": "Not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "delete": {
+        "tags": ["Form"],
+        "summary": "Delete form",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 25 },
+                  "_id": { "type": "string" }
+                }
+              },
+              "example": {
+                "apiId": 25,
+                "_id": "64e1f9f32a6d1c0013a1b234"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted" },
+          "500": { "description": "Server error" }
+        }
+      }
+    }
+  }
+}

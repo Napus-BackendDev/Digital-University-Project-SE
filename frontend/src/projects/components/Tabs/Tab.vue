@@ -1,36 +1,37 @@
 <template>
-    <CTabs variant="pills" :active-tab="0" class="custom-tabs-wrapper">
-        <CTab>
-            <template slot="title">
-                <span class="d-flex align-items-center">
-                    <CIcon name="cil-description" class="mr-2" />
-                    Questions
-                </span>
-            </template>
-            <TabQuestion :title="title" :description="description" :questions="questions"
-                @update:title="$emit('update:title', $event)" @update:description="$emit('update:description', $event)"
-                @auto-save="triggerAutoSave" />
-        </CTab>
-        <CTab>
-            <template slot="title">
-                <span class="d-flex align-items-center">
-                    <CIcon name="cil-chart-pie" class="mr-2" />
-                    Responses
-                    <CBadge color="secondary" shape="pill" class="ml-2">6</CBadge>
-                </span>
-            </template>
-            <TabResponses :settings="settings" @auto-save="triggerAutoSave" />
-        </CTab>
-        <CTab>
-            <template slot="title">
-                <span class="d-flex align-items-center">
-                    <CIcon name="cil-settings" class="mr-2" />
-                    Settings
-                </span>
-            </template>
-            <TabSetting :settings="settings" @auto-save="triggerAutoSave" />
-        </CTab>
-    </CTabs>
+    <CRow>
+        <CCol col="12" class="mb-4">
+            <CTabs variant="pills" :active-tab="0" class="custom-tabs-wrapper">
+                <CTab>
+                    <template slot="title">
+                        <span class="d-flex align-items-center">
+                            <CIcon name="cil-description" class="mr-2" />
+                            Questions
+                        </span>
+                    </template>
+                    <TabQuestion :form="form" @auto-save="triggerAutoSave" />
+                </CTab>
+                <CTab>
+                    <template slot="title">
+                        <span class="d-flex align-items-center">
+                            <CIcon name="cil-chart-pie" class="mr-2" />
+                            Responses
+                        </span>
+                    </template>
+                    <TabResponses :responses="form" @auto-save="triggerAutoSave" />
+                </CTab>
+                <CTab>
+                    <template slot="title">
+                        <span class="d-flex align-items-center">
+                            <CIcon name="cil-settings" class="mr-2" />
+                            Settings
+                        </span>
+                    </template>
+                    <TabSetting :settings="form" @auto-save="triggerAutoSave" />
+                </CTab>
+            </CTabs>
+        </CCol>
+    </CRow>
 </template>
 
 <script>
@@ -46,21 +47,9 @@ export default {
         TabSetting
     },
     props: {
-        title: {
-            type: String,
-            default: ''
-        },
-        description: {
-            type: String,
-            default: ''
-        },
-        questions: {
-            type: Array,
-            default: () => []
-        },
-        settings: {
+        form: {
             type: Object,
-            required: true
+            default: () => ({})
         }
     },
     methods: {
@@ -76,12 +65,7 @@ export default {
     width: 100%;
 }
 
-.custom-tabs-wrapper .tab-content {
-    width: 100%;
-}
-
-/* Add min-height to the white content boxes */
-.custom-tabs-wrapper .tab-content>.active {
+.custom-tabs-wrapper .tab-content .active {
     min-height: 60vh;
     display: flex;
     flex-direction: column;
@@ -92,18 +76,14 @@ export default {
     padding: 4px;
     border-radius: 50px;
     display: flex;
-    /* Changed from inline-flex to flex for full width */
     width: 100%;
-    /* Force full width */
     border: 1px solid #e2e8f0;
     margin-bottom: 1.5rem;
-    /* Add spacing below tabs */
 }
 
 .custom-tabs-wrapper .nav-item {
     margin-right: 0 !important;
     flex: 1;
-    /* Distribute space equally */
     text-align: center;
 }
 
@@ -111,7 +91,6 @@ export default {
     border-radius: 50px !important;
     color: #64748b !important;
     padding: 10px 0 !important;
-    /* Adjust padding */
     font-weight: 500;
     transition: all 0.2s ease;
     border: none !important;

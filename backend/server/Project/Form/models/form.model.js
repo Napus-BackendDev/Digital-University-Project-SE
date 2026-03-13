@@ -4,23 +4,24 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
-    title : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
-    description : [{ key: { type: String , default: null}, value: { type: String , default: null}}],
-    questions: { type : [{ type: Schema.Types.ObjectId, ref: 'Questions' }] , default: [] },
-    status: { type: String, ref: 'Setting_Status', default: '6982ee0d50e7666e04a5c7b8'},
+    title: [{ key: { type: String, default: null }, value: { type: String, default: null } }],
+    description: [{ key: { type: String, default: null }, value: { type: String, default: null } }],
+    questions: { type: [{ type: Schema.Types.ObjectId, ref: 'Questions' }], default: [] },
+    status: { type: Schema.Types.ObjectId, ref: 'Setting_Status', default: '69b0e3adf864c1088c19da36' },
     schedule: {
         startAt: { type: Date, default: null },
         endAt: { type: Date, default: null }
     },
     settings: {
-        whoCanRespond: { type: String, ref: 'Setting_Respond', default: '' },
+        whoCanRespond: { type: Schema.Types.ObjectId, ref: 'Setting_Respond', default: null },
         collectEmail: { type: Boolean, default: false },
         limitResponse: { type: Boolean, default: false },
         progressBar: { type: Boolean, default: false },
+        requireResponse: { type: Boolean, default: false },
         confirmMessage: { type: String, default: 'Thank you for completing this survey. Your response has been recorded.' },
         showAnotherResponseLink: { type: Boolean, default: true }
     },
-    respolinnses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
+    responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null },
 
 }, { timestamps: true });

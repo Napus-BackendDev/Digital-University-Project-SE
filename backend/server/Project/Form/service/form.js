@@ -2,12 +2,20 @@ const mongo = require("mongodb");
 const Form = require("../controller/form");
 const ResMessage = require("../../Settings/service/message");
 
+const getApiId = function (request) {
+  return Number(request.body.apiId) || 0;
+};
+
+const getSuccessCode = function (request) {
+  return 20000 + getApiId(request);
+};
+
 exports.onQuery = async function (request, response) {
   try {
     let query = {};
     query._id = new mongo.ObjectId(request.body._id);
 
-    const doc = await Form.onAggregate([
+    const results = await Form.onAggregate([
       { $match: query },
       {
         $graphLookup: {
@@ -31,32 +39,48 @@ exports.onQuery = async function (request, response) {
       },
     ]);
 
-    return ResMessage.sendResponse(response, 0, 20000, doc[0]);
+    // Use onQuery for population instead of custom onPopulate
+    const doc = await Form.onQuery({ _id: query._id }, [
+      { path: 'questions', populate: { path: 'type', select: 'type' } },
+      { 
+        path: 'responses', 
+        populate: { 
+          path: 'answers.question',
+          populate: { path: 'type', select: 'type' }
+        } 
+      },
+      { path: 'status', select: 'title' }
+    ]);
+
+    if (doc && results.length > 0) {
+      doc.childrenForms = results[0].childrenForms;
+    }
+
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, 0, 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
   }
 };
 
 exports.onQuerys = async function (request, response) {
   try {
-    let query = {};
-    // if (request.body.allowAll != true) {
-    //   query.schedule = { endAt: { $gte: new Date() } };
-    // }
-
-    const doc = await Form.onQuerys(query);
-    return ResMessage.sendResponse(response, 0, 20000, doc);
+    var querys = {};
+    const doc = await Form.onQuerys(querys, [
+      { path: 'status', select: 'title' },
+      { path: 'responses', match: { submit: true } }
+    ]);
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, 0, 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
   }
 };
-  
+
 exports.onCreate = async function (request, response) {
   try {
     const doc = await Form.onCreate(request.body);
-    return ResMessage.sendResponse(response, 0, 20000, doc);
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, 0, 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
   }
 };
 
@@ -66,9 +90,9 @@ exports.onUpdate = async function (request, response) {
     query._id = new mongo.ObjectId(request.body._id);
 
     const doc = await Form.onUpdate(query, request.body);
-    return ResMessage.sendResponse(response, 0, 20000, doc);
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, 0, 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
   }
 };
 
@@ -77,8 +101,8 @@ exports.onDelete = async function (request, response) {
     let query = {};
     query._id = new mongo.ObjectId(request.body._id);
     const doc = await Form.onDelete(query);
-    return ResMessage.sendResponse(response, 0, 20000, doc);
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, 0, 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
   }
 };

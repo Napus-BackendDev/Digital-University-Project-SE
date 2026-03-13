@@ -1,182 +1,279 @@
 <template>
     <div>
         <!-- Filter Toolbar -->
-        <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center py-3 mb-3">
             <div class="flex-grow-1 mr-3">
-                <CInput v-model="searchQuery" placeholder="Search forms..." class=" mb-0">
+                <CInput v-model="searchQuery" :placeholder="$t('table.search')" class="mb-0">
                     <template #prepend-content>
-                        <CIcon name="cil-magnifying-glass" class="text-muted" />
+                        <CIcon name="cil-magnifying-glass" />
                     </template>
                 </CInput>
             </div>
 
             <div class="d-flex align-items-center">
-                <div class="mr-3">
-                    <CDropdown class="filter-dropdown">
-                        <template #toggler>
-                            <button class="btn d-flex align-items-center text-muted border bg-white"
-                                style="border-radius: 6px;">
-                                <CIcon name="cil-filter" size="sm" class="mr-2" />
-                                <span>{{ selectedStatus }}</span>
-                                <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
-                            </button>
-                        </template>
-                        <CDropdownItem @click="filterStatus('All Status')">All Status</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Open')">Open</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Closed')">Closed</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
-                    </CDropdown>
-                </div>
+                <CDropdown class="filter-dropdown" style="border-radius: 1rem; margin-right: 1rem;">
+                    <template #toggler>
+                        <button class="btn d-flex align-items-center text-muted border bg-white"
+                            style="border-radius: 6px;">
+                            <CIcon name="cil-filter" size="sm" class="mr-2" />
+                            <span>{{ selectedStatus === 'All Status' ? $t('table.allStatus') : $t(`status.${selectedStatus.toLowerCase()}`) }}</span>
+                            <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
+                        </button>
+                    </template>
+                    <CDropdownItem @click="filterStatus('All Status')">{{ $t('table.allStatus') }}</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Open')">{{ $t('status.open') }}</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Closed')">{{ $t('status.closed') }}</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Draft')">{{ $t('status.draft') }}</CDropdownItem>
+                </CDropdown>
 
                 <CButton color="danger" class="d-flex align-items-center text-white px-3"
-                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c;" @click="createNewForm"
-                    :disabled="isCreating">
+                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c; border-radius: .5rem;"
+                    hover @click="createNewForm" :disabled="isCreating">
                     <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
                     <CSpinner v-else size="sm" class="mr-2" />
-                    Create Form
+                    {{ $t('button.create') }}
                 </CButton>
             </div>
         </div>
 
+        <!-- Table -->
         <div class="user-tables-container">
-            <CDataTable :items="tableData" :fields="fields" :items-per-page="6" hover :pagination="{ align: 'center' }"
-                class="mb-0 custom-datatable">
-                <!-- Form Name (Title) Slot -->
+            <CDataTable class="custom-table mb-0" :items="tableData" :fields="columns" :items-per-page="itemsPerPage"
+                :pagination="false" hover :activePage.sync="activePage">
+
+                <!-- Under Table Pagination & Info -->
+                <template #under-table>
+                    <!-- Empty under-table intentionally to remove built-in text -->
+                </template>
+
+                <!-- Title Combo -->
                 <template #title="{ item }">
-                    <td class="pl-4 py-3">
-                        <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
-                        <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                    <td class="align-middle">
+                        <template v-if="!item.isEmpty">
+                            <strong class="text-dark form-title">{{ item.title }}</strong>
+                            <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                        </template>
                     </td>
                 </template>
 
-                <!-- Status Slot -->
+                <!-- Status Label -->
                 <template #status="{ item }">
-                    <td class="py-3">
-                        <span class="status-badge" :class="getStatusClass(item.status)">
+                    <td class="align-middle">
+                        <span v-if="!item.isEmpty" class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
-                            {{ item.status }}
+                            {{ $t(`status.${item.status.toLowerCase()}`) }}
                         </span>
                     </td>
                 </template>
 
-                <!-- Responses Slot -->
+                <!-- Responses Combo -->
                 <template #responses="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-wrapper mr-2 chart-color">
+                    <td class="align-middle">
+                        <div v-if="!item.isEmpty" class="d-flex align-items-center">
+                            <div class="icon-wrapper mr-3 chart-color">
                                 <CIcon name="cil-comment-bubble" size="sm" />
                             </div>
-                            <div>
-                                <div class="font-weight-bold text-dark">{{ item.responses }}</div>
-                                <div class="small text-muted">responses</div>
+                            <div class="text-left">
+                                <div class="font-weight-bold text-dark responses-value">{{ item.responses }}</div>
+                                <div class="small text-muted">{{ $t('table.responses') }}</div>
                             </div>
                         </div>
                     </td>
                 </template>
 
-                <!-- Created (Last Modified) Slot -->
-                <template #created="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center text-muted">
-                            <CIcon name="cil-calendar" size="sm" class="mr-2" />
-                            <span>{{ item.created }}</span>
-                        </div>
+                <!-- Vision/Visibility Status Badge -->
+                <template #visibility="{ item }">
+                    <td class="align-middle">
+                        <span v-if="!item.isEmpty" class="visibility-badge" :class="getVisibilityClass(item.visibility)">
+                            {{ item.visibility }}
+                        </span>
                     </td>
                 </template>
 
-                <!-- Actions Slot -->
+                <!-- Actions -->
                 <template #actions="{ item }">
-                    <td class="text-right pr-4 py-3">
-                        <CDropdown placement="bottom-end">
+                    <td class="align-middle text-right">
+                        <CDropdown v-if="!item.isEmpty" placement="bottom-end">
                             <template #toggler>
-                                <button class="btn btn-link text-muted p-0 text-decoration-none">
-                                    <CIcon name="cil-options" />
+                                <button class="btn btn-link text-muted p-0 text-decoration-none shadow-none">
+                                    <CIcon name="cil-options" size="lg" />
                                 </button>
                             </template>
-                            <CDropdownItem @click="goToEditForm(item)">Edit</CDropdownItem>
-                            <CDropdownItem>Duplicate</CDropdownItem>
-                            <CDropdownItem class="text-danger" @click="deleteForm(item)">Delete</CDropdownItem>
+                            <CDropdownItem @click="goToViewForm(item)">
+                                <CIcon name="cil-magnifying-glass" class="mr-2 text-info" /> {{ $t('table.view') }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="goToDuplicationForm(item)">
+                                <CIcon name="cil-copy" class="mr-2 text-info" /> {{ $t('table.duplicate') }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="goToEditForm(item)">
+                                <CIcon name="cil-pencil" class="mr-2 text-warning" /> {{ $t('table.edit') }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="deleteModal = true && (deleteItem = item)" class="text-danger">
+                                <CIcon name="cil-trash" class="mr-2" /> {{ $t('table.delete') }}
+                            </CDropdownItem>
                         </CDropdown>
                     </td>
                 </template>
+
             </CDataTable>
         </div>
+
+        <!-- Pagination -->
+        <Pagination :activePage.sync="activePage" :pages="totalPages" />
+
+        <!-- Confirm Delete modal -->
+        <CModal :show.sync="deleteModal" :centered="true">
+            <template #header-wrapper>
+                <div class="align-items-start p-3">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="icon-wrapper border-danger m-1">
+                            <CIcon name="cil-x" />
+                        </div>
+                        <span class="font-weight-bold">{{ $t('modal.deleteTitle') }}</span>
+                    </div>
+                </div>
+            </template>
+            <template #body-wrapper>
+                <div class="d-flex justify-content-center p-4">
+                    <span>{{ $t('modal.deleteMessage') }}</span>
+                </div>
+            </template>
+            <template #footer-wrapper>
+                <div class="d-flex justify-content-center p-3">
+                    <CButton color="secondary" @click="deleteModal = false">
+                        {{ $t('modal.cancel') }}
+                    </CButton>
+                    <CButton color="danger" class="ml-2" @click="confirmDelete()">
+                        {{ $t('modal.confirm') }}
+                    </CButton>
+                </div>
+            </template>
+        </CModal>
     </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import moment from 'moment'
+import Pagination from '@/projects/components/Util/Pagination.vue'
 
 export default {
     name: 'EditorTables',
+    components: { Pagination },
     data() {
         return {
             searchQuery: '',
             selectedStatus: 'All Status',
             isCreating: false,
-            fields: [
-                { key: 'title', label: 'Form Name', _style: 'width:40%' },
-                { key: 'status', label: 'Status', _style: 'width:15%' },
-                { key: 'responses', label: 'Responses', _style: 'width:15%' },
-                { key: 'created', label: 'Last Modified', _style: 'width:20%' },
-                { key: 'actions', label: 'Actions', _style: 'width:10%; text-align:right' }
-            ]
+            activePage: 1,
+            itemsPerPage: 5,
+            deleteModal: false,
+            deleteItem: null,
         }
     },
     computed: {
+        columns() {
+            return [
+                { key: 'title', label: this.$t('table.title'), _style: 'width:40%' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:15%' },
+                { key: 'responses', label: this.$t('table.responses'), _style: 'width:15%' },
+                { key: 'visibility', label: this.$t('table.visibility'), _style: 'width:20%' },
+                { key: 'actions', label: this.$t('table.actions'), _style: 'width:10%; text-align:right' }
+            ]
+        },
         ...mapGetters('Forms', ['forms']),
-        ...mapGetters('setting', ['lang']),
+
+        totalPages() {
+            return Math.ceil(this.tableData.length / this.itemsPerPage) || 1;
+        },
+        tableStartItem() {
+            if (this.tableData.length === 0) return 0;
+            return (this.activePage - 1) * this.itemsPerPage + 1;
+        },
+        tableEndItem() {
+            const validItemsCount = this.tableData.filter(item => !item.isEmpty).length;
+            return Math.min(this.activePage * this.itemsPerPage, validItemsCount);
+        },
 
         tableData() {
-            // Force reactivity on locale change
-            const locale = this.lang;
+            let finalData = [];
 
-            if (!Array.isArray(this.forms) || this.forms.length === 0) return []
+            if (Array.isArray(this.forms) && this.forms.length > 0) {
+                // Sort forms by updatedAt (newest first)
+                const sortedForms = [...this.forms].sort((a, b) => {
+                    return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)
+                })
 
-            // Sort forms by createdAt (newest first)
-            const sortedForms = [...this.forms].sort((a, b) => {
-                return new Date(b.createdAt) - new Date(a.createdAt)
-            })
+                // 2. Map to display objects
+                const mappedData = sortedForms.map(form => {
+                    // Determine status based on schedule
+                    let statusTitle = 'Draft';
+                    const now = new Date();
+                    const schedule = form.schedule;
 
-            // 2. Map to display objects
-            const mappedData = sortedForms.map(form => {
-                // Safe check for status
-                let statusTitle = 'Draft';
-                if (form.status && form.status.title) {
-                    statusTitle = this.getLang(form.status.title);
-                } else if (typeof form.status === 'string') {
-                    statusTitle = form.status;
+                    if (schedule && schedule.startAt) {
+                        const start = new Date(schedule.startAt);
+                        const end = new Date(schedule.endAt);
+
+                        if (!start && !end) {
+                            statusTitle = 'Draft';
+                        } else if (start <= now && now <= end) {
+                            statusTitle = 'Open';
+                        } else {
+                            statusTitle = 'Closed';
+                        }
+                    }
+
+                    return {
+                        _id: form._id,
+                        title: this.getLang(form.title) || 'Untitled Form',
+                        description: this.getLang(form.description) || '',
+                        status: statusTitle,
+                        access: form.isPublic ? 'Public' : 'Private',
+                        visibility: form.status ? this.getLang(form.status.title) : '-',
+                        responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
+                        created: form.updatedAt ? moment(form.updatedAt).format('MMM D, YYYY') : '-'
+                    }
+                });
+
+                // 3. Apply filters
+                finalData = mappedData.filter(item => {
+                    // Filter by Status
+                    if (this.selectedStatus !== 'All Status' && item.status !== this.selectedStatus) {
+                        return false;
+                    }
+
+                    // Filter by Search Query
+                    if (this.searchQuery) {
+                        const query = this.searchQuery.toLowerCase();
+                        const titleMatch = item.title.toLowerCase().includes(query);
+                        const descMatch = item.description && item.description.toLowerCase().includes(query);
+                        return titleMatch || descMatch;
+                    }
+
+                    return true;
+                });
+            }
+
+            // Fill empty rows if less than Items Per Page (5)
+            const minRows = this.itemsPerPage;
+            if (finalData.length < minRows) {
+                const emptySlotCount = minRows - finalData.length;
+                for (let i = 0; i < emptySlotCount; i++) {
+                    finalData.push({
+                        _id: `empty-${i}`,
+                        isEmpty: true,
+                        title: '',
+                        description: '',
+                        status: '',
+                        visibility: '',
+                        responses: '',
+                        created: ''
+                    });
                 }
+            }
 
-                return {
-                    _id: form._id,
-                    title: this.getLang(form.title) || 'Untitled Form',
-                    description: this.getLang(form.description) || '',
-                    status: statusTitle,
-                    access: form.isPublic ? 'Public' : 'Private',
-                    responses: form.responses ? form.responses.length : 0,
-                    created: form.createdAt ? moment(form.createdAt).format('MMM D, YYYY') : '-'
-                }
-            })
-
-            // 3. Apply filters
-            return mappedData.filter(item => {
-                // Filter by Status
-                if (this.selectedStatus !== 'All Status' && item.status !== this.selectedStatus) {
-                    return false;
-                }
-
-                // Filter by Search Query
-                if (this.searchQuery) {
-                    const query = this.searchQuery.toLowerCase();
-                    const titleMatch = item.title.toLowerCase().includes(query);
-                    const descMatch = item.description.toLowerCase().includes(query);
-                    return titleMatch || descMatch;
-                }
-
-                return true;
-            });
+            return finalData;
         }
     },
     methods: {
@@ -184,44 +281,47 @@ export default {
             this.selectedStatus = status;
             this.currentPage = 1; // Reset pagination when filter changes
         },
-        getLang(data) {
-            if (!data) return '';
-            if (typeof data === 'string') return data;
-            if (!Array.isArray(data)) return '';
-
-            // Find content matching current locale
-            const currentLang = this.lang;
-            let content = data.find(item => item.key === currentLang);
-
-            // Fallback to 'en' if current locale not found
-            if (!content) {
-                content = data.find(item => item.key === 'en');
-            }
-
-            // Fallback to first available if 'en' not found
-            if (!content && data.length > 0) {
-                content = data[0];
-            }
-
-            return content ? content.value : '';
-        },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'open' || s === 'published') return 'status-open';
+            if (s === 'open') return 'status-open';
             if (s === 'closed') return 'status-closed';
-            return 'status-draft'; // Default/Draft
+            return 'status-draft';
+        },
+        getVisibilityClass(visibility) {
+            if (!visibility) return 'visi-default';
+            const v = visibility.toLowerCase();
+            if (v.includes('public') || v.includes('สาธารณะ')) return 'visi-public';
+            if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
+            return 'visi-default';
         },
         async createNewForm() {
             this.isCreating = true;
             try {
                 const newFormData = {
                     title: [
-                        { key: 'en', value: 'Untitled Form' },
-                        { key: 'th', value: 'แบบร่างฟอร์ม' }
+                        { key: 'en', value: 'Untitled Form' }
                     ],
+                    description: [
+                        { key: 'en', value: 'Description' }
+                    ],
+                    questions: [],
+                    responses: [],
+                    settings: {
+                        startDateTime: '',
+                        endDateTime: '',
+                        accessType: 'Anyone with the link',
+                        newCollaborator: {
+                            email: '',
+                            role: 'Editor'
+                        },
+                        collectEmails: false,
+                        limitOneResponse: false,
+                        allowEditing: false,
+                        showProgressBar: false
+                    }
                 };
 
-                const response = await this.$store.dispatch('Forms/createForm', newFormData);
+                const response = await this.$store.dispatch('Forms/create', newFormData);
 
                 this.$router.push({ name: 'EditorCreateForm', params: { id: response.data.data._id } });
             } catch (error) {
@@ -233,16 +333,27 @@ export default {
         goToEditForm(item) {
             this.$router.push({ name: 'EditorCreateForm', params: { id: item._id } });
         },
-        async deleteForm(item) {
-            if (confirm("Are you sure you want to delete this form?")) {
-                try {
-                    await this.$store.dispatch('Forms/deleteForm', { _id: item._id });
-                    await this.$store.dispatch('Forms/getForms');
-                } catch (error) {
-                    console.error("Failed to delete form:", error);
-                }
+        goToDuplicationForm(item) {
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'duplicate', source: 'internal' } });
+        },
+        goToViewForm(item) {
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'preview', source: 'internal' } });
+        },
+        async confirmDelete() {
+            if (this.deleteItem) {
+                await this.deleteForm(this.deleteItem);
             }
-        }
+            this.deleteModal = false;
+            this.deleteItem = null;
+        },
+        async deleteForm(item) {
+            try {
+                await this.$store.dispatch('Forms/delete', { _id: item._id });
+                await this.$store.dispatch('Forms/get');
+            } catch (error) {
+                console.error("Failed to delete form:", error);
+            }
+        },
     }
 }
 </script>
@@ -250,39 +361,9 @@ export default {
 <style scoped>
 .user-tables-container {
     background: white;
-    border-radius: 8px;
+    border-radius: 1rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
-    overflow: hidden;
-    /* For rounded corners on child elements */
-}
-
-/* Table Header */
-.custom-table thead th {
-    background-color: #f8fafc;
-    border-bottom: 1px solid #edf2f7;
-    color: #64748b;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    border-top: none;
-}
-
-/* Rows */
-.custom-table tbody tr {
-    transition: background-color 0.2s ease;
-}
-
-.custom-table tbody tr:hover {
-    background-color: #f8fafc;
-}
-
-.custom-table tbody td {
-    border-top: 1px solid #edf2f7;
-    vertical-align: middle;
 }
 
 /* Typography */
@@ -339,6 +420,34 @@ export default {
     background-color: #dc2626;
 }
 
+/* Visibility Badges */
+.visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25em 0.75em;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.visi-public {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.visi-private {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+    border: 1px solid #e9d5ff;
+}
+
+.visi-default {
+    background-color: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
 /* Icon Wrapper */
 .icon-wrapper {
     display: flex;
@@ -392,5 +501,49 @@ export default {
 
 .search-input-group input {
     background-color: #f8fafc !important;
+}
+
+
+::v-deep .custom-table table {
+    margin-bottom: 0;
+}
+
+::v-deep .custom-table thead th {
+    background-color: #f8fafc !important;
+    /* Very subtle grey background for header */
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: capitalize !important;
+    letter-spacing: normal;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 16px 24px !important;
+    vertical-align: middle;
+}
+
+::v-deep .custom-table tbody td {
+    color: #1e293b !important;
+    font-size: 14px;
+    font-weight: 500;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 18px 24px !important;
+    vertical-align: middle;
+    height: 76px;
+    /* Set a default height to prevent empty rows from shrinking */
+}
+
+::v-deep .custom-table tbody tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+::v-deep .custom-table tbody tr:last-child td {
+    border-bottom: none !important;
+    /* Remove bottom border from the last row */
 }
 </style>

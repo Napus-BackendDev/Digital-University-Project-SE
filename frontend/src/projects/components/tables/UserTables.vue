@@ -3,7 +3,7 @@
         <!-- Filter Toolbar -->
         <div class="d-flex justify-content-between align-items-center pt-3 py-3 mb-3">
             <div class="flex-grow-1 mr-3">
-                <CInput v-model="searchQuery" placeholder="Search forms..." class=" mb-0">
+                <CInput v-model="searchQuery" :placeholder="$t('table.searchPlaceholder')" class=" mb-0">
                     <template #prepend-content>
                         <CIcon name="cil-magnifying-glass" class="text-muted" />
                     </template>
@@ -17,35 +17,27 @@
                             <button class="btn d-flex align-items-center text-muted border bg-white"
                                 style="border-radius: 6px;">
                                 <CIcon name="cil-filter" size="sm" class="mr-2" />
-                                <span>{{ selectedStatus }}</span>
+                                <span>{{ selectedStatus === 'All' ? $t('status.all') : $t('status.' + selectedStatus.toLowerCase()) }}</span>
                                 <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                             </button>
                         </template>
-                        <CDropdownItem @click="filterStatus('All Status')">All Status</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Open')">Open</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Closed')">Closed</CDropdownItem>
-                        <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
+                        <CDropdownItem @click="filterStatus('All')">{{ $t('status.all') }}</CDropdownItem>
+                        <CDropdownItem @click="filterStatus('Pending')">{{ $t('status.pending') }}</CDropdownItem>
+                        <CDropdownItem @click="filterStatus('Completed')">{{ $t('status.completed') }}</CDropdownItem>
                     </CDropdown>
                 </div>
             </div>
         </div>
 
+        <!-- Table -->
         <div class="user-tables-container">
-            <CDataTable 
-                :items="tableData" 
-                :fields="fields" 
-                :items-per-page="5" 
-                hover 
-                sorter
-                :pagination="{ align: 'center' }" 
-                :loading="loading"  
-                clickable-rows 
-                @row-clicked="goToForm"
-                class="mb-0 custom-datatable">
-                <!-- Form Name (Title) Slot -->
-                <template #title="{ item }">
-                    <td class="pl-4 py-3">
-                        <div class="font-weight-bold text-dark text-lg">{{ item.title }}</div>
+            <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
+                :pagination="false" hover class="mb-0 custom-table">
+                <!-- Form Name (Title & Description) Slot -->
+                <template #form="{ item }">
+                    <td class="pl-4 py-3" :style="{ height: item.isEmptyRow ? '76px' : 'auto' }">
+                        <div class="font-weight-bold text-dark text-lg" style="font-size: 0.95rem;">{{ item.title }}
+                        </div>
                         <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
                     </td>
                 </template>
@@ -53,146 +45,155 @@
                 <!-- Status Slot -->
                 <template #status="{ item }">
                     <td class="py-3">
-                        <span class="status-badge" :class="getStatusClass(item.status)">
+                        <span v-if="!item.isEmptyRow" class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
-                            {{ item.status }}
+                            {{ $t('status.' + item.status.toLowerCase()) }}
                         </span>
                     </td>
                 </template>
 
-                <!-- Responses Slot -->
-                <template #responses="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-wrapper mr-2 chart-color">
-                                <CIcon name="cil-comment-bubble" size="sm" />
-                            </div>
-                            <div>
-                                <div class="font-weight-bold text-dark">{{ item.responses }}</div>
-                                <div class="small text-muted">responses</div>
-                            </div>
-                        </div>
+                <!-- Action Slot -->
+                <template #action="{ item }">
+                    <td class="py-3 text-right pr-4">
+                        <CButton v-if="!item.isEmptyRow"
+                            :color="item.status.toLowerCase() === 'completed' ? 'secondary' : 'primary'"
+                            :disabled="item.status.toLowerCase() === 'completed'" size="sm"
+                            class="font-weight-bold px-4" style="border-radius: 6px;" @click.stop="goToForm(item._id)">
+                            {{ item.status.toLowerCase() === 'completed' ? $t('status.completed') : $t('button.start') }}
+                        </CButton>
                     </td>
                 </template>
             </CDataTable>
         </div>
+
+        <!-- Pagination -->
+        <Pagination :activePage.sync="activePage" :pages="totalPages" />
     </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import moment from 'moment'
+import Pagination from '@/projects/components/Util/Pagination.vue'
 
 export default {
     name: 'UserTables',
+    components: { Pagination },
     data() {
         return {
             searchQuery: '',
-            selectedStatus: 'All Status',
+            selectedStatus: 'All',
             loading: false,
-            fields: [
-                { key: 'title', label: 'Form Name', _style: 'width:40%' },
-                { key: 'status', label: 'Status', _style: 'width:15%' },
-                { key: 'responses', label: 'Responses', _style: 'width:15%' },
-            ]
+            activePage: 1,
+            itemsPerPage: 5
         }
     },
     computed: {
+        fields() {
+            return [
+                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:60%' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:20%' },
+                { key: 'action', label: this.$t('table.action'), _style: 'width:20%; text-align:right' }
+            ]
+        },
         ...mapGetters('Forms', ['forms']),
-        ...mapGetters('setting', ['lang']),
+
+        totalPages() {
+            return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
+        },
 
         tableData() {
-            // Force reactivity on locale change
-            const locale = this.lang;
-
             if (!this.forms || this.forms.length === 0) return []
 
-            // Sort forms by createdAt (newest first)
             const sortedForms = [...this.forms].sort((a, b) => {
                 return new Date(b.createdAt) - new Date(a.createdAt)
             })
 
-            // 2. Map to display objects
-            const mappedData = sortedForms.map(form => {
-                // Safe check for status
-                let statusTitle = 'Draft';
-                if (form.status && form.status.title) {
-                    statusTitle = this.getLang(form.status.title);
-                } else if (typeof form.status === 'string') {
-                    statusTitle = form.status;
+            const mappedData = [];
+            const now = new Date();
+
+            sortedForms.forEach(form => {
+                const schedule = form.schedule;
+                let isOpen = false;
+
+                if (schedule && schedule.startAt) {
+                    const start = new Date(schedule.startAt);
+                    const end = new Date(schedule.endAt);
+
+                    if (start <= now && now <= end) {
+                        isOpen = true;
+                    }
                 }
 
-                return {
-                    _id: form._id || form.id,
-                    title: this.getLang(form.title) || 'Untitled Form',
-                    description: this.getLang(form.description) || '',
-                    status: statusTitle,
-                    access: form.isPublic ? 'Public' : 'Private',
-                    responses: form.responses ? form.responses.length : 0,
-                    created: form.createdAt ? moment(form.createdAt).format('MMM D, YYYY') : '-'
-                }
-            })
+                if (isOpen) {
+                    const responder = '69a50fcc5f1adf15e09b2d86';
 
-            // 3. Apply filters
-            return mappedData.filter(item => {
-                // Filter by Status
-                if (this.selectedStatus !== 'All Status' && item.status !== this.selectedStatus) {
+                    let hasCompleted = false;
+                    let hasDraft = false;
+                    if (form.responses && Array.isArray(form.responses)) {
+                        form.responses.forEach(r => {
+                            if (!r) return;
+                            if (typeof r === 'object') {
+                                try {
+                                    if (String(r.responder) === String(responder)) {
+                                        if (r.submit === true || r.submit === 'true') hasCompleted = true;
+                                        else hasDraft = true;
+                                    }
+                                } catch (e) {
+                                    // ignore
+                                }
+                            }
+                        });
+                    }
+
+                    const statusTitle = hasCompleted ? 'Completed' : 'Pending';
+
+                    mappedData.push({
+                        _id: form._id || form.id,
+                        title: this.getLang(form.title) || this.$t('common.untitled'),
+                        description: this.getLang(form.description) || '',
+                        status: statusTitle
+                    });
+                }
+            });
+
+            let finalData = mappedData.filter(item => {
+                if (this.selectedStatus !== 'All' && item.status !== this.selectedStatus) {
                     return false;
                 }
 
-                // Filter by Search Query
                 if (this.searchQuery) {
                     const query = this.searchQuery.toLowerCase();
                     const titleMatch = item.title.toLowerCase().includes(query);
-                    const descMatch = item.description.toLowerCase().includes(query);
+                    const descMatch = (item.description || '').toLowerCase().includes(query);
                     return titleMatch || descMatch;
                 }
 
                 return true;
             });
+
+            return JSON.parse(JSON.stringify(finalData));
         }
     },
     methods: {
+        goToFormRecord(item) {
+            if (item && !item.isEmptyRow) {
+                this.goToForm(item._id);
+            }
+        },
         goToForm(id) {
             if (id) {
-                this.$router.push({
-                    name: 'UserFormFill',
-                    params: {
-                        id: id
-                    }
-                })
+                this.$router.push({ name: 'FormFill', params: { id: id }, query: { source: 'internal' } })
             }
         },
         filterStatus(status) {
             this.selectedStatus = status;
             this.currentPage = 1; // Reset pagination when filter changes
         },
-        getLang(data) {
-            if (!data) return '';
-            if (typeof data === 'string') return data;
-            if (!Array.isArray(data)) return '';
-
-            // Find content matching current locale
-            const currentLang = this.$i18n.locale;
-            let content = data.find(item => item.key === currentLang);
-
-            // Fallback to 'en' if current locale not found
-            if (!content) {
-                content = data.find(item => item.key === 'en');
-            }
-
-            // Fallback to first available if 'en' not found
-            if (!content && data.length > 0) {
-                content = data[0];
-            }
-
-            return content ? content.value : '';
-        },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'open' || s === 'published') return 'status-open';
-            if (s === 'closed') return 'status-closed';
-            return 'status-draft'; // Default/Draft
+            if (s === 'completed') return 'status-completed';
+            return 'status-pending';
         }
     }
 }
@@ -264,60 +265,23 @@ export default {
 }
 
 /* Status Colors */
-.status-open {
+.status-completed {
     background-color: #d1fae5;
     color: #065f46;
 }
 
-.status-open .status-dot {
+.status-completed .status-dot {
     background-color: #059669;
 }
 
-.status-draft {
-    background-color: #f3f4f6;
-    color: #4b5563;
+.status-pending {
+    background-color: #fef9c3;
+    color: #854d0e;
 }
 
-.status-draft .status-dot {
-    background-color: #9ca3af;
+.status-pending .status-dot {
+    background-color: #eab308;
 }
-
-.status-closed {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
-
-.status-closed .status-dot {
-    background-color: #dc2626;
-}
-
-/* Icon Wrapper */
-.icon-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background-color: #fff1f2;
-    /* Light rose background for chart looking icon */
-    color: #be123c;
-}
-
-.chart-color {
-    background-color: #fff5f5;
-    color: #e55353;
-}
-
-/* Dropdown */
-.btn-link {
-    color: #94a3b8;
-}
-
-.btn-link:hover {
-    color: #64748b;
-}
-
 
 /* Pagination customization to match clean theme */
 ::v-deep .page-link {
@@ -350,5 +314,56 @@ export default {
 
 .search-input-group input {
     background-color: #f8fafc !important;
+}
+
+/* Custom Table Styling matching EditorTables */
+::v-deep .custom-table table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Header Styling */
+::v-deep .custom-table thead th {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: capitalize !important;
+    letter-spacing: normal;
+    border: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 16px 24px !important;
+    vertical-align: middle;
+}
+
+::v-deep .custom-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+::v-deep .custom-table thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+/* Body Styling */
+::v-deep .custom-table tbody td {
+    color: #1e293b !important;
+    font-size: 14px;
+    font-weight: 500;
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 18px 24px !important;
+    vertical-align: middle;
+    height: 76px;
+}
+
+/* Hover Effect */
+::v-deep .custom-table tbody tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+/* Remove bottom border from the very last row */
+::v-deep .custom-table tbody tr:last-child td {
+    border-bottom: none !important;
 }
 </style>

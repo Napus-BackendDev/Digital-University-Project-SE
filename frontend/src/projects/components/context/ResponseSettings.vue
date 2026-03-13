@@ -9,8 +9,8 @@
                     <small class="text-muted">Require respondents to enter their
                         email</small>
                 </div>
-                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                    :checked.sync="settings.collectEmails" @update:checked="triggerAutoSave" />
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedCollectEmail"
+                    @update:checked="val => { mappedCollectEmail = val; triggerAutoSave(); }" />
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,18 +18,27 @@
                     <h6 class="mb-1 font-weight-bold">Limit to one response</h6>
                     <small class="text-muted">Only allow one response per person</small>
                 </div>
-                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                    :checked.sync="settings.limitOneResponse" @update:checked="triggerAutoSave" />
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedLimitResponse"
+                    @update:checked="val => { mappedLimitResponse = val; triggerAutoSave(); }" />
             </div>
 
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h6 class="mb-1 font-weight-bold">Show progress bar</h6>
                     <small class="text-muted">Display completion progress to
                         respondents</small>
                 </div>
-                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite"
-                    :checked.sync="settings.showProgressBar" @update:checked="triggerAutoSave" />
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedProgressBar"
+                    @update:checked="val => { mappedProgressBar = val; triggerAutoSave(); }" />
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1 font-weight-bold">Require all responses</h6>
+                    <small class="text-muted">Ensure all questions have a response before submission</small>
+                </div>
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedRequireResponse"
+                    @update:checked="val => { mappedRequireResponse = val; triggerAutoSave(); }" />
             </div>
         </CCardBody>
     </CCard>
@@ -44,8 +53,46 @@ export default {
             required: true
         }
     },
+    computed: {
+        mappedCollectEmail: {
+            get() {
+                return !!(this.settings.settings && this.settings.settings.collectEmail);
+            },
+            set(val) {
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'collectEmail', val);
+            }
+        },
+        mappedLimitResponse: {
+            get() {
+                return !!(this.settings.settings && this.settings.settings.limitResponse);
+            },
+            set(val) {
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'limitResponse', val);
+            }
+        },
+        mappedProgressBar: {
+            get() {
+                return !!(this.settings.settings && this.settings.settings.progressBar);
+            },
+            set(val) {
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'progressBar', val);
+            }
+        },
+        mappedRequireResponse: {
+            get() {
+                return !!(this.settings.settings && this.settings.settings.requireResponse);
+            },
+            set(val) {
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'requireResponse', val);
+            }
+        }
+    },
     methods: {
-        triggerAutoSave() {
+        async triggerAutoSave() {
             this.$emit('auto-save');
         }
     }

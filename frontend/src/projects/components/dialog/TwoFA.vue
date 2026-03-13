@@ -111,7 +111,6 @@ export default {
     onSubmitCode() {
       const code = this.otpInputs.join('')
       if (code.length === this.otpLength) {
-        console.log('✅ OTP entered:', code)
         alert(`OTP entered: ${code}`)
       } else {
         alert(`Please enter all ${this.otpLength} characters`)

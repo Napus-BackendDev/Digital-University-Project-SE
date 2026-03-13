@@ -5,14 +5,15 @@ var Schema = mongoose.Schema;
 
 var objSchema = new Schema(
   {
-    responder: { type: Schema.Types.ObjectId, ref: "Users", default: null },
+    responder: { type: Schema.Types.ObjectId, ref: "Users", required: true },
     form: { type: Schema.Types.ObjectId, ref: "Forms", required: true },
     answers: [
       {
         question: { type: Schema.Types.ObjectId, ref: "Questions" },
         response: { type: Schema.Types.Mixed },
       },
-    ]
+    ],
+    submit: { type: Schema.Types.Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -121,7 +121,7 @@ export default {
 
       this.$store.commit("dialog/dialog",objs)
 
-      // console.log(12,values)
+      
 
       this.$store.commit("dialog/isCode",values)
     }

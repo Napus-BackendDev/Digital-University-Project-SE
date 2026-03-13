@@ -1,26 +1,18 @@
 <template>
-    <CButton color="dark" variant="outline" shape="pill" class="d-flex align-items-center px-4 font-weight-bold"
-        @click="$router.push(path)">
-        <CIcon name="cil-arrow-left" class="mr-2" />
-        {{ label }}
-    </CButton>
+
+    <CRow>
+        <CCol col="12" class="d-flex justify-content-between align-items-center">
+            <div class="back" style="cursor: pointer" @click="$router.back()">
+                <CIcon name="cil-chevron-left" />
+                <span class="px-1">Back</span>
+            </div>
+        </CCol>
+    </CRow>
 </template>
 
 <script>
 export default {
     name: "ButtonBack",
-    props: {
-        path: {
-            type: String,
-            default: '/user/dashboard'
-        },
-        label: {
-            type: String,
-            default: 'Back to Forms'
-        }
-    },
-    components: {
-    },
     data() {
         return {
         }
@@ -36,3 +28,18 @@ export default {
     }
 }
 </script>
+
+<style>
+.back {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.back:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+</style>

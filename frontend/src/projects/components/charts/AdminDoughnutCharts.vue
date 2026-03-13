@@ -2,13 +2,13 @@
     <div class="chart-wrapper-container">
         <div class="header mb-4">
             <div class="d-flex align-items-center mb-1">
-                <h4 class="m-0 font-weight-bold">Forms by Status</h4>
+                <h4 class="m-0 font-weight-bold">{{ $t('chart.formsByStatus') }}</h4>
             </div>
-            <div class="text-muted small ">Current form distribution</div>
+            <div class="text-muted small ">{{ $t('chart.distribution') }}</div>
         </div>
 
         <div class="chart-container mb-4">
-            <CChartDoughnut :datasets="defaultDatasets" :labels="['Open', 'Draft', 'Closed']"
+            <CChartDoughnut :datasets="defaultDatasets" :labels="[$t('status.open'), $t('status.draft'), $t('status.closed')]"
                 :options="defaultOptions" />
         </div>
 
@@ -16,21 +16,21 @@
             <div class="legend-item d-flex justify-content-between align-items-center mb-2">
                 <div class="d-flex align-items-center">
                     <span class="legend-dot bg-success"></span>
-                    <span class="text-muted">Open</span>
+                    <span class="text-muted">{{ $t('status.open') }}</span>
                 </div>
                 <span class="font-weight-bold">{{ statusCounts.Open }}</span>
             </div>
             <div class="legend-item d-flex justify-content-between align-items-center mb-2">
                 <div class="d-flex align-items-center">
                     <span class="legend-dot bg-warning"></span>
-                    <span class="text-muted">Draft</span>
+                    <span class="text-muted">{{ $t('status.draft') }}</span>
                 </div>
                 <span class="font-weight-bold">{{ statusCounts.Draft }}</span>
             </div>
             <div class="legend-item d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <span class="legend-dot" style="background-color: #6c757d;"></span>
-                    <span class="text-muted">Closed</span>
+                    <span class="text-muted">{{ $t('status.closed') }}</span>
                 </div>
                 <span class="font-weight-bold">{{ statusCounts.Closed }}</span>
             </div>
@@ -52,22 +52,22 @@ export default {
             const counts = { Open: 0, Draft: 0, Closed: 0 };
 
             this.forms.forEach(form => {
-                let statusRaw = ''
-                if (form.status && form.status.title) {
-                    if (Array.isArray(form.status.title)) {
-                        const enItem = form.status.title.find(item => item.key === 'en')
-                        statusRaw = enItem ? enItem.value : (form.status.title[0]?.value || '')
+                let status = 'Draft';
+                const now = new Date();
+                const schedule = form.schedule || (form.settings && form.settings.schedule);
+
+                if (schedule && schedule.startAt) {
+                    const start = new Date(schedule.startAt);
+                    const end = new Date(schedule.endAt);
+
+                    if (!start && !end) {
+                        status = 'Draft';
+                    } else if (start <= now && now <= end) {
+                        status = 'Open';
                     } else {
-                        statusRaw = form.status.title
+                        status = 'Closed';
                     }
                 }
-
-                statusRaw = statusRaw.toLowerCase()
-
-                let status = 'Draft'
-                if (statusRaw.includes('open') || statusRaw.includes('publish')) status = 'Open'
-                else if (statusRaw.includes('close')) status = 'Closed'
-                else if (statusRaw.includes('draft')) status = 'Draft'
 
                 counts[status]++
             })
@@ -106,14 +106,6 @@ export default {
         }
     },
     methods: {
-        getLang(data) {
-            if (!data || !Array.isArray(data)) return data;
-            const currentLang = this.$i18n.locale;
-            let content = data.find(item => item.key === currentLang);
-            if (!content) content = data.find(item => item.key === 'en');
-            if (!content && data.length > 0) content = data[0];
-            return content ? content.value : '';
-        }
     }
 }
 </script>

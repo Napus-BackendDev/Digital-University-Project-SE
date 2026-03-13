@@ -2,19 +2,16 @@ import Vue from "vue";
 import Vuex from "vuex";
 Vue.use(Vuex);
 
-
-
-import formModel from "@/store/modules/Form";
-import questionModel from "@/store/modules/Questions";
-import settingModel from "@/store/modules/Setting";
-// import responseModel from "@/store/modules/responseModel";
-// import settingModel from "@/store/modules/settingModel";
-// import organizationModel from "@/store/modules/organizationModel";
+import Form from "@/store/modules/Form";
+import Setting from "@/store/modules/Setting";
+import Questions from "@/store/modules/Questions/index.js";
+import Responses from "@/store/modules/Responses/index.js";
 
 export default new Vuex.Store({
   modules: {
-    Forms: formModel,
-    Questions: questionModel,
-    setting: settingModel,
+    Forms: Form,
+    Setting: Setting,
+    Questions: Questions,
+    Responses: Responses
   }
 });
