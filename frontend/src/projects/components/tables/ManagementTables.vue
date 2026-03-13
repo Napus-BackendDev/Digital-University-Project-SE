@@ -1,52 +1,27 @@
 <template>
     <div>
-        <!-- Filter Toolbar -->
-        <div class="d-flex justify-content-between align-items-center py-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
             <div class="flex-grow-1 mr-3">
-                <CInput v-model="searchQuery" :placeholder="$t('table.search')" class="mb-0">
-                    <template #prepend-content>
-                        <CIcon name="cil-magnifying-glass" />
-                    </template>
-                </CInput>
-            </div>
-
-            <div class="d-flex align-items-center">
-                <CDropdown class="filter-dropdown" style="border-radius: 1rem; margin-right: 1rem;">
-                    <template #toggler>
-                        <button class="btn d-flex align-items-center text-muted border bg-white"
-                            style="border-radius: 6px;">
-                            <CIcon name="cil-filter" size="sm" class="mr-2" />
-                            <span>{{ selectedStatus === 'All Status' ? $t('table.allStatus') : $t(`status.${selectedStatus.toLowerCase()}`) }}</span>
-                            <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
-                        </button>
-                    </template>
-                    <CDropdownItem @click="filterStatus('All Status')">{{ $t('table.allStatus') }}</CDropdownItem>
-                    <CDropdownItem @click="filterStatus('Open')">{{ $t('status.open') }}</CDropdownItem>
-                    <CDropdownItem @click="filterStatus('Closed')">{{ $t('status.closed') }}</CDropdownItem>
-                    <CDropdownItem @click="filterStatus('Draft')">{{ $t('status.draft') }}</CDropdownItem>
-                </CDropdown>
-
-                <CButton color="danger" class="d-flex align-items-center text-white px-3"
-                    style="border-radius: 6px; background-color: #be123c; border-color: #be123c; border-radius: .5rem;"
-                    hover @click="createNewForm" :disabled="isCreating">
-                    <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
-                    <CSpinner v-else size="sm" class="mr-2" />
-                    {{ $t('button.create') }}
-                </CButton>
+                <FilterTable :searchQuery.sync="searchQuery" :selectedStatus.sync="selectedStatus" :startDate.sync="startDate" :endDate.sync="endDate" />
             </div>
         </div>
+        
+        <!-- <div class="d-flex align-items-center">
+            <CButton color="danger" class="d-flex align-items-center text-white px-3"
+                style="border-radius: 6px; background-color: #be123c; border-color: #be123c; border-radius: .5rem;"
+                hover @click="createNewForm" :disabled="isCreating">
+                <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
+                <CSpinner v-else size="sm" class="mr-2" />
+                {{ $t('button.create') }}
+            </CButton>
+        </div> -->
 
         <!-- Table -->
         <div class="user-tables-container">
             <CDataTable class="custom-table mb-0" :items="tableData" :fields="columns" :items-per-page="itemsPerPage"
                 :pagination="false" hover :activePage.sync="activePage">
 
-                <!-- Under Table Pagination & Info -->
-                <template #under-table>
-                    <!-- Empty under-table intentionally to remove built-in text -->
-                </template>
-
-                <!-- Title Combo -->
+                <!-- Questionnaire (Title & Description) -->
                 <template #title="{ item }">
                     <td class="align-middle">
                         <template v-if="!item.isEmpty">
@@ -56,27 +31,47 @@
                     </td>
                 </template>
 
+                <!-- Created By -->
+                <template #createBy="{ item }">
+                    <td class="align-middle">
+                        <div class="small text-dark">{{ item.createdBy || item.organization || '-' }}</div>
+                    </td>
+                </template>
+
+                <!-- Time Range -->
+                <template #timeRange="{ item }">
+                    <td class="align-middle">
+                        <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
+                        <div class="small text-muted mt-1">{{ item.daysLeft || '' }}</div>
+                    </td>
+                </template>
+
                 <!-- Status Label -->
                 <template #status="{ item }">
                     <td class="align-middle">
                         <span v-if="!item.isEmpty" class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
-                            {{ $t(`status.${item.status.toLowerCase()}`) }}
+                            {{ item.status }}
                         </span>
                     </td>
                 </template>
 
-                <!-- Responses Combo -->
+                <!-- Responses: show all responses (as small badges) -->
                 <template #responses="{ item }">
                     <td class="align-middle">
                         <div v-if="!item.isEmpty" class="d-flex align-items-center">
                             <div class="icon-wrapper mr-3 chart-color">
                                 <CIcon name="cil-comment-bubble" size="sm" />
                             </div>
-                            <div class="text-left">
-                                <div class="font-weight-bold text-dark responses-value">{{ item.responses }}</div>
-                                <div class="small text-muted">{{ $t('table.responses') }}</div>
+                            <div v-if="Array.isArray(item.responses) && item.responses.length > 0"
+                                class="d-flex flex-wrap">
+                                <span v-for="(response, idx) in item.responses" :key="idx"
+                                    class="response-badge mr-2 mb-1">
+                                    <small class="text-muted">{{ formatResponseLabel(response, idx) }}</small>
+                                </span>
                             </div>
+                            <div v-else class="small text-muted">0</div>
+                            <small class="text-muted ml-2">Responses</small>
                         </div>
                     </td>
                 </template>
@@ -84,34 +79,30 @@
                 <!-- Vision/Visibility Status Badge -->
                 <template #visibility="{ item }">
                     <td class="align-middle">
-                        <span v-if="!item.isEmpty" class="visibility-badge" :class="getVisibilityClass(item.visibility)">
+                        <span v-if="!item.isEmpty" class="visibility-badge"
+                            :class="getVisibilityClass(item.visibility)">
                             {{ item.visibility }}
                         </span>
                     </td>
                 </template>
 
-                <!-- Actions -->
+                <!-- Actions: individual icon buttons like FormTables -->
                 <template #actions="{ item }">
-                    <td class="align-middle text-right">
-                        <CDropdown v-if="!item.isEmpty" placement="bottom-end">
-                            <template #toggler>
-                                <button class="btn btn-link text-muted p-0 text-decoration-none shadow-none">
-                                    <CIcon name="cil-options" size="lg" />
-                                </button>
-                            </template>
-                            <CDropdownItem @click="goToViewForm(item)">
-                                <CIcon name="cil-magnifying-glass" class="mr-2 text-info" /> {{ $t('table.view') }}
-                            </CDropdownItem>
-                            <CDropdownItem @click="goToDuplicationForm(item)">
-                                <CIcon name="cil-copy" class="mr-2 text-info" /> {{ $t('table.duplicate') }}
-                            </CDropdownItem>
-                            <CDropdownItem @click="goToEditForm(item)">
-                                <CIcon name="cil-pencil" class="mr-2 text-warning" /> {{ $t('table.edit') }}
-                            </CDropdownItem>
-                            <CDropdownItem @click="deleteModal = true && (deleteItem = item)" class="text-danger">
-                                <CIcon name="cil-trash" class="mr-2" /> {{ $t('table.delete') }}
-                            </CDropdownItem>
-                        </CDropdown>
+                    <td class="align-middle text-right pr-4">
+                        <div class="d-flex align-items-center justify-content-end">
+                            <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn" @click.stop="goToViewForm(item)" v-c-tooltip="'View'" aria-label="View">
+                                <CIcon name="cil-magnifying-glass" />
+                            </CButton>
+                            <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn" @click.stop="goToDuplicationForm(item)" v-c-tooltip="'Duplicate'" aria-label="Duplicate">
+                                <CIcon name="cil-copy" />
+                            </CButton>
+                            <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn" @click.stop="goToEditForm(item)" v-c-tooltip="'Edit'" aria-label="Edit">
+                                <CIcon name="cil-pencil" />
+                            </CButton>
+                            <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn" @click.stop="confirmDeleteItem(item)" v-c-tooltip="'Delete'" aria-label="Delete">
+                                <CIcon name="cil-trash" />
+                            </CButton>
+                        </div>
                     </td>
                 </template>
 
@@ -156,14 +147,18 @@
 import { mapGetters } from 'vuex'
 import moment from 'moment'
 import Pagination from '@/projects/components/Util/Pagination.vue'
+import FilterTable from '@/projects/components/Filter/FilterTable.vue'
 
 export default {
-    name: 'EditorTables',
+    name: 'ManagementTables',
     components: { Pagination },
+    components: { Pagination, FilterTable },
     data() {
         return {
             searchQuery: '',
-            selectedStatus: 'All Status',
+            selectedStatus: 'All',
+            startDate: '',
+            endDate: '',
             isCreating: false,
             activePage: 1,
             itemsPerPage: 5,
@@ -174,10 +169,11 @@ export default {
     computed: {
         columns() {
             return [
-                { key: 'title', label: this.$t('table.title'), _style: 'width:40%' },
-                { key: 'status', label: this.$t('table.status'), _style: 'width:15%' },
-                { key: 'responses', label: this.$t('table.responses'), _style: 'width:15%' },
-                { key: 'visibility', label: this.$t('table.visibility'), _style: 'width:20%' },
+                { key: 'title', label: this.$t('table.questionnaire'), _style: 'width:30%' },
+                { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:12%' },
+                { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:18%' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:12%' },
+                { key: 'responses', label: this.$t('table.responses'), _style: 'width:18%' },
                 { key: 'actions', label: this.$t('table.actions'), _style: 'width:10%; text-align:right' }
             ]
         },
@@ -206,19 +202,17 @@ export default {
 
                 // 2. Map to display objects
                 const mappedData = sortedForms.map(form => {
-                    // Determine status based on schedule
-                    let statusTitle = 'Draft';
+                    // Determine status based on schedule and map to Active/Pending/Closed
+                    let statusTitle = 'Pending';
                     const now = new Date();
                     const schedule = form.schedule;
-
                     if (schedule && schedule.startAt) {
                         const start = new Date(schedule.startAt);
                         const end = new Date(schedule.endAt);
-
                         if (!start && !end) {
-                            statusTitle = 'Draft';
+                            statusTitle = 'Pending';
                         } else if (start <= now && now <= end) {
-                            statusTitle = 'Open';
+                            statusTitle = 'Active';
                         } else {
                             statusTitle = 'Closed';
                         }
@@ -229,17 +223,18 @@ export default {
                         title: this.getLang(form.title) || 'Untitled Form',
                         description: this.getLang(form.description) || '',
                         status: statusTitle,
-                        access: form.isPublic ? 'Public' : 'Private',
-                        visibility: form.status ? this.getLang(form.status.title) : '-',
-                        responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
+                        organization: form.organization || form.createdBy || '-',
+                        timeRange: schedule && schedule.startAt ? `${moment(schedule.startAt).format('MMM D, YYYY')} - ${moment(schedule.endAt).format('MMM D, YYYY')}` : '-',
+                        daysLeft: schedule && schedule.endAt ? this.calculateDaysLeft(schedule.endAt) : '',
+                        responses: Array.isArray(form.responses) ? form.responses : (form.responses ? [form.responses] : []),
                         created: form.updatedAt ? moment(form.updatedAt).format('MMM D, YYYY') : '-'
                     }
                 });
 
                 // 3. Apply filters
                 finalData = mappedData.filter(item => {
-                    // Filter by Status
-                    if (this.selectedStatus !== 'All Status' && item.status !== this.selectedStatus) {
+                    // Filter by Status (map selectedStatus coming from FilterTable to our display statuses)
+                    if (this.selectedStatus !== 'All' && item.status !== this.selectedStatus) {
                         return false;
                     }
 
@@ -255,35 +250,39 @@ export default {
                 });
             }
 
-            // Fill empty rows if less than Items Per Page (5)
-            const minRows = this.itemsPerPage;
-            if (finalData.length < minRows) {
-                const emptySlotCount = minRows - finalData.length;
-                for (let i = 0; i < emptySlotCount; i++) {
-                    finalData.push({
-                        _id: `empty-${i}`,
-                        isEmpty: true,
-                        title: '',
-                        description: '',
-                        status: '',
-                        visibility: '',
-                        responses: '',
-                        created: ''
-                    });
-                }
-            }
+            console.log(finalData)
 
             return finalData;
         }
     },
     methods: {
+        calculateDaysLeft(endAt) {
+            try {
+                const end = new Date(endAt);
+                const now = new Date();
+                const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                return diff > 0 ? `${diff} days left` : 'Closed';
+            } catch (e) {
+                return '';
+            }
+        },
+        formatResponseLabel(r, idx) {
+            if (!r) return `#${idx + 1}`;
+            if (r.email) return r.email;
+            if (r.createdAt) return moment(r.createdAt).format('MMM D');
+            return `#${idx + 1}`;
+        },
+        confirmDeleteItem(item) {
+            this.deleteItem = item;
+            this.deleteModal = true;
+        },
         filterStatus(status) {
             this.selectedStatus = status;
             this.currentPage = 1; // Reset pagination when filter changes
         },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'open') return 'status-open';
+            if (s === 'active') return 'status-open';
             if (s === 'closed') return 'status-closed';
             return 'status-draft';
         },
@@ -420,6 +419,15 @@ export default {
     background-color: #dc2626;
 }
 
+/* Responses badge */
+.response-badge {
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
 /* Visibility Badges */
 .visibility-badge {
     display: inline-flex;
@@ -475,6 +483,22 @@ export default {
     color: #64748b;
 }
 
+.action-icon-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    transition: all 0.2s ease;
+}
+
+.action-icon-btn:hover {
+    background-color: #f1f5f9 !important;
+    color: #3c4b64 !important;
+    transform: translateY(-1px);
+}
 
 /* Pagination customization to match clean theme */
 ::v-deep .page-link {

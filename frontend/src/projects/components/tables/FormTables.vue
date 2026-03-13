@@ -1,20 +1,32 @@
 <template>
     <div>
         <!-- Filter Toolbar Refactored -->
-        <FilterTable 
-            :searchQuery.sync="searchQuery" 
-            :selectedStatus.sync="selectedStatus" 
-            :startDate.sync="startDate" 
-            :endDate.sync="endDate" 
-        />
+        <FilterTable :searchQuery.sync="searchQuery" :selectedStatus.sync="selectedStatus" :startDate.sync="startDate"
+            :endDate.sync="endDate" />
 
-        <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
+        <div class="user-tables-container">
+            <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
                 :pagination="false" hover class="mb-0 custom-table">
                 <!-- Form Name (Title & Description) Slot -->
                 <template #form="{ item }">
                     <td class="py-3">
                         <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
                         <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                    </td>
+                </template>
+
+                <!-- Create By Slot -->
+                <template #createBy="{ item }">
+                    <td class="py-3">
+                        <div class="small text-dark">{{ item.organization }}</div>
+                    </td>
+                </template>
+
+                <!-- Time Range Slot -->
+                <template #timeRange="{ item }">
+                    <td class="py-3">
+                        <div class="small text-dark font-weight-bold">{{ item.timeRange }}</div>
+                        <div class="small text-muted mt-1">{{ item.daysLeft }}</div>
                     </td>
                 </template>
 
@@ -28,30 +40,16 @@
                     </td>
                 </template>
 
-                <!-- Time Range Slot -->
-                <template #timeRange="{ item }">
-                    <td class="py-3">
-                        <div class="small text-dark font-weight-bold">{{ item.timeRange }}</div>
-                        <div class="small text-muted mt-1">{{ item.daysLeft }}</div>
-                    </td>
-                </template>
-
                 <!-- Progress Slot -->
                 <template #progress="{ item }">
                     <td class="py-3" style="min-width: 140px;">
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1 mr-3">
-                                <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px" class="progress-xs" />
+                                <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px"
+                                    class="progress-xs" />
                             </div>
                             <div class="small font-weight-bold text-dark">{{ item.progress }}%</div>
                         </div>
-                    </td>
-                </template>
-
-                <!-- Create By Slot -->
-                <template #createBy="{ item }">
-                    <td class="py-3">
-                        <div class="small text-dark">{{ item.organization }}</div>
                     </td>
                 </template>
 
@@ -59,20 +57,10 @@
                 <template #action="{ item }">
                     <td class="py-3 text-right pr-4">
                         <div class="d-flex align-items-center justify-content-end">
-                            <CIcon 
-                                v-if="item.requireEmail" 
-                                name="cil-warning" 
-                                class="text-danger mr-2" 
-                                style="width: 20px;"
-                                v-c-tooltip="'Email required'"
-                            />
-                            <CButton
-                                :color="getActionColor(item.status)"
-                                variant="ghost"
-                                class="p-2 action-icon-btn"
-                                @click.stop="goToForm(item._id)"
-                                v-c-tooltip="getActionTooltip(item.status)"
-                            >
+                            <CIcon v-if="item.requireEmail" name="cil-warning" class="text-danger mr-2"
+                                style="width: 20px;" v-c-tooltip="'Email required'" />
+                            <CButton :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
+                                @click.stop="goToForm(item._id)" v-c-tooltip="getActionTooltip(item.status)">
                                 <CIcon :name="getActionIcon(item.status)" size="lg" />
                             </CButton>
                         </div>
@@ -80,14 +68,14 @@
                 </template>
             </CDataTable>
 
-        <!-- Pagination -->
-        <Pagination :activePage.sync="activePage" :pages="totalPages" />
+            <!-- Pagination -->
+            <Pagination :activePage.sync="activePage" :pages="totalPages" />
         </div>
+    </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import moment from 'moment'
 import Pagination from '@/projects/components/Util/Pagination.vue'
 import FilterTable from '@/projects/components/Filter/FilterTable.vue'
 import localeMixin from '@/mixins/localeMixin'
@@ -114,7 +102,7 @@ export default {
                 { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:15%' },
                 { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:18%' },
                 { key: 'status', label: this.$t('table.status'), _style: 'width:12%' },
-                { key: 'progress', label: this.$t('table.progress'), _style: 'width:15%' }, 
+                { key: 'progress', label: this.$t('table.progress'), _style: 'width:15%' },
                 { key: 'action', label: this.$t('table.action'), _style: 'width:15%; text-align:right' }
             ]
         },
@@ -199,7 +187,7 @@ export default {
         },
         filterStatus(status) {
             this.selectedStatus = status;
-            this.activePage = 1; 
+            this.activePage = 1;
         },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
@@ -233,8 +221,8 @@ export default {
         },
         getActionTooltip(status) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'completed') return 'View summary';
-            if (s === 'inprogress') return 'Continue form';
+            if (s === 'completed') return 'View ฆummary';
+            if (s === 'inprogress') return 'Continue โorm';
             return 'Start Form';
         }
     }
@@ -242,6 +230,14 @@ export default {
 </script>
 
 <style scoped>
+.user-tables-container {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    padding: 0;
+    /* ensure no extra spacing around table */
+}
 
 /* Table Header */
 .custom-table thead th {
@@ -359,7 +355,7 @@ export default {
     background-color: #f8fafc !important;
 }
 
-/* Custom Table Styling matching EditorTables */
+/* Custom Table Styling matching ManagementTables */
 ::v-deep .custom-table table {
     margin-bottom: 0;
     border-collapse: separate;

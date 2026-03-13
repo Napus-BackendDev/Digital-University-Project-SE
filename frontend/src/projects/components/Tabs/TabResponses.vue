@@ -141,7 +141,7 @@
 
         <!-- INDIVIDUAL VIEW -->
         <div v-else-if="currentView === 'individual'" class="p-5 bg-white border rounded shadow-sm">
-            <ResponeTables :responseList="allSubmittedResponses" />
+            <ResponseTables :responseList="allSubmittedResponses" />
         </div>
 
     </div>
@@ -151,10 +151,10 @@
 import { mapGetters } from 'vuex'
 import moment from 'moment'
 import * as XLSX from 'xlsx'
-import ResponeTables from '@/projects/components/tables/ResponeTables.vue'
+import ResponseTables from '@/projects/components/tables/ResponseTables.vue'
 export default {
     name: 'TabResponses',
-    components: { ResponeTables },
+    components: { ResponseTables },
     props: {
         responses: {
             type: Object,

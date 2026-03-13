@@ -76,7 +76,7 @@ import moment from 'moment'
 import Pagination from '@/projects/components/Util/Pagination.vue'
 
 export default {
-    name: 'ResponeTables',
+    name: 'ResponseTables',
     components: { Pagination },
     props: {
         responseList: {
@@ -193,7 +193,7 @@ export default {
     color: #64748b !important;
 }
 
-/* Custom Table Styling matching EditorTables */
+/* Custom Table Styling matching ManagementTables */
 ::v-deep .custom-table table {
     margin-bottom: 0;
     border-collapse: separate;

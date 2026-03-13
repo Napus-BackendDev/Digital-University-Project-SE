@@ -1,18 +1,21 @@
 <template>
     <div class="flex-grow-1">
         <Header :title="$t('nav.manage')" :description="$t('description')" />
-        <EditorTables />
+        <WidgetsDropdownUser />
+        <ManagementTables />
     </div>
 </template>
 
 <script>
-import EditorTables from '../components/tables/EditorTables.vue'
+import ManagementTables from '../components/tables/ManagementTables.vue'
+import WidgetsDropdownUser from '../components/widgets/WidgetsDropdownUser.vue'
 import Header from '../components/Util/Header.vue'
 
 export default {
     name: "EditorDashboard",
     components: {
-        EditorTables,
+        ManagementTables,
+        WidgetsDropdownUser,
         Header
     },
     data() {

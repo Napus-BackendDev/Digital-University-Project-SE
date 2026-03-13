@@ -118,7 +118,7 @@ export default {
 </script>
 
 <style scoped>
-/* Custom Answers Table Styling matching ResponeTables */
+/* Custom Answers Table Styling matching ResponseTables */
 ::v-deep .custom-table table {
     margin-bottom: 0;
     border-collapse: separate;

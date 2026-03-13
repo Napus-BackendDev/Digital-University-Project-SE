@@ -2,19 +2,19 @@
     <div class="flex-grow-1">
         <Header :title="$t('nav.forms')" :description="$t('table.header')" />
         <WidgetsDropdownUser />
-        <UserTables />
+        <FormTables />
     </div>
 </template>
 
 <script>
-import UserTables from '../components/tables/UserTables.vue'
+import FormTables from '../components/tables/FormTables.vue'
 import WidgetsDropdownUser from '../components/widgets/WidgetsDropdownUser.vue'
 import Header from '../components/Util/Header.vue'
 
 export default {
     name: "Forms",
     components: {
-        UserTables,
+        FormTables,
         WidgetsDropdownUser,
         Header
     },

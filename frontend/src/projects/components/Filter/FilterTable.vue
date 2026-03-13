@@ -19,7 +19,7 @@
                 </CCol>
 
                 <!-- Status Dropdown -->
-                <CCol md="3" lg="3" class="mb-2 mb-md-0">
+                <CCol md="3" lg="2" class="mb-2 mb-md-0">
                     <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.status') }}</label>
                     <CDropdown class="filter-dropdown w-100">
                         <template #toggler>
@@ -40,7 +40,7 @@
                 </CCol>
 
                 <!-- Quick Date Filters -->
-                <CCol md="3" lg="3" class="mb-2 mb-md-0">
+                <CCol md="3" lg="4" class="mb-2 mb-md-0">
                     <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.rangeShortcuts') }}</label>
                     <CButtonGroup class="w-100">
                         <CButton
@@ -57,7 +57,7 @@
                 </CCol>
 
                 <!-- Time Range: From -->
-                <CCol sm="6" md="1.5" lg="1.5" class="mb-2 mb-md-0" style="flex: 0 0 12.5%; max-width: 12.5%;">
+                <CCol sm="6" md="1.5" class="mb-2 mb-md-0" style="flex: 0 0 12.5%; max-width: 12.5%;">
                     <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.dateFrom') }}</label>
                     <CInput 
                         type="date" 

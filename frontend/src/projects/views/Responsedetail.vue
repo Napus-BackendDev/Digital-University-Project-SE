@@ -108,7 +108,7 @@
                     <h5 class="font-weight-bold text-dark">All Responses Overview</h5>
                 </CCardHeader>
                 <CCardBody>
-                    <ResponeTables />
+                    <ResponseTables />
                 </CCardBody>
             </CCard>
 
@@ -120,13 +120,13 @@
 import { mapGetters } from 'vuex';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
-import ResponeTables from '@/projects/components/tables/ResponeTables.vue';
+import ResponseTables from '@/projects/components/tables/ResponseTables.vue';
 import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
 import ButtonBack from '@/projects/components/Button/ButtonBack.vue';
 
 export default {
     name: 'Response',
-    components: { ResponeTables, AnswerTable, ButtonBack },
+    components: { ResponseTables, AnswerTable, ButtonBack },
     props: {
         id: {
             type: String,

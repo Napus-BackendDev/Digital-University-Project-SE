@@ -42,7 +42,7 @@ export default {
                     },
                     {
                         _name: 'CSidebarNavItem',
-                        name: 'Form Builder',
+                        name: 'Form Management',
                         to: '/manage',
                         icon: 'cib-ghost',
                     },
