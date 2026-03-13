@@ -15,12 +15,17 @@
 
         <CRenderFunction flat :contentToRender="navs" />
 
-        <CSidebarFooter class="d-flex flex-column">
-            <span class="font-weight-bold text-white">{{ username }}</span>
-            <span class="text-white-50 small">{{ userEmail }}</span>
+        <CSidebarFooter class="p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="font-weight-bold text-white">{{ username }}</div>
+                    <div class="text-white-50 small">{{ userEmail }}</div>
+                </div>
+                <CButton color="ghost" variant="ghost" class="text-white" @click="logout">
+                    <CIcon name="cil-account-logout" />
+                </CButton>
+            </div>
         </CSidebarFooter>
-
-        <CRenderFunction flat :contentToRender="footer" />
     </CSidebar>
 </template>
 
@@ -59,12 +64,6 @@ export default {
                         icon: 'cil-lock-locked',
                     },
                 ]
-            }],
-            footer: [{
-                _name: 'CSidebarNavItem',
-                name: 'Logout',
-                to: '/login',
-                icon: 'cil-account-logout',
             }]
         }
     },
