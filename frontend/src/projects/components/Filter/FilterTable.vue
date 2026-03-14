@@ -39,7 +39,7 @@
                     </CDropdown>
                 </CCol>
 
-                <!-- Quick Date Filters -->
+                <!-- Time Range Filters -->
                 <CCol md="3" lg="4" class="mb-2 mb-md-0">
                     <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.rangeShortcuts') }}</label>
                     <CButtonGroup class="w-100">

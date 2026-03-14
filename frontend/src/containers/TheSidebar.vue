@@ -101,6 +101,7 @@ export default {
 
 <style scoped>
 .c-sidebar {
-    background: linear-gradient(30deg, #FEC260 0%, #8c1515 60%);
+    background: linear-gradient(180deg, #1e3a8a 0%, #1e1b4b 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 </style>

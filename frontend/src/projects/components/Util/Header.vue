@@ -10,6 +10,22 @@
                     <h1 class="header-title mb-1">{{ title }}</h1>
                     <p class="header-description mb-0 text-muted-custom">{{ description }}</p>
                 </div>
+                
+                <!-- Explicit Create Button for Management -->
+                <div v-if="showCreateButton" class="ml-3">
+                    <CButton 
+                        color="primary" 
+                        size="lg"
+                        class="d-flex align-items-center shadow-sm px-4 py-2"
+                        style="border-radius: 12px; font-weight: 600; transition: all 0.2s ease; background-color: #2563eb; border-color: #2563eb;"
+                        @click="createNewForm"
+                        :disabled="isCreating"
+                    >
+                        <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
+                        <CSpinner v-else size="sm" class="mr-2" />
+                        {{ $t('button.create') }}
+                    </CButton>
+                </div>
             </div>
         </CCardBody>
     </CCard>
@@ -26,6 +42,46 @@ export default {
         description: {
             type: String,
             default: ""
+        },
+        showCreateButton: {
+            type: Boolean,
+            default: false
+        }
+    },
+    data() {
+        return {
+            isCreating: false
+        }
+    },
+    methods: {
+        async createNewForm() {
+            this.isCreating = true
+            try {
+                const newFormData = {
+                    title: [{ key: 'en', value: 'Untitled Form' }],
+                    description: [{ key: 'en', value: 'Description' }],
+                    questions: [],
+                    responses: [],
+                    settings: {
+                        startDateTime: '',
+                        endDateTime: '',
+                        accessType: 'Anyone with the link',
+                        newCollaborator: { email: '', role: 'Editor' },
+                        collectEmails: false,
+                        limitOneResponse: false,
+                        allowEditing: false,
+                        showProgressBar: false
+                    }
+                }
+
+                const response = await this.$store.dispatch('Forms/create', newFormData)
+                const id = response.data.data._id
+                this.$router.push({ name: 'EditorCreateForm', params: { _id: id } })
+            } catch (error) {
+                console.error('Failed to create form:', error)
+            } finally {
+                this.isCreating = false
+            }
         }
     }
 }

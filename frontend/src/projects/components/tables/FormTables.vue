@@ -40,9 +40,8 @@
                     </td>
                 </template>
 
-                <!-- Progress Slot -->
                 <template #progress="{ item }">
-                    <td class="py-3" style="min-width: 140px;">
+                    <td class="py-3">
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1 mr-3">
                                 <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px"
@@ -98,12 +97,12 @@ export default {
     computed: {
         fields() {
             return [
-                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:25%' },
+                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:30%' },
                 { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:15%' },
                 { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:18%' },
                 { key: 'status', label: this.$t('table.status'), _style: 'width:12%' },
                 { key: 'progress', label: this.$t('table.progress'), _style: 'width:15%' },
-                { key: 'action', label: this.$t('table.action'), _style: 'width:15%; text-align:right' }
+                { key: 'action', label: this.$t('table.action'), _style: 'width:10%; text-align:right' }
             ]
         },
         ...mapGetters('Forms', ['forms']),
@@ -360,6 +359,13 @@ export default {
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
+    table-layout: fixed !important;
+    width: 100% !important;
+}
+
+::v-deep .custom-table table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Header Styling */
