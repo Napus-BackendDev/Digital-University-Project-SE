@@ -38,22 +38,22 @@
                         <h5 class="font-weight-bold">Question Types</h5>
                         <div class="d-flex flex-column mb-3">
                             <CButton v-for="type in questionTypes" :key="type._id"
-                                v-if="type.type !== 'title_description' && type.type !== 'image'" variant="ghost"
-                                color="dark" class="w-100 mb-2 text-left d-flex align-items-center"
-                                @click="$refs.tabQuestion && $refs.tabQuestion.addQuestion(type._id)">
-                                <CIcon :name="getIconForType(type.type)" class="mr-2" />
-                                <span class="text-capitalize">{{ formatTypeLabel(type.type) }}</span>
-                            </CButton>
+                                    v-if="type.type !== 'title_description' && type.type !== 'image'" variant="ghost"
+                                    color="dark" class="w-100 mb-2 text-left d-flex align-items-center"
+                                    @click="addAndOpen(type._id)">
+                                    <CIcon :name="getIconForType(type.type)" class="mr-2" />
+                                    <span class="text-capitalize">{{ formatTypeLabel(type.type) }}</span>
+                                </CButton>
                         </div>
 
                         <h5 class="font-weight-bold pt-3 border-top">Content Elements</h5>
                         <div class="d-flex flex-column mt-2">
                             <CButton variant="ghost" color="dark" class="w-100 mb-2 text-left d-flex align-items-center"
-                                @click="$refs.tabQuestion && $refs.tabQuestion.addQuestion('title_description')">
+                                @click="addAndOpen('title_description')">
                                 <CIcon name="cil-text" class="mr-2" /> Title & Description
                             </CButton>
                             <CButton variant="ghost" color="dark" class="w-100 mb-2 text-left d-flex align-items-center"
-                                @click="$refs.tabQuestion && ($refs.tabQuestion.modalImageIndex = null, $refs.tabQuestion.modalFiles = '', $refs.tabQuestion.showImageModal = true)">
+                                @click="openImageInQuestionTab()">
                                 <CIcon name="cil-image-1" class="mr-2" /> Image
                             </CButton>
                         </div>
@@ -108,6 +108,30 @@ export default {
     methods: {
         triggerAutoSave() {
             this.$emit('auto-save');
+        },
+        async addAndOpen(typeId) {
+            this.activeTab = 'question';
+            await this.$nextTick();
+            if (this.$refs.tabQuestion && typeof this.$refs.tabQuestion.addQuestion === 'function') {
+                try {
+                    const created = await this.$refs.tabQuestion.addQuestion(typeId);
+                    if (created && created._id && typeof this.$refs.tabQuestion.scrollToQuestion === 'function') {
+                        this.$refs.tabQuestion.scrollToQuestion(created._id);
+                    }
+                } catch (err) {
+                    console.error('addAndOpen failed', err);
+                }
+            }
+        },
+        openImageInQuestionTab() {
+            this.activeTab = 'question';
+            this.$nextTick(() => {
+                if (this.$refs.tabQuestion) {
+                    this.$refs.tabQuestion.modalImageIndex = null;
+                    this.$refs.tabQuestion.modalFiles = '';
+                    this.$refs.tabQuestion.showImageModal = true;
+                }
+            });
         },
         formatTypeLabel(rawType) {
             if (!rawType) return '';

@@ -47,9 +47,9 @@
         </CCard>
 
         <!-- Left Side Tab -->
-        <CCard md="9">
+        <CCard md="9" class="questions-wrapper">
             <CCard v-for="(question, index) in localQuestions" :key="question._id || index"
-                class="mb-3 position-relative">
+                :id="'question-' + (question._id || index)" class="mb-3 position-relative">
                 <CCardBody class="p-4">
 
                     <!-- Question Title -->
@@ -498,13 +498,22 @@ export default {
             };
 
             const payload = {
-                form: this.form._id,
+                form: this.form && this.form._id ? this.form._id : undefined,
                 title: [{ key: 'en', value: 'Untitled Question' }],
                 order: this.localQuestions.length + 1,
                 type: foundType._id,
                 isRequired: false,
                 config,
             };
+
+            if (!this.form || !this.form._id) {
+                const tmp = {
+                    _id: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+                    ...payload,
+                };
+                this.localQuestions.push(tmp);
+                return tmp;
+            }
 
             try {
                 const res = await this.$store.dispatch('Questions/create', payload);
@@ -515,11 +524,14 @@ export default {
                         if (foundType) created.type = foundType;
                     }
                     this.localQuestions.push(created);
+                    return created;
                 } else {
                     console.error('addQuestion: backend did not return a created document with _id', res);
+                    return null;
                 }
             } catch (e) {
                 console.error('addQuestion failed:', e);
+                return null;
             }
         },
         async removeQuestion(qId) {
@@ -662,6 +674,15 @@ export default {
             }
             this.showImageModal = false;
         },
+        scrollToQuestion(questionId) {
+            if (!questionId) return;
+            this.$nextTick(() => {
+                const el = document.getElementById('question-' + questionId);
+                if (el && el.scrollIntoView) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        },
         addOption(question) {
             if (!question) return;
             if (!question.config) this.$set(question, 'config', {});
@@ -801,5 +822,10 @@ export default {
     color: #adb5bd;
     text-transform: none;
     letter-spacing: 0;
+}
+
+.questions-wrapper {
+    border: none !important;
+    box-shadow: none !important;
 }
 </style>
