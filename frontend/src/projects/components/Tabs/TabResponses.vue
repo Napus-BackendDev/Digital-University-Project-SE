@@ -1,5 +1,5 @@
 <template>
-    <div class="mt-4">
+    <div>
         <!-- Toolbar -->
         <div class="d-flex justify-content-between align-items-center mb-4 px-2">
             <!-- Loading state -->

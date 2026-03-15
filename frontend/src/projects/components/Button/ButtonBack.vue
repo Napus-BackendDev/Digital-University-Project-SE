@@ -1,10 +1,9 @@
 <template>
-
     <CRow>
         <CCol col="12" class="d-flex justify-content-between align-items-center">
             <div class="back" style="cursor: pointer" @click="$router.back()">
-                <CIcon name="cil-chevron-left" />
-                <span class="px-1">Back</span>
+                <CIcon name="cil-chevron-left" class="text-danger" />
+                <span class="px-1 text-danger">Back</span>
             </div>
         </CCol>
     </CRow>
@@ -33,9 +32,8 @@ export default {
 .back {
     display: flex;
     align-items: center;
-    font-weight: bold;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
     transition: background-color 0.2s ease;
 }
 

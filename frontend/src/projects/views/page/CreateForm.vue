@@ -1,23 +1,16 @@
 <template>
     <div class="flex-grow-1">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <ButtonBack />
-            <ButtonPreview />
-        </div>
         <Tab :form="formData" @auto-save="triggerAutoSave" />
     </div>
 </template>
 
 <script>
-import ButtonBack from '../../components/Button/ButtonBack.vue'
-import ButtonPreview from '../../components/Button/ButtonPreview.vue'
+
 import Tab from '../../components/Tabs/Tab.vue';
 
 export default {
     name: "CreateForm",
     components: {
-        ButtonBack,
-        ButtonPreview,
         Tab
     },
     data() {

@@ -1,5 +1,5 @@
 <template>
-    <div class="mt-3">
+    <div>
         <FormStatus :settings="settings" @auto-save="triggerAutoSave" />
         <OrganizationControl :settings="settings" @auto-save="triggerAutoSave" />
         <AccessControl :settings="settings" @auto-save="triggerAutoSave" />

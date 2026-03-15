@@ -1,5 +1,5 @@
 <template>
-    <CButton color="light" class="d-flex align-items-center px-4 py-2 font-weight-bold btn-preview"
+    <CButton size="sm" color="light" class="btn-preview"
         style="border-radius: 0.5rem;" @click="goToPreview">
         <CIcon name="cil-media-play" class="mr-2 text-dark" />
         <span class="text-dark">Preview</span>
@@ -21,6 +21,9 @@ export default {
 
 <style scoped>
 .btn-preview {
+    display: flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
     transition: all 0.2s ease;

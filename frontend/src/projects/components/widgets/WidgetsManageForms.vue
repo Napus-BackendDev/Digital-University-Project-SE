@@ -107,7 +107,7 @@ export default {
 .icon-box {
     width: 48px;
     height: 48px;
-    border-radius: 12px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;

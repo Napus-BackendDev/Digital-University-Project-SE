@@ -69,7 +69,7 @@
                 <template #actions="{ item }">
                     <td class="align-middle text-right pr-4">
                         <div class="d-flex align-items-center justify-content-end">
-                            <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn" @click.stop="goToViewForm(item)" v-c-tooltip="'View'" aria-label="View">
+                            <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn" @click.stop="goToPreviewForm(item)" v-c-tooltip="'Preview'" aria-label="Preview">
                                 <CIcon name="cil-magnifying-glass" />
                             </CButton>
                             <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn" @click.stop="goToDuplicationForm(item)" v-c-tooltip="'Duplicate'" aria-label="Duplicate">
@@ -241,7 +241,7 @@ export default {
         goToDuplicationForm(item) {
             this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'duplicate', source: 'internal' } });
         },
-        goToViewForm(item) {
+        goToPreviewForm(item) {
             this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'preview', source: 'internal' } });
         },
         async confirmDelete() {
