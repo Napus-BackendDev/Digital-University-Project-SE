@@ -40,17 +40,7 @@ exports.onQuery = async function (request, response) {
     ]);
 
     // Use onQuery for population instead of custom onPopulate
-    const doc = await Form.onQuery({ _id: query._id }, [
-      { path: 'questions', populate: { path: 'type', select: 'type' } },
-      { 
-        path: 'responses', 
-        populate: { 
-          path: 'answers.question',
-          populate: { path: 'type', select: 'type' }
-        } 
-      },
-      { path: 'status', select: 'title' }
-    ]);
+    const doc = await Form.onQuery({ _id: query._id });
 
     if (doc && results.length > 0) {
       doc.childrenForms = results[0].childrenForms;
@@ -65,10 +55,7 @@ exports.onQuery = async function (request, response) {
 exports.onQuerys = async function (request, response) {
   try {
     var querys = {};
-    const doc = await Form.onQuerys(querys, [
-      { path: 'status', select: 'title' },
-      { path: 'responses', match: { submit: true } }
-    ]);
+    const doc = await Form.onQuerys(querys);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
     return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);

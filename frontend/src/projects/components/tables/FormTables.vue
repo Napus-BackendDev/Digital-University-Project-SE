@@ -6,7 +6,9 @@
 
         <div class="user-tables-container">
             <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
-                :pagination="false" hover class="mb-0 custom-table">
+                :pagination="false" hover class="mb-0 custom-table"
+                :no-items-view="{ noItems: 'No questionnaires yet. Create one to get started.' }">
+
                 <!-- Form Name (Title & Description) Slot -->
                 <template #form="{ item }">
                     <td class="py-3">
@@ -15,27 +17,28 @@
                     </td>
                 </template>
 
-                <!-- Create By Slot -->
+                <!-- Create By Slot (match ManagementTables) -->
                 <template #createBy="{ item }">
                     <td class="py-3">
-                        <div class="small text-dark">{{ item.organization }}</div>
+                        <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
+                        <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
                     </td>
                 </template>
 
-                <!-- Time Range Slot -->
+                <!-- Time Range Slot (match ManagementTables) -->
                 <template #timeRange="{ item }">
                     <td class="py-3">
-                        <div class="small text-dark font-weight-bold">{{ item.timeRange }}</div>
-                        <div class="small text-muted mt-1">{{ item.daysLeft }}</div>
+                        <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
+                        <div class="small text-muted mt-1" v-if="item.daysLeft">{{ item.daysLeft }}</div>
                     </td>
                 </template>
 
-                <!-- Status Slot -->
+                <!-- Status Slot (match ManagementTables display) -->
                 <template #status="{ item }">
                     <td class="py-3">
-                        <span class="status-badge" :class="getStatusClass(item.status)">
+                        <span v-if="item && item.status" class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
-                            {{ $t('status.' + item.status.toLowerCase()) }}
+                            {{ item.status }}
                         </span>
                     </td>
                 </template>
@@ -43,11 +46,13 @@
                 <template #progress="{ item }">
                     <td class="py-3">
                         <div class="d-flex align-items-center">
-                            <div class="flex-grow-1 mr-3">
+                            <div class="flex-grow-1 mr-3" v-if="typeof item.progress === 'number'">
                                 <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px"
                                     class="progress-xs" />
                             </div>
-                            <div class="small font-weight-bold text-dark">{{ item.progress }}%</div>
+                            <div class="small font-weight-bold text-dark" v-if="typeof item.progress === 'number'">{{
+                                item.progress }}%</div>
+                            <div class="small font-weight-bold text-dark" v-else>-</div>
                         </div>
                     </td>
                 </template>
@@ -112,65 +117,196 @@ export default {
         },
 
         tableData() {
-            // Mockup data as requested by the user
-            return [
-                {
-                    _id: '1',
-                    title: '2024 Faculty Satisfaction Survey',
-                    description: 'Collecting feedback from all faculty members on facilities and resources.',
-                    status: 'InProgress',
-                    timeRange: 'Mar 1, 2024 - Mar 31, 2024',
-                    daysLeft: '18 days left',
-                    progress: 65,
-                    organization: 'Faculty of Engineering',
-                    createdAt: '2024-03-01T08:00:00Z'
-                },
-                {
-                    _id: '2',
-                    title: 'Course Evaluation - Semester 2',
-                    description: 'Standard end-of-semester evaluation for GE courses.',
-                    status: 'Completed',
-                    timeRange: 'Feb 15, 2024 - Mar 15, 2024',
-                    daysLeft: 'Closed',
-                    progress: 100,
-                    organization: 'Department of Computer Science',
-                    createdAt: '2024-02-15T10:00:00Z'
-                },
-                {
-                    _id: '3',
-                    title: 'Research Proposal Feedback',
-                    description: 'Optional survey for graduate students to provide feedback on proposal process.',
-                    status: 'Pending',
-                    timeRange: 'Mar 10, 2024 - Apr 10, 2024',
-                    daysLeft: '28 days left',
-                    progress: 0,
-                    organization: 'Graduate School',
-                    createdAt: '2024-03-05T09:00:00Z'
-                },
-                {
-                    _id: '4',
-                    title: 'Library Services Annual Review',
-                    description: 'Help us improve our library services by sharing your experience.',
-                    status: 'InProgress',
-                    timeRange: 'Feb 20, 2024 - Apr 20, 2024',
-                    daysLeft: '38 days left',
-                    progress: 35,
-                    organization: 'Central Library',
-                    createdAt: '2024-02-10T11:00:00Z'
-                },
-                {
-                    _id: '5',
-                    title: 'IT Infrastructure Survey',
-                    description: 'Feedback on campus WiFi and computing facilities.',
-                    status: 'Pending',
-                    timeRange: 'Mar 15, 2024 - Apr 15, 2024',
-                    daysLeft: '33 days left',
-                    progress: 0,
-                    organization: 'IT Center',
-                    requireEmail: true,
-                    createdAt: '2024-03-12T14:00:00Z'
+            if (!this.forms || this.forms.length === 0) return [];
+            console.log(JSON.parse(JSON.stringify(this.forms))); // log raw forms data for debugging
+            // try to find current user from common Vuex locations
+            const currentUser = (this.$store && this.$store.getters && this.$store.getters['Auth/user']) ||
+                (this.$store && this.$store.state && this.$store.state.Auth && this.$store.state.Auth.user) || null;
+
+            const mapped = this.forms.map(f => {
+                if (!f) f = {};
+                const missingFields = [];
+
+                // Title: robust support, default to '-'
+                let title = '-';
+                if (Array.isArray(f.title) && f.title.length > 0) {
+                    const en = f.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
+                    title = en ? (en.value || '-') : (f.title[0] && f.title[0].value) || '-';
+                } else if (typeof f.title === 'string' && f.title.trim()) {
+                    title = f.title;
+                } else if (f.title && typeof f.title === 'object') {
+                    title = f.title.value || f.title.en || '-';
+                } else {
+                    missingFields.push('title');
                 }
-            ];
+
+                // Description
+                let description = '-';
+                if (Array.isArray(f.description) && f.description.length > 0) {
+                    const en = f.description.find(d => d && d.key && d.key.toLowerCase() === 'en');
+                    description = en ? (en.value || '-') : (f.description[0] && f.description[0].value) || '-';
+                } else if (typeof f.description === 'string' && f.description.trim()) {
+                    description = f.description;
+                } else if (f.description && typeof f.description === 'object') {
+                    description = f.description.value || '-';
+                } else {
+                    // description is optional but show '-' if absent
+                    description = '-';
+                }
+
+                // Organization
+                let organization = '-';
+                if (f.organization) {
+                    if (typeof f.organization === 'string' && f.organization.trim()) organization = f.organization;
+                    else if (typeof f.organization === 'object') organization = f.organization.name || f.organization.title || '-';
+                } else {
+                    missingFields.push('organization');
+                }
+
+                // Created By (extract name and email separately)
+                let createdName = '-';
+                let createdEmail = '';
+                if (f.creator) {
+                    if (typeof f.creator === 'string' && f.creator.trim()) createdName = f.creator;
+                    else if (typeof f.creator === 'object') {
+                        createdName = f.creator.name || f.creator.fullname || f.creator.email || '-';
+                        createdEmail = f.creator.email || '';
+                    }
+                } else if (f.createdBy) {
+                    if (typeof f.createdBy === 'string' && f.createdBy.trim()) createdName = f.createdBy;
+                    else if (typeof f.createdBy === 'object') {
+                        createdName = f.createdBy.name || f.createdBy.email || '-';
+                        createdEmail = f.createdBy.email || '';
+                    }
+                } else {
+                    missingFields.push('createdBy');
+                }
+
+                // Time Range: show schedule start - end and compute daysLeft
+                let timeRange = '-';
+                let daysLeft = '';
+                if (f.schedule && (f.schedule.startAt || f.schedule.endAt)) {
+                    const startAt = f.schedule.startAt ? new Date(f.schedule.startAt).toLocaleDateString() : '';
+                    const endAt = f.schedule.endAt ? new Date(f.schedule.endAt).toLocaleDateString() : '';
+                    timeRange = startAt || endAt ? `${startAt}${endAt ? ' - ' + endAt : ''}` : '-';
+                    if (f.schedule.endAt) {
+                        const diff = Math.ceil((new Date(f.schedule.endAt) - new Date()) / (1000 * 60 * 60 * 24));
+                        daysLeft = diff > 0 ? `${diff} days left` : 'Closed';
+                    }
+                } else if (f.timeRange && typeof f.timeRange === 'string' && f.timeRange.trim()) {
+                    timeRange = f.timeRange;
+                } else {
+                    missingFields.push('timeRange');
+                }
+
+                // Determine total questions if available
+                let totalQuestions = null;
+                if (Array.isArray(f.questions)) totalQuestions = f.questions.length;
+                else if (typeof f.questions === 'number') totalQuestions = f.questions;
+                else if (Array.isArray(f.questionIds)) totalQuestions = f.questionIds.length;
+
+                // Compute user's filled answers count when possible
+                let userAnswerCount = null;
+                if (currentUser && Array.isArray(f.responses) && f.responses.length > 0) {
+                    const uid = (currentUser._id || currentUser.id || currentUser.userId || '').toString();
+                    const matching = f.responses.filter(r => {
+                        if (!r) return false;
+                        const owners = [r.creator, r.createdBy, r.user, r.owner, r.ownerId, r.created_by];
+                        for (const c of owners) {
+                            if (!c) continue;
+                            if (typeof c === 'string' && uid && c.toString() === uid) return true;
+                            if (typeof c === 'object' && (c._id && c._id.toString && c._id.toString() === uid)) return true;
+                        }
+                        return false;
+                    });
+
+                    if (matching.length > 0) {
+                        userAnswerCount = matching.reduce((acc, rr) => {
+                            if (!rr) return acc;
+                            if (Array.isArray(rr.answers)) return acc + rr.answers.length;
+                            if (Array.isArray(rr.data)) return acc + rr.data.length;
+                            if (Array.isArray(rr.responses)) return acc + rr.responses.length;
+                            if (Array.isArray(rr.answersList)) return acc + rr.answersList.length;
+                            if (rr.answer) return acc + 1;
+                            return acc;
+                        }, 0);
+                    } else {
+                        // we could not identify a response for this user
+                        userAnswerCount = 0;
+                    }
+                }
+
+                // Status & Progress based on user's completion
+                let status = 'Pending';
+                let progress = 0;
+                if (userAnswerCount !== null && totalQuestions !== null && totalQuestions > 0) {
+                    progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
+                    if (userAnswerCount <= 0) status = 'Pending';
+                    else if (userAnswerCount < totalQuestions) status = 'InProgress';
+                    else status = 'Completed';
+                } else {
+                    // defaults when we cannot compute
+                    status = 'Pending';
+                    progress = 0;
+                    if (userAnswerCount === null) missingFields.push('userProgress');
+                    if (totalQuestions === null) missingFields.push('totalQuestions');
+                }
+
+                const createdAt = f.updatedAt || f.createdAt || '-';
+
+                if (missingFields.length > 0) {
+                    console.warn(`Form ${f._id || '(unknown)'} missing fields: ${missingFields.join(', ')}`);
+                }
+
+                return {
+                    _id: f._id,
+                    title: title || '-',
+                    description: description || '-',
+                    status: status || '-',
+                    timeRange: timeRange || '-',
+                    daysLeft: daysLeft || '',
+                    progress: (typeof progress === 'number') ? progress : 0,
+                    organization: organization || '-',
+                    createdAt,
+                    createdBy: createdName || createdEmail || '-',
+                    createdName: createdName || '-',
+                    createdEmail: createdEmail || '',
+                    _raw: f
+                };
+            });
+
+            // apply Quick Range / From-To date filtering if provided (based on schedule overlap)
+            let filtered = mapped;
+            if (this.startDate || this.endDate) {
+                const start = this.startDate ? new Date(this.startDate + 'T00:00:00') : new Date(-8640000000000000);
+                const end = this.endDate ? new Date(this.endDate + 'T23:59:59') : new Date(8640000000000000);
+                filtered = filtered.filter(row => {
+                    const raw = row._raw || {};
+                    const s = raw.schedule && raw.schedule.startAt ? new Date(raw.schedule.startAt) : null;
+                    const e = raw.schedule && raw.schedule.endAt ? new Date(raw.schedule.endAt) : null;
+                    const formStart = s || e;
+                    const formEnd = e || s;
+                    if (!formStart && !formEnd) return false;
+                    return (formStart <= end) && (formEnd >= start);
+                });
+            }
+
+            // apply status filter (same behavior as ManagementTables)
+            if (this.selectedStatus && this.selectedStatus !== 'All') {
+                filtered = filtered.filter(f => f.status === this.selectedStatus);
+            }
+
+            // apply search filter (title, organization, createdBy)
+            if (this.searchQuery) {
+                const q = this.searchQuery.toLowerCase();
+                filtered = filtered.filter(f => {
+                    return (f.title && f.title.toString().toLowerCase().includes(q)) ||
+                        (f.organization && f.organization.toString().toLowerCase().includes(q)) ||
+                        (f.createdBy && f.createdBy.toString().toLowerCase().includes(q));
+                });
+            }
+
+            return filtered;
         }
     },
     methods: {
@@ -235,7 +371,6 @@ export default {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
     padding: 0;
-    /* ensure no extra spacing around table */
 }
 
 /* Table Header */

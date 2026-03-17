@@ -112,17 +112,57 @@ export default {
             // Use prop if provided, otherwise fallback to store responses (and filter them)
             const source = this.responseList !== null
                 ? this.responseList
-                : (this.responses || []).filter(r => r && (r.submit === true || r.submit === 'true'));
+                : (this.responses || []).filter(r => r && ((r.submit === true || r.submit === 'true') || (Array.isArray(r.answers) && r.answers.length > 0)));
 
-            return source.map((r, idx) => ({
-                id: idx + 1,
-                _id: r._id,
-                responder: r.responder || '-',
-                submitted: r.createdAt ? moment(r.createdAt).format('DD/MM/YYYY, HH:mm') : '-',
-                answers: Array.isArray(r.answers) ? r.answers.length : 0,
-                raw: r,
-                isEmpty: false
-            }))
+            return source.map((r, idx) => {
+                // derive a readable responder name/email from common shapes
+                let responder = '-';
+                console.log(JSON.parse(JSON.stringify(r)))
+
+                const tryFields = (obj) => {
+                    if (!obj || typeof obj !== 'object') return null;
+                    return obj.name || obj.fullname || obj.email || obj.username || (obj._id ? obj._id.toString() : null);
+                };
+
+                if (!r) {
+                    responder = '-';
+                } else {
+                    // prefer direct populated responder object
+                    if (r.responder && typeof r.responder === 'object') {
+                        responder = tryFields(r.responder) || '-';
+                    }
+                    // if responder is id/string, try to resolve from raw or other fields
+                    else if (r.responder && typeof r.responder === 'string' && r.responder.trim()) {
+                        const fromRaw = tryFields(r.raw && r.raw.responder ? r.raw.responder : null);
+                        if (fromRaw) responder = fromRaw;
+                        else responder = r.responder;
+                    }
+                    // fallback: check common alternative locations
+                    else if (r.raw && r.raw.responder && typeof r.raw.responder === 'object') {
+                        responder = tryFields(r.raw.responder) || '-';
+                    } else if (r.user && typeof r.user === 'object') {
+                        responder = tryFields(r.user) || '-';
+                    } else if (r.createdBy && typeof r.createdBy === 'object') {
+                        responder = tryFields(r.createdBy) || '-';
+                    } else if (r.owner && typeof r.owner === 'object') {
+                        responder = tryFields(r.owner) || '-';
+                    } else if (r.responderName) {
+                        responder = r.responderName;
+                    } else if (r.email) {
+                        responder = r.email;
+                    }
+                }
+
+                return {
+                    id: idx + 1,
+                    _id: r._id,
+                    responder: responder || '-',
+                    submitted: r.createdAt ? moment(r.createdAt).format('DD/MM/YYYY, HH:mm') : '-',
+                    answers: Array.isArray(r.answers) ? r.answers.length : 0,
+                    raw: r,
+                    isEmpty: false
+                };
+            })
         },
 
         // Total pages for CPagination

@@ -67,11 +67,35 @@ export default {
     computed: {
         stats() {
             const forms = this.forms || [];
+            const now = new Date();
+            let active = 0, pending = 0, closed = 0;
+            for (const f of forms) {
+                let status = 'Pending';
+                if (f) {
+                    const hasStart = f.schedule && f.schedule.startAt;
+                    const hasEnd = f.schedule && f.schedule.endAt;
+                    if (hasStart || hasEnd) {
+                        const start = hasStart ? new Date(f.schedule.startAt) : null;
+                        const end = hasEnd ? new Date(f.schedule.endAt) : null;
+                        if (start && now < start) status = 'Pending';
+                        else if (end && now > end) status = 'Closed';
+                        else status = 'Active';
+                    } else if (f.status) {
+                        status = typeof f.status === 'string' ? f.status : (f.status.type || f.status.name || 'Pending');
+                    } else {
+                        status = 'Pending';
+                    }
+                }
+                if (status === 'Active') active++;
+                else if (status === 'Pending') pending++;
+                else if (status === 'Closed') closed++;
+            }
+
             return {
                 total: forms.length,
-                active: forms.filter(f => f.status === 'Active').length,
-                pending: forms.filter(f => f.status === 'Pending').length,
-                closed: forms.filter(f => f.status === 'Closed').length
+                active,
+                pending,
+                closed
             };
         }
     }
@@ -113,10 +137,21 @@ export default {
     justify-content: center;
 }
 
-.bg-primary-light { background-color: rgba(37, 99, 235, 0.1); }
-.bg-success-light { background-color: rgba(22, 163, 74, 0.1); }
-.bg-warning-light { background-color: rgba(234, 179, 8, 0.1); }
-.bg-danger-light { background-color: rgba(220, 38, 38, 0.1); }
+.bg-primary-light {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.bg-success-light {
+    background-color: rgba(22, 163, 74, 0.1);
+}
+
+.bg-warning-light {
+    background-color: rgba(234, 179, 8, 0.1);
+}
+
+.bg-danger-light {
+    background-color: rgba(220, 38, 38, 0.1);
+}
 
 .stat-value {
     font-size: 2rem;

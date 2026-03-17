@@ -51,7 +51,7 @@
                             style="height: 38px; flex: 1;"
                             @click="applyQuickDate(shortcut.id)"
                         >
-                            {{ $t('table.quickDate.' + shortcut.id) }}
+                            {{ shortcut.label || $t('table.quickDate.' + shortcut.id) }}
                         </CButton>
                     </CButtonGroup>
                 </CCol>
@@ -112,10 +112,10 @@ export default {
         return {
             currentShortcut: 'all',
             dateShortcuts: [
-                { id: 'all' },
-                { id: 'today' },
-                { id: 'thisWeek' },
-                { id: 'last30Days' }
+                { id: 'all', label: 'All' },
+                { id: 'today', label: 'Today' },
+                { id: 'last7Days', label: 'Last 7 Days' },
+                { id: 'last30Days', label: 'Last 30 Days' }
             ]
         }
     },
@@ -124,13 +124,13 @@ export default {
             this.currentShortcut = type;
             let start = '';
             let end = '';
-
             if (type === 'today') {
                 start = moment().format('YYYY-MM-DD');
                 end = moment().format('YYYY-MM-DD');
-            } else if (type === 'thisWeek') {
-                start = moment().startOf('week').format('YYYY-MM-DD');
-                end = moment().endOf('week').format('YYYY-MM-DD');
+            } else if (type === 'last7Days') {
+                // Last 7 days: from 6 days ago up to today (7-day window)
+                start = moment().subtract(6, 'days').format('YYYY-MM-DD');
+                end = moment().format('YYYY-MM-DD');
             } else if (type === 'last30Days') {
                 start = moment().subtract(30, 'days').format('YYYY-MM-DD');
                 end = moment().format('YYYY-MM-DD');

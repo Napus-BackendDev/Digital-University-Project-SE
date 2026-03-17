@@ -11,7 +11,7 @@
             <div v-else-if="error" class="text-center py-4 text-danger">{{ error }}</div>
 
             <div class="text-muted" style="font-size: 1.1rem; font-weight: 500; color: #475569 !important;">
-                {{ allSubmittedResponses.length }} responses
+                {{ allSubmittedResponses.length }} Responses
             </div>
 
             <div class="d-flex align-items-center gap-2">
@@ -301,14 +301,16 @@ export default {
             // Combine with responses fetched from store and stored in Responses module.
             const listFromProp = (this.responses && this.responses.responses) || [];
             const listFromStore = this.storeResponses || [];
-            const combined = [...listFromProp, ...listFromStore];
+            // prefer store responses (should be populated) over prop responses (may be unpopulated ids)
+            const combined = [...listFromStore, ...listFromProp];
             
-            // Remove duplicates by _id and filter by submit status
+            // Remove duplicates by _id and treat responses with answers as submitted when `submit` missing
             const unique = [];
             const seen = new Set();
             combined.forEach(r => {
                 if (r && r._id && !seen.has(r._id)) {
-                    if (r.submit === true || r.submit === 'true') {
+                    const isSubmitted = (r.submit === true || r.submit === 'true') || (Array.isArray(r.answers) && r.answers.length > 0);
+                    if (isSubmitted) {
                         unique.push(r);
                         seen.add(r._id);
                     }
@@ -324,25 +326,52 @@ export default {
 
             this.allSubmittedResponses.forEach(resp => {
                 (resp.answers || []).forEach(ans => {
-                    const q = ans.question;
-                    if (!q || !q._id) return;
-                    if (!map[q._id]) {
-                        map[q._id] = {
-                            _id: q._id,
-                            title: q.title,
-                            type: (q.type && q.type.type ? q.type.type : 'short').toLowerCase(),
+                    // ans.question may be a populated object or just an id
+                    let qRaw = ans.question;
+                    let qId = null;
+                    let qObj = null;
+
+                    if (!qRaw) return;
+
+                    if (typeof qRaw === 'string' || typeof qRaw === 'number') {
+                        qId = qRaw.toString();
+                    } else if (qRaw._id) {
+                        qId = qRaw._id.toString();
+                        qObj = qRaw;
+                    } else if (qRaw.id) {
+                        qId = qRaw.id.toString();
+                    }
+
+                    // Try to resolve question metadata from the form prop if available
+                    if (!qObj && this.responses && Array.isArray(this.responses.questions)) {
+                        qObj = this.responses.questions.find(qq => qq && (qq._id && qq._id.toString && qq._id.toString() === qId) || (qq.id && qq.id.toString && qq.id.toString() === qId));
+                    }
+
+                    // If still no qId but qObj found, set qId
+                    if (!qId && qObj && qObj._id) qId = qObj._id.toString();
+
+                    if (!qId) return;
+
+                    if (!map[qId]) {
+                        const title = (qObj && qObj.title) ? qObj.title : (qRaw && qRaw.title) ? qRaw.title : [{ key: 'en', value: 'Unknown question' }];
+                        const typeVal = (qObj && qObj.type) ? (qObj.type.type || qObj.type) : (qRaw && qRaw.type ? (qRaw.type.type || qRaw.type) : 'short');
+                        map[qId] = {
+                            _id: qId,
+                            title,
+                            type: (typeVal || 'short').toString().toLowerCase(),
                             responses: [],
                             _rawChoices: {}
                         };
-                        order.push(q._id);
+                        order.push(qId);
                     }
-                    const val = ans.response;
-                    map[q._id].responses.push(val);
 
-                    if (this.isChoiceType(map[q._id].type)) {
+                    const val = ans.response;
+                    map[qId].responses.push(val);
+
+                    if (this.isChoiceType(map[qId].type)) {
                         const choices = Array.isArray(val) ? val : [val];
                         choices.forEach(c => {
-                            if (c) map[q._id]._rawChoices[c] = (map[q._id]._rawChoices[c] || 0) + 1;
+                            if (c) map[qId]._rawChoices[c] = (map[qId]._rawChoices[c] || 0) + 1;
                         });
                     }
                 });
