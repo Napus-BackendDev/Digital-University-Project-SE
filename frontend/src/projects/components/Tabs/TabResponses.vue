@@ -2,13 +2,6 @@
     <div>
         <!-- Toolbar -->
         <div class="d-flex justify-content-between align-items-center mb-4 px-2">
-            <!-- Loading state -->
-            <div v-if="loading" class="text-center py-4">
-                <CSpinner color="secondary" />
-                <p class="text-muted mt-2">Loading responses...</p>
-            </div>
-            <!-- Error state -->
-            <div v-else-if="error" class="text-center py-4 text-danger">{{ error }}</div>
 
             <div class="text-muted" style="font-size: 1.1rem; font-weight: 500; color: #475569 !important;">
                 {{ allSubmittedResponses.length }} Responses
@@ -220,7 +213,11 @@ export default {
             const wscols = headers.map(h => ({ wch: Math.max(h.length, 15) }));
             worksheet['!cols'] = wscols;
 
-            const filename = `responses_${this.responses && this.responses._id || 'export'}.xlsx`;
+            // Generate filename: [Form Title]_[Timestamp].xlsx
+            const formTitle = this.getTitle(this.responses.title) || 'responses';
+            const timestamp = moment().format('YYYY-MM-DD');
+            const filename = `${formTitle}(${timestamp}).xlsx`;
+            
             XLSX.writeFile(workbook, filename);
         },
 

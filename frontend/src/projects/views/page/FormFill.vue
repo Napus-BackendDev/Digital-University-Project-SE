@@ -173,9 +173,10 @@ export default {
             submit: false,
             loading: false,
             submitting: false,
+            isSaving: false,
             error: null,
             errorIds: new Set(),
-            responder: '69a50fcc5f1adf15e09b2d86'
+            responder: '69bad4901379fb457ca63b8d'
         };
     },
     created() {
@@ -206,10 +207,17 @@ export default {
                 try {
                     await this.$store.dispatch('Responses/get', { form_id: this.form._id });
                     const responses = this.$store.getters['Responses/responses'] || [];
+                    
+                    const draft = (responses || []).find(r => {
+                        if (!r) return false;
+                        const fId = (typeof r.form === 'object' ? r.form._id : r.form);
+                        const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
+                        return String(fId) === String(this.form._id) && 
+                               String(rId) === String(this.responder) && 
+                               !r.submit;
+                    });
 
-                    const draft = (responses || []).find(r => String(r.form) === String(this.form._id) && String(r.responder) === String(this.responder) && !r.submit);
-
-                    if (draft && draft._id && Array.isArray(draft.answers)) {
+                    if (draft && draft._id) {
                         this.draftResponseId = draft._id;
 
                         const questionIds = new Set((this.form.questions || []).map(q => String(q._id)));
@@ -237,7 +245,8 @@ export default {
         },
 
         async saveDraftResponse() {
-            if (!this.form || !this.form._id || this.isPreviewMode || this.submit) return;
+            if (this.isSaving || this.loading || this.submit || !this.form || !this.form._id || this.isPreviewMode) return;
+            this.isSaving = true;
             try {
                 const payload = {
                     responder: this.responder,
@@ -264,6 +273,8 @@ export default {
                 }
             } catch (err) {
                 console.error('Auto-save failed:', err);
+            } finally {
+                this.isSaving = false;
             }
         },
 
@@ -357,11 +368,12 @@ export default {
             try {
                 // 1. Create a new form without questions
                 const formPayload = {
-                    title: this.form.title.map(t => ({ ...t, value: t.value + ' (Copy)' })),
+                    title: this.form.title.map(t => ({ ...t, value: (this.getLang(t) || t.value) + ' (Copy)' })),
                     description: [...this.form.description],
                     settings: { ...this.form.settings },
                     status: this.form.status ? (typeof this.form.status === 'object' ? this.form.status._id : this.form.status) : '69b0e3adf864c1088c19da36',
-                    originalFormId: this.form._id
+                    originalFormId: this.form._id,
+                    creator: 'ewfopkwoefkwoefk'
                 };
 
                 const formRes = await this.$store.dispatch('Forms/create', formPayload);

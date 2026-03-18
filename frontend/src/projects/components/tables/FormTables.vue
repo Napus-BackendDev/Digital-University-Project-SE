@@ -25,6 +25,18 @@
                     </td>
                 </template>
 
+                <!-- Access Slot -->
+                <template #access="{ item }">
+                    <td class="py-3">
+                        <div class="access-stack">
+                            <span v-for="(v, idx) in item.access" :key="idx" 
+                                  class="visibility-badge" :class="getVisibilityClass(v)">
+                                {{ v }}
+                            </span>
+                        </div>
+                    </td>
+                </template>
+
                 <!-- Time Range Slot (match ManagementTables) -->
                 <template #timeRange="{ item }">
                     <td class="py-3">
@@ -99,15 +111,26 @@ export default {
             itemsPerPage: 5
         }
     },
+    async created() {
+        console.log('--- START FETCHING SPECIFIC USER DATA ---');
+        try {
+            const userData = await this.$store.dispatch('User/get', { _id: '69bad4901379fb457ca63b8d' });
+            console.log('Fetched User Data:', JSON.parse(JSON.stringify(userData)));
+        } catch (err) {
+            console.error('Error fetching user data:', err);
+        }
+        console.log('--- END FETCHING SPECIFIC USER DATA ---');
+    },
     computed: {
         fields() {
             return [
-                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:30%' },
-                { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:15%' },
+                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:22%' },
+                { key: 'access', label: 'Access', _style: 'width:15%' },
                 { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:18%' },
                 { key: 'status', label: this.$t('table.status'), _style: 'width:12%' },
-                { key: 'progress', label: this.$t('table.progress'), _style: 'width:15%' },
-                { key: 'action', label: this.$t('table.action'), _style: 'width:10%; text-align:right' }
+                { key: 'progress', label: this.$t('table.progress'), _style: 'width:12%' },
+                { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:13%' },
+                { key: 'action', label: this.$t('table.action'), _style: 'width:8%; text-align:right' }
             ]
         },
         ...mapGetters('Forms', ['forms']),
@@ -119,9 +142,10 @@ export default {
         tableData() {
             if (!this.forms || this.forms.length === 0) return [];
             console.log(JSON.parse(JSON.stringify(this.forms))); // log raw forms data for debugging
-            // try to find current user from common Vuex locations
-            const currentUser = (this.$store && this.$store.getters && this.$store.getters['Auth/user']) ||
-                (this.$store && this.$store.state && this.$store.state.Auth && this.$store.state.Auth.user) || null;
+            // try to find current user from User store (fetched in created) or common Vuex locations
+            const currentUser = (this.$store?.getters?.['User/user'] || this.$store?.state?.User?.user ||
+                                 this.$store?.getters?.['Auth/user'] || this.$store?.state?.Auth?.user || 
+                                 JSON.parse(localStorage.getItem('user')) || null);
 
             const mapped = this.forms.map(f => {
                 if (!f) f = {};
@@ -205,58 +229,81 @@ export default {
                 else if (typeof f.questions === 'number') totalQuestions = f.questions;
                 else if (Array.isArray(f.questionIds)) totalQuestions = f.questionIds.length;
 
-                // Compute user's filled answers count when possible
-                let userAnswerCount = null;
-                if (currentUser && Array.isArray(f.responses) && f.responses.length > 0) {
-                    const uid = (currentUser._id || currentUser.id || currentUser.userId || '').toString();
-                    const matching = f.responses.filter(r => {
-                        if (!r) return false;
-                        const owners = [r.creator, r.createdBy, r.user, r.owner, r.ownerId, r.created_by];
-                        for (const c of owners) {
-                            if (!c) continue;
-                            if (typeof c === 'string' && uid && c.toString() === uid) return true;
-                            if (typeof c === 'object' && (c._id && c._id.toString && c._id.toString() === uid)) return true;
-                        }
-                        return false;
-                    });
+                // Identify the user's specific response and its 'submit' status
+                // Identify the user's response from their profile list
+                const userObj = currentUser || {};
+                const userResponses = userObj.response || []; // Populated from backend earlier
+                
+                let status = 'Pending';
+                let progress = 0;
+                let userAnswerCount = 0;
 
-                    if (matching.length > 0) {
-                        userAnswerCount = matching.reduce((acc, rr) => {
-                            if (!rr) return acc;
-                            if (Array.isArray(rr.answers)) return acc + rr.answers.length;
-                            if (Array.isArray(rr.data)) return acc + rr.data.length;
-                            if (Array.isArray(rr.responses)) return acc + rr.responses.length;
-                            if (Array.isArray(rr.answersList)) return acc + rr.answersList.length;
-                            if (rr.answer) return acc + 1;
-                            return acc;
-                        }, 0);
+                // Match response by form ID
+                const userResponse = userResponses.find(r => {
+                    if (!r || !r.form) return false;
+                    const resFormId = (typeof r.form === 'object' ? r.form._id : r.form).toString();
+                    return resFormId === f._id.toString();
+                });
+
+                if (userResponse) {
+                    // 1. Determine total questions from the form linked in the response
+                    const nestedForm = userResponse.form || {};
+                    if (Array.isArray(nestedForm.questions)) {
+                        totalQuestions = nestedForm.questions.length;
+                    } else if (Array.isArray(nestedForm.questionIds)) {
+                        totalQuestions = nestedForm.questionIds.length;
+                    }
+
+                    // 2. Count valid answers (where response is not null/empty/placeholder)
+                    if (Array.isArray(userResponse.answers)) {
+                        userAnswerCount = userResponse.answers.filter(a => {
+                            if (!a || a.response === null || a.response === undefined) return false;
+                            const resStr = String(a.response).trim();
+                            return resStr !== '' && resStr !== 'null' && resStr !== 'undefined' && resStr !== '[]';
+                        }).length;
+                    }
+                    
+                    if (totalQuestions > 0) {
+                        progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
+                    }
+
+                    // Status based on submit field
+                    if (userResponse.submit === true) {
+                        status = 'Completed';
+                        progress = 100;
                     } else {
-                        // we could not identify a response for this user
-                        userAnswerCount = 0;
+                        status = 'InProgress';
                     }
                 }
 
-                // Status & Progress based on user's completion
-                let status = 'Pending';
-                let progress = 0;
-                if (userAnswerCount !== null && totalQuestions !== null && totalQuestions > 0) {
-                    progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
-                    if (userAnswerCount <= 0) status = 'Pending';
-                    else if (userAnswerCount < totalQuestions) status = 'InProgress';
-                    else status = 'Completed';
+                // Access Logic (match ManagementTables)
+                const rawOrgs = f.organization || [];
+                let access = [];
+
+                // Extract plain names from populated objects or strings
+                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
+                    if (!o) return null;
+                    if (typeof o === 'string') return o;
+                    if (typeof o === 'object') {
+                        // Support the multi-language title structure
+                        if (Array.isArray(o.title)) {
+                            const en = o.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
+                            return en ? en.value : (o.title[0] ? o.title[0].value : null);
+                        }
+                        return o.name || o.value || o.title || null;
+                    }
+                    return null;
+                }).filter(Boolean);
+
+                if (orgNames.includes('General')) {
+                    access = ['Public'];
+                } else if (orgNames.length > 0) {
+                    access = orgNames;
                 } else {
-                    // defaults when we cannot compute
-                    status = 'Pending';
-                    progress = 0;
-                    if (userAnswerCount === null) missingFields.push('userProgress');
-                    if (totalQuestions === null) missingFields.push('totalQuestions');
+                    access = ['Private'];
                 }
 
                 const createdAt = f.updatedAt || f.createdAt || '-';
-
-                if (missingFields.length > 0) {
-                    console.warn(`Form ${f._id || '(unknown)'} missing fields: ${missingFields.join(', ')}`);
-                }
 
                 return {
                     _id: f._id,
@@ -271,6 +318,7 @@ export default {
                     createdBy: createdName || createdEmail || '-',
                     createdName: createdName || '-',
                     createdEmail: createdEmail || '',
+                    access: access,
                     _raw: f
                 };
             });
@@ -306,26 +354,91 @@ export default {
                 });
             }
 
-            // Apply requested global filters: only Pending/InProgress AND within active Time Range
+            // apply final default filtering:
+            // 1. Hide if no schedule is provided (always)
+            // 2. If 'Completed', always show for historical records 
+            // 3. Otherwise, only show if current time is within [startAt, endAt]
             const now = new Date();
             filtered = filtered.filter(f => {
-                // Status check
-                const isAcceptableStatus = f.status === 'Pending' || f.status === 'InProgress';
-                
-                // Time Range check
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
                 
-                // If both are null/missing, don't show it as requested ("when it null don't show too")
+                // Always hide if no schedule at all (requested)
                 if (!sched.startAt && !sched.endAt) return false;
 
+                // Always show completed questionnaires
+                if (f.status === 'Completed') return true;
+
+                // Check if current time is within schedule
                 let isInTimeRange = true;
                 if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
                 if (sched.endAt && now > new Date(sched.endAt)) isInTimeRange = false;
                 
-                return isAcceptableStatus && isInTimeRange;
+                return isInTimeRange;
             });
 
             return filtered;
+        },
+        stats() {
+            const fallback = { total: 0, pending: 0, completed: 0, inProgress: 0 };
+            if (!this.forms || !Array.isArray(this.forms)) return fallback;
+            
+            const currentUser = (this.$store?.getters?.['User/user'] || 
+                                 this.$store?.state?.User?.user || JSON.parse(localStorage.getItem('user')));
+            const userResponses = currentUser?.response || [];
+            const now = new Date();
+
+            let total = 0;
+            let pending = 0;
+            let completed = 0;
+            let inProgress = 0;
+
+            this.forms.forEach(f => {
+                if (!f) return;
+                
+                // UNIFIED LOGIC: Match tableData's schedule and status detection
+                const sched = f.schedule || {};
+                const start = sched.startAt ? new Date(sched.startAt) : null;
+                const end = sched.endAt ? new Date(sched.endAt) : null;
+                
+                // Identify Status based on User's response list
+                let s = 'Pending';
+                const userRes = userResponses.find(r => {
+                    if (!r || !r.form) return false;
+                    const resFormId = (typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form).toString();
+                    return resFormId === (f._id || f.id).toString();
+                });
+
+                if (userRes) {
+                    if (userRes.submit === true) s = 'Completed';
+                    else s = 'InProgress';
+                }
+
+                // UNIFIED LOGIC: Determine if it's currently live or historially completed
+                let isLive = true;
+                if (start && now < start) isLive = false;
+                if (end && now > end) isLive = false;
+
+                // Requirement: Must have schedule dates to be counted at all
+                if (start || end) {
+                    // Only count if it's currently live OR it's already completed
+                    if (s === 'Completed' || isLive) {
+                        total++;
+                        if (s === 'Completed') completed++;
+                        else if (s === 'InProgress') inProgress++;
+                        else pending++;
+                    }
+                }
+            });
+            const result = { total, pending, completed, inProgress };
+            return result;
+        }
+    },
+    watch: {
+        stats: {
+            immediate: true,
+            handler(newVal) {
+                this.$emit('update-stats', newVal);
+            }
         }
     },
     methods: {
@@ -334,10 +447,34 @@ export default {
                 this.goToForm(item._id);
             }
         },
-        goToForm(id) {
-            if (id) {
-                this.$router.push({ name: 'FormFill', params: { id: id }, query: { source: 'internal' } })
+        async goToForm(id) {
+            if (!id) return;
+
+            try {
+                const userId = '69bad4901379fb457ca63b8d';
+                const currentUser = (this.$store?.getters?.['User/user'] || this.$store?.state?.User?.user || null);
+                if (currentUser) {
+                    const userResponses = currentUser.response || [];
+                    const hasResponse = userResponses.some(r => {
+                        if (!r || !r.form) return false;
+                        const resFormId = (typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form).toString();
+                        return resFormId === id.toString();
+                    });
+                    if (!hasResponse) {
+                        console.log('[FormTables] Initializing new response for form:', id);
+                        await this.$store.dispatch('Responses/create', {
+                            form: id,
+                            responder: currentUser._id || userId,
+                            answers: [],
+                            submit: false
+                        });
+                        await this.$store.dispatch('User/get', { _id: currentUser._id || userId });
+                    }
+                }
+            } catch (err) {
+                console.error('Error during automatic response initialization:', err);
             }
+            this.$router.push({ name: 'FormFill', params: { id: id }, query: { source: 'internal' } });
         },
         filterStatus(status) {
             this.selectedStatus = status;
@@ -348,6 +485,13 @@ export default {
             if (s === 'completed') return 'status-completed';
             if (s === 'inprogress') return 'status-inprogress';
             return 'status-pending';
+        },
+        getVisibilityClass(visibility) {
+            if (!visibility) return 'visi-default';
+            const v = String(visibility).toLowerCase();
+            if (v.includes('public') || v.includes('สาธารณะ') || v === 'general') return 'visi-public';
+            if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
+            return 'visi-org';
         },
         getProgressColor(progress) {
             if (progress >= 100) return 'success';
@@ -369,7 +513,7 @@ export default {
         },
         getActionTooltip(status) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'completed') return 'View ฆummary';
+            if (s === 'completed') return 'View Summary';
             if (s === 'inprogress') return 'Continue โorm';
             return 'Start Form';
         }
@@ -573,8 +717,41 @@ export default {
     transform: translateY(-1px);
 }
 
+/* Visibility Badges for Access column */
+.access-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.visibility-badge {
+    display: inline-flex;
+    padding: 0.25em 0.8em;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.visi-public {
+    background-color: #ecfdf5;
+    color: #059669;
+}
+
+.visi-private {
+    background-color: #fff1f2;
+    color: #e11d48;
+}
+
+.visi-org {
+    background-color: #f0f7ff;
+    color: #1e40af;
+}
+
 /* Remove bottom border from the very last row */
 ::v-deep .custom-table tbody tr:last-child td {
     border-bottom: none !important;
 }
 </style>
+```

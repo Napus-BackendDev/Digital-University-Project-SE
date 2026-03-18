@@ -298,14 +298,28 @@ export default {
                     status = 'Draft';
                 }
 
-                // Access/Visibility Logic
-                const orgs = f.organization || [];
+                // Access/Visibility Logic (Extract plain names from populated objects or strings)
+                const rawOrgs = f.organization || [];
                 let access = [];
 
-                if (orgs.includes('General')) {
+                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
+                    if (!o) return null;
+                    if (typeof o === 'string') return o;
+                    if (typeof o === 'object') {
+                        // Support the multi-language title structure
+                        if (Array.isArray(o.title)) {
+                            const en = o.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
+                            return en ? en.value : (o.title[0] ? o.title[0].value : null);
+                        }
+                        return o.name || o.title || o.value || null;
+                    }
+                    return null;
+                }).filter(Boolean);
+
+                if (orgNames.includes('General')) {
                     access = ['Public'];
-                } else if (orgs.length > 0) {
-                    access = orgs;
+                } else if (orgNames.length > 0) {
+                    access = orgNames;
                 } else {
                     // No organizations assigned = Private
                     access = ['Private'];
@@ -471,12 +485,12 @@ export default {
 }
 
 .status-active {
-    background-color: #dbeafe;
-    color: #1e40af;
+    background-color: #d1fae5;
+    color: #065f46;
 }
 
 .status-active .status-dot {
-    background-color: #2563eb;
+    background-color: #059669;
 }
 
 .status-pending {

@@ -6,6 +6,8 @@ import Form from "@/store/modules/Form";
 import Setting from "@/store/modules/Setting";
 import Questions from "@/store/modules/Questions/index.js";
 import Responses from "@/store/modules/Responses/index.js";
+import User from "@/store/modules/User";
+import Organizations from "@/store/modules/Organizations";
 
 const state = {
   sidebarShow: 'responsive',
@@ -38,6 +40,8 @@ export default new Vuex.Store({
     Forms: Form,
     Setting: Setting,
     Questions: Questions,
-    Responses: Responses
+    Responses: Responses,
+    User: User,
+    Organizations: Organizations
   }
 });

@@ -1,179 +1,73 @@
 {
-  "openapi": "3.0.0",
-  "info": {
-    "title": "Question API",
-    "version": "1.0.0",
-    "description": "Question endpoints"
-  },
   "tags": [
-    { "name": "Question" }
+    {
+      "name": "Questions",
+      "description": "API for Managing Questions within Forms"
+    }
   ],
   "paths": {
-    "/question/id": {
+    "/api/v1/question/exp": {
       "get": {
-        "tags": ["Question"],
-        "summary": "Get question by ID",
-        "parameters": [
-          {
-            "name": "_id",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "Question ID"
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "apiId": { "type": "integer", "example": 11 }
-                }
-              },
-              "example": { "apiId": 11 }
-            }
-          }
-        },
+        "tags": ["Questions"],
+        "summary": "Get all questions",
         "responses": {
-          "200": { "description": "Success" },
-          "404": { "description": "Not found" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Success" }
         }
       }
     },
-    "/question": {
-      "get": {
-        "tags": ["Question"],
-        "summary": "Get all questions",
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "apiId": { "type": "integer", "example": 12 }
-                }
-              },
-              "example": { "apiId": 12 }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Success" },
-          "500": { "description": "Server error" }
-        }
-      },
+    "/api/v1/question/get": {
       "post": {
-        "tags": ["Question"],
-        "summary": "Create question",
+        "tags": ["Questions"],
+        "summary": "Get one question by ID",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["form", "type"],
                 "properties": {
-                  "apiId": { "type": "integer", "example": 13 },
-                  "form": { "type": "string" },
-                  "order": { "type": "number" },
-                  "title": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": { "type": "string" },
-                        "value": { "type": "string" }
-                      }
-                    }
-                  },
-                  "type": { "type": "string" },
-                  "required": { "type": "boolean" }
+                  "_id": { "type": "string" }
                 }
-              },
-              "example": {
-                "apiId": 13,
-                "form": "64e1f9f32a6d1c0013a1b234",
-                "type": "text",
-                "title": [{ "key": "en", "value": "Question" }]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Created" },
-          "400": { "description": "Validation error" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/api/v1/question": {
+      "post": {
+        "tags": ["Questions"],
+        "summary": "Create a new question",
+        "responses": {
+          "201": { "description": "Created" }
         }
       },
       "put": {
-        "tags": ["Question"],
-        "summary": "Update question",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["_id"],
-                "properties": {
-                  "apiId": { "type": "integer", "example": 14 },
-                  "_id": { "type": "string" },
-                  "title": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": { "type": "string" },
-                        "value": { "type": "string" }
-                      }
-                    }
-                  },
-                  "required": { "type": "boolean" }
-                }
-              },
-              "example": {
-                "apiId": 14,
-                "_id": "64e1f9f32a6d1c0013a1b111",
-                "title": [{ "key": "en", "value": "Updated" }]
-              }
-            }
-          }
-        },
+        "tags": ["Questions"],
+        "summary": "Update an existing question",
         "responses": {
-          "200": { "description": "Updated" },
-          "404": { "description": "Not found" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Updated" }
         }
       },
       "delete": {
-        "tags": ["Question"],
-        "summary": "Delete question",
+        "tags": ["Questions"],
+        "summary": "Delete a question",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["_id"],
                 "properties": {
-                  "apiId": { "type": "integer", "example": 15 },
                   "_id": { "type": "string" }
                 }
-              },
-              "example": {
-                "apiId": 15,
-                "_id": "64e1f9f32a6d1c0013a1b111"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Deleted" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Deleted" }
         }
       }
     }

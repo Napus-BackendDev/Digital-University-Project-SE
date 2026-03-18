@@ -11,7 +11,10 @@ var objSchema = new Schema({
         startAt: { type: Date, default: null },
         endAt: { type: Date, default: null }
     },
-    organization: [{ type: String, default: null }],
+    organization: {
+        type: [{ type: Schema.Types.ObjectId, ref: 'Organizations' }],
+        default: ["69baf8349050b9215c700b96"]
+    },
     settings: {
         whoCanRespond: { type: Schema.Types.ObjectId, ref: 'Setting_Respond', default: null },
         collectEmail: { type: Boolean, default: false },
@@ -23,7 +26,7 @@ var objSchema = new Schema({
     },
     responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null },
-    creator: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
+    creator: { type: Schema.Types.ObjectId, ref: 'Users' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Forms', objSchema, "Forms");

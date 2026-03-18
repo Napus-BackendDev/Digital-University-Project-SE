@@ -1,8 +1,8 @@
 <template>
     <div class="flex-grow-1">
         <Header :title="$t('nav.forms')" :description="$t('table.header')" />
-        <WidgetsDropdownUser @filter="(status) => $refs.table.filterStatus(status)" />
-        <FormTables ref="table" />
+        <WidgetsDropdownUser :stats="stats" @filter="(status) => $refs.table.filterStatus(status)" />
+        <FormTables ref="table" @update-stats="updateStats" />
     </div>
 </template>
 
@@ -20,6 +20,7 @@ export default {
     },
     data() {
         return {
+            stats: { total: 0, pending: 0, completed: 0, inProgress: 0 }
         }
     },
     created() {
@@ -29,6 +30,9 @@ export default {
         onInit() {
             this.$store.dispatch('Forms/get');
         },
+        updateStats(newStats) {
+            this.stats = newStats;
+        }
     },
 }
 </script>

@@ -56,45 +56,12 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-
 export default {
     name: 'WidgetsDropdownUser',
-    computed: {
-        ...mapGetters('Forms', ['forms']),
-        stats() {
-            if (!this.forms || !Array.isArray(this.forms)) return { total: 0, pending: 0, completed: 0, inProgress: 0 };
-
-            const responder = '69a50fcc5f1adf15e09b2d86'; 
-
-            let total = 0;
-            let pending = 0;
-            let completed = 0;
-            let inProgress = 0;
-
-            this.forms.forEach(form => {
-                total++;
-
-                let userResponse = null;
-                if (form.responses && Array.isArray(form.responses)) {
-                    userResponse = form.responses.find(r =>
-                        r && typeof r === 'object' &&
-                        String(r.responder) === String(responder)
-                    );
-                }
-
-                if (userResponse) {
-                    if (userResponse.submit === true || userResponse.submit === 'true') {
-                        completed++;
-                    } else {
-                        inProgress++;
-                    }
-                } else {
-                    pending++;
-                }
-            });
-
-            return { total, pending, completed, inProgress };
+    props: {
+        stats: {
+            type: Object,
+            default: () => ({ total: 0, pending: 0, completed: 0, inProgress: 0 })
         }
     }
 }
