@@ -68,7 +68,7 @@
             </div>
 
             <!-- Dynamic question cards -->
-            <div v-for="(q, qIdx) in summaryByQuestion" :key="q._id" class="p-5 bg-white border rounded shadow-sm mb-4">
+            <div v-for="(q, qIdx) in summaryByQuestion" :key="q._id" class="p-5 bg-white shadow-sm mb-4 rounded-20">
                 <!-- Question header -->
                 <h4 class="mb-1 font-weight-bold" style="color: #334155;">
                     {{ qIdx + 1 }}. {{ getTitle(q.title) }}
@@ -140,7 +140,7 @@
         </div>
 
         <!-- INDIVIDUAL VIEW -->
-        <div v-else-if="currentView === 'individual'" class="p-5 bg-white border rounded shadow-sm">
+        <div v-else-if="currentView === 'individual'" class="p-5 bg-white shadow-sm rounded-20">
             <ResponseTables :responseList="allSubmittedResponses" />
         </div>
 
@@ -645,11 +645,15 @@ export default {
 }
 
 ::v-deep .custom-search .input-group-text {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-right: none;
-    border-top-left-radius: 0.75rem;
-    border-bottom-left-radius: 0.75rem;
     color: #94a3b8;
+}
+
+.rounded-20 {
+    border-radius: 20px !important;
+    overflow: hidden;
+}
+
+.shadow-sm {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
 </style>

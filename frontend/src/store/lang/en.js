@@ -106,7 +106,7 @@ const en = {
         total: "Total Form",
         pending: "Pending",
         finish: "Finish",
-        late: "Late"
+        inprogress: "In Progress"
     },
     description: "Description"
 }

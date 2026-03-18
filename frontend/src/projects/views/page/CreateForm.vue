@@ -1,21 +1,27 @@
 <template>
     <div class="flex-grow-1">
-        <Tab :form="formData" @auto-save="triggerAutoSave" />
+        <Header :title="headerTitle" :description="headerDescription" />
+        <Container>
+            <Tab :form="formData" :activeTab.sync="activeTab" @auto-save="triggerAutoSave" />
+        </Container>
     </div>
 </template>
 
 <script>
 
 import Tab from '../../components/Tabs/Tab.vue';
+import Header from '../../components/Util/Header.vue';
 
 export default {
     name: "CreateForm",
     components: {
-        Tab
+        Tab,
+        Header
     },
     data() {
         return {
-            formData: {}
+            formData: {},
+            activeTab: 'question'
         };
     },
     created() {
@@ -39,6 +45,28 @@ export default {
         }
     },
     computed: {
+        headerTitle() {
+            if (this.activeTab === 'response') return "Form Responses";
+            if (this.activeTab === 'setting') return "Form Settings";
+            
+            // Default: show form title for 'question' tab
+            if (!this.formData || !this.formData.title) return "Loading...";
+            if (Array.isArray(this.formData.title)) {
+                return this.formData.title[0]?.value || "Untitled Form";
+            }
+            return this.formData.title || "Untitled Form";
+        },
+        headerDescription() {
+            if (this.activeTab === 'response') return "View and analyze form submissions and performance data";
+            if (this.activeTab === 'setting') return "Configure form access, schedule, and organization controls";
+
+            // Default: show form description for 'question' tab
+            if (!this.formData || !this.formData.description) return "";
+            if (Array.isArray(this.formData.description)) {
+                return this.formData.description[0]?.value || "";
+            }
+            return this.formData.description || "";
+        }
     }
 }
 </script>

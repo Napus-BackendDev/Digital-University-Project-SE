@@ -1,5 +1,5 @@
 <template>
-    <div class="nested-question-container mt-3 pl-4 border-left ml-3 mb-3">
+    <div class="nested-question-container mt-3 pl-4 border-left ml-3 mb-4">
         <CCard class="bg-light border mb-0">
             <CCardBody class="p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">

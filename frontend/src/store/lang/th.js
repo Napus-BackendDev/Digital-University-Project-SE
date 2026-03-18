@@ -105,7 +105,7 @@ const th = {
         total: "ฟอร์มทั้งหมด",
         pending: "รอดำเนินการ",
         finish: "เสร็จสิ้น",
-        late: "เกินกำหนด"
+        inprogress: "กำลังดำเนินการ"
     },
     description: "รายละเอียด"
 }

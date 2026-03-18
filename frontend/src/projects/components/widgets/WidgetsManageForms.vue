@@ -1,6 +1,6 @@
 <template>
     <CRow class="mb-4">
-        <CCol sm="6" lg="3">
+        <CCol sm="6" lg="3" @click="$emit('filter', 'All')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-primary-light text-primary">
@@ -13,7 +13,7 @@
                 </div>
             </div>
         </CCol>
-        <CCol sm="6" lg="3">
+        <CCol sm="6" lg="3" @click="$emit('filter', 'Active')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-success-light text-success">
@@ -26,7 +26,7 @@
                 </div>
             </div>
         </CCol>
-        <CCol sm="6" lg="3">
+        <CCol sm="6" lg="3" @click="$emit('filter', 'Pending')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-warning-light text-warning">
@@ -39,7 +39,7 @@
                 </div>
             </div>
         </CCol>
-        <CCol sm="6" lg="3">
+        <CCol sm="6" lg="3" @click="$emit('filter', 'Closed')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-danger-light text-danger">

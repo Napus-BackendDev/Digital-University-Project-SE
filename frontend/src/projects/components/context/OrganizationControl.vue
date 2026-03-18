@@ -1,5 +1,5 @@
 <template>
-    <CCard class="mb-4 border-0 shadow-sm">
+    <CCard class="mb-4 border-0 shadow-sm rounded-20">
         <CCardBody class="p-4">
             <h5 class="mb-4 font-weight-bold text-dark">Organization Control</h5>
 
@@ -145,6 +145,11 @@ export default {
 </script>
 
 <style scoped>
+.rounded-20 {
+    border-radius: 20px !important;
+    overflow: hidden;
+}
+
 .form-select-custom {
     height: 45px;
     background-color: #f8f9fa;

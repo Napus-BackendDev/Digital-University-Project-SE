@@ -364,7 +364,7 @@ export default {
         },
         filterStatus(status) {
             this.selectedStatus = status;
-            this.currentPage = 1; // Reset pagination when filter changes
+            this.activePage = 1; // Reset pagination when filter changes
         },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
