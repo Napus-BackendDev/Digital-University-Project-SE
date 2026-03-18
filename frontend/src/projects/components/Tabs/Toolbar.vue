@@ -1,6 +1,6 @@
 <template>
     <CCol md="3">
-        <CCard class="tab-card shadow-sm border-0">
+        <CCard class="tab-card shadow-sm border">
             <CCardBody class="p-4 d-flex flex-column h-100">
                 <!-- Navigation Buttons -->
                 <div class="d-flex justify-content-between mb-4">
@@ -31,8 +31,9 @@
                 <!-- Question Types Section -->
                 <div class="toolbar-scroll-area flex-grow-1 pr-2" v-if="activeTab === 'question'">
                     <div class="mb-4">
-                        <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Question
-                            Types</label>
+                        <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">
+                            Question Types
+                        </label>
                         <div class="d-flex flex-column">
                             <CButton v-for="type in questionTypes" :key="type._id"
                                 v-if="type.type !== 'title_description' && type.type !== 'image'" variant="ghost"
@@ -47,8 +48,9 @@
                     </div>
 
                     <div class="pt-3 border-top">
-                        <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Content
-                            Elements</label>
+                        <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">
+                            Content Elements
+                        </label>
                         <div class="d-flex flex-column">
                             <CButton variant="ghost" color="dark"
                                 class="w-100 mb-1 text-left type-btn d-flex align-items-center"

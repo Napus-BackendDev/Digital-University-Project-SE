@@ -50,17 +50,21 @@
         <CCard md="9" class="questions-wrapper">
             <CCard v-for="(question, index) in localQuestions" :key="question._id || index"
                 :id="'question-' + (question._id || index)" class="mb-3 position-relative rounded-20 shadow-sm border"
-                :style="question && question.config && question.config.parent ? { borderLeft: '6px solid ' + getFollowUpColor(question) } : {}">
+                :class="{ 'followup-card': getParentForFollowUp(question) }"
+                :style="getParentForFollowUp(question) ? { backgroundColor: '#FFF3CD', border: '1px solid #F7C948' } : {}">
                 <CCardBody class="p-4">
 
                     <!-- Question Title -->
-                    <div v-if="question.config && question.config.parent" class="mb-2">
-                        <span class="badge badge-warning rounded-pill px-2">Follow-up</span>
-                        <small class="text-muted ml-2">
-                            From option: {{ question.config.parent.parentChoiceLabel }}
+                    <div v-if="getParentForFollowUp(question)" class="mb-2 d-flex align-items-center">
+                        <div class="followup-header">Follow-up Question</div>
+                        <small class="text-muted ml-3 followup-from">
+                            From option: {{ getParentForFollowUp(question).meta.parentChoiceLabel }}
                         </small>
                     </div>
                     <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div :class="['number-question', { 'followup-number': getParentForFollowUp(question) }]">{{
+                            displayQuestionNumber(question, index) }}</div>
+
                         <div class="flex-grow-1">
                             <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
                                 class="d-flex align-items-center mb-1">
@@ -248,25 +252,27 @@
                     <!-- ── Footer: Question Type dropdown + Required toggle ── -->
                     <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
-                            <span class="text-muted font-weight-bold mr-2">Type</span>
-                            <CDropdown color="light" variant="outline">
-                                <template #toggler>
-                                    <button class="btn d-flex align-items-center text-muted border bg-white"
-                                        style="border-radius: 6px;">
-                                        <CIcon :name="getIconForType(question.type)" class="mr-2" />
+                            <div v-if="!getParentForFollowUp(question)" class="d-flex align-items-center">
+                                <span class="text-muted font-weight-bold mr-2">Type</span>
+                                <CDropdown color="light" variant="outline">
+                                    <template #toggler>
+                                        <button class="btn d-flex align-items-center text-muted border bg-white"
+                                            style="border-radius: 6px;">
+                                            <CIcon :name="getIconForType(question.type)" class="mr-2" />
+                                            <span class="text-capitalize">
+                                                {{ formatTypeLabel(getQuestionType(question.type)) }}
+                                            </span>
+                                        </button>
+                                    </template>
+                                    <CDropdownItem v-for="type in typesAll" :key="type._id"
+                                        @click="setQuestionType(question, type._id)">
+                                        <CIcon :name="getIconForType(type._id)" class="mr-2" />
                                         <span class="text-capitalize">
-                                            {{ formatTypeLabel(getQuestionType(question.type)) }}
+                                            {{ formatTypeLabel(type.type) }}
                                         </span>
-                                    </button>
-                                </template>
-                                <CDropdownItem v-for="type in typesAll" :key="type._id"
-                                    @click="setQuestionType(question, type._id)">
-                                    <CIcon :name="getIconForType(type._id)" class="mr-2" />
-                                    <span class="text-capitalize">
-                                        {{ formatTypeLabel(type.type) }}
-                                    </span>
-                                </CDropdownItem>
-                            </CDropdown>
+                                    </CDropdownItem>
+                                </CDropdown>
+                            </div>
                         </div>
 
                         <div v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'"
@@ -327,13 +333,9 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import NestedQuestion from './NestedQuestion.vue'
 
 export default {
     name: 'TabQuestion',
-    components: {
-        NestedQuestion
-    },
     props: {
         form: {
             type: Object,
@@ -368,6 +370,24 @@ export default {
             async handler(newForm) {
                 if (newForm && Array.isArray(newForm.questions)) {
                     this.localQuestions = JSON.parse(JSON.stringify(newForm.questions));
+                    try {
+                        const localIds = (this.localQuestions || []).map(question => question._id && question._id.toString());
+                        const parents = this.localQuestions.filter(question => question && Array.isArray(question.followUp) && question.followUp.length > 0);
+                        let added = 0;
+                        parents.forEach(parent => {
+                            parent.followUp.forEach(follow => {
+                                if (follow && typeof follow === 'object' && follow._id && !localIds.includes(follow._id.toString())) {
+                                    const parentIdx = this.localQuestions.findIndex(q => q._id && q._id.toString() === parent._id.toString());
+                                    const insertAt = parentIdx === -1 ? this.localQuestions.length : parentIdx + 1;
+                                    this.localQuestions.splice(insertAt, 0, follow);
+                                    localIds.push(follow._id.toString());
+                                    added++;
+                                }
+                            });
+                        });
+                    } catch (err) {
+                        console.error('Failed to merge missing follow-ups:', err);
+                    }
                 }
                 if (newForm && (!Array.isArray(newForm.title) || newForm.title.length === 0)) {
                     this.$nextTick(() => this.addFormTitle());
@@ -481,6 +501,15 @@ export default {
                 console.error('Failed to update question', err);
             }
         },
+        convertIdToStr(val) {
+            if (!val && val !== 0) return null;
+            if (typeof val === 'string') return val;
+            if (typeof val === 'object') {
+                if (val._id) return (val._id && val._id.toString) ? val._id.toString() : String(val._id);
+                if (val.toString && typeof val.toString === 'function') return val.toString();
+            }
+            return String(val);
+        },
         async updateQuestionTitle(question) {
             if (!question || !question._id) return;
             try {
@@ -575,12 +604,65 @@ export default {
                 console.warn('removeQuestion: question not found in localQuestions for qId', qId);
                 return;
             }
+
+            const rootQ = this.localQuestions[index];
+            const toDelete = [];
+            const stack = [rootQ];
+            while (stack.length) {
+                const cur = stack.pop();
+                if (!cur) continue;
+                if (!toDelete.includes(cur)) toDelete.push(cur);
+                if (Array.isArray(cur.followUp)) {
+                    for (const fid of cur.followUp) {
+                        if (!fid) continue;
+                        const fidStr = this.convertIdToStr(fid);
+                        const childIdx = this.localQuestions.findIndex(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
+                        if (childIdx !== -1) {
+                            const child = this.localQuestions[childIdx];
+                            if (child && !toDelete.includes(child)) stack.push(child);
+                        }
+                    }
+                }
+            }
+
             try {
-                await this.$store.dispatch('Questions/delete', { _id: qId });
-                this.localQuestions.splice(index, 1);
+                for (const item of toDelete) {
+                    if (item && item._id && !String(item._id).startsWith('tmp-')) {
+                        await this.$store.dispatch('Questions/delete', { _id: item._id });
+                    }
+                }
             } catch (e) {
                 console.error('removeQuestion failed:', e);
             }
+
+            const indices = toDelete.map(item => this.localQuestions.findIndex(q => q === item)).filter(i => i !== -1).sort((a, b) => b - a);
+            for (const i of indices) this.localQuestions.splice(i, 1);
+
+            const deletedIdSet = new Set(toDelete.map(d => this.convertIdToStr(d._id || d)));
+            const parentsToPersist = [];
+            for (const parent of this.localQuestions) {
+                if (!parent || !Array.isArray(parent.followUp)) continue;
+                let changed = false;
+                for (let i = 0; i < parent.followUp.length; i++) {
+                    const fid = parent.followUp[i];
+                    if (!fid) continue;
+                    if (deletedIdSet.has(this.convertIdToStr(fid))) {
+                        parent.followUp[i] = null;
+                        changed = true;
+                    }
+                }
+                if (changed && parent._id) parentsToPersist.push(parent);
+            }
+
+            for (const p of parentsToPersist) {
+                try {
+                    await this.$store.dispatch('Questions/update', { _id: p._id, followUp: p.followUp });
+                } catch (err) {
+                    console.error('Failed to persist parent.followUp cleanup', err);
+                }
+            }
+
+            await this.updateOrdersAndPersist();
         },
         setQuestionType(question, typeId) {
             if (!question) return;
@@ -758,31 +840,31 @@ export default {
                 type: typeId,
                 isRequired: false,
                 config: {
-                    choices: [{ key: '0', lang: [{ key: 'en', value: 'Option 1' }] }],
-                    parent: {
-                        parentQuestionId: question._id || null,
-                        parentChoiceIndex: choiceIndex,
-                        parentChoiceLabel: (choice && choice.lang && choice.lang[0] && choice.lang[0].value) || ''
-                    }
+                    choices: [{ key: '0', lang: [{ key: 'en', value: 'Option 1' }] }]
                 }
             };
 
-            // insert as a separate question after any existing follow-ups for this parent
             const insertAt = (function () {
                 if (parentIndex === -1) return this.localQuestions.length;
                 let lastIdx = parentIndex;
                 for (let i = parentIndex + 1; i < this.localQuestions.length; i++) {
                     const q2 = this.localQuestions[i];
-                    if (q2 && q2.config && q2.config.parent && q2.config.parent.parentQuestionId &&
-                        q2.config.parent.parentQuestionId.toString() === (question._id ? question._id.toString() : '')) {
+                    if (q2 && question.followUp && Array.isArray(question.followUp) && q2._id && question.followUp.find(id => this.convertIdToStr(id) === (q2._id && q2._id.toString ? q2._id.toString() : q2._id))) {
                         lastIdx = i;
                     } else break;
                 }
                 return lastIdx + 1;
             }).call(this);
             this.localQuestions.splice(insertAt, 0, newQ);
+            if (!this.form || !this.form._id) {
+                const parentLocal = this.localQuestions[parentIndex];
+                if (parentLocal) {
+                    if (!Array.isArray(parentLocal.followUp)) parentLocal.followUp = [];
+                    while (parentLocal.followUp.length <= choiceIndex) parentLocal.followUp.push(null);
+                    parentLocal.followUp[choiceIndex] = newQ._id;
+                }
+            }
 
-            // if backend available, create and replace
             if (this.form && this.form._id) {
                 try {
                     const payload = JSON.parse(JSON.stringify(newQ));
@@ -790,11 +872,25 @@ export default {
                     const res = await this.$store.dispatch('Questions/create', payload);
                     const created = res && res.data && res.data.data;
                     if (created && created._id) {
-                        // ensure parent meta preserved and replace the pushed temp at the end
-                        if (!created.config) created.config = {};
-                        created.config.parent = newQ.config.parent;
                         // replace the inserted temp/newQ at insertAt with created
                         this.$set(this.localQuestions, insertAt, created);
+
+                        // update parent locally and persist: push created._id into parent.followUp
+                        const parentLocal = this.localQuestions[parentIndex];
+                        if (parentLocal) {
+                            if (!Array.isArray(parentLocal.followUp)) parentLocal.followUp = [];
+                            while (parentLocal.followUp.length <= choiceIndex) parentLocal.followUp.push(null);
+                            parentLocal.followUp[choiceIndex] = created._id;
+
+                            try {
+                                await this.$store.dispatch('Questions/update', {
+                                    _id: parentLocal._id,
+                                    followUp: parentLocal.followUp
+                                });
+                            } catch (err) {
+                                console.error('Failed to persist parent.followUp', err);
+                            }
+                        }
                     }
                 } catch (e) {
                     console.error('create follow-up failed', e);
@@ -802,15 +898,25 @@ export default {
             }
 
             await this.updateOrdersAndPersist();
-            this.goToFollowUp(question, choiceIndex);
         },
         async removeFollowUp(question, choiceIndex) {
-            // find follow-up question linked to this parent+choice
-            const fIndex = this.localQuestions.findIndex(q => q.config && q.config.parent && q.config.parent.parentQuestionId &&
-                q.config.parent.parentQuestionId.toString() === (question._id ? question._id.toString() : '') &&
-                q.config.parent.parentChoiceIndex === choiceIndex);
-            if (fIndex === -1) return;
-            const fq = this.localQuestions[fIndex];
+            if (!question || !Array.isArray(question.followUp)) return;
+            let childId = null;
+            let fIndex = -1;
+            let fq = null;
+            const parentIdStr = question._id && question._id.toString ? question._id.toString() : question._id;
+            if (Array.isArray(question.followUp)) {
+                const fid = question.followUp[choiceIndex];
+                if (fid) {
+                    const fidStr = this.convertIdToStr(fid);
+                    fIndex = this.localQuestions.findIndex(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
+                    if (fIndex !== -1) {
+                        fq = this.localQuestions[fIndex];
+                        childId = fq && fq._id;
+                    }
+                }
+            }
+            if (!childId) return;
             try {
                 if (fq && fq._id) {
                     await this.$store.dispatch('Questions/delete', { _id: fq._id });
@@ -818,15 +924,41 @@ export default {
             } catch (e) {
                 console.error('delete follow-up failed', e);
             }
-            this.localQuestions.splice(fIndex, 1);
+            if (fIndex !== -1) this.localQuestions.splice(fIndex, 1);
+
+            try {
+                const parentLocal = question;
+                if (Array.isArray(parentLocal.followUp)) {
+                    if (parentLocal.followUp[choiceIndex] && this.convertIdToStr(parentLocal.followUp[choiceIndex]) === this.convertIdToStr(childId)) {
+                        parentLocal.followUp[choiceIndex] = null;
+                    } else {
+                        parentLocal.followUp = parentLocal.followUp.filter(id => !(this.convertIdToStr(id) === (childId && childId.toString ? childId.toString() : childId)));
+                    }
+                }
+                if (parentLocal && parentLocal._id) {
+                    await this.$store.dispatch('Questions/update', {
+                        _id: parentLocal._id,
+                        followUp: parentLocal.followUp
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to persist parent followUp removal', err);
+            }
+
             await this.updateOrdersAndPersist();
         },
 
         findFollowUp(question, choiceIndex) {
             if (!question) return null;
-            return this.localQuestions.find(q => q.config && q.config.parent && q.config.parent.parentQuestionId &&
-                q.config.parent.parentQuestionId.toString() === (question._id ? question._id.toString() : '') &&
-                q.config.parent.parentChoiceIndex === choiceIndex) || null;
+            if (!Array.isArray(question.followUp)) return null;
+            // Prefer mapping by choiceIndex: parent.followUp[choiceIndex] should point to the child id
+            const fid = question.followUp[choiceIndex];
+            if (fid) {
+                const fidStr = this.convertIdToStr(fid);
+                const child = this.localQuestions.find(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
+                if (child) return child;
+            }
+            return null;
         },
         goToFollowUp(question, choiceIndex) {
             const fq = this.findFollowUp(question, choiceIndex);
@@ -835,22 +967,104 @@ export default {
             const idToScroll = fq._id || idx;
             this.scrollToQuestion(idToScroll);
         },
-        async updateOrdersAndPersist() {
-            for (let i = 0; i < this.localQuestions.length; i++) {
-                const q = this.localQuestions[i];
-                const newOrder = i + 1;
-                if (q.order !== newOrder) {
-                    this.$set(q, 'order', newOrder);
-                    if (q && q._id) {
+        getParentForFollowUp(child) {
+            if (!child) return null;
+            const childIdStr = this.convertIdToStr(child._id || child);
+            if (!childIdStr) return null;
+            for (const parent of this.localQuestions) {
+                if (!parent || !Array.isArray(parent.followUp) || parent.followUp.length === 0) continue;
+                for (let i = 0; i < parent.followUp.length; i++) {
+                    const fidStr = this.convertIdToStr(parent.followUp[i]);
+                    if (fidStr && fidStr === childIdStr) {
+                        let parentChoiceLabel = '';
                         try {
-                            await this.putQuestion(q);
+                            if (parent.config && Array.isArray(parent.config.choices)) {
+                                const choice = parent.config.choices[i] || parent.config.choices[0];
+                                if (choice && Array.isArray(choice.lang) && choice.lang[0]) parentChoiceLabel = choice.lang[0].value || '';
+                            }
                         } catch (e) {
-                            console.error('update order failed', e);
+                            // ignore
                         }
+                        return { parent, meta: { parentChoiceLabel } };
                     }
                 }
             }
-            this.triggerAutoSave();
+            return null;
+        },
+        getAncestorChain(question) {
+            // returns array of ancestor questions from root -> immediate parent
+            const chain = [];
+            try {
+                let p = this.getParentForFollowUp(question);
+                while (p && p.parent) {
+                    chain.push(p.parent);
+                    p = this.getParentForFollowUp(p.parent);
+                }
+            } catch (e) {
+                // ignore
+            }
+            return chain.reverse();
+        },
+        displayQuestionNumber(question, index) {
+            try {
+                const ancestors = this.getAncestorChain(question); // root -> immediate parent
+                const parts = [];
+
+                // If there are ancestors, compute numbers for each ancestor
+                for (let aIdx = 0; aIdx < ancestors.length; aIdx++) {
+                    const anc = ancestors[aIdx];
+                    const ancParentObj = this.getParentForFollowUp(anc);
+                    if (!ancParentObj || !ancParentObj.parent) {
+                        // anc is top-level: compute its top-level number
+                        let topNum = 0;
+                        for (let i = 0; i < this.localQuestions.length; i++) {
+                            const item = this.localQuestions[i];
+                            if (!this.getParentForFollowUp(item)) topNum++;
+                            if (item === anc) break;
+                        }
+                        parts.push(String(topNum));
+                    } else {
+                        const parentQ = ancParentObj.parent;
+                        let childPos = 0;
+                        if (Array.isArray(parentQ.followUp)) {
+                            const ancIdStr = this.convertIdToStr(anc._id || anc);
+                            for (let i = 0; i < parentQ.followUp.length; i++) {
+                                if (this.convertIdToStr(parentQ.followUp[i]) === ancIdStr) {
+                                    childPos = i + 1;
+                                    break;
+                                }
+                            }
+                        }
+                        parts.push(String(childPos || 1));
+                    }
+                }
+
+                const immediateParentObj = this.getParentForFollowUp(question);
+                if (immediateParentObj && immediateParentObj.parent) {
+                    const parentQ = immediateParentObj.parent;
+                    let childPos = 0;
+                    if (Array.isArray(parentQ.followUp)) {
+                        const myIdStr = this.convertIdToStr(question._id || question);
+                        for (let i = 0; i < parentQ.followUp.length; i++) {
+                            if (this.convertIdToStr(parentQ.followUp[i]) === myIdStr) {
+                                childPos = i + 1;
+                                break;
+                            }
+                        }
+                    }
+                    parts.push(String(childPos || 1));
+                    return parts.join('.');
+                }
+            } catch (e) {
+                // fallback to default numbering
+            }
+
+            let num = 0;
+            for (let i = 0; i <= index && i < this.localQuestions.length; i++) {
+                const item = this.localQuestions[i];
+                if (!this.getParentForFollowUp(item)) num++;
+            }
+            return num;
         },
         toggleFileType(question, ftKey) {
             if (!question) return;
@@ -911,13 +1125,6 @@ export default {
         },
         getPlaceholder(type, lang) {
             return 'Untitled Question';
-        }
-        ,
-        getFollowUpColor(question) {
-            if (!question || !question.config || !question.config.parent) return '#f6c348';
-            const palette = ['#f6c348', '#4fc3f7', '#81c784', '#e57373'];
-            const idx = Number.isInteger(question.config.parent.parentChoiceIndex) ? (question.config.parent.parentChoiceIndex % palette.length) : 0;
-            return palette[idx];
         }
     }
 }
@@ -983,5 +1190,44 @@ export default {
 
 .shadow-sm {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.followup-card {
+    background-color: #FFFBEB !important;
+    border: 1px solid #FDE68A !important;
+}
+
+.followup-header {
+    background: #FFF3CD;
+    border: 1px solid #F7C948;
+    color: #b45309;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.followup-from {
+    font-size: 0.95rem;
+    color: #6b7280;
+}
+
+.number-question {
+    background: #f8fafc;
+    /* grey-like bg to match card */
+    border: 1px solid #e6eef6;
+    /* subtle border */
+    color: #374151;
+    border-radius: 999px;
+    padding: 0.45rem 0.55rem;
+    margin: 0 0.5rem 0.5rem 0;
+    font-weight: 600;
+}
+
+.number-question.followup-number {
+    background: #FFF3CD;
+    border: 1px solid #F7C948;
+    color: #b45309;
 }
 </style>
