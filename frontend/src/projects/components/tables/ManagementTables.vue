@@ -268,9 +268,9 @@ export default {
                 if (hasStart || hasEnd) {
                     const start = hasStart ? new Date(f.schedule.startAt) : null;
                     const end = hasEnd ? new Date(f.schedule.endAt) : null;
-                    if (start && now < start) {
-                        status = 'Pending';
-                    } else if (end && now > end) {
+                    
+                    // If current time is outside the set range, it's Closed
+                    if ((start && now < start) || (end && now > end)) {
                         status = 'Closed';
                     } else {
                         status = 'Active';
@@ -278,11 +278,11 @@ export default {
                 } else if (f.status) {
                     // fallback to existing status field if schedule not present
                     if (typeof f.status === 'string') status = f.status;
-                    else if (typeof f.status === 'object') status = f.status.type || f.status.name || '-';
+                    else if (typeof f.status === 'object') status = f.status.type || f.status.name || 'Draft';
                 }
                 else {
-                    // no schedule or explicit status -> default to Pending
-                    status = 'Pending';
+                    // no schedule or explicit status -> default to Draft
+                    status = 'Draft';
                 }
 
                 // Responses array
@@ -364,13 +364,13 @@ export default {
         },
         filterStatus(status) {
             this.selectedStatus = status;
-            this.currentPage = 1; // Reset pagination when filter changes
+            this.activePage = 1; // Reset pagination when filter changes
         },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
             if (s === 'active') return 'status-active';
             if (s === 'closed') return 'status-closed';
-            return 'status-pending';
+            return 'status-draft';
         },
         getVisibilityClass(visibility) {
             if (!visibility) return 'visi-default';
@@ -397,8 +397,14 @@ export default {
         },
         async deleteForm(item) {
             try {
-                await this.$store.dispatch('Forms/delete', { _id: item._id });
-                await this.$store.dispatch('Forms/get');
+                const formId = item._id || (item._raw ? item._raw._id : null) || item.id;
+                
+                if (!formId) {
+                    console.error("Could not find a valid ID to delete the form.");
+                    return;
+                }
+
+                await this.$store.dispatch('Forms/delete', { _id: formId });
             } catch (error) {
                 console.error("Failed to delete form:", error);
             }
@@ -445,12 +451,12 @@ export default {
     background-color: #2563eb;
 }
 
-.status-pending {
+.status-draft {
     background-color: #fef9c3;
     color: #854d0e;
 }
 
-.status-pending .status-dot {
+.status-draft .status-dot {
     background-color: #eab308;
 }
 

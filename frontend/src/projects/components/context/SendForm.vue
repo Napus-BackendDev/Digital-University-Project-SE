@@ -1,5 +1,5 @@
 <template>
-    <CCard class="mb-4 border-0 shadow-sm">
+    <CCard class="mb-4 border-0 shadow-sm rounded-20">
         <CCardBody class="p-4">
             <h5 class="mb-2 font-weight-bold text-dark">Send Form</h5>
             <p class="text-muted mb-4">Share this form with respondents via link or email
@@ -83,6 +83,11 @@ export default {
 </script>
 
 <style scoped>
+.rounded-20 {
+    border-radius: 20px !important;
+    overflow: hidden;
+}
+
 .fade-enter-active,
 .fade-leave-active {
     transition: opacity 0.3s ease;

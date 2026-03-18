@@ -1,8 +1,8 @@
 <template>
     <div class="flex-grow-1">
         <Header :title="$t('nav.forms')" :description="$t('table.header')" />
-        <WidgetsDropdownUser />
-        <FormTables />
+        <WidgetsDropdownUser @filter="(status) => $refs.table.filterStatus(status)" />
+        <FormTables ref="table" />
     </div>
 </template>
 

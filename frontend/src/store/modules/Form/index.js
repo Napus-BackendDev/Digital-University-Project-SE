@@ -45,10 +45,10 @@ const ServerModule = {
                 })
                 .catch(error => { throw error; });
         },
-        delete({ commit }, data) {
+        delete({ dispatch }, data) {
             return Service.form('delete', data, {})
                 .then(response => {
-                    commit('forms', response.data.data);
+                    dispatch('get');
                     return response;
                 })
                 .catch(error => { throw error; });

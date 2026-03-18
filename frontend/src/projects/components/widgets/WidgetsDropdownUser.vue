@@ -1,6 +1,6 @@
 <template>
     <CRow class="mb-4">
-        <CCol sm="6" lg="3">
+        <CCol sm="6" lg="3" @click="$emit('filter', 'All')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-primary-light text-primary">
@@ -13,20 +13,7 @@
                 </div>
             </div>
         </CCol>
-        <CCol sm="6" lg="3">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="icon-box bg-warning-light text-warning">
-                        <CIcon name="cil-clock" size="xl" />
-                    </div>
-                </div>
-                <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.pending }}</h2>
-                    <div class="stat-label">{{ $t('widget.pending') }}</div>
-                </div>
-            </div>
-        </CCol>
-        <CCol sm="6" lg="3">
+        <CCol sm="6" lg="3" @click="$emit('filter', 'Completed')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-success-light text-success">
@@ -39,16 +26,29 @@
                 </div>
             </div>
         </CCol>
-        <CCol sm="6" lg="3">
+        <CCol sm="6" lg="3" @click="$emit('filter', 'Pending')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-danger-light text-danger">
-                        <CIcon name="cil-warning" size="xl" />
+                    <div class="icon-box bg-warning-light text-warning">
+                        <CIcon name="cil-clock" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.late }}</h2>
-                    <div class="stat-label">{{ $t('widget.late') }}</div>
+                    <h2 class="stat-value">{{ stats.pending }}</h2>
+                    <div class="stat-label">{{ $t('widget.pending') }}</div>
+                </div>
+            </div>
+        </CCol>
+        <CCol sm="6" lg="3" @click="$emit('filter', 'InProgress')" style="cursor: pointer;">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="icon-box bg-info-light text-info">
+                        <CIcon name="cil-speedometer" size="xl" />
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h2 class="stat-value">{{ stats.inProgress }}</h2>
+                    <div class="stat-label">{{ $t('widget.inprogress') }}</div>
                 </div>
             </div>
         </CCol>
@@ -63,46 +63,38 @@ export default {
     computed: {
         ...mapGetters('Forms', ['forms']),
         stats() {
-            if (!this.forms) return { total: 0, pending: 0, finish: 0, late: 0 };
+            if (!this.forms || !Array.isArray(this.forms)) return { total: 0, pending: 0, finish: 0, inProgress: 0 };
 
-            const now = new Date();
             const responder = '69a50fcc5f1adf15e09b2d86'; 
 
             let total = 0;
             let pending = 0;
             let finish = 0;
-            let late = 0;
+            let inProgress = 0;
 
             this.forms.forEach(form => {
                 total++;
 
-                let hasCompleted = false;
+                let userResponse = null;
                 if (form.responses && Array.isArray(form.responses)) {
-                    hasCompleted = form.responses.some(r =>
+                    userResponse = form.responses.find(r =>
                         r && typeof r === 'object' &&
-                        String(r.responder) === String(responder) &&
-                        (r.submit === true || r.submit === 'true')
+                        String(r.responder) === String(responder)
                     );
                 }
 
-                if (hasCompleted) {
-                    finish++;
-                } else {
-                    const schedule = form.schedule;
-                    if (schedule && schedule.endAt) {
-                        const end = new Date(schedule.endAt);
-                        if (now > end) {
-                            late++;
-                        } else {
-                            pending++;
-                        }
+                if (userResponse) {
+                    if (userResponse.submit === true || userResponse.submit === 'true') {
+                        finish++;
                     } else {
-                        pending++;
+                        inProgress++;
                     }
+                } else {
+                    pending++;
                 }
             });
 
-            return { total, pending, finish, late };
+            return { total, pending, finish, inProgress };
         }
     }
 }
@@ -153,8 +145,8 @@ export default {
     background-color: rgba(46, 184, 92, 0.1);
 }
 
-.bg-danger-light {
-    background-color: rgba(229, 83, 83, 0.1);
+.bg-info-light {
+    background-color: rgba(57, 181, 255, 0.1);
 }
 
 .stat-value {

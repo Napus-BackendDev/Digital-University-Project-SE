@@ -1,8 +1,8 @@
 <template>
     <div class="flex-grow-1">
         <Header :title="$t('nav.manage')" :description="$t('description')" :showCreateButton="true" />
-        <WidgetsManageForms :forms="forms" />
-        <ManagementTables :items="forms" />
+        <WidgetsManageForms :forms="forms" @filter="(status) => $refs.table.filterStatus(status)" />
+        <ManagementTables ref="table" :items="forms" />
     </div>
 </template>
 

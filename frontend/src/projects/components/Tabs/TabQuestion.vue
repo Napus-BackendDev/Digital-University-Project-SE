@@ -1,6 +1,6 @@
 <template>
     <div>
-        <CCard class="mb-3">
+        <CCard class="mb-4 rounded-20 shadow-sm border-0">
             <CCardBody class="p-4">
                 <div>
                     <!-- ── Form Title  ── -->
@@ -49,7 +49,7 @@
         <!-- Left Side Tab -->
         <CCard md="9" class="questions-wrapper">
             <CCard v-for="(question, index) in localQuestions" :key="question._id || index"
-                :id="'question-' + (question._id || index)" class="mb-3 position-relative"
+                :id="'question-' + (question._id || index)" class="mb-3 position-relative rounded-20 shadow-sm border-0""
                 :style="question && question.config && question.config.parent ? { borderLeft: '6px solid ' + getFollowUpColor(question) } : {}">
                 <CCardBody class="p-4">
 
@@ -279,7 +279,7 @@
 
             <!-- Empty state -->
             <div v-if="!localQuestions || localQuestions.length === 0"
-                class="text-center py-5 text-muted bg-white rounded">
+                class="text-center py-5 text-muted bg-white rounded-20 shadow-sm">
                 <CIcon name="cil-notes" :height="40" class="mb-3 text-muted" />
                 <p class="mb-0">You haven’t added any questions yet. Try adding one from the sidebar.</p>
             </div>
@@ -970,5 +970,15 @@ export default {
 .questions-wrapper {
     border: none !important;
     box-shadow: none !important;
+    background: transparent !important;
+}
+
+.rounded-20 {
+    border-radius: 20px !important;
+    overflow: hidden;
+}
+
+.shadow-sm {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
 </style>
