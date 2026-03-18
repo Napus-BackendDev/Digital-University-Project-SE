@@ -471,12 +471,12 @@ export default {
 }
 
 .status-active {
-    background-color: #dbeafe;
-    color: #1e40af;
+    background-color: #d1fae5;
+    color: #065f46;
 }
 
 .status-active .status-dot {
-    background-color: #2563eb;
+    background-color: #059669;
 }
 
 .status-pending {
