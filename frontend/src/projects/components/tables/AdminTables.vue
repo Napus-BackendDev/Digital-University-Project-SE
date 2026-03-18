@@ -23,7 +23,7 @@
                 <template #status="{ item }">
                     <td class="align-middle py-3">
                         <div class="d-flex align-items-center"
-                            :class="{ 'text-dark': item.status === 'Open' || item.status === 'Draft', 'text-muted': item.status === 'Closed' }">
+                            :class="{ 'text-dark': item.status === 'Active' || item.status === 'Draft', 'text-muted': item.status === 'Closed' }">
                             <CIcon :name="getStatusIcon(item.status)" size="sm" class="mr-1" />
                             {{ $t(`status.${item.status.toLowerCase()}`) }}
                         </div>
@@ -106,7 +106,7 @@ export default {
                     if (!start && !end) {
                         statusTitle = 'Draft';
                     } else if (start <= now && now <= end) {
-                        statusTitle = 'Open';
+                        statusTitle = 'Active';
                     } else {
                         statusTitle = 'Closed';
                     }
@@ -134,7 +134,7 @@ export default {
     methods: {
         getStatusIcon(status) {
             switch (status) {
-                case 'Open': return 'cil-check-circle';
+                case 'Active': return 'cil-check-circle';
                 case 'Draft': return 'cil-clock';
                 case 'Closed': return 'cil-x-circle';
                 case 'Scheduled': return 'cil-calendar';

@@ -93,19 +93,20 @@ const en = {
     },
 
     status: {
-        open: "Open",
-        closed: "Closed",
         draft: "Draft",
-        pending: "Draft",
+        active: "Active",
+        closed: "Closed",
+        pending: "Pending",
         inprogress: "In Progress",
         completed: "Completed",
         all: "All Status"
     },
 
     widget: {
-        total: "Total Form",
-        draft: "Draft Forms",
-        finish: "Finish",
+        total: "Total Forms",
+        draft: "Draft",
+        pending: "Pending",
+        completed: "Completed",
         inprogress: "In Progress"
     },
     description: "Description"

@@ -1,7 +1,7 @@
 <template>
     <div>
         <FilterTable :searchQuery.sync="searchQuery" :selectedStatus.sync="selectedStatus" :startDate.sync="startDate"
-            :endDate.sync="endDate" />
+            :endDate.sync="endDate" :managementMode="true" />
 
         <!-- Table -->
         <div class="user-tables-container">
@@ -66,7 +66,7 @@
                                     <CIcon name="cil-check-alt" size="sm" class="text-success" />
                                 </div>
                                 <span class="response-count font-weight-bold mr-1">{{ getCompletedCount(item.responses)
-                                }}</span>
+                                    }}</span>
                                 <small class="text-muted">Completed</small>
                             </div>
                             <div class="d-flex align-items-center">
@@ -75,7 +75,7 @@
                                     <CIcon name="cil-history" size="sm" class="text-info" />
                                 </div>
                                 <span class="response-count font-weight-bold mr-1">{{ getOngoingCount(item.responses)
-                                }}</span>
+                                    }}</span>
                                 <small class="text-muted">Ongoing</small>
                             </div>
                         </div>
@@ -273,15 +273,15 @@ export default {
                     timeRange = f.timeRange;
                 }
 
-                // Status: derive from schedule if available (Pending / Active / Closed)
-                let status = 'Pending';
+                // Status: derive from schedule if available (Draft / Active / Closed)
+                let status = 'Draft';
                 const now = new Date();
                 const hasStart = f.schedule && f.schedule.startAt;
                 const hasEnd = f.schedule && f.schedule.endAt;
                 if (hasStart || hasEnd) {
                     const start = hasStart ? new Date(f.schedule.startAt) : null;
                     const end = hasEnd ? new Date(f.schedule.endAt) : null;
-                    
+
                     // If current time is outside the set range, it's Closed
                     if ((start && now < start) || (end && now > end)) {
                         status = 'Closed';
@@ -291,7 +291,7 @@ export default {
                 } else if (f.status) {
                     // fallback to existing status field if schedule not present
                     if (typeof f.status === 'string') status = f.status;
-                    else if (typeof f.status === 'object') status = f.status.type || f.status.name || 'Draft';
+                    else if (typeof f.status === 'object') status = f.status.type || f.status.name || 'Pending';
                 }
                 else {
                     // no schedule or explicit status -> default to Draft
@@ -397,7 +397,7 @@ export default {
             const s = status ? status.toLowerCase() : '';
             if (s === 'active') return 'status-active';
             if (s === 'closed') return 'status-closed';
-            return 'status-draft';
+            return 'status-pending';
         },
         getVisibilityClass(visibility) {
             if (!visibility) return 'visi-default';
@@ -426,7 +426,7 @@ export default {
         async deleteForm(item) {
             try {
                 const formId = item._id || (item._raw ? item._raw._id : null) || item.id;
-                
+
                 if (!formId) {
                     console.error("Could not find a valid ID to delete the form.");
                     return;
@@ -479,12 +479,12 @@ export default {
     background-color: #2563eb;
 }
 
-.status-draft {
+.status-pending {
     background-color: #fef9c3;
     color: #854d0e;
 }
 
-.status-draft .status-dot {
+.status-pending .status-dot {
     background-color: #eab308;
 }
 

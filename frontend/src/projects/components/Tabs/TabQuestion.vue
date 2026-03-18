@@ -1,6 +1,6 @@
 <template>
     <div>
-        <CCard class="mb-4 rounded-20 shadow-sm border-0">
+        <CCard class="mb-4 rounded-20 shadow-sm border">
             <CCardBody class="p-4">
                 <div>
                     <!-- ── Form Title  ── -->
@@ -49,14 +49,16 @@
         <!-- Left Side Tab -->
         <CCard md="9" class="questions-wrapper">
             <CCard v-for="(question, index) in localQuestions" :key="question._id || index"
-                :id="'question-' + (question._id || index)" class="mb-3 position-relative rounded-20 shadow-sm border-0""
+                :id="'question-' + (question._id || index)" class="mb-3 position-relative rounded-20 shadow-sm border"
                 :style="question && question.config && question.config.parent ? { borderLeft: '6px solid ' + getFollowUpColor(question) } : {}">
                 <CCardBody class="p-4">
 
                     <!-- Question Title -->
                     <div v-if="question.config && question.config.parent" class="mb-2">
                         <span class="badge badge-warning rounded-pill px-2">Follow-up</span>
-                        <small class="text-muted ml-2">From option: {{ question.config.parent.parentChoiceLabel }}</small>
+                        <small class="text-muted ml-2">
+                            From option: {{ question.config.parent.parentChoiceLabel }}
+                        </small>
                     </div>
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div class="flex-grow-1">
@@ -116,18 +118,19 @@
                                 </CButton>
                             </div>
 
-                            <div class="ml-4 pl-1">
-                                <div v-if="!choice.followUp" class="mb-2">
+                            <div class="ml-4 mt-1">
+                                <div v-if="!findFollowUp(question, choiceIndex)" class="mb-2">
                                     <CButton size="sm" variant="ghost" color="danger" class="px-2 text-decoration-none"
                                         @click="addFollowUp(question, choiceIndex)">
-                                        <span>+ Add follow-up question</span>
+                                        + Add Follow-Up Question
                                     </CButton>
                                 </div>
 
-                                <div v-else="findFollowUp(question, choiceIndex)" class="mt-2">
-                                    <CButton size="sm" variant="ghost" color="warning" class="p-0 text-decoration-none"
+                                <div v-else-if="findFollowUp(question, choiceIndex)" class="mt-2">
+                                    <CButton size="sm" variant="ghost" color="warning" class="px-2 text-decoration-none"
                                         @click="goToFollowUp(question, choiceIndex)">
-                                        <CIcon name="cil-arrow-right" class="mr-1" /> Go to follow up question
+                                        <CIcon name="cil-arrow-right" class="mr-1" />
+                                        Go To Follow-Up Question
                                     </CButton>
                                 </div>
                             </div>
@@ -744,7 +747,6 @@ export default {
             const choice = question.config.choices[choiceIndex];
             if (!choice) return;
 
-            // build follow-up question object
             const mcType = this.questionTypes.find(t => t.type === 'multiple_choice');
             const typeId = mcType ? mcType._id : (typeof question.type === 'object' ? question.type._id : question.type);
 
@@ -800,6 +802,7 @@ export default {
             }
 
             await this.updateOrdersAndPersist();
+            this.goToFollowUp(question, choiceIndex);
         },
         async removeFollowUp(question, choiceIndex) {
             // find follow-up question linked to this parent+choice

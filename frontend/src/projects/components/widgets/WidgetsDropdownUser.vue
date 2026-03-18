@@ -21,8 +21,8 @@
                     </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.finish }}</h2>
-                    <div class="stat-label">{{ $t('widget.finish') }}</div>
+                    <h2 class="stat-value">{{ stats.completed }}</h2>
+                    <div class="stat-label">{{ $t('widget.completed') }}</div>
                 </div>
             </div>
         </CCol>
@@ -63,13 +63,13 @@ export default {
     computed: {
         ...mapGetters('Forms', ['forms']),
         stats() {
-            if (!this.forms || !Array.isArray(this.forms)) return { total: 0, pending: 0, finish: 0, inProgress: 0 };
+            if (!this.forms || !Array.isArray(this.forms)) return { total: 0, pending: 0, completed: 0, inProgress: 0 };
 
             const responder = '69a50fcc5f1adf15e09b2d86'; 
 
             let total = 0;
             let pending = 0;
-            let finish = 0;
+            let completed = 0;
             let inProgress = 0;
 
             this.forms.forEach(form => {
@@ -85,7 +85,7 @@ export default {
 
                 if (userResponse) {
                     if (userResponse.submit === true || userResponse.submit === 'true') {
-                        finish++;
+                        completed++;
                     } else {
                         inProgress++;
                     }
@@ -94,7 +94,7 @@ export default {
                 }
             });
 
-            return { total, pending, finish, inProgress };
+            return { total, pending, completed, inProgress };
         }
     }
 }
