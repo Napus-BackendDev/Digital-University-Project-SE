@@ -31,12 +31,15 @@
             <div class="mb-4">
                 <label class="mb-3 font-weight-bold ">Selected Organizations</label>
                 <div class="org-list">
-                    <span v-for="(org, index) in settings.organization" :key="index" class="badge-custom">
-                        {{ org }}
+                    <span v-for="(orgId, index) in settings.organization" :key="index" class="badge-custom">
+                        {{ getOrgName(orgId) }}
                         <span class="ml-2 delete-icon-wrapper" @click.stop="removeOrganization(index)" title="Remove">
                             <CIcon name="cil-x" size="sm" class="delete-icon" />
                         </span>
                     </span>
+                    <div v-if="!settings.organization || settings.organization.length === 0" class="text-muted small">
+                        No organizations selected. Form will be private.
+                    </div>
                 </div>
             </div>
 
@@ -47,8 +50,8 @@
                 <CRow>
                     <CCol md="10" class="mb-3">
                         <label class="mb-2 font-weight-bold small">Organization Name</label>
-                        <CSelect :options="organizationOptions" :value="selectedOrg" placeholder="Select organization"
-                            class="form-select-custom" @update:value="(val) => { selectedOrg = val; }" />
+                        <CSelect :options="organizationOptions" :value="selectedOrgId" placeholder="Select organization"
+                            class="form-select-custom" @update:value="(val) => { selectedOrgId = val; }" />
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
@@ -61,7 +64,7 @@
                 <!-- Info Hint -->
                 <div class="info-hint mb-3">
                     <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
-                    <h5 class="mb-0 ">ถ้าคุณเลือก <strong>General</strong> หน่วยงานจะสามารถ ทำ ฟอร์ม ได้</h5>
+                    <h5 class="mb-0 ">ถ้าคุณเลือก <strong>General</strong> ทุกหน่วยงานจะสามารถ ทำ ฟอร์ม ได้</h5>
                 </div>
             </div>
 
@@ -70,6 +73,8 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
     name: 'OrganizationControl',
     props: {
@@ -80,30 +85,50 @@ export default {
     },
     data() {
         return {
-            selectedOrg: 'Digital University',
-            organizationOptions: [
-                { label: 'Digital University', value: 'Digital University' },
-                { label: 'Academic Affairs', value: 'Academic Affairs' },
-                { label: 'Student Services', value: 'Student Services' },
-                { label: 'Administration', value: 'Administration' },
-                { label: 'General', value: 'General' }
-            ]
+            selectedOrgId: null,
+        }
+    },
+    computed: {
+        ...mapGetters('Organizations', ['organizations']),
+        organizationOptions() {
+            if (!this.organizations || this.organizations.length === 0) return [];
+            return this.organizations.map(o => {
+                // Extract English title
+                let label = 'Unknown Org';
+                if (Array.isArray(o.title)) {
+                    const en = o.title.find(t => t && t.key === 'en');
+                    label = en ? en.value : (o.title[0] ? o.title[0].value : 'Unnamed');
+                }
+                return { label: label, value: o._id };
+            });
         }
     },
     methods: {
+        getOrgName(orgId) {
+            if (!this.organizations) return '...';
+            const org = this.organizations.find(o => o._id === orgId);
+            if (!org) return orgId; // Fallback to ID if not found
+            
+            if (Array.isArray(org.title)) {
+                const en = org.title.find(t => t && t.key === 'en');
+                return en ? en.value : (org.title[0] ? org.title[0].value : 'Unnamed');
+            }
+            return org.name || org.title || 'Unnamed';
+        },
         addOrganization() {
-            if (!this.selectedOrg) return;
+            if (!this.selectedOrgId) return;
             
             // Initialize settings.organization if it doesn't exist
             if (!this.settings.organization) {
                 this.$set(this.settings, 'organization', []);
             }
 
-            if (this.settings.organization.includes(this.selectedOrg)) {
+            if (this.settings.organization.includes(this.selectedOrgId)) {
                 return;
             }
 
-            this.settings.organization.push(this.selectedOrg);
+            this.settings.organization.push(this.selectedOrgId);
+            this.selectedOrgId = null; // Clear after add
             this.triggerAutoSave();
         },
         removeOrganization(index) {
@@ -115,6 +140,7 @@ export default {
         }
     },
     mounted() {
+        this.$store.dispatch('Organizations/getAll');
         // Ensure organization array exists
         if (!this.settings.organization) {
             this.$set(this.settings, 'organization', []);

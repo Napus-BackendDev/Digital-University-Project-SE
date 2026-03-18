@@ -67,7 +67,7 @@ export default {
         return instance.delete('response', { data })
 
       case 'download-user-json':
-        return instance.get(`response/download/${data.formId}/user/${data.userId}`)
+        return instance.get(`response/download/${data.formId}/response/${data.responseId}`)
       case 'download-form-json':
         return instance.get(`response/download/${data.formId}`)
       default:
@@ -135,8 +135,35 @@ export default {
 
   user(method, data) {
     switch (method) {
+      case 'exp':
+        return instance.get('user/exp')
       case 'get':
         return instance.post('user/get', data)
+      case 'create':
+        return instance.post('user', data)
+      case 'update':
+        return instance.put('user', data)
+      case 'delete':
+        return instance.delete('user', { data })
+      case 'role-list':
+        return instance.get('user/role/exp')
+      default:
+        break
+    }
+  },
+
+  organization(method, data) {
+    switch (method) {
+      case 'exp':
+        return instance.get('organization/exp')
+      case 'get':
+        return instance.post('organization/get', data)
+      case 'create':
+        return instance.post('organization', data)
+      case 'update':
+        return instance.put('organization', data)
+      case 'delete':
+        return instance.delete('organization', { data })
       default:
         break
     }

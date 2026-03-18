@@ -29,9 +29,9 @@
                 <template #access="{ item }">
                     <td class="py-3">
                         <div class="access-stack">
-                            <span v-for="(v, idx) in item.visibility" :key="idx" 
-                                  class="visibility-badge" :class="v.class">
-                                {{ v.name }}
+                            <span v-for="(v, idx) in item.access" :key="idx" 
+                                  class="visibility-badge" :class="getVisibilityClass(v)">
+                                {{ v }}
                             </span>
                         </div>
                     </td>
@@ -276,15 +276,31 @@ export default {
                     }
                 }
 
-                // Access logic (match ManagementTables)
-                let visibility = [];
-                if (Array.isArray(f.organization) && f.organization.length > 0) {
-                    visibility = f.organization.map(o => {
-                        if (o.name === 'General') return { name: 'Public', class: 'visi-public' };
-                        return { name: o.name || o.title || 'Org', class: 'visi-org' };
-                    });
+                // Access Logic (match ManagementTables)
+                const rawOrgs = f.organization || [];
+                let access = [];
+
+                // Extract plain names from populated objects or strings
+                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
+                    if (!o) return null;
+                    if (typeof o === 'string') return o;
+                    if (typeof o === 'object') {
+                        // Support the multi-language title structure
+                        if (Array.isArray(o.title)) {
+                            const en = o.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
+                            return en ? en.value : (o.title[0] ? o.title[0].value : null);
+                        }
+                        return o.name || o.value || o.title || null;
+                    }
+                    return null;
+                }).filter(Boolean);
+
+                if (orgNames.includes('General')) {
+                    access = ['Public'];
+                } else if (orgNames.length > 0) {
+                    access = orgNames;
                 } else {
-                    visibility = [{ name: 'Private', class: 'visi-private' }];
+                    access = ['Private'];
                 }
 
                 const createdAt = f.updatedAt || f.createdAt || '-';
@@ -302,7 +318,7 @@ export default {
                     createdBy: createdName || createdEmail || '-',
                     createdName: createdName || '-',
                     createdEmail: createdEmail || '',
-                    visibility: visibility,
+                    access: access,
                     _raw: f
                 };
             });
@@ -469,6 +485,13 @@ export default {
             if (s === 'completed') return 'status-completed';
             if (s === 'inprogress') return 'status-inprogress';
             return 'status-pending';
+        },
+        getVisibilityClass(visibility) {
+            if (!visibility) return 'visi-default';
+            const v = String(visibility).toLowerCase();
+            if (v.includes('public') || v.includes('สาธารณะ') || v === 'general') return 'visi-public';
+            if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
+            return 'visi-org';
         },
         getProgressColor(progress) {
             if (progress >= 100) return 'success';

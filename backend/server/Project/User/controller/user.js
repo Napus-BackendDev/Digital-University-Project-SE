@@ -8,6 +8,7 @@ const defaultPopulate = [
         path: 'response',
         populate: { path: 'form' }
     },
-]
+    { path: 'organization', select: 'title' }
+];
 
 module.exports = createBaseService(objSchema, defaultPopulate);
