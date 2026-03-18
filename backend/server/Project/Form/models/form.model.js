@@ -22,8 +22,7 @@ var objSchema = new Schema({
     },
     responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null },
-    creator: { type: Schema.Types.ObjectId, ref: 'Users', default: null },
-
+    creator: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Forms', objSchema, "Forms");
