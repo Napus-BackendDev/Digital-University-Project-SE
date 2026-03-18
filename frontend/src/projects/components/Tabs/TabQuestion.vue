@@ -49,10 +49,15 @@
         <!-- Left Side Tab -->
         <CCard md="9" class="questions-wrapper">
             <CCard v-for="(question, index) in localQuestions" :key="question._id || index"
-                :id="'question-' + (question._id || index)" class="mb-3 position-relative">
+                :id="'question-' + (question._id || index)" class="mb-3 position-relative"
+                :style="question && question.config && question.config.parent ? { borderLeft: '6px solid ' + getFollowUpColor(question) } : {}">
                 <CCardBody class="p-4">
 
                     <!-- Question Title -->
+                    <div v-if="question.config && question.config.parent" class="mb-2">
+                        <span class="badge badge-warning rounded-pill px-2">Follow-up</span>
+                        <small class="text-muted ml-2">From option: {{ question.config.parent.parentChoiceLabel }}</small>
+                    </div>
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div class="flex-grow-1">
                             <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
@@ -94,17 +99,38 @@
                     <div v-else-if="
                         getQuestionType(question.type).toLowerCase() === 'multiple_choice' ||
                         getQuestionType(question.type).toLowerCase() === 'checkbox'">
-                        <div v-for="(choice, choiceIndex) in question.config.choices"
-                            class="d-flex align-items-center mb-2">
-                            <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
-                                class="border rounded-circle mr-2 flex-shrink-0" style="width: 30px; height: 30px;" />
-                            <div v-else class="border rounded mr-2 flex-shrink-0" style="width: 30px; height: 30px;" />
-                            <CInput class="flex-grow-1 mb-0" :value="choice.lang[0].value"
-                                @input="updateOption(question, choiceIndex, $event)" />
-                            <CButton color="danger" variant="ghost" size="sm" class="ml-1"
-                                v-if="question.config.choices.length > 1" @click="removeOption(question, choiceIndex)">
-                                <CIcon name="cil-minus" />
-                            </CButton>
+                        <div v-for="(choice, choiceIndex) in question.config.choices" :key="choice.key || choiceIndex"
+                            class="mb-2">
+                            <div class="d-flex align-items-center">
+                                <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
+                                    class="border rounded-circle mr-2 flex-shrink-0"
+                                    style="width: 30px; height: 30px;" />
+                                <div v-else class="border rounded mr-2 flex-shrink-0"
+                                    style="width: 30px; height: 30px;" />
+                                <CInput class="flex-grow-1 mb-0" :value="choice.lang[0].value"
+                                    @input="updateOption(question, choiceIndex, $event)" />
+                                <CButton color="danger" variant="ghost" size="sm" class="ml-1"
+                                    v-if="question.config.choices.length > 1"
+                                    @click="removeOption(question, choiceIndex)">
+                                    <CIcon name="cil-minus" />
+                                </CButton>
+                            </div>
+
+                            <div class="ml-4 pl-1">
+                                <div v-if="!choice.followUp" class="mb-2">
+                                    <CButton size="sm" variant="ghost" color="danger" class="px-2 text-decoration-none"
+                                        @click="addFollowUp(question, choiceIndex)">
+                                        <span>+ Add follow-up question</span>
+                                    </CButton>
+                                </div>
+
+                                <div v-else="findFollowUp(question, choiceIndex)" class="mt-2">
+                                    <CButton size="sm" variant="ghost" color="warning" class="p-0 text-decoration-none"
+                                        @click="goToFollowUp(question, choiceIndex)">
+                                        <CIcon name="cil-arrow-right" class="mr-1" /> Go to follow up question
+                                    </CButton>
+                                </div>
+                            </div>
                         </div>
                         <CButton color="primary" variant="ghost" class="d-flex align-items-center p-1 mt-1"
                             @click="addOption(question)">
@@ -713,6 +739,116 @@ export default {
             question.config.choices.splice(oIndex, 1);
             this.putQuestion(question);
         },
+        async addFollowUp(question, choiceIndex) {
+            if (!question || !question.config || !Array.isArray(question.config.choices)) return;
+            const choice = question.config.choices[choiceIndex];
+            if (!choice) return;
+
+            // build follow-up question object
+            const mcType = this.questionTypes.find(t => t.type === 'multiple_choice');
+            const typeId = mcType ? mcType._id : (typeof question.type === 'object' ? question.type._id : question.type);
+
+            const parentIndex = this.localQuestions.findIndex(q => q === question || (q._id && question._id && q._id.toString() === question._id.toString()));
+            const newQ = {
+                _id: this.form && this.form._id ? undefined : ('tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)),
+                form: this.form && this.form._id ? this.form._id : undefined,
+                title: [{ key: 'en', value: 'Follow-up Question' }],
+                type: typeId,
+                isRequired: false,
+                config: {
+                    choices: [{ key: '0', lang: [{ key: 'en', value: 'Option 1' }] }],
+                    parent: {
+                        parentQuestionId: question._id || null,
+                        parentChoiceIndex: choiceIndex,
+                        parentChoiceLabel: (choice && choice.lang && choice.lang[0] && choice.lang[0].value) || ''
+                    }
+                }
+            };
+
+            // insert as a separate question after any existing follow-ups for this parent
+            const insertAt = (function () {
+                if (parentIndex === -1) return this.localQuestions.length;
+                let lastIdx = parentIndex;
+                for (let i = parentIndex + 1; i < this.localQuestions.length; i++) {
+                    const q2 = this.localQuestions[i];
+                    if (q2 && q2.config && q2.config.parent && q2.config.parent.parentQuestionId &&
+                        q2.config.parent.parentQuestionId.toString() === (question._id ? question._id.toString() : '')) {
+                        lastIdx = i;
+                    } else break;
+                }
+                return lastIdx + 1;
+            }).call(this);
+            this.localQuestions.splice(insertAt, 0, newQ);
+
+            // if backend available, create and replace
+            if (this.form && this.form._id) {
+                try {
+                    const payload = JSON.parse(JSON.stringify(newQ));
+                    if (payload.type && typeof payload.type === 'object') payload.type = payload.type._id;
+                    const res = await this.$store.dispatch('Questions/create', payload);
+                    const created = res && res.data && res.data.data;
+                    if (created && created._id) {
+                        // ensure parent meta preserved and replace the pushed temp at the end
+                        if (!created.config) created.config = {};
+                        created.config.parent = newQ.config.parent;
+                        // replace the inserted temp/newQ at insertAt with created
+                        this.$set(this.localQuestions, insertAt, created);
+                    }
+                } catch (e) {
+                    console.error('create follow-up failed', e);
+                }
+            }
+
+            await this.updateOrdersAndPersist();
+        },
+        async removeFollowUp(question, choiceIndex) {
+            // find follow-up question linked to this parent+choice
+            const fIndex = this.localQuestions.findIndex(q => q.config && q.config.parent && q.config.parent.parentQuestionId &&
+                q.config.parent.parentQuestionId.toString() === (question._id ? question._id.toString() : '') &&
+                q.config.parent.parentChoiceIndex === choiceIndex);
+            if (fIndex === -1) return;
+            const fq = this.localQuestions[fIndex];
+            try {
+                if (fq && fq._id) {
+                    await this.$store.dispatch('Questions/delete', { _id: fq._id });
+                }
+            } catch (e) {
+                console.error('delete follow-up failed', e);
+            }
+            this.localQuestions.splice(fIndex, 1);
+            await this.updateOrdersAndPersist();
+        },
+
+        findFollowUp(question, choiceIndex) {
+            if (!question) return null;
+            return this.localQuestions.find(q => q.config && q.config.parent && q.config.parent.parentQuestionId &&
+                q.config.parent.parentQuestionId.toString() === (question._id ? question._id.toString() : '') &&
+                q.config.parent.parentChoiceIndex === choiceIndex) || null;
+        },
+        goToFollowUp(question, choiceIndex) {
+            const fq = this.findFollowUp(question, choiceIndex);
+            if (!fq) return;
+            const idx = this.localQuestions.findIndex(q => q === fq);
+            const idToScroll = fq._id || idx;
+            this.scrollToQuestion(idToScroll);
+        },
+        async updateOrdersAndPersist() {
+            for (let i = 0; i < this.localQuestions.length; i++) {
+                const q = this.localQuestions[i];
+                const newOrder = i + 1;
+                if (q.order !== newOrder) {
+                    this.$set(q, 'order', newOrder);
+                    if (q && q._id) {
+                        try {
+                            await this.putQuestion(q);
+                        } catch (e) {
+                            console.error('update order failed', e);
+                        }
+                    }
+                }
+            }
+            this.triggerAutoSave();
+        },
         toggleFileType(question, ftKey) {
             if (!question) return;
             if (!question.config) this.$set(question, 'config', {});
@@ -772,6 +908,13 @@ export default {
         },
         getPlaceholder(type, lang) {
             return 'Untitled Question';
+        }
+        ,
+        getFollowUpColor(question) {
+            if (!question || !question.config || !question.config.parent) return '#f6c348';
+            const palette = ['#f6c348', '#4fc3f7', '#81c784', '#e57373'];
+            const idx = Number.isInteger(question.config.parent.parentChoiceIndex) ? (question.config.parent.parentChoiceIndex % palette.length) : 0;
+            return palette[idx];
         }
     }
 }

@@ -48,7 +48,8 @@ var objSchema = new Schema({
         // Image
         image: { type: String, default: null },
     },
-    isRequired: { type: Boolean, default: false }
+    isRequired: { type: Boolean, default: false },
+    followUp: { type: mongoose.Schema.Types.ObjectId, ref: 'Questions', default: null },
 }, { timestamps: true });
 
 // Auto-update Form's questions array when a new Question is created
