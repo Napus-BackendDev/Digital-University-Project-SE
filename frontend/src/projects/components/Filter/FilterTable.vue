@@ -33,7 +33,7 @@
                             </button>
                         </template>
                         <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}</CDropdownItem>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}</CDropdownItem>
+                        <CDropdownItem @click="$emit('update:selectedStatus', 'Draft')">{{ $t('status.draft') }}</CDropdownItem>
                         <CDropdownItem @click="$emit('update:selectedStatus', 'InProgress')">{{ $t('status.inprogress') }}</CDropdownItem>
                         <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{ $t('status.completed') }}</CDropdownItem>
                     </CDropdown>

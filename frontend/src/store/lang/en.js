@@ -96,7 +96,7 @@ const en = {
         open: "Open",
         closed: "Closed",
         draft: "Draft",
-        pending: "Pending",
+        pending: "Draft",
         inprogress: "In Progress",
         completed: "Completed",
         all: "All Status"
@@ -104,7 +104,7 @@ const en = {
 
     widget: {
         total: "Total Form",
-        pending: "Pending",
+        draft: "Draft Forms",
         finish: "Finish",
         inprogress: "In Progress"
     },

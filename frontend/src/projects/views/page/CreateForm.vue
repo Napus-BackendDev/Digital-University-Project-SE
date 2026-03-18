@@ -46,6 +46,7 @@ export default {
     },
     computed: {
         headerTitle() {
+            if (this.activeTab === 'question') return "Form Questions";
             if (this.activeTab === 'response') return "Form Responses";
             if (this.activeTab === 'setting') return "Form Settings";
             
@@ -57,6 +58,7 @@ export default {
             return this.formData.title || "Untitled Form";
         },
         headerDescription() {
+            if (this.activeTab === 'question') return "Add and organize questions to collect responses";
             if (this.activeTab === 'response') return "View and analyze form submissions and performance data";
             if (this.activeTab === 'setting') return "Configure form access, schedule, and organization controls";
 

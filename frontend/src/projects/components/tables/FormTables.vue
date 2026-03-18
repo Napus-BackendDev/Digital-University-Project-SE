@@ -306,6 +306,25 @@ export default {
                 });
             }
 
+            // Apply requested global filters: only Pending/InProgress AND within active Time Range
+            const now = new Date();
+            filtered = filtered.filter(f => {
+                // Status check
+                const isAcceptableStatus = f.status === 'Pending' || f.status === 'InProgress';
+                
+                // Time Range check
+                const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
+                
+                // If both are null/missing, don't show it as requested ("when it null don't show too")
+                if (!sched.startAt && !sched.endAt) return false;
+
+                let isInTimeRange = true;
+                if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
+                if (sched.endAt && now > new Date(sched.endAt)) isInTimeRange = false;
+                
+                return isAcceptableStatus && isInTimeRange;
+            });
+
             return filtered;
         }
     },
@@ -329,12 +348,6 @@ export default {
             if (s === 'completed') return 'status-completed';
             if (s === 'inprogress') return 'status-inprogress';
             return 'status-pending';
-        },
-        getProgressColor(progress) {
-            if (progress >= 100) return 'success';
-            if (progress >= 40) return 'info';
-            if (progress > 0) return 'warning';
-            return 'secondary';
         },
         getProgressColor(progress) {
             if (progress >= 100) return 'success';
