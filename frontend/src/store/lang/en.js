@@ -94,7 +94,7 @@ const en = {
 
     status: {
         draft: "Draft",
-        active: "Open",
+        active: "Active",
         closed: "Closed",
         pending: "Pending",
         inprogress: "In Progress",

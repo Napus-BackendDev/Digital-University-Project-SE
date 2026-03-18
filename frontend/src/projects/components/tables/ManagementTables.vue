@@ -1,7 +1,7 @@
 <template>
     <div>
         <FilterTable :searchQuery.sync="searchQuery" :selectedStatus.sync="selectedStatus" :startDate.sync="startDate"
-            :endDate.sync="endDate" />
+            :endDate.sync="endDate" :managementMode="true" />
 
         <!-- Table -->
         <div class="user-tables-container">
@@ -54,7 +54,7 @@
                                     <CIcon name="cil-check-alt" size="sm" class="text-success" />
                                 </div>
                                 <span class="response-count font-weight-bold mr-1">{{ getCompletedCount(item.responses)
-                                }}</span>
+                                    }}</span>
                                 <small class="text-muted">Completed</small>
                             </div>
                             <div class="d-flex align-items-center">
@@ -63,7 +63,7 @@
                                     <CIcon name="cil-history" size="sm" class="text-info" />
                                 </div>
                                 <span class="response-count font-weight-bold mr-1">{{ getOngoingCount(item.responses)
-                                }}</span>
+                                    }}</span>
                                 <small class="text-muted">Ongoing</small>
                             </div>
                         </div>
@@ -268,7 +268,7 @@ export default {
                 if (hasStart || hasEnd) {
                     const start = hasStart ? new Date(f.schedule.startAt) : null;
                     const end = hasEnd ? new Date(f.schedule.endAt) : null;
-                    
+
                     // If current time is outside the set range, it's Closed
                     if ((start && now < start) || (end && now > end)) {
                         status = 'Closed';
@@ -398,7 +398,7 @@ export default {
         async deleteForm(item) {
             try {
                 const formId = item._id || (item._raw ? item._raw._id : null) || item.id;
-                
+
                 if (!formId) {
                     console.error("Could not find a valid ID to delete the form.");
                     return;

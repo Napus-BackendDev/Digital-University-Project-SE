@@ -92,9 +92,9 @@ const th = {
     },
 
     status: {
+        draft: "ร่าง",
         active: "เปิด",
         closed: "ปิด",
-        draft: "ร่าง",
         pending: "ร่าง",
         inprogress: "กำลังดำเนินการ",
         completed: "เสร็จสิ้น",

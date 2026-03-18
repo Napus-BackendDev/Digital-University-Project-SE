@@ -11,28 +11,19 @@
                 <!-- Tab Selectors -->
                 <div class="tab-buttons mb-4">
                     <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Main Navigation</label>
-                    <CButton 
-                        class="w-100 mb-2 text-left nav-btn" 
-                        color="primary"
-                        :variant="activeTab === 'question' ? 'solid' : 'ghost'" 
-                        @click="$emit('update:activeTab', 'question')"
-                    >
+                    <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
+                        :variant="activeTab === 'question' ? 'solid' : 'ghost'"
+                        @click="$emit('update:activeTab', 'question')">
                         <CIcon name="cil-description" class="mr-2" /> Questions
                     </CButton>
-                    <CButton 
-                        class="w-100 mb-2 text-left nav-btn" 
-                        color="primary"
-                        :variant="activeTab === 'response' ? 'solid' : 'ghost'" 
-                        @click="$emit('update:activeTab', 'response')"
-                    >
+                    <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
+                        :variant="activeTab === 'response' ? 'solid' : 'ghost'"
+                        @click="$emit('update:activeTab', 'response')">
                         <CIcon name="cil-chart-pie" class="mr-2" /> Responses
                     </CButton>
-                    <CButton 
-                        class="w-100 mb-2 text-left nav-btn" 
-                        color="primary"
-                        :variant="activeTab === 'setting' ? 'solid' : 'ghost'" 
-                        @click="$emit('update:activeTab', 'setting')"
-                    >
+                    <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
+                        :variant="activeTab === 'setting' ? 'solid' : 'ghost'"
+                        @click="$emit('update:activeTab', 'setting')">
                         <CIcon name="cil-settings" class="mr-2" /> Settings
                     </CButton>
                 </div>
@@ -40,17 +31,13 @@
                 <!-- Question Types Section -->
                 <div class="toolbar-scroll-area flex-grow-1 pr-2" v-if="activeTab === 'question'">
                     <div class="mb-4">
-                        <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Question Types</label>
+                        <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Question
+                            Types</label>
                         <div class="d-flex flex-column">
-                            <CButton 
-                                v-for="type in questionTypes" 
-                                :key="type._id"
-                                v-if="type.type !== 'title_description' && type.type !== 'image'" 
-                                variant="ghost"
-                                color="dark" 
-                                class="w-100 mb-1 text-left type-btn d-flex align-items-center"
-                                @click="$emit('add-question', type._id)"
-                            >
+                            <CButton v-for="type in questionTypes" :key="type._id"
+                                v-if="type.type !== 'title_description' && type.type !== 'image'" variant="ghost"
+                                color="dark" class="w-100 mb-1 text-left type-btn d-flex align-items-center"
+                                @click="$emit('add-question', type._id)">
                                 <div class="icon-circle mr-3">
                                     <CIcon :name="getIconForType(type.type)" size="sm" />
                                 </div>
@@ -60,25 +47,20 @@
                     </div>
 
                     <div class="pt-3 border-top">
-                        <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Content Elements</label>
+                        <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Content
+                            Elements</label>
                         <div class="d-flex flex-column">
-                            <CButton 
-                                variant="ghost" 
-                                color="dark" 
+                            <CButton variant="ghost" color="dark"
                                 class="w-100 mb-1 text-left type-btn d-flex align-items-center"
-                                @click="$emit('add-question', 'title_description')"
-                            >
+                                @click="$emit('add-question', 'title_description')">
                                 <div class="icon-circle mr-3">
                                     <CIcon name="cil-text" size="sm" />
                                 </div>
                                 <span class="font-weight-medium">Title & Description</span>
                             </CButton>
-                            <CButton 
-                                variant="ghost" 
-                                color="dark" 
+                            <CButton variant="ghost" color="dark"
                                 class="w-100 mb-1 text-left type-btn d-flex align-items-center"
-                                @click="$emit('open-image')"
-                            >
+                                @click="$emit('open-image')">
                                 <div class="icon-circle mr-3">
                                     <CIcon name="cil-image-1" size="sm" />
                                 </div>
@@ -115,9 +97,10 @@ export default {
     methods: {
         formatTypeLabel(rawType) {
             if (!rawType) return '';
-            const type = rawType.toLowerCase();
-            if (type === 'short_answer') return 'Short Paragraph';
-            return type.split('_').join(' ');
+            return rawType
+                .split(/[_\s]+/)
+                .map(seg => seg ? seg.charAt(0).toUpperCase() + seg.slice(1) : '')
+                .join(' ');
         },
         getIconForType(typeStr) {
             const type = (typeStr || '').toLowerCase().replace(/ /g, '_');
@@ -140,7 +123,7 @@ export default {
 <style scoped>
 .tab-card {
     position: sticky;
-    top: 75px; 
+    top: 75px;
     height: calc(100vh - 100px);
     border-radius: 20px !important;
     background: #ffffff;
@@ -203,7 +186,7 @@ export default {
 .type-btn:hover .icon-circle {
     background: #ffffff;
     color: #2563eb;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .font-weight-medium {

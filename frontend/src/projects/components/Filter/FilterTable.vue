@@ -32,15 +32,30 @@
                                 <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                             </button>
                         </template>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}
-                        </CDropdownItem>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}
-                        </CDropdownItem>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'InProgress')">{{ $t('status.inprogress')
-                            }}
-                        </CDropdownItem>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{ $t('status.completed') }}
-                        </CDropdownItem>
+                        <template v-if="managementMode">
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Draft')">{{ $t('status.draft') }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Active')">{{ $t('status.active')
+                                }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Closed')">{{ $t('status.closed')
+                                }}
+                            </CDropdownItem>
+                        </template>
+                        <template v-else>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'InProgress')">{{
+                                $t('status.inprogress') }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{
+                                $t('status.completed') }}
+                            </CDropdownItem>
+                        </template>
                     </CDropdown>
                 </CCol>
 
@@ -89,6 +104,10 @@ export default {
         searchQuery: {
             type: String,
             default: ''
+        },
+        managementMode: {
+            type: Boolean,
+            default: false
         },
         selectedStatus: {
             type: String,
