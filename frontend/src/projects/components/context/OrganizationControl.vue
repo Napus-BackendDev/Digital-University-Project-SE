@@ -3,8 +3,7 @@
         <CCardBody class="p-4">
             <h5 class="mb-4 font-weight-bold text-dark">Organization Control</h5>
 
-            <!-- Organization Info Section -->
-            <div class="mb-4">
+            <!-- <div class="mb-4">
                 <h6 class="font-weight-bold mb-3">Organization CanEdit</h6>
                 <CRow>
                     <CCol md="5" class="mb-3">
@@ -26,29 +25,44 @@
                 </CRow>
             </div>
 
-            <hr class="my-4" />
+            <hr class="my-4" /> -->
 
-            <!-- Department Management Section -->
+            <!-- Selected Organizations List -->
             <div class="mb-4">
-                <h6 class="font-weight-bold mb-3">Organization CanRespone</h6>
+                <label class="mb-3 font-weight-bold ">Selected Organizations</label>
+                <div class="org-list">
+                    <span v-for="(org, index) in settings.organization" :key="index" class="badge-custom">
+                        {{ org }}
+                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeOrganization(index)" title="Remove">
+                            <CIcon name="cil-x" size="sm" class="delete-icon" />
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Organization Selection Section -->
+            <div class="mb-4">
+                <h6 class="font-weight-bold mb-3">Organization Can Response</h6>
+
                 <CRow>
-                    <CCol md="5" class="mb-3">
+                    <CCol md="10" class="mb-3">
                         <label class="mb-2 font-weight-bold small">Organization Name</label>
-                        <CSelect :options="organizationOptions" :value="orgData.name" placeholder="Select organization"
-                            class="form-select-custom" @update:value="(val) => { orgData.name = val; triggerAutoSave(); }" />
-                    </CCol>
-                    <CCol md="5" class="mb-3">
-                        <label class="mb-2 font-weight-bold small">Departments</label>
-                        <CSelect :options="departmentOptions" :value="selectedDepartment"
-                            placeholder="Choose a department" class="form-select-custom" @update:value="selectDepartment" />
+                        <CSelect :options="organizationOptions" :value="selectedOrg" placeholder="Select organization"
+                            class="form-select-custom" @update:value="(val) => { selectedOrg = val; }" />
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
-                            class="font-weight-bold mt-4" @click="addDepartment">
+                            class="font-weight-bold mt-4" @click="addOrganization">
                             Add
                         </CButton>
                     </CCol>
                 </CRow>
+
+                <!-- Info Hint -->
+                <div class="info-hint mb-3">
+                    <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
+                    <h5 class="mb-0 ">ถ้าคุณเลือก <strong>General</strong> หน่วยงานจะสามารถ ทำ ฟอร์ม ได้</h5>
+                </div>
             </div>
 
         </CCardBody>
@@ -66,72 +80,34 @@ export default {
     },
     data() {
         return {
-            selectedDepartment: null,
+            selectedOrg: 'Digital University',
             organizationOptions: [
                 { label: 'Digital University', value: 'Digital University' },
                 { label: 'Academic Affairs', value: 'Academic Affairs' },
                 { label: 'Student Services', value: 'Student Services' },
-                { label: 'Administration', value: 'Administration' }
-            ],
-            departmentOptions: [
-                { label: 'Engineering', value: 'Engineering' },
-                { label: 'Product Management', value: 'Product Management' },
-                { label: 'Design', value: 'Design' },
-                { label: 'Quality Assurance', value: 'Quality Assurance' },
-                { label: 'Marketing', value: 'Marketing' },
-                { label: 'Human Resources', value: 'Human Resources' }
-            ],
-            orgData: {
-                name: 'Digital University',
-                code: 'DU-2024',
-                description: 'A comprehensive digital learning platform for managing forms and surveys',
-                status: 'active',
-                createdDate: '2024-01-15',
-                departments: [
-                    'Engineering',
-                    'Product Management',
-                    'Design',
-                    'Quality Assurance'
-                ],
-                allowMultipleForms: true,
-                requireApproval: false,
-                enableAnalytics: true
-            }
+                { label: 'Administration', value: 'Administration' },
+                { label: 'General', value: 'General' }
+            ]
         }
     },
     methods: {
-        selectDepartment(value) {
-            this.selectedDepartment = value;
-        },
-        addSelectedDepartment() {
-            if (!this.selectedDepartment) {
-                alert('Please select a department');
+        addOrganization() {
+            if (!this.selectedOrg) return;
+            
+            // Initialize settings.organization if it doesn't exist
+            if (!this.settings.organization) {
+                this.$set(this.settings, 'organization', []);
+            }
+
+            if (this.settings.organization.includes(this.selectedOrg)) {
                 return;
             }
 
-            if (this.orgData.departments.includes(this.selectedDepartment)) {
-                alert('This department is already assigned');
-                return;
-            }
-
-            this.orgData.departments.push(this.selectedDepartment);
-            this.selectedDepartment = null;
+            this.settings.organization.push(this.selectedOrg);
             this.triggerAutoSave();
         },
-        removeDepartment(index) {
-            this.orgData.departments.splice(index, 1);
-            this.triggerAutoSave();
-        },
-        updateMultipleForms(val) {
-            this.$set(this.orgData, 'allowMultipleForms', val);
-            this.triggerAutoSave();
-        },
-        updateRequireApproval(val) {
-            this.$set(this.orgData, 'requireApproval', val);
-            this.triggerAutoSave();
-        },
-        updateEnableAnalytics(val) {
-            this.$set(this.orgData, 'enableAnalytics', val);
+        removeOrganization(index) {
+            this.settings.organization.splice(index, 1);
             this.triggerAutoSave();
         },
         async triggerAutoSave() {
@@ -139,7 +115,10 @@ export default {
         }
     },
     mounted() {
-        console.log('OrganizationControl component mounted', this.orgData);
+        // Ensure organization array exists
+        if (!this.settings.organization) {
+            this.$set(this.settings, 'organization', []);
+        }
     }
 }
 </script>
@@ -174,29 +153,64 @@ export default {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.dept-list {
+.org-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    padding: 0.75rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 12px;
     border: 1px solid #e2e8f0;
     min-height: 50px;
+}
+
+.info-hint {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: #f0f7ff;
+    border-radius: 10px;
+    border-left: 4px solid #3b82f6;
+    color: #1e40af;
 }
 
 .badge-custom {
     display: inline-flex;
     align-items: center;
     padding: 0.5rem 0.75rem;
-    border-radius: 6px;
+    border-radius: 8px;
+    background-color: #f1f5f9;
+    color: #475569;
     font-weight: 500;
-    cursor: default;
+    font-size: 0.875rem;
     transition: all 0.2s ease;
+    border: 1px solid #e2e8f0;
 }
 
 .badge-custom:hover {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+.delete-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.delete-icon-wrapper:hover {
+    background-color: #fee2e2;
+    color: #ef4444;
+    transform: scale(1.1);
+}
+
+.delete-icon {
+    font-size: 10px;
 }
 
 .list-group-item {

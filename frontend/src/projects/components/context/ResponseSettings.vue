@@ -34,7 +34,7 @@
 
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h6 class="mb-1 font-weight-bold">Require all responses</h6>
+                    <h6 class="mb-1 font-weight-bold">Require Email</h6>
                     <small class="text-muted">Ensure all questions have a response before submission</small>
                 </div>
                 <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedRequireResponse"

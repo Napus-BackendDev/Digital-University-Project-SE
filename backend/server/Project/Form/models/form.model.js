@@ -11,6 +11,7 @@ var objSchema = new Schema({
         startAt: { type: Date, default: null },
         endAt: { type: Date, default: null }
     },
+    organization: [{ type: String, default: null }],
     settings: {
         whoCanRespond: { type: Schema.Types.ObjectId, ref: 'Setting_Respond', default: null },
         collectEmail: { type: Boolean, default: false },

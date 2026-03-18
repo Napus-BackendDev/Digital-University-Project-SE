@@ -4,17 +4,11 @@
             <h5 class="mb-4 font-weight-bold text-dark">Access Control</h5>
 
             <CRow class="mb-4">
-                <CCol md="6">
+                <CCol>
                     <h6 class="font-weight-bold mb-2">Who can respond?</h6>
                     <CSelect :options="accessTypeOptions" :value="settings.settings.whoCanRespond"
                         style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
                         @update:value="(val) => { settings.settings.whoCanRespond = val; triggerAutoSave(); }" />
-                </CCol>
-                <CCol md="6">
-                    <h6 class="font-weight-bold mb-2">Vision</h6>
-                    <CSelect :options="visionOptions" :value="currentStatusId"
-                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        @update:value="onVisionChange" />
                 </CCol>
             </CRow>
 

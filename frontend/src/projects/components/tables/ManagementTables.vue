@@ -45,6 +45,18 @@
                     </td>
                 </template>
 
+                <!-- Access -->
+                <template #access="{ item }">
+                    <td class="py-3">
+                        <div v-if="!item.isEmpty" class="access-stack">
+                            <span v-for="(acc, i) in (Array.isArray(item.access) ? item.access : [item.access])" :key="i"
+                                class="visibility-badge" :class="getVisibilityClass(acc)">
+                                {{ acc }}
+                            </span>
+                        </div>
+                    </td>
+                </template>
+
                 <!-- Responses: show two rows (Completed vs Ongoing) -->
                 <template #responses="{ item }">
                     <td class="align-middle">
@@ -171,11 +183,12 @@ export default {
     computed: {
         fields() {
             return [
-                { key: 'title', label: this.$t('table.questionnaire'), _style: 'width:25%' },
-                { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:10%' },
-                { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:18%' },
-                { key: 'status', label: this.$t('table.status'), _style: 'width:12%' },
+                { key: 'title', label: this.$t('table.questionnaire'), _style: 'width:20%' },
+                { key: 'access', label: this.$t('table.access'), _style: 'width:10%' },
+                { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:15%' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:10%' },
                 { key: 'responses', label: this.$t('table.responses'), _style: 'width:20%' },
+                { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:10%' },
                 { key: 'actions', label: this.$t('table.actions'), _style: 'width:15%; text-align:right' }
             ]
         },
@@ -285,6 +298,19 @@ export default {
                     status = 'Draft';
                 }
 
+                // Access/Visibility Logic
+                const orgs = f.organization || [];
+                let access = [];
+
+                if (orgs.includes('General')) {
+                    access = ['Public'];
+                } else if (orgs.length > 0) {
+                    access = orgs;
+                } else {
+                    // No organizations assigned = Private
+                    access = ['Private'];
+                }
+
                 // Responses array
                 const responses = Array.isArray(f.responses) ? f.responses : [];
 
@@ -298,6 +324,7 @@ export default {
                     organization,
                     timeRange,
                     daysLeft,
+                    access,
                     status,
                     responses,
                     isEmpty: false,
@@ -374,10 +401,11 @@ export default {
         },
         getVisibilityClass(visibility) {
             if (!visibility) return 'visi-default';
-            const v = visibility.toLowerCase();
-            if (v.includes('public') || v.includes('สาธารณะ')) return 'visi-public';
+            const v = String(visibility).toLowerCase();
+            if (v.includes('public') || v.includes('สาธารณะ') || v === 'general') return 'visi-public';
             if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
-            return 'visi-default';
+            // Default class for organizations
+            return 'visi-org';
         },
         goToEditForm(item) {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
@@ -467,6 +495,43 @@ export default {
 
 .status-closed .status-dot {
     background-color: #dc2626;
+}
+
+/* Visibility Badges */
+.access-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.visibility-badge {
+    display: inline-flex;
+    padding: 0.25em 0.8em;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.visi-public {
+    background-color: #ecfdf5;
+    color: #059669;
+}
+
+.visi-private {
+    background-color: #fff1f2;
+    color: #e11d48;
+}
+
+.visi-org {
+    background-color: #f0f7ff;
+    color: #1e40af;
+}
+
+.visi-default {
+    background-color: #f1f5f9;
+    color: #64748b;
 }
 
 /* Responses badge */
