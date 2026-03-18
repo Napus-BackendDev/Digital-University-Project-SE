@@ -1,182 +1,99 @@
 {
-  "openapi": "3.0.0",
-  "info": {
-    "title": "Form API",
-    "version": "1.0.0",
-    "description": "Form endpoints"
-  },
   "tags": [
-    { "name": "Form" }
+    {
+      "name": "Forms",
+      "description": "API for Managing Forms"
+    }
   ],
   "paths": {
-    "/form/exp": {
+    "/api/v1/form/exp": {
       "get": {
-        "tags": ["Form"],
-        "summary": "Get forms (export)",
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "apiId": { "type": "integer", "example": 21 }
-                }
-              },
-              "example": { "apiId": 21 }
-            }
-          }
-        },
+        "tags": ["Forms"],
+        "summary": "Get all forms",
         "responses": {
-          "200": { "description": "Success" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Success" }
         }
       }
     },
-    "/form/get": {
+    "/api/v1/form/get": {
       "post": {
-        "tags": ["Form"],
-        "summary": "Get form by ID",
-        "parameters": [
-          {
-            "name": "_id",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "Form ID"
-          }
-        ],
+        "tags": ["Forms"],
+        "summary": "Get one form by ID",
         "requestBody": {
-          "required": false,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "apiId": { "type": "integer", "example": 22 }
+                  "_id": { "type": "string", "example": "651a2b3c4d5e6f7a8b9c0d1e" }
                 }
-              },
-              "example": { "apiId": 22 }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Success" },
-          "404": { "description": "Not found" },
-          "500": { "description": "Server error" }
-        }
-      }
-    },
-    "/form": {
-      "post": {
-        "tags": ["Form"],
-        "summary": "Create form",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "apiId": { "type": "integer", "example": 23 },
-                  "title": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": { "type": "string" },
-                        "value": { "type": "string" }
-                      }
-                    }
-                  },
-                  "description": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": { "type": "string" },
-                        "value": { "type": "string" }
-                      }
-                    }
-                  }
-                }
-              },
-              "example": {
-                "apiId": 23,
-                "title": [{ "key": "en", "value": "Form" }]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Created" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/api/v1/form": {
+      "post": {
+        "tags": ["Forms"],
+        "summary": "Create a new form",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "array", "items": { "type": "object" } },
+                  "creator": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created" }
         }
       },
       "put": {
-        "tags": ["Form"],
-        "summary": "Update form",
+        "tags": ["Forms"],
+        "summary": "Update an existing form",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["_id"],
                 "properties": {
-                  "apiId": { "type": "integer", "example": 24 },
                   "_id": { "type": "string" },
-                  "title": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": { "type": "string" },
-                        "value": { "type": "string" }
-                      }
-                    }
-                  }
+                  "title": { "type": "array", "items": { "type": "object" } }
                 }
-              },
-              "example": {
-                "apiId": 24,
-                "_id": "64e1f9f32a6d1c0013a1b234",
-                "title": [{ "key": "en", "value": "Updated" }]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Updated" },
-          "404": { "description": "Not found" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Updated" }
         }
       },
       "delete": {
-        "tags": ["Form"],
-        "summary": "Delete form",
+        "tags": ["Forms"],
+        "summary": "Delete a form",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["_id"],
                 "properties": {
-                  "apiId": { "type": "integer", "example": 25 },
                   "_id": { "type": "string" }
                 }
-              },
-              "example": {
-                "apiId": 25,
-                "_id": "64e1f9f32a6d1c0013a1b234"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Deleted" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Deleted" }
         }
       }
     }
