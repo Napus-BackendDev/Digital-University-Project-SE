@@ -260,8 +260,8 @@ export default {
                     timeRange = f.timeRange;
                 }
 
-                // Status: derive from schedule if available (Pending / Active / Closed)
-                let status = 'Pending';
+                // Status: derive from schedule if available (Draft / Active / Closed)
+                let status = 'Draft';
                 const now = new Date();
                 const hasStart = f.schedule && f.schedule.startAt;
                 const hasEnd = f.schedule && f.schedule.endAt;
@@ -278,7 +278,7 @@ export default {
                 } else if (f.status) {
                     // fallback to existing status field if schedule not present
                     if (typeof f.status === 'string') status = f.status;
-                    else if (typeof f.status === 'object') status = f.status.type || f.status.name || 'Draft';
+                    else if (typeof f.status === 'object') status = f.status.type || f.status.name || 'Pending';
                 }
                 else {
                     // no schedule or explicit status -> default to Draft
@@ -370,7 +370,7 @@ export default {
             const s = status ? status.toLowerCase() : '';
             if (s === 'active') return 'status-active';
             if (s === 'closed') return 'status-closed';
-            return 'status-draft';
+            return 'status-pending';
         },
         getVisibilityClass(visibility) {
             if (!visibility) return 'visi-default';
@@ -451,12 +451,12 @@ export default {
     background-color: #2563eb;
 }
 
-.status-draft {
+.status-pending {
     background-color: #fef9c3;
     color: #854d0e;
 }
 
-.status-draft .status-dot {
+.status-pending .status-dot {
     background-color: #eab308;
 }
 

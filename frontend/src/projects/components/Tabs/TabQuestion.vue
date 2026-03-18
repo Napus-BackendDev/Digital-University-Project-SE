@@ -1,6 +1,6 @@
 <template>
     <div>
-        <CCard class="mb-4 rounded-20 shadow-sm border-0">
+        <CCard class="mb-4 rounded-20 shadow-sm border">
             <CCardBody class="p-4">
                 <div>
                     <!-- ── Form Title  ── -->
@@ -49,7 +49,7 @@
         <!-- Left Side Tab -->
         <CCard md="9" class="questions-wrapper">
             <CCard v-for="(question, index) in localQuestions" :key="question._id || index"
-                :id="'question-' + (question._id || index)" class="mb-3 position-relative rounded-20 shadow-sm border-0""
+                :id="'question-' + (question._id || index)" class="mb-3 position-relative rounded-20 shadow-sm border"
                 :style="question && question.config && question.config.parent ? { borderLeft: '6px solid ' + getFollowUpColor(question) } : {}">
                 <CCardBody class="p-4">
 

@@ -4,14 +4,11 @@
             <CRow class="align-items-end">
                 <!-- Search -->
                 <CCol md="3" lg="3" class="mb-2 mb-md-0">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.search') }}</label>
-                    <CInput 
-                        :value="searchQuery" 
-                        @input="$emit('update:searchQuery', $event)"
-                        :placeholder="$t('table.searchPlaceholder')" 
-                        class="mb-0 custom-filter-input"
-                        style="height: 38px;"
-                    >
+                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.search')
+                        }}</label>
+                    <CInput :value="searchQuery" @input="$emit('update:searchQuery', $event)"
+                        :placeholder="$t('table.searchPlaceholder')" class="mb-0 custom-filter-input"
+                        style="height: 38px;">
                         <template #prepend-content>
                             <CIcon name="cil-magnifying-glass" class="text-muted" />
                         </template>
@@ -20,37 +17,43 @@
 
                 <!-- Status Dropdown -->
                 <CCol md="3" lg="2" class="mb-2 mb-md-0">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.status') }}</label>
+                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.status')
+                        }}</label>
                     <CDropdown class="filter-dropdown w-100">
                         <template #toggler>
-                            <button class="btn d-flex align-items-center justify-content-between text-muted border bg-white w-100 px-3"
+                            <button
+                                class="btn d-flex align-items-center justify-content-between text-muted border bg-white w-100 px-3"
                                 style="border-radius: 6px; height: 38px;">
                                 <div class="d-flex align-items-center text-truncate">
                                     <CIcon name="cil-filter" size="sm" class="mr-2" />
-                                    <span class="text-truncate small">{{ selectedStatus === 'All' ? $t('status.all') : $t('status.' + selectedStatus.toLowerCase()) }}</span>
+                                    <span class="text-truncate small">{{ selectedStatus === 'All' ? $t('status.all') :
+                                        $t('status.' + selectedStatus.toLowerCase()) }}</span>
                                 </div>
                                 <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                             </button>
                         </template>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}</CDropdownItem>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'Draft')">{{ $t('status.draft') }}</CDropdownItem>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'InProgress')">{{ $t('status.inprogress') }}</CDropdownItem>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{ $t('status.completed') }}</CDropdownItem>
+                        <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}
+                        </CDropdownItem>
+                        <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}
+                        </CDropdownItem>
+                        <CDropdownItem @click="$emit('update:selectedStatus', 'InProgress')">{{ $t('status.inprogress')
+                            }}
+                        </CDropdownItem>
+                        <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{ $t('status.completed') }}
+                        </CDropdownItem>
                     </CDropdown>
                 </CCol>
 
                 <!-- Time Range Filters -->
                 <CCol md="3" lg="4" class="mb-2 mb-md-0">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.rangeShortcuts') }}</label>
+                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{
+                        $t('table.rangeShortcuts')
+                        }}</label>
                     <CButtonGroup class="w-100">
-                        <CButton
-                            v-for="shortcut in dateShortcuts"
-                            :key="shortcut.id"
+                        <CButton v-for="shortcut in dateShortcuts" :key="shortcut.id"
                             :color="currentShortcut === shortcut.id ? 'primary' : 'secondary'"
                             :variant="currentShortcut === shortcut.id ? 'solid' : 'outline'"
-                            style="height: 38px; flex: 1;"
-                            @click="applyQuickDate(shortcut.id)"
-                        >
+                            style="height: 38px; flex: 1;" @click="applyQuickDate(shortcut.id)">
                             {{ shortcut.label || $t('table.quickDate.' + shortcut.id) }}
                         </CButton>
                     </CButtonGroup>
@@ -58,26 +61,18 @@
 
                 <!-- Time Range: From -->
                 <CCol sm="6" md="1.5" class="mb-2 mb-md-0" style="flex: 0 0 12.5%; max-width: 12.5%;">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.dateFrom') }}</label>
-                    <CInput 
-                        type="date" 
-                        :value="startDate" 
-                        @input="onDateInput('startDate', $event)"
-                        class="mb-0 custom-filter-input" 
-                        style="height: 38px;"
-                    />
+                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.dateFrom')
+                        }}</label>
+                    <CInput type="date" :value="startDate" @input="onDateInput('startDate', $event)"
+                        class="mb-0 custom-filter-input" style="height: 38px;" />
                 </CCol>
 
                 <!-- Time Range: To -->
                 <CCol sm="6" md="1.5" lg="1.5" class="mb-2 mb-md-0" style="flex: 0 0 12.5%; max-width: 12.5%;">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.dateTo') }}</label>
-                    <CInput 
-                        type="date" 
-                        :value="endDate" 
-                        @input="onDateInput('endDate', $event)"
-                        class="mb-0 custom-filter-input" 
-                        style="height: 38px;"
-                    />
+                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.dateTo')
+                        }}</label>
+                    <CInput type="date" :value="endDate" @input="onDateInput('endDate', $event)"
+                        class="mb-0 custom-filter-input" style="height: 38px;" />
                 </CCol>
 
             </CRow>

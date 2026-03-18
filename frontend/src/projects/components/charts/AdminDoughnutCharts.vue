@@ -8,7 +8,7 @@
         </div>
 
         <div class="chart-container mb-4">
-            <CChartDoughnut :datasets="defaultDatasets" :labels="[$t('status.open'), $t('status.draft'), $t('status.closed')]"
+            <CChartDoughnut :datasets="defaultDatasets" :labels="[$t('status.open'), $t('status.pending'), $t('status.closed')]"
                 :options="defaultOptions" />
         </div>
 
@@ -23,9 +23,9 @@
             <div class="legend-item d-flex justify-content-between align-items-center mb-2">
                 <div class="d-flex align-items-center">
                     <span class="legend-dot bg-warning"></span>
-                    <span class="text-muted">{{ $t('status.draft') }}</span>
+                    <span class="text-muted">{{ $t('status.pending') }}</span>
                 </div>
-                <span class="font-weight-bold">{{ statusCounts.Draft }}</span>
+                <span class="font-weight-bold">{{ statusCounts.Pending }}</span>
             </div>
             <div class="legend-item d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
@@ -49,10 +49,10 @@ export default {
         ...mapGetters('Forms', ['forms']),
 
         statusCounts() {
-            const counts = { Open: 0, Draft: 0, Closed: 0 };
+            const counts = { Open: 0, Pending: 0, Closed: 0 };
 
             this.forms.forEach(form => {
-                let status = 'Draft';
+                let status = 'Pending';
                 const now = new Date();
                 const schedule = form.schedule || (form.settings && form.settings.schedule);
 
@@ -61,7 +61,7 @@ export default {
                     const end = new Date(schedule.endAt);
 
                     if (!start && !end) {
-                        status = 'Draft';
+                        status = 'Pending';
                     } else if (start <= now && now <= end) {
                         status = 'Open';
                     } else {
@@ -80,12 +80,12 @@ export default {
                 {
                     backgroundColor: [
                         '#4dbd74', // Green - Open
-                        '#f9b115', // Yellow - Draft
+                        '#f9b115', // Yellow - Pending
                         '#6c757d'  // Grey - Closed
                     ],
                     data: [
                         this.statusCounts.Open,
-                        this.statusCounts.Draft,
+                        this.statusCounts.Pending,
                         this.statusCounts.Closed
                     ],
                     borderWidth: 0

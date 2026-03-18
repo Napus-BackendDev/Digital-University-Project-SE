@@ -92,7 +92,7 @@ const th = {
     },
 
     status: {
-        open: "เปิด",
+        active: "เปิด",
         closed: "ปิด",
         draft: "ร่าง",
         pending: "ร่าง",
@@ -104,7 +104,8 @@ const th = {
     widget: {
         total: "ฟอร์มทั้งหมด",
         draft: "ฟอร์มร่าง",
-        finish: "เสร็จสิ้น",
+        pending: "ฟอร์มร่าง",
+        completed: "เสร็จสิ้น",
         inprogress: "กำลังดำเนินการ"
     },
     description: "รายละเอียด"
