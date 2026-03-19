@@ -11,6 +11,7 @@
 
         <Toolbar 
             :activeTab="activeTab" 
+            :form="form"
             @update:activeTab="(val) => $emit('update:activeTab', val)"
             :questionTypes="questionTypes"
             @add-question="addAndOpen"

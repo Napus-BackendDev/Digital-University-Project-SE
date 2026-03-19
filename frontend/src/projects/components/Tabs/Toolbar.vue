@@ -3,7 +3,7 @@
         <CCard class="tab-card shadow-sm border">
             <CCardBody class="p-4 d-flex flex-column h-100">
                 <!-- Navigation Buttons -->
-                <div class="d-flex justify-content-between mb-4">
+                <div class="d-flex justify-content-between mb-4 align-items-center">
                     <ButtonBack />
                     <ButtonPreview />
                 </div>
@@ -25,6 +25,28 @@
                         :variant="activeTab === 'setting' ? 'solid' : 'ghost'"
                         @click="$emit('update:activeTab', 'setting')">
                         <CIcon name="cil-settings" class="mr-2" /> Settings
+                    </CButton>
+                </div>
+
+
+
+                <!-- Sharing Section (New) -->
+                <div class="mb-4" v-if="activeTab === 'setting'">
+                    <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Form Sharing</label>
+                    <CButton variant="ghost" color="dark" class="w-100 mb-1 text-left type-btn d-flex align-items-center"
+                        @click="copyLink">
+                        <div class="icon-circle mr-3">
+                            <CIcon :name="copied ? 'cil-check' : 'cil-link'" size="sm" />
+                        </div>
+                        <span class="font-weight-medium">{{ copied ? 'Copied!' : 'Copy link' }}</span>
+                    </CButton>  
+
+                    <CButton variant="ghost" color="dark" class="w-100 mb-1 text-left type-btn d-flex align-items-center"
+                        @click="sendEmail">
+                        <div class="icon-circle mr-3">
+                            <CIcon name="cil-envelope-closed" size="sm" />
+                        </div>
+                        <span class="font-weight-medium">Send Email</span>
                     </CButton>
                 </div>
 
@@ -79,12 +101,14 @@
 <script>
 import ButtonBack from '../../components/Button/ButtonBack.vue';
 import ButtonPreview from '../../components/Button/ButtonPreview.vue';
+import SendForm from '../../components/context/SendForm.vue';
 
 export default {
     name: 'Toolbar',
     components: {
         ButtonBack,
-        ButtonPreview
+        ButtonPreview,
+        SendForm
     },
     props: {
         activeTab: {
@@ -94,6 +118,15 @@ export default {
         questionTypes: {
             type: Array,
             default: () => []
+        },
+        form: {
+            type: Object,
+            default: () => ({})
+        }
+    },
+    data() {
+        return {
+            copied: false
         }
     },
     methods: {
@@ -117,6 +150,40 @@ export default {
                 case 'image': return 'cil-image-1';
                 default: return 'cil-question';
             }
+        },
+        copyLink() {
+            if (!this.form || !this.form._id) return;
+            const url = `${window.location.origin}/forms/${this.form._id}`;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => this.showCopied());
+            } else {
+                const el = document.createElement('textarea');
+                el.value = url;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                this.showCopied();
+            }
+        },
+        showCopied() {
+            this.copied = true;
+            setTimeout(() => { this.copied = false; }, 2000);
+        },
+        sendEmail() {
+            if (!this.form || !this.form._id) return;
+            const url = `${window.location.origin}/forms/${this.form._id}`;
+            const title = this.getTitle(this.form.title) || 'Form';
+            const subject = encodeURIComponent(`Please fill out this form: ${title}`);
+            const body = encodeURIComponent(`You can access the form here:\n${url}`);
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        },
+        getTitle(arr) {
+            if (!arr || !arr.length) return '';
+            const lang = (this.$i18n?.locale || 'en').substring(0, 2).toLowerCase();
+            const match = arr.find(t => t.key && t.key.toLowerCase() === lang);
+            return match ? match.value : arr[0].value;
         }
     }
 }
@@ -193,5 +260,19 @@ export default {
 
 .font-weight-medium {
     font-weight: 500;
+}
+
+.btn-send {
+    border-radius: 8px !important;
+    background-color: #2563eb !important;
+    border: none !important;
+    font-size: 0.9rem !important;
+    transition: all 0.2s ease;
+}
+
+.btn-send:hover {
+    background-color: #1d4ed8 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 </style>

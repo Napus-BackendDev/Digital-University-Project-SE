@@ -41,14 +41,6 @@
                     </CDropdownItem>
                 </CDropdown>
 
-                <!-- Copied toast -->
-                <transition name="fade">
-                    <span v-if="copied" class="ml-2 text-success d-inline-flex align-items-center"
-                        style="font-size:0.82rem; font-weight:600;">
-                        ✓ Copied!
-                    </span>
-                </transition>
-
             </div>
         </div>
 
@@ -294,20 +286,12 @@ export default {
             storeResponses: 'Responses/responses'
         }),
         allSubmittedResponses() {
-            // this.responses prop is the form object which has responses array
-            // Combine with responses fetched from store and stored in Responses module.
-            const listFromProp = (this.responses && this.responses.responses) || [];
-            const listFromStore = this.storeResponses || [];
-            // prefer store responses (should be populated) over prop responses (may be unpopulated ids)
-            const combined = [...listFromStore, ...listFromProp];
-            
-            // Remove duplicates by _id and treat responses with answers as submitted when `submit` missing
+            const list = (this.responses && this.responses.responses) || [];
             const unique = [];
             const seen = new Set();
-            combined.forEach(r => {
+            list.forEach(r => {
                 if (r && r._id && !seen.has(r._id)) {
-                    const isSubmitted = (r.submit === true || r.submit === 'true') || (Array.isArray(r.answers) && r.answers.length > 0);
-                    if (isSubmitted) {
+                    if (r.submit === true || r.submit === 'true') {
                         unique.push(r);
                         seen.add(r._id);
                     }

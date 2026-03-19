@@ -152,6 +152,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import ButtonBack from '../../components/Button/ButtonBack.vue'
 
 export default {
@@ -177,10 +178,13 @@ export default {
             isSaving: false,
             error: null,
             errorIds: new Set(),
-            responder: '69bad4901379fb457ca63b8d'
+            responderId: null
         };
     },
     created() {
+        if (this.user && this.user._id) {
+            this.responderId = this.user._id;
+        }
         this.onInit();
     },
     methods: {
@@ -208,13 +212,14 @@ export default {
                 try {
                     await this.$store.dispatch('Responses/get', { form_id: this.form._id });
                     const responses = this.$store.getters['Responses/responses'] || [];
-                    
+                    const currentResponder = this.user?._id || this.responderId;
+
                     const draft = (responses || []).find(r => {
                         if (!r) return false;
                         const fId = (typeof r.form === 'object' ? r.form._id : r.form);
                         const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
                         return String(fId) === String(this.form._id) && 
-                               String(rId) === String(this.responder) && 
+                               String(rId) === String(currentResponder) && 
                                !r.submit;
                     });
 
@@ -249,8 +254,11 @@ export default {
             if (this.isSaving || this.loading || this.submit || !this.form || !this.form._id || this.isPreviewMode) return;
             this.isSaving = true;
             try {
+                const currentResponder = this.user?._id || this.responderId;
+                if (!currentResponder && !this.isPreviewMode) return;
+
                 const payload = {
-                    responder: this.responder,
+                    responder: currentResponder,
                     form: this.form._id,
                     answers: Object.entries(this.answers).map(([question, response]) => ({ question, response })),
                     submit: this.submit
@@ -573,8 +581,10 @@ export default {
                 return;
             }
             this.errorIds = new Set();
+            
+            const currentResponder = this.user?._id || this.responderId;
 
-            if (!this.responder) {
+            if (!currentResponder) {
                 this.modalTitle = this.$t('form.notAuthenticated');
                 this.modalMessage = this.$t('form.loginRequired');
                 this.modalType = 'error';
@@ -585,8 +595,9 @@ export default {
             this.submit = true;
             this.submitting = true;
             try {
+                const currentResponder = this.user?._id || this.responderId;
                 const createPayload = {
-                    responder: this.responder,
+                    responder: currentResponder,
                     form: this.form._id,
                     answers: Object.entries(this.answers).map(([question, response]) => ({ question, response }))
                 };
@@ -637,6 +648,7 @@ export default {
         }
     },
     computed: {
+        ...mapGetters('User', ['user']),
         isDuplicateMode() {
             return this.$route.query.mode === 'duplicate';
         },

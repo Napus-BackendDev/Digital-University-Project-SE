@@ -4,7 +4,6 @@
         <OrganizationControl :settings="settings" @auto-save="triggerAutoSave" />
         <AccessControl :settings="settings" @auto-save="triggerAutoSave" />
         <ResponseSettings :settings="settings" @auto-save="triggerAutoSave" />
-        <SendForm :form="settings" />
     </div>
 </template>
 
@@ -21,8 +20,7 @@ export default {
         OrganizationControl,
         FormStatus,
         AccessControl,
-        ResponseSettings,
-        SendForm
+        ResponseSettings
     },
     props: {
         settings: {
