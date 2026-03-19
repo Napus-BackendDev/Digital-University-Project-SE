@@ -44,10 +44,13 @@ exports.onQuery = async function (request, response) {
       { path: 'questions', populate: [{ path: 'type' }, { path: 'followUp.question' }] },
       {
         path: 'responses',
-        populate: {
-          path: 'answers.question',
-          populate: { path: 'type' }
-        }
+        populate: [
+          {
+            path: 'answers.question',
+            populate: { path: 'type' }
+          },
+          { path: 'responder' }
+        ]
       },
       { path: 'organization' },
       { path: 'creator' },

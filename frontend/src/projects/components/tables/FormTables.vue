@@ -112,11 +112,6 @@ export default {
         }
     },
     async created() {
-        try {
-            const userData = await this.$store.dispatch('User/get', { _id: '69bacce8cf17264fc49caa64' });
-        } catch (err) {
-            console.error('Error fetching user data:', err);
-        }
     },
     computed: {
         fields() {
@@ -131,6 +126,7 @@ export default {
             ]
         },
         ...mapGetters('Forms', ['forms']),
+        ...mapGetters('User', ['user']),
 
         totalPages() {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
@@ -138,9 +134,9 @@ export default {
 
         tableData() {
             if (!this.forms || this.forms.length === 0) return [];
-            const currentUser = (this.$store?.getters?.['User/user'] || this.$store?.state?.User?.user ||
-                                 this.$store?.getters?.['Auth/user'] || this.$store?.state?.Auth?.user || 
-                                 JSON.parse(localStorage.getItem('user')) || null);
+            console.log(JSON.parse(JSON.stringify(this.forms))); // log raw forms data for debugging
+            
+            const currentUser = this.user;
 
             const mapped = this.forms.map(f => {
                 if (!f) f = {};
@@ -372,8 +368,7 @@ export default {
             const fallback = { total: 0, pending: 0, completed: 0, inProgress: 0 };
             if (!this.forms || !Array.isArray(this.forms)) return fallback;
             
-            const currentUser = (this.$store?.getters?.['User/user'] || 
-                                 this.$store?.state?.User?.user || JSON.parse(localStorage.getItem('user')));
+            const currentUser = this.user;
             const userResponses = currentUser?.response || [];
             const now = new Date();
 
@@ -439,30 +434,6 @@ export default {
         },
         async goToForm(id) {
             if (!id) return;
-
-            try {
-                const userId = '69bacce8cf17264fc49caa64';
-                const currentUser = (this.$store?.getters?.['User/user'] || this.$store?.state?.User?.user || null);
-                if (currentUser) {
-                    const userResponses = currentUser.response || [];
-                    const hasResponse = userResponses.some(r => {
-                        if (!r || !r.form) return false;
-                        const resFormId = (typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form).toString();
-                        return resFormId === id.toString();
-                    });
-                    if (!hasResponse) {
-                        await this.$store.dispatch('Responses/create', {
-                            form: id,
-                            responder: currentUser._id || userId,
-                            answers: [],
-                            submit: false
-                        });
-                        await this.$store.dispatch('User/get', { _id: currentUser._id || userId });
-                    }
-                }
-            } catch (err) {
-                console.error('Error during automatic response initialization:', err);
-            }
             this.$router.push({ name: 'FormFill', params: { id: id }, query: { source: 'internal' } });
         },
         filterStatus(status) {

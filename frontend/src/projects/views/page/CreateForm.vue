@@ -8,7 +8,7 @@
 </template>
 
 <script>
-
+import { mapGetters } from 'vuex';
 import Tab from '../../components/Tabs/Tab.vue';
 import Header from '../../components/Util/Header.vue';
 
@@ -45,6 +45,7 @@ export default {
         }
     },
     computed: {
+        ...mapGetters('User', ['user']),
         headerTitle() {
             if (this.activeTab === 'question') return "Form Questions";
             if (this.activeTab === 'response') return "Form Responses";
