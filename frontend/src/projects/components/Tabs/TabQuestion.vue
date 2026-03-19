@@ -122,7 +122,7 @@
                                 </CButton>
                             </div>
 
-                            <div class="ml-4 mt-1">
+                            <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'" class="ml-4 mt-1">
                                 <div v-if="!findFollowUp(question, choiceIndex)" class="mb-2">
                                     <CButton size="sm" variant="ghost" color="danger" class="px-2 text-decoration-none"
                                         @click="addFollowUp(question, choiceIndex)">
@@ -369,22 +369,59 @@ export default {
             deep: false,
             async handler(newForm) {
                 if (newForm && Array.isArray(newForm.questions)) {
-                    this.localQuestions = JSON.parse(JSON.stringify(newForm.questions));
                     try {
-                        const localIds = (this.localQuestions || []).map(question => question._id && question._id.toString());
-                        const parents = this.localQuestions.filter(question => question && Array.isArray(question.followUp) && question.followUp.length > 0);
-                        let added = 0;
-                        parents.forEach(parent => {
-                            parent.followUp.forEach(follow => {
-                                if (follow && typeof follow === 'object' && follow._id && !localIds.includes(follow._id.toString())) {
-                                    const parentIdx = this.localQuestions.findIndex(q => q._id && q._id.toString() === parent._id.toString());
-                                    const insertAt = parentIdx === -1 ? this.localQuestions.length : parentIdx + 1;
-                                    this.localQuestions.splice(insertAt, 0, follow);
-                                    localIds.push(follow._id.toString());
-                                    added++;
+                        const built = [];
+                        const pushedIds = new Set();
+
+                        const findQuestionById = id => {
+                            if (!id) return null;
+                            const idStr = this.convertIdToStr(id);
+                            return (newForm.questions || []).find(q => this.convertIdToStr(q && q._id) === idStr) || null;
+                        };
+
+                        const pushWithFollow = q => {
+                            if (!q) return;
+                            const idStr = this.convertIdToStr(q._id || q);
+                            if (idStr && pushedIds.has(idStr)) return;
+                            if (idStr) pushedIds.add(idStr);
+                            built.push(q);
+
+                            if (Array.isArray(q.followUp) && q.followUp.length) {
+                                for (const f of q.followUp) {
+                                    try {
+                                        if (f && typeof f === 'object') {
+                                            if (f._id) {
+                                                pushWithFollow(f);
+                                            } else if (f.question !== undefined && f.question !== null) {
+                                                if (Array.isArray(f.question) && f.question.length) {
+                                                    const found = findQuestionById(f.question[0]);
+                                                    if (found) pushWithFollow(found);
+                                                } else {
+                                                    const found = findQuestionById(f.question);
+                                                    if (found) pushWithFollow(found);
+                                                }
+                                            } else {
+                                                const found = findQuestionById(f);
+                                                if (found) pushWithFollow(found);
+                                            }
+                                        } else {
+                                            const found = findQuestionById(f);
+                                            if (found) pushWithFollow(found);
+                                        }
+                                    } catch (e) {
+                                        // ignore individual follow-up errors
+                                    }
                                 }
-                            });
-                        });
+                            }
+                        };
+
+                        for (const q of newForm.questions) {
+                            const qId = this.convertIdToStr(q && q._id);
+                            if (qId && pushedIds.has(qId)) continue;
+                            pushWithFollow(q);
+                        }
+
+                        this.localQuestions = built;
                     } catch (err) {
                         console.error('Failed to merge missing follow-ups:', err);
                     }
@@ -510,6 +547,20 @@ export default {
             }
             return String(val);
         },
+        getFollowUpChildId(entry) {
+            if (!entry && entry !== 0) return null;
+            if (typeof entry === 'object') {
+                // If schema uses a single ObjectId on `question`
+                if (entry.question !== undefined && entry.question !== null) {
+                    if (Array.isArray(entry.question) && entry.question.length > 0) return this.convertIdToStr(entry.question[0]);
+                    return this.convertIdToStr(entry.question);
+                }
+                // If entry is actually an embedded question object
+                if (entry._id) return this.convertIdToStr(entry._id);
+                return null;
+            }
+            return this.convertIdToStr(entry);
+        },
         async updateQuestionTitle(question) {
             if (!question || !question._id) return;
             try {
@@ -615,7 +666,8 @@ export default {
                 if (Array.isArray(cur.followUp)) {
                     for (const fid of cur.followUp) {
                         if (!fid) continue;
-                        const fidStr = this.convertIdToStr(fid);
+                        const fidStr = this.getFollowUpChildId(fid);
+                        if (!fidStr) continue;
                         const childIdx = this.localQuestions.findIndex(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
                         if (childIdx !== -1) {
                             const child = this.localQuestions[childIdx];
@@ -646,7 +698,8 @@ export default {
                 for (let i = 0; i < parent.followUp.length; i++) {
                     const fid = parent.followUp[i];
                     if (!fid) continue;
-                    if (deletedIdSet.has(this.convertIdToStr(fid))) {
+                    const childIdStr = this.getFollowUpChildId(fid);
+                    if (childIdStr && deletedIdSet.has(childIdStr)) {
                         parent.followUp[i] = null;
                         changed = true;
                     }
@@ -709,7 +762,6 @@ export default {
         formatTypeLabel(rawType) {
             if (!rawType) return '';
             const type = rawType.toLowerCase();
-            if (type === 'short_answer') return 'Short Paragraph';
             return type.split('_').join(' ');
         },
         getIconForType(typeObjOrId) {
@@ -849,9 +901,29 @@ export default {
                 let lastIdx = parentIndex;
                 for (let i = parentIndex + 1; i < this.localQuestions.length; i++) {
                     const q2 = this.localQuestions[i];
-                    if (q2 && question.followUp && Array.isArray(question.followUp) && q2._id && question.followUp.find(id => this.convertIdToStr(id) === (q2._id && q2._id.toString ? q2._id.toString() : q2._id))) {
-                        lastIdx = i;
-                    } else break;
+                    if (!q2) break;
+
+                    // If q2 is a descendant of the parent (any depth), advance past it
+                    try {
+                        const ancestors = this.getAncestorChain(q2) || [];
+                        const isDescendant = ancestors.some(a => this.convertIdToStr(a._id || a) === (question._id && question._id.toString ? question._id.toString() : question._id));
+                        if (isDescendant) {
+                            lastIdx = i;
+                            continue;
+                        }
+                    } catch (e) {
+                        // ignore and fallthrough
+                    }
+
+                    if (Array.isArray(question.followUp)) {
+                        const q2IdStr = this.convertIdToStr(q2._id || q2);
+                        if (q2IdStr && question.followUp.some(entry => this.getFollowUpChildId(entry) === q2IdStr)) {
+                            lastIdx = i;
+                            continue;
+                        }
+                    }
+
+                    break;
                 }
                 return lastIdx + 1;
             }).call(this);
@@ -861,7 +933,7 @@ export default {
                 if (parentLocal) {
                     if (!Array.isArray(parentLocal.followUp)) parentLocal.followUp = [];
                     while (parentLocal.followUp.length <= choiceIndex) parentLocal.followUp.push(null);
-                    parentLocal.followUp[choiceIndex] = newQ._id;
+                    parentLocal.followUp[choiceIndex] = { key: (choice && choice.key) ? choice.key : String(choiceIndex), question: newQ._id };
                 }
             }
 
@@ -880,7 +952,8 @@ export default {
                         if (parentLocal) {
                             if (!Array.isArray(parentLocal.followUp)) parentLocal.followUp = [];
                             while (parentLocal.followUp.length <= choiceIndex) parentLocal.followUp.push(null);
-                            parentLocal.followUp[choiceIndex] = created._id;
+                            const followEntry = { key: (choice && choice.key) ? choice.key : String(choiceIndex), question: created._id };
+                            parentLocal.followUp[choiceIndex] = followEntry;
 
                             try {
                                 await this.$store.dispatch('Questions/update', {
@@ -908,11 +981,13 @@ export default {
             if (Array.isArray(question.followUp)) {
                 const fid = question.followUp[choiceIndex];
                 if (fid) {
-                    const fidStr = this.convertIdToStr(fid);
-                    fIndex = this.localQuestions.findIndex(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
-                    if (fIndex !== -1) {
-                        fq = this.localQuestions[fIndex];
-                        childId = fq && fq._id;
+                    const fidStr = this.getFollowUpChildId(fid);
+                    if (fidStr) {
+                        fIndex = this.localQuestions.findIndex(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
+                        if (fIndex !== -1) {
+                            fq = this.localQuestions[fIndex];
+                            childId = fq && fq._id;
+                        }
                     }
                 }
             }
@@ -929,10 +1004,15 @@ export default {
             try {
                 const parentLocal = question;
                 if (Array.isArray(parentLocal.followUp)) {
-                    if (parentLocal.followUp[choiceIndex] && this.convertIdToStr(parentLocal.followUp[choiceIndex]) === this.convertIdToStr(childId)) {
+                    const entry = parentLocal.followUp[choiceIndex];
+                    const entryChildId = this.getFollowUpChildId(entry);
+                    if (entry && entryChildId && this.convertIdToStr(entryChildId) === this.convertIdToStr(childId)) {
                         parentLocal.followUp[choiceIndex] = null;
                     } else {
-                        parentLocal.followUp = parentLocal.followUp.filter(id => !(this.convertIdToStr(id) === (childId && childId.toString ? childId.toString() : childId)));
+                        parentLocal.followUp = parentLocal.followUp.filter(id => {
+                            const idChild = this.getFollowUpChildId(id);
+                            return !(idChild && this.convertIdToStr(idChild) === this.convertIdToStr(childId));
+                        });
                     }
                 }
                 if (parentLocal && parentLocal._id) {
@@ -951,12 +1031,13 @@ export default {
         findFollowUp(question, choiceIndex) {
             if (!question) return null;
             if (!Array.isArray(question.followUp)) return null;
-            // Prefer mapping by choiceIndex: parent.followUp[choiceIndex] should point to the child id
             const fid = question.followUp[choiceIndex];
             if (fid) {
-                const fidStr = this.convertIdToStr(fid);
-                const child = this.localQuestions.find(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
-                if (child) return child;
+                const fidStr = this.getFollowUpChildId(fid);
+                if (fidStr) {
+                    const child = this.localQuestions.find(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
+                    if (child) return child;
+                }
             }
             return null;
         },
@@ -974,7 +1055,7 @@ export default {
             for (const parent of this.localQuestions) {
                 if (!parent || !Array.isArray(parent.followUp) || parent.followUp.length === 0) continue;
                 for (let i = 0; i < parent.followUp.length; i++) {
-                    const fidStr = this.convertIdToStr(parent.followUp[i]);
+                    const fidStr = this.getFollowUpChildId(parent.followUp[i]);
                     if (fidStr && fidStr === childIdStr) {
                         let parentChoiceLabel = '';
                         try {
@@ -1029,7 +1110,7 @@ export default {
                         if (Array.isArray(parentQ.followUp)) {
                             const ancIdStr = this.convertIdToStr(anc._id || anc);
                             for (let i = 0; i < parentQ.followUp.length; i++) {
-                                if (this.convertIdToStr(parentQ.followUp[i]) === ancIdStr) {
+                                if (this.getFollowUpChildId(parentQ.followUp[i]) === ancIdStr) {
                                     childPos = i + 1;
                                     break;
                                 }
@@ -1046,7 +1127,7 @@ export default {
                     if (Array.isArray(parentQ.followUp)) {
                         const myIdStr = this.convertIdToStr(question._id || question);
                         for (let i = 0; i < parentQ.followUp.length; i++) {
-                            if (this.convertIdToStr(parentQ.followUp[i]) === myIdStr) {
+                            if (this.getFollowUpChildId(parentQ.followUp[i]) === myIdStr) {
                                 childPos = i + 1;
                                 break;
                             }

@@ -36,12 +36,13 @@
             </CCard>
 
             <!-- Question Cards -->
-            <CCard v-for="(question, index) in form.questions" :key="question._id || index"
+            <CCard v-for="(question, index) in visibleQuestions" :key="question._id || index"
+                v-if="isQuestionVisible(question)"
                 :id="'question-card-' + question._id" class="mb-3"
-                :class="{ 'card-error': errorIds.has(question._id) }">
+                :class="{ 'card-error': errorIds.has(question._id), 'followup-card': isFollowUp(question) }">
                 <CCardBody class="p-4">
-                    <p v-if="!isType(question, 'title_description', 'image')" class="question-index">
-                        {{ $t('form.question') }} {{ index + 1 }}
+                    <p v-if="!isType(question, 'title_description', 'image')" :class="['question-index', { 'followup-number': isFollowUp(question) }]">
+                        {{ $t('form.question') }} {{ getQuestionNumber(question, index) }}
                     </p>
                     <p v-if="!isType(question, 'title_description', 'image')" class="question-title mb-1">
                         {{ getLang(question.title) }}
@@ -53,7 +54,7 @@
                     </p>
 
                     <!-- Short Answer -->
-                    <CInput v-if="isType(question, 'short', 'short_answer')" v-model="answers[question._id]"
+                    <CInput v-if="isType(question, 'short_answer')" v-model="answers[question._id]"
                         :placeholder="$t('form.yourAnswer')" class="mb-0" :disabled="isPreviewMode"
                         @input="(e) => { clearError(question._id); autoSave(); }" />
 
@@ -63,13 +64,13 @@
                         @input="(e) => { clearError(question._id); autoSave(); }" />
 
                     <!-- Multiple Choice / Checkboxes -->
-                    <div v-else-if="isType(question, 'multiple_choice', 'checkboxes', 'checkbox')"
+                    <div v-else-if="isType(question, 'multiple_choice', 'checkbox')"
                         class="options-container">
-                        <label v-for="(opt, oIdx) in (question.config && question.config.choices || [])" :key="oIdx"
+                            <label v-for="(opt, oIdx) in (question.config && question.config.choices || [])" :key="oIdx"
                             class="option-row">
                             <input
                                 :type="(question.config && question.config.allowMultipleSelect) ? 'checkbox' : 'radio'"
-                                :name="'q_' + question._id" :value="getOptionLabel(opt)" v-model="answers[question._id]"
+                                :name="'q_' + question._id" :value="getOptionKey(opt, oIdx)" v-model="answers[question._id]"
                                 class="option-input" :disabled="isPreviewMode"
                                 @change="(e) => { clearError(question._id); autoSave(); }" />
                             <span>{{ getOptionLabel(opt) }}</span>
@@ -305,14 +306,129 @@ export default {
         },
 
         isType(q, ...types) {
+            console.log(JSON.parse(JSON.stringify(q)));
             return types.includes(this.getType(q));
         },
 
+        getOptionKey(opt, oIdx) {
+            if (opt && (opt.key !== undefined && opt.key !== null)) return String(opt.key);
+            return String(oIdx);
+        },
         getOptionLabel(opt) {
             if (!opt || !opt.lang || !opt.lang.length) return '';
             return this.getLang(opt.lang);
         },
+        convertIdToStr(val) {
+            if (!val && val !== 0) return null;
+            if (typeof val === 'string') return val;
+            if (typeof val === 'object') {
+                if (val._id) return (val._id && val._id.toString) ? val._id.toString() : String(val._id);
+                if (val.toString && typeof val.toString === 'function') return val.toString();
+            }
+            return String(val);
+        },
+        getFollowUpChildId(entry) {
+            if (!entry && entry !== 0) return null;
+            if (typeof entry === 'object') {
+                if (entry.question !== undefined && entry.question !== null) {
+                    if (Array.isArray(entry.question) && entry.question.length) return this.convertIdToStr(entry.question[0]);
+                    return this.convertIdToStr(entry.question);
+                }
+                if (entry._id) return this.convertIdToStr(entry._id);
+                return null;
+            }
+            return this.convertIdToStr(entry);
+        },
+        getParentForFollowUp(question) {
+            try {
+                if (!question || !question._id) return null;
+                const map = this.followUpMap || {};
+                const entries = map[String(question._id)];
+                if (!entries || !entries.length) return null;
+                const p = entries[0];
+                const parentId = p.parentId;
+                const parent = (this.form && Array.isArray(this.form.questions)) ? this.form.questions.find(q => String(q._id) === String(parentId)) : null;
+                if (!parent) return null;
+                return { parent, meta: p };
+            } catch (e) {
+                return null;
+            }
+        },
+        getAncestorChain(question) {
+            const chain = [];
+            try {
+                let pObj = this.getParentForFollowUp(question);
+                while (pObj && pObj.parent) {
+                    chain.push(pObj.parent);
+                    pObj = this.getParentForFollowUp(pObj.parent);
+                }
+            } catch (e) {
+                // ignore
+            }
+            return chain.reverse();
+        },
+        getQuestionNumber(question, index) {
+            try {
+                // Build ancestor chain root -> immediate parent
+                const ancestors = this.getAncestorChain(question);
+                const parts = [];
 
+                // Compute numbers for ancestors
+                for (let aIdx = 0; aIdx < ancestors.length; aIdx++) {
+                    const anc = ancestors[aIdx];
+                    const ancParentObj = this.getParentForFollowUp(anc);
+                    if (!ancParentObj || !ancParentObj.parent) {
+                        // anc is top-level: compute its top-level number among non-followups
+                        let topNum = 0;
+                        for (let i = 0; i < this.form.questions.length; i++) {
+                            const item = this.form.questions[i];
+                            if (!this.isFollowUp(item)) topNum++;
+                            if (item === anc) break;
+                        }
+                        parts.push(String(topNum));
+                    } else {
+                        const parentQ = ancParentObj.parent;
+                        let childPos = 0;
+                        if (Array.isArray(parentQ.followUp)) {
+                            const ancIdStr = this.getFollowUpChildId(anc);
+                            for (let i = 0; i < parentQ.followUp.length; i++) {
+                                if (this.getFollowUpChildId(parentQ.followUp[i]) === ancIdStr) {
+                                    childPos = i + 1;
+                                    break;
+                                }
+                            }
+                        }
+                        parts.push(String(childPos || 1));
+                    }
+                }
+
+                const immediateParentObj = this.getParentForFollowUp(question);
+                if (immediateParentObj && immediateParentObj.parent) {
+                    const parentQ = immediateParentObj.parent;
+                    let childPos = 0;
+                    if (Array.isArray(parentQ.followUp)) {
+                        const myIdStr = this.getFollowUpChildId(question);
+                        for (let i = 0; i < parentQ.followUp.length; i++) {
+                            if (this.getFollowUpChildId(parentQ.followUp[i]) === myIdStr) {
+                                childPos = i + 1;
+                                break;
+                            }
+                        }
+                    }
+                    parts.push(String(childPos || 1));
+                    return parts.join('.');
+                }
+            } catch (e) {
+                // fallback to default numbering
+            }
+
+            let num = 0;
+            for (let i = 0; i <= index && i < this.visibleQuestions.length; i++) {
+                const item = this.visibleQuestions[i];
+                if (!this.isFollowUp(item)) num++;
+            }
+            return num;
+        },
         getAcceptString(question) {
             if (!question || !question.config || !Array.isArray(question.config.fileTypes)) return '';
             const map = {
@@ -324,7 +440,6 @@ export default {
             const types = question.config.fileTypes.map(t => map[t] || '').filter(Boolean);
             return types.join(',');
         },
-
         handleFileChange(questionId, files, question) {
             if (!files) return;
             const arr = Array.from(files || []);
@@ -355,13 +470,36 @@ export default {
                 this.$set(this.answers, questionId, filtered.slice(0, max));
             }
         },
-
         clearError(questionId) {
             if (this.errorIds.has(questionId)) {
                 const next = new Set(this.errorIds);
                 next.delete(questionId);
                 this.errorIds = next;
             }
+        },
+        isFollowUp(question) {
+            if (!question || !question._id) return false;
+            const map = this.followUpMap || {};
+            const entries = map[String(question._id)];
+            return Array.isArray(entries) && entries.length > 0;
+        },
+        isQuestionVisible(question) {
+            if (!this.form || !Array.isArray(this.form.questions) || !question || !question._id) return true;
+            const childId = String(question._id);
+            const map = this.followUpMap || {};
+            const parents = map[childId];
+            if (!parents || parents.length === 0) return true;
+            for (const p of parents) {
+                const parentAnswer = this.answers[p.parentId];
+                if (parentAnswer === undefined || parentAnswer === null) continue;
+                const neededKey = String(p.key);
+                if (Array.isArray(parentAnswer)) {
+                    if (parentAnswer.map(a => String(a)).includes(neededKey)) return true;
+                } else {
+                    if (String(parentAnswer) === neededKey) return true;
+                }
+            }
+            return false;
         },
         async duplicateForm() {
             this.submitting = true;
@@ -512,6 +650,96 @@ export default {
 
             return this.$route.name === 'FormFill' && !isInternalMode && !isInternalSource && !isPreviewRoute;
         }
+        ,
+        followUpMap() {
+            const map = {};
+            if (!this.form || !Array.isArray(this.form.questions)) return map;
+
+            const qlist = this.form.questions || [];
+            for (const q of qlist) {
+                if (!q || !Array.isArray(q.followUp)) continue;
+                for (const f of q.followUp) {
+                    if (!f) continue;
+                    const entries = [];
+                    // followUp entries may map a key to a question or questions
+                    const key = f.key !== undefined && f.key !== null ? String(f.key) : null;
+                    if (f.question !== undefined && f.question !== null) {
+                        if (Array.isArray(f.question)) {
+                            f.question.forEach(qobj => {
+                                const cid = (typeof qobj === 'object' && qobj._id) ? String(qobj._id) : String(qobj);
+                                if (!map[cid]) map[cid] = [];
+                                map[cid].push({ parentId: String(q._id), key });
+                            });
+                        } else {
+                            const cid = (typeof f.question === 'object' && f.question._id) ? String(f.question._id) : String(f.question);
+                            if (!map[cid]) map[cid] = [];
+                            map[cid].push({ parentId: String(q._id), key });
+                        }
+                    }
+                }
+            }
+            return map;
+        },
+
+        visibleQuestions() {
+            if (!this.form || !Array.isArray(this.form.questions)) return [];
+            const built = [];
+            const pushedIds = new Set();
+            const qlist = this.form.questions || [];
+
+            const findQuestionById = id => {
+                if (!id && id !== 0) return null;
+                const idStr = (typeof id === 'object' && id._id) ? String(id._id) : String(id);
+                return qlist.find(q => (q && q._id) && String(q._id) === idStr) || null;
+            };
+
+            const pushWithFollow = q => {
+                if (!q) return;
+                const idStr = (q._id && String(q._id)) || null;
+                if (idStr && pushedIds.has(idStr)) return;
+                if (idStr) pushedIds.add(idStr);
+                built.push(q);
+
+                if (Array.isArray(q.followUp) && q.followUp.length) {
+                    for (const f of q.followUp) {
+                        try {
+                            if (f && typeof f === 'object') {
+                                if (f._id) {
+                                    const found = findQuestionById(f._id);
+                                    if (found) pushWithFollow(found);
+                                } else if (f.question !== undefined && f.question !== null) {
+                                    if (Array.isArray(f.question) && f.question.length) {
+                                        for (const ref of f.question) {
+                                            const found = findQuestionById(ref);
+                                            if (found) pushWithFollow(found);
+                                        }
+                                    } else {
+                                        const found = findQuestionById(f.question);
+                                        if (found) pushWithFollow(found);
+                                    }
+                                } else {
+                                    const found = findQuestionById(f);
+                                    if (found) pushWithFollow(found);
+                                }
+                            } else {
+                                const found = findQuestionById(f);
+                                if (found) pushWithFollow(found);
+                            }
+                        } catch (e) {
+                            // ignore individual follow-up errors
+                        }
+                    }
+                }
+            };
+
+            for (const q of qlist) {
+                const qId = (q && q._id) ? String(q._id) : null;
+                if (qId && pushedIds.has(qId)) continue;
+                pushWithFollow(q);
+            }
+
+            return built;
+        }
     },
     watch: {
         answers: {
@@ -542,7 +770,6 @@ export default {
     min-height: 60vh;
 }
 
-/* Header card */
 .header-card {
     border-top: 8px solid #1a73e8;
     border-radius: 12px !important;
@@ -739,6 +966,21 @@ export default {
 .success-actions {
     display: flex;
     justify-content: center;
+}
+
+.followup-card {
+    background-color: #FFFBEB !important;
+    border: 1px solid #FDE68A !important;
+}
+
+.question-index.followup-number {
+    background: #FFF3CD;
+    border: 1px solid #F7C948;
+    color: #b45309;
+    padding: 0.35rem 0.5rem;
+    border-radius: 999px;
+    display: inline-block;
+    font-weight: 600;
 }
 
 .success-ok-button {

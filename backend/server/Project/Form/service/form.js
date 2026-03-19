@@ -1,6 +1,7 @@
 const mongo = require("mongodb");
 const Form = require("../controller/form");
 const ResMessage = require("../../Settings/service/message");
+const { populate } = require("../models/form.model");
 
 const getApiId = function (request) {
   return Number(request.body.apiId) || 0;
@@ -39,17 +40,17 @@ exports.onQuery = async function (request, response) {
       },
     ]);
 
-    // Use onQuery for population instead of custom onPopulate
     const doc = await Form.onQuery({ _id: query._id }, [
-      { path: 'questions', populate: { path: 'type', path: 'followUp' } },
+      { path: 'questions', populate: [{ path: 'type' }, { path: 'followUp.question' }] },
       {
         path: 'responses',
         populate: {
           path: 'answers.question',
-          populate: { path: 'type', select: 'type' }
+          populate: { path: 'type' }
         }
       },
-      { path: 'creator' }
+      { path: 'organization' },
+      { path: 'creator' },
     ]);
 
     if (doc && results.length > 0) {

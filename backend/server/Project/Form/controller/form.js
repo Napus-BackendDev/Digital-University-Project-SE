@@ -7,7 +7,6 @@ const createBaseService = require("../../../../helpers/base.service")
 
 const defaultPopulate = [
     { path: 'creator' },
-    { path: 'responses', select: 'submit' },
     { path: 'organization', select: 'title' }
 ];
 
