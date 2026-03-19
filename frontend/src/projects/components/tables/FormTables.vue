@@ -112,14 +112,11 @@ export default {
         }
     },
     async created() {
-        console.log('--- START FETCHING SPECIFIC USER DATA ---');
         try {
-            const userData = await this.$store.dispatch('User/get', { _id: '69bad4901379fb457ca63b8d' });
-            console.log('Fetched User Data:', JSON.parse(JSON.stringify(userData)));
+            const userData = await this.$store.dispatch('User/get', { _id: '69bacce8cf17264fc49caa64' });
         } catch (err) {
             console.error('Error fetching user data:', err);
         }
-        console.log('--- END FETCHING SPECIFIC USER DATA ---');
     },
     computed: {
         fields() {
@@ -141,8 +138,6 @@ export default {
 
         tableData() {
             if (!this.forms || this.forms.length === 0) return [];
-            console.log(JSON.parse(JSON.stringify(this.forms))); // log raw forms data for debugging
-            // try to find current user from User store (fetched in created) or common Vuex locations
             const currentUser = (this.$store?.getters?.['User/user'] || this.$store?.state?.User?.user ||
                                  this.$store?.getters?.['Auth/user'] || this.$store?.state?.Auth?.user || 
                                  JSON.parse(localStorage.getItem('user')) || null);
@@ -151,7 +146,6 @@ export default {
                 if (!f) f = {};
                 const missingFields = [];
 
-                // Title: robust support, default to '-'
                 let title = '-';
                 if (Array.isArray(f.title) && f.title.length > 0) {
                     const en = f.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
@@ -267,25 +261,21 @@ export default {
                         progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
                     }
 
-                    // Status based on submit field
                     if (userResponse.submit === true) {
                         status = 'Completed';
                         progress = 100;
                     } else {
-                        status = 'InProgress';
+                        status = 'In Progress';
                     }
                 }
 
-                // Access Logic (match ManagementTables)
                 const rawOrgs = f.organization || [];
                 let access = [];
 
-                // Extract plain names from populated objects or strings
                 const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
                     if (!o) return null;
                     if (typeof o === 'string') return o;
                     if (typeof o === 'object') {
-                        // Support the multi-language title structure
                         if (Array.isArray(o.title)) {
                             const en = o.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
                             return en ? en.value : (o.title[0] ? o.title[0].value : null);
@@ -410,7 +400,7 @@ export default {
 
                 if (userRes) {
                     if (userRes.submit === true) s = 'Completed';
-                    else s = 'InProgress';
+                    else s = 'In Progress';
                 }
 
                 // UNIFIED LOGIC: Determine if it's currently live or historially completed
@@ -424,7 +414,7 @@ export default {
                     if (s === 'Completed' || isLive) {
                         total++;
                         if (s === 'Completed') completed++;
-                        else if (s === 'InProgress') inProgress++;
+                        else if (s === 'In Progress') inProgress++;
                         else pending++;
                     }
                 }
@@ -451,7 +441,7 @@ export default {
             if (!id) return;
 
             try {
-                const userId = '69bad4901379fb457ca63b8d';
+                const userId = '69bacce8cf17264fc49caa64';
                 const currentUser = (this.$store?.getters?.['User/user'] || this.$store?.state?.User?.user || null);
                 if (currentUser) {
                     const userResponses = currentUser.response || [];
@@ -461,7 +451,6 @@ export default {
                         return resFormId === id.toString();
                     });
                     if (!hasResponse) {
-                        console.log('[FormTables] Initializing new response for form:', id);
                         await this.$store.dispatch('Responses/create', {
                             form: id,
                             responder: currentUser._id || userId,
@@ -483,7 +472,7 @@ export default {
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
             if (s === 'completed') return 'status-completed';
-            if (s === 'inprogress') return 'status-inprogress';
+            if (s === 'in progress') return 'status-inprogress';
             return 'status-pending';
         },
         getVisibilityClass(visibility) {

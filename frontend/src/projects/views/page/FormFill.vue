@@ -18,7 +18,7 @@
         <div v-else-if="form" class="fillform-body">
 
             <!-- Header Card -->
-            <CCard class="mb-3 header-card">
+            <CCard class="mb-3 border header-card">
                 <div v-if="isPreviewMode" class="preview-banner p-2 text-center text-white font-weight-bold">
                     <CIcon name="cil-magnifying-glass" class="mr-2" />
                     {{ $t('form.previewBanner') }}
@@ -36,11 +36,12 @@
             </CCard>
 
             <!-- Question Cards -->
-            <CCard v-for="(question, index) in visibleQuestions" :key="question._id || index"
-                v-if="isQuestionVisible(question)"
-                :id="'question-card-' + question._id" class="mb-3"
-                :class="{ 'card-error': errorIds.has(question._id), 'followup-card': isFollowUp(question) }">
-                <CCardBody class="p-4">
+            <transition-group name="fade-slide" tag="div">
+                <CCard v-for="(question, index) in visibleQuestions" :key="question._id || index"
+                    v-if="isQuestionVisible(question)"
+                    :id="'question-card-' + question._id" class="mb-3"
+                    :class="['question-card border', { 'card-error': errorIds.has(question._id), 'followup-card': isFollowUp(question) }]">
+                    <CCardBody class="p-4">
                     <p v-if="!isType(question, 'title_description', 'image')" :class="['question-index', { 'followup-number': isFollowUp(question) }]">
                         {{ $t('form.question') }} {{ getQuestionNumber(question, index) }}
                     </p>
@@ -110,7 +111,8 @@
                     <!-- Fallback -->
                     <CInput v-else v-model="answers[question._id]" :placeholder="$t('form.yourAnswer')" class="mb-0" />
                 </CCardBody>
-            </CCard>
+                </CCard>
+            </transition-group>
 
             <!-- Submit / Duplicate Button -->
             <div v-if="!isPreviewMode" class="p-3 d-flex justify-content-end">
@@ -177,7 +179,7 @@ export default {
             isSaving: false,
             error: null,
             errorIds: new Set(),
-            responder: '69bad4901379fb457ca63b8d'
+            responder: '69bacce8cf17264fc49caa64'
         };
     },
     created() {
@@ -306,7 +308,6 @@ export default {
         },
 
         isType(q, ...types) {
-            console.log(JSON.parse(JSON.stringify(q)));
             return types.includes(this.getType(q));
         },
 
@@ -483,13 +484,21 @@ export default {
             const entries = map[String(question._id)];
             return Array.isArray(entries) && entries.length > 0;
         },
-        isQuestionVisible(question) {
+        isQuestionVisible(question, _visited = null) {
             if (!this.form || !Array.isArray(this.form.questions) || !question || !question._id) return true;
+            const visited = _visited || new Set();
             const childId = String(question._id);
+            if (visited.has(childId)) return false;
+            visited.add(childId);
+
             const map = this.followUpMap || {};
             const parents = map[childId];
             if (!parents || parents.length === 0) return true;
             for (const p of parents) {
+                const parentQ = this.form.questions.find(q => String(q._id) === String(p.parentId));
+                if (!parentQ) continue;
+
+                if (!this.isQuestionVisible(parentQ, visited)) continue;
                 const parentAnswer = this.answers[p.parentId];
                 if (parentAnswer === undefined || parentAnswer === null) continue;
                 const neededKey = String(p.key);
@@ -773,6 +782,23 @@ export default {
 .header-card {
     border-top: 8px solid #1a73e8;
     border-radius: 12px !important;
+    background: linear-gradient(90deg, #e3f4ff 0%, #ffffff 100%);
+    box-shadow: 0 10px 30px rgba(26,115,232,0.06);
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.header-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: linear-gradient(180deg, #1a73e8 0%, #0f62fe 100%);
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
 }
 
 .form-main-title {
@@ -814,7 +840,14 @@ export default {
     color: #9aa0a6;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    display: inline-block;
+    background: #f8fafc;
+    border: 1px solid #e6eef6;
+    color: #374151;
+    border-radius: 999px;
+    padding: 0.35rem 0.5rem;
+    font-weight: 600;
 }
 
 .question-title {
@@ -837,6 +870,8 @@ export default {
     margin: 0;
     font-weight: normal;
     width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
 }
 
 .option-input {
@@ -847,7 +882,6 @@ export default {
     flex-shrink: 0;
 }
 
-/* Rating stars */
 .rating-container {
     display: flex;
     justify-content: space-between;
@@ -962,17 +996,39 @@ export default {
     font-size: 0.98rem;
     margin-bottom: 18px;
 }
-
 .success-actions {
     display: flex;
     justify-content: center;
 }
-
+.question-card {
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #eef3f8;
+    box-shadow: 0 4px 18px rgba(15,23,42,0.03);
+}
 .followup-card {
     background-color: #FFFBEB !important;
     border: 1px solid #FDE68A !important;
 }
 
+.followup-card {
+    margin-left: 18px;
+    padding-left: 6px;
+}
+
+/* Transition for follow-up show/hide */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+    transition: all 220ms cubic-bezier(.2,.8,.2,1);
+}
+.fade-slide-enter-from {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+.fade-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
 .question-index.followup-number {
     background: #FFF3CD;
     border: 1px solid #F7C948;

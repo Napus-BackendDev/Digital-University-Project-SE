@@ -6,39 +6,38 @@
                     <!-- ── Form Title  ── -->
                     <div class="mb-3">
                         <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
-                            class="d-flex align-items-center">
-                            <CInput class="lang-key-input flex-shrink-0 mr-2" v-model="titleItem.key"
+                            class="d-flex align-items-center mb-1">
+                            <CInput class="lang-key-input flex-shrink-0  mb-0 mr-2" v-model="titleItem.key"
                                 @change="updateFormMeta" maxlength="3" style="width: 3.2rem;" />
-                            <CInput class="form-title-input flex-grow-1 border-bottom" size="lg"
-                                v-model="titleItem.value" @change="updateFormMeta" />
+                            <CInput class="form-title-input flex-grow-1 border-bottom mb-0" v-model="titleItem.value"
+                                @change="updateFormMeta" />
                             <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
                                 v-if="form.title && form.title.length > 1" @click="removeFormTitle(tIdx)">
                                 <CIcon name="cil-minus" />
                             </CButton>
                         </div>
-                        <CButton variant="ghost" color="primary" class="d-flex align-items-center"
-                            @click="addFormTitle">
-                            <CIcon name="cil-plus" class="mr-1" />
-                            <small>Add New Language</small>
+                        <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
+                            @click="addFormTitle" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
+                            <CIcon name="cil-globe-alt" />
                         </CButton>
                     </div>
 
                     <!-- ── Form Description ── -->
                     <div>
                         <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
-                            class="d-flex align-items-center">
-                            <CInput class="lang-key-input flex-shrink-0 mr-2" v-model="descItem.key"
+                            class="d-flex align-items-center mb-1">
+                            <CInput class="lang-key-input flex-shrink-0 mb-0 mr-2" v-model="descItem.key"
                                 @change="updateFormMeta" maxlength="3" style="width: 3.2rem;" />
-                            <CInput class="form-desc-input flex-grow-1" v-model="descItem.value"
+                            <CInput class="form-desc-input flex-grow-1 mb-0" v-model="descItem.value"
                                 @change="updateFormMeta" rows="2" />
                             <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
                                 v-if="form.description && form.description.length > 1" @click="removeFormDesc(dIdx)">
                                 <CIcon name="cil-minus" />
                             </CButton>
                         </div>
-                        <CButton variant="ghost" color="primary" class="d-flex align-items-center" @click="addFormDesc">
-                            <CIcon name="cil-plus" class="mr-1" />
-                            <small>Add New Language</small>
+                        <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
+                            @click="addFormDesc" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
+                            <CIcon name="cil-globe-alt" />
                         </CButton>
                     </div>
 
@@ -79,10 +78,10 @@
                                 </CButton>
                             </div>
 
-                            <CButton variant="ghost" color="primary" class="d-flex align-items-center p-1 mt-1"
-                                @click="addTitle(question)">
-                                <CIcon name="cil-plus" class="mr-1" />
-                                <small>Add New Language</small>
+                            <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn mt-1"
+                                style="width: 3.2rem;" @click="addTitle(question)" size="sm"
+                                v-c-tooltip="'Add language'" aria-label="Add language">
+                                <CIcon name="cil-globe-alt" />
                             </CButton>
                         </div>
 
@@ -109,40 +108,59 @@
                             class="mb-2">
                             <div class="d-flex align-items-center">
                                 <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
-                                    class="border rounded-circle mr-2 flex-shrink-0"
+                                    class="border rounded-circle mr-2 flex-shrink-0 mb-1"
                                     style="width: 30px; height: 30px;" />
-                                <div v-else class="border rounded mr-2 flex-shrink-0"
+                                <div v-else class="border rounded mr-2 flex-shrink-0 mb-1"
                                     style="width: 30px; height: 30px;" />
-                                <CInput class="flex-grow-1 mb-0" :value="choice.lang[0].value"
-                                    @input="updateOption(question, choiceIndex, $event)" />
-                                <CButton color="danger" variant="ghost" size="sm" class="ml-1"
-                                    v-if="question.config.choices.length > 1"
+                                <div class="option-langs flex-grow-1">
+                                    <div v-for="(lang, li) in (choice.lang || [])" :key="li"
+                                        class="d-flex align-items-center mb-1">
+                                        <CInput class="lang-key-input flex-shrink-0 mr-2 mb-0" v-model="lang.key"
+                                            @change="putQuestion(question)" maxlength="3" style="width: 3.2rem;" />
+                                        <CInput class="flex-grow-1 mb-0" v-model="lang.value"
+                                            @input="(e) => updateOption(question, choiceIndex, li, e)" />
+                                        <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0"
+                                            v-if="choice.lang && choice.lang.length > 1"
+                                            @click="removeOptionLanguage(question, choiceIndex, li)">
+                                            <CIcon name="cil-minus" />
+                                        </CButton>
+                                    </div>
+                                </div>
+                                <CButton color="danger" variant="ghost" size="sm" class="ml-1 mb-1"
+                                    v-if="question.config.choices.length > 1 && (!choice.lang || choice.lang.length <= 1)"
                                     @click="removeOption(question, choiceIndex)">
                                     <CIcon name="cil-minus" />
                                 </CButton>
                             </div>
 
-                            <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'" class="ml-4 mt-1">
-                                <div v-if="!findFollowUp(question, choiceIndex)" class="mb-2">
-                                    <CButton size="sm" variant="ghost" color="danger" class="px-2 text-decoration-none"
-                                        @click="addFollowUp(question, choiceIndex)">
-                                        + Add Follow-Up Question
+                            <div class="d-flex align-items-start mt-1">
+                                <div v-if="!findFollowUp(question, choiceIndex) && getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
+                                    class="mb-2 mr-1">
+                                    <CButton size="sm" variant="ghost" color="warning" class="icon-btn followup-add-btn"
+                                        @click="addFollowUp(question, choiceIndex)"
+                                        v-c-tooltip="'Add follow-up question'" aria-label="Add follow-up question">
+                                        <CIcon name="cil-speech" />
                                     </CButton>
                                 </div>
 
                                 <div v-else-if="findFollowUp(question, choiceIndex)" class="mt-2">
-                                    <CButton size="sm" variant="ghost" color="warning" class="px-2 text-decoration-none"
-                                        @click="goToFollowUp(question, choiceIndex)">
-                                        <CIcon name="cil-arrow-right" class="mr-1" />
-                                        Go To Follow-Up Question
+                                    <CButton size="sm" variant="ghost" color="info" class="icon-btn followup-go-btn"
+                                        @click="goToFollowUp(question, choiceIndex)"
+                                        v-c-tooltip="'Go to follow-up question'" aria-label="Go to follow-up question">
+                                        <CIcon name="cil-arrow-right" />
                                     </CButton>
                                 </div>
+
+                                <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn"
+                                    style="width: 3.2rem;" @click="addOptionLanguage(question, choiceIndex)" size="sm"
+                                    v-c-tooltip="'Add language'" aria-label="Add language">
+                                    <CIcon name="cil-globe-alt" />
+                                </CButton>
                             </div>
                         </div>
-                        <CButton color="primary" variant="ghost" class="d-flex align-items-center p-1 mt-1"
-                            @click="addOption(question)">
-                            <CIcon name="cil-plus" class="mr-1" />
-                            <small>Add New Option</small>
+                        <CButton color="primary" variant="ghost" class="icon-btn add-option-btn mt-1"
+                            @click="addOption(question)" size="sm" v-c-tooltip="'Add option'" aria-label="Add option">
+                            <CIcon name="cil-list" />
                         </CButton>
                     </div>
 
@@ -211,26 +229,26 @@
                     </div>
 
                     <div v-else-if="getQuestionType(question.type).toLowerCase() === 'title_description'">
-                        <div>
-                            <small class="text-muted font-weight-bold d-block mb-1">Description</small>
-                            <div v-for="(descItem, dIdx) in (question.config.description || [])" :key="'qd-' + dIdx"
-                                class="d-flex align-items-center mb-1">
-                                <CInput class="lang-key-input flex-shrink-0 mr-2" v-model="descItem.key"
-                                    @change="putQuestion(question)" maxlength="3" style="width: 3.2rem;" />
-                                <CInput class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
-                                    rows="2" />
-                                <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                    v-if="question.config.description && question.config.description.length > 1"
-                                    @click="removeConfigDesc(question, dIdx)">
-                                    <CIcon name="cil-minus" />
-                                </CButton>
-                            </div>
-                            <CButton variant="ghost" color="primary" class="d-flex align-items-center"
-                                @click="addConfigDesc(question)">
-                                <CIcon name="cil-plus" class="mr-1" />
-                                <small>Add New Language</small>
+                        <small class="text-muted font-weight-bold d-block mb-1">Description</small>
+
+                        <div v-for="(descItem, dIdx) in (question.config.description || [])" :key="'qd-' + dIdx"
+                            class="d-flex align-items-center">
+                            <CInput class="lang-key-input flex-shrink-0 mr-2" v-model="descItem.key"
+                                @change="putQuestion(question)" maxlength="3" style="width: 3.2rem;" />
+                            <CInput class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
+                                rows="2" />
+                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                v-if="question.config.description && question.config.description.length > 1"
+                                @click="removeConfigDesc(question, dIdx)">
+                                <CIcon name="cil-minus" />
                             </CButton>
                         </div>
+
+                        <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
+                            @click="addConfigDesc(question)" size="sm" v-c-tooltip="'Add language'"
+                            aria-label="Add language">
+                            <CIcon name="cil-globe-alt" />
+                        </CButton>
                     </div>
 
                     <div v-else-if="getQuestionType(question.type).toLowerCase() === 'image'">
@@ -857,17 +875,41 @@ export default {
             this.putQuestion(question);
         },
         updateOption(question, oIndex, val) {
-            const v = val ? String(val) : '';
+            // Support two call signatures:
+            // updateOption(question, oIndex, val)
+            // updateOption(question, oIndex, langIndex, event)
             if (!question || !Array.isArray(question.config.choices)) return;
-            const opt = question.config.choices[oIndex];
-            if (opt && Array.isArray(opt.lang) && opt.lang[0]) {
-                this.$set(opt.lang, 0, { ...opt.lang[0], value: v });
-            } else {
-                this.$set(question.config.choices, oIndex, {
-                    key: String(oIndex),
-                    lang: [{ key: 'en', value: v }]
-                });
+            let langIndex = 0;
+            let value = '';
+            if (arguments.length === 3) {
+                value = val ? String(val) : '';
+            } else if (arguments.length >= 4) {
+                langIndex = val;
+                const ev = arguments[3];
+                value = ev && ev.target ? String(ev.target.value) : (ev ? String(ev) : '');
             }
+
+            const opt = question.config.choices[oIndex];
+            if (!opt) return;
+            if (!Array.isArray(opt.lang)) opt.lang = [];
+            const existing = opt.lang[langIndex] || { key: '', value: '' };
+            this.$set(opt.lang, langIndex, { ...existing, value });
+            this.putQuestion(question);
+        },
+        addOptionLanguage(question, choiceIndex) {
+            if (!question || !question.config || !Array.isArray(question.config.choices)) return;
+            const choice = question.config.choices[choiceIndex];
+            if (!choice) return;
+            if (!Array.isArray(choice.lang)) this.$set(choice, 'lang', []);
+            choice.lang.push({ key: '', value: '' });
+            this.putQuestion(question);
+        },
+        removeOptionLanguage(question, choiceIndex, langIndex) {
+            if (!question || !question.config || !Array.isArray(question.config.choices)) return;
+            const choice = question.config.choices[choiceIndex];
+            if (!choice || !Array.isArray(choice.lang)) return;
+            if (choice.lang.length <= 1) return;
+            choice.lang.splice(langIndex, 1);
             this.putQuestion(question);
         },
         removeOption(question, oIndex) {
@@ -1310,5 +1352,47 @@ export default {
     background: #FFF3CD;
     border: 1px solid #F7C948;
     color: #b45309;
+}
+
+.icon-btn {
+    width: 34px;
+    height: 34px;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+    border-radius: 6px !important;
+}
+
+.add-lang-btn {
+    background: rgba(250, 251, 255, 0.816) !important;
+    color: #0ea5e9 !important;
+    border: 1px solid rgba(153, 211, 255, 0.289) !important;
+}
+
+.add-option-btn {
+    background: rgba(139, 174, 255, 0.244) !important;
+    color: #150ee9 !important;
+    border: 1px solid rgba(14, 54, 233, 0.2) !important;
+    width: 100% !important;
+}
+
+.followup-add-btn {
+    background: rgba(245, 158, 11, 0.06) !important;
+    color: #b45309 !important;
+    border: 1px solid rgba(244, 206, 130, 0.6) !important;
+}
+
+.followup-go-btn {
+    background: rgba(14, 165, 233, 0.06) !important;
+    color: #0369a1 !important;
+    border: 1px solid rgba(14, 165, 233, 0.12) !important;
+}
+
+.followup-add-btn:hover,
+.followup-go-btn:hover,
+.add-option-btn:hover,
+.add-lang-btn:hover {
+    transform: translateY(-1px);
 }
 </style>
