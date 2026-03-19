@@ -143,7 +143,7 @@
                                     </CButton>
                                 </div>
 
-                                <div v-else-if="findFollowUp(question, choiceIndex)" class="mt-2">
+                                <div v-else-if="findFollowUp(question, choiceIndex)" class="mb-2 mr-1">
                                     <CButton size="sm" variant="ghost" color="info" class="icon-btn followup-go-btn"
                                         @click="goToFollowUp(question, choiceIndex)"
                                         v-c-tooltip="'Go to follow-up question'" aria-label="Go to follow-up question">
@@ -1115,7 +1115,6 @@ export default {
             return null;
         },
         getAncestorChain(question) {
-            // returns array of ancestor questions from root -> immediate parent
             const chain = [];
             try {
                 let p = this.getParentForFollowUp(question);
@@ -1130,15 +1129,13 @@ export default {
         },
         displayQuestionNumber(question, index) {
             try {
-                const ancestors = this.getAncestorChain(question); // root -> immediate parent
+                const ancestors = this.getAncestorChain(question);
                 const parts = [];
 
-                // If there are ancestors, compute numbers for each ancestor
                 for (let aIdx = 0; aIdx < ancestors.length; aIdx++) {
                     const anc = ancestors[aIdx];
                     const ancParentObj = this.getParentForFollowUp(anc);
                     if (!ancParentObj || !ancParentObj.parent) {
-                        // anc is top-level: compute its top-level number
                         let topNum = 0;
                         for (let i = 0; i < this.localQuestions.length; i++) {
                             const item = this.localQuestions[i];
@@ -1308,7 +1305,7 @@ export default {
 
 .rounded-20 {
     border-radius: 20px !important;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .shadow-sm {
