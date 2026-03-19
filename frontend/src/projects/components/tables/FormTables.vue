@@ -142,7 +142,6 @@ export default {
                 if (!f) f = {};
                 const missingFields = [];
 
-                // Title: robust support, default to '-'
                 let title = '-';
                 if (Array.isArray(f.title) && f.title.length > 0) {
                     const en = f.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
@@ -258,25 +257,21 @@ export default {
                         progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
                     }
 
-                    // Status based on submit field
                     if (userResponse.submit === true) {
                         status = 'Completed';
                         progress = 100;
                     } else {
-                        status = 'InProgress';
+                        status = 'In Progress';
                     }
                 }
 
-                // Access Logic (match ManagementTables)
                 const rawOrgs = f.organization || [];
                 let access = [];
 
-                // Extract plain names from populated objects or strings
                 const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
                     if (!o) return null;
                     if (typeof o === 'string') return o;
                     if (typeof o === 'object') {
-                        // Support the multi-language title structure
                         if (Array.isArray(o.title)) {
                             const en = o.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
                             return en ? en.value : (o.title[0] ? o.title[0].value : null);
@@ -400,7 +395,7 @@ export default {
 
                 if (userRes) {
                     if (userRes.submit === true) s = 'Completed';
-                    else s = 'InProgress';
+                    else s = 'In Progress';
                 }
 
                 // UNIFIED LOGIC: Determine if it's currently live or historially completed
@@ -414,7 +409,7 @@ export default {
                     if (s === 'Completed' || isLive) {
                         total++;
                         if (s === 'Completed') completed++;
-                        else if (s === 'InProgress') inProgress++;
+                        else if (s === 'In Progress') inProgress++;
                         else pending++;
                     }
                 }
@@ -448,7 +443,7 @@ export default {
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
             if (s === 'completed') return 'status-completed';
-            if (s === 'inprogress') return 'status-inprogress';
+            if (s === 'in progress') return 'status-inprogress';
             return 'status-pending';
         },
         getVisibilityClass(visibility) {
