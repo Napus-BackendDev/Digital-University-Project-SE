@@ -3,11 +3,8 @@
         <Header title="Admin Dashboard" description="Overview of all forms and responses" />
         <WidgetsDropdown class="mb-4" />
         <CRow class="mb-4">
-            <CCol lg="8">
+            <CCol lg="12">
                 <AdminLineCharts />
-            </CCol>
-            <CCol lg="4">
-                <AdminDoughnutCharts />
             </CCol>
         </CRow>
         <CRow>

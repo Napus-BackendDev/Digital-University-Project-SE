@@ -3,7 +3,7 @@
         <div class="header mb-4">
             <div class="d-flex align-items-center mb-1">
                 <CIcon name="cil-chart" class="text-danger mr-2" size="lg" />
-                <h4 class="m-0 font-weight-bold">Top Performing Forms</h4>
+                <h4 class="m-0 font-weight-bold">Most Responded Form</h4>
             </div>
             <div class="text-muted small ">Forms with the most responses</div>
         </div>

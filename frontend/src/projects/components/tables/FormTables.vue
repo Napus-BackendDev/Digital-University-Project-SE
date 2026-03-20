@@ -4,89 +4,87 @@
         <FilterTable :searchQuery.sync="searchQuery" :selectedStatus.sync="selectedStatus" :startDate.sync="startDate"
             :endDate.sync="endDate" />
 
-        <div class="user-tables-container">
-            <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
-                :pagination="false" hover class="mb-0 custom-table"
-                :no-items-view="{ noItems: 'No questionnaires yet. Create one to get started.' }">
+        <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
+            :pagination="false" hover class="mb-0 user-tables-container"
+            :no-items-view="{ noItems: 'No questionnaires yet. Create one to get started.' }">
 
-                <!-- Form Name (Title & Description) Slot -->
-                <template #form="{ item }">
-                    <td class="py-3">
-                        <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
-                        <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
-                    </td>
-                </template>
+            <!-- Form Name (Title & Description) Slot -->
+            <template #form="{ item }">
+                <td class="py-3">
+                    <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
+                    <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                </td>
+            </template>
 
-                <!-- Create By Slot (match ManagementTables) -->
-                <template #createBy="{ item }">
-                    <td class="py-3">
-                        <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
-                        <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
-                    </td>
-                </template>
+            <!-- Create By Slot (match ManagementTables) -->
+            <template #createBy="{ item }">
+                <td class="py-3">
+                    <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
+                    <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
+                </td>
+            </template>
 
-                <!-- Access Slot -->
-                <template #access="{ item }">
-                    <td class="py-3">
-                        <div class="access-stack">
-                            <span v-for="(v, idx) in item.access" :key="idx" 
-                                  class="visibility-badge" :class="getVisibilityClass(v)">
-                                {{ v }}
-                            </span>
-                        </div>
-                    </td>
-                </template>
-
-                <!-- Time Range Slot (match ManagementTables) -->
-                <template #timeRange="{ item }">
-                    <td class="py-3">
-                        <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
-                        <div class="small text-muted mt-1" v-if="item.daysLeft">{{ item.daysLeft }}</div>
-                    </td>
-                </template>
-
-                <!-- Status Slot (match ManagementTables display) -->
-                <template #status="{ item }">
-                    <td class="py-3">
-                        <span v-if="item && item.status" class="status-badge" :class="getStatusClass(item.status)">
-                            <span class="status-dot"></span>
-                            {{ item.status }}
+            <!-- Access Slot -->
+            <template #access="{ item }">
+                <td class="py-3">
+                    <div class="access-stack">
+                        <span v-for="(v, idx) in item.access" :key="idx" class="visibility-badge"
+                            :class="getVisibilityClass(v)">
+                            {{ v }}
                         </span>
-                    </td>
-                </template>
+                    </div>
+                </td>
+            </template>
 
-                <template #progress="{ item }">
-                    <td class="py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1 mr-3" v-if="typeof item.progress === 'number'">
-                                <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px"
-                                    class="progress-xs" />
-                            </div>
-                            <div class="small font-weight-bold text-dark" v-if="typeof item.progress === 'number'">{{
-                                item.progress }}%</div>
-                            <div class="small font-weight-bold text-dark" v-else>-</div>
+            <!-- Time Range Slot (match ManagementTables) -->
+            <template #timeRange="{ item }">
+                <td class="py-3">
+                    <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
+                    <div class="small text-muted mt-1" v-if="item.daysLeft">{{ item.daysLeft }}</div>
+                </td>
+            </template>
+
+            <!-- Status Slot (match ManagementTables display) -->
+            <template #status="{ item }">
+                <td class="py-3">
+                    <span v-if="item && item.status" class="status-badge" :class="getStatusClass(item.status)">
+                        <span class="status-dot"></span>
+                        {{ item.status }}
+                    </span>
+                </td>
+            </template>
+
+            <template #progress="{ item }">
+                <td class="py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 mr-3" v-if="typeof item.progress === 'number'">
+                            <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px"
+                                class="progress-xs" />
                         </div>
-                    </td>
-                </template>
+                        <div class="small font-weight-bold text-dark" v-if="typeof item.progress === 'number'">{{
+                            item.progress }}%</div>
+                        <div class="small font-weight-bold text-dark" v-else>-</div>
+                    </div>
+                </td>
+            </template>
 
-                <!-- Action Slot -->
-                <template #action="{ item }">
-                    <td class="py-3 text-right pr-4">
-                        <div class="d-flex align-items-center justify-content-end">
-                            <CIcon v-if="item.requireEmail" name="cil-warning" class="text-danger mr-2"
-                                style="width: 20px;" v-c-tooltip="'Email required'" />
-                            <CButton :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
-                                @click.stop="goToForm(item._id)" v-c-tooltip="getActionTooltip(item.status)">
-                                <CIcon :name="getActionIcon(item.status)" size="lg" />
-                            </CButton>
-                        </div>
-                    </td>
-                </template>
-            </CDataTable>
+            <!-- Action Slot -->
+            <template #action="{ item }">
+                <td class="py-3 text-right pr-4">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <CIcon v-if="item.requireEmail" name="cil-warning" class="text-danger mr-2" style="width: 20px;"
+                            v-c-tooltip="'Email required'" />
+                        <CButton :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
+                            @click.stop="goToForm(item._id)" v-c-tooltip="getActionTooltip(item.status)">
+                            <CIcon :name="getActionIcon(item.status)" size="lg" />
+                        </CButton>
+                    </div>
+                </td>
+            </template>
+        </CDataTable>
 
-            <!-- Pagination -->
-            <Pagination :activePage.sync="activePage" :pages="totalPages" />
-        </div>
+        <!-- Pagination -->
+        <Pagination :activePage.sync="activePage" :pages="totalPages" />
     </div>
 </template>
 
@@ -135,7 +133,7 @@ export default {
         tableData() {
             if (!this.forms || this.forms.length === 0) return [];
             console.log(JSON.parse(JSON.stringify(this.forms))); // log raw forms data for debugging
-            
+
             const currentUser = this.user;
 
             const mapped = this.forms.map(f => {
@@ -223,7 +221,7 @@ export default {
                 // Identify the user's response from their profile list
                 const userObj = currentUser || {};
                 const userResponses = userObj.response || []; // Populated from backend earlier
-                
+
                 let status = 'Pending';
                 let progress = 0;
                 let userAnswerCount = 0;
@@ -252,7 +250,7 @@ export default {
                             return resStr !== '' && resStr !== 'null' && resStr !== 'undefined' && resStr !== '[]';
                         }).length;
                     }
-                    
+
                     if (totalQuestions > 0) {
                         progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
                     }
@@ -347,7 +345,7 @@ export default {
             const now = new Date();
             filtered = filtered.filter(f => {
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
-                
+
                 // Always hide if no schedule at all (requested)
                 if (!sched.startAt && !sched.endAt) return false;
 
@@ -358,7 +356,7 @@ export default {
                 let isInTimeRange = true;
                 if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
                 if (sched.endAt && now > new Date(sched.endAt)) isInTimeRange = false;
-                
+
                 return isInTimeRange;
             });
 
@@ -367,7 +365,7 @@ export default {
         stats() {
             const fallback = { total: 0, pending: 0, completed: 0, inProgress: 0 };
             if (!this.forms || !Array.isArray(this.forms)) return fallback;
-            
+
             const currentUser = this.user;
             const userResponses = currentUser?.response || [];
             const now = new Date();
@@ -379,12 +377,12 @@ export default {
 
             this.forms.forEach(f => {
                 if (!f) return;
-                
+
                 // UNIFIED LOGIC: Match tableData's schedule and status detection
                 const sched = f.schedule || {};
                 const start = sched.startAt ? new Date(sched.startAt) : null;
                 const end = sched.endAt ? new Date(sched.endAt) : null;
-                
+
                 // Identify Status based on User's response list
                 let s = 'Pending';
                 const userRes = userResponses.find(r => {
@@ -488,38 +486,9 @@ export default {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
     padding: 0;
+    overflow: hidden;
 }
 
-/* Table Header */
-.custom-table thead th {
-    background-color: #f8fafc;
-    border-bottom: 1px solid #edf2f7;
-    color: #64748b;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    border-top: none;
-}
-
-/* Clickable Rows */
-.custom-table tbody tr {
-    transition: background-color 0.2s ease;
-    cursor: pointer;
-}
-
-.custom-table tbody tr:hover {
-    background-color: #f8fafc;
-}
-
-.custom-table tbody td {
-    border-top: 1px solid #edf2f7;
-    vertical-align: middle;
-}
-
-/* Typography */
 .text-lg {
     font-size: 0.95rem;
 }
@@ -528,7 +497,6 @@ export default {
     color: #94a3b8 !important;
 }
 
-/* Status Badges */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -606,60 +574,6 @@ export default {
     background-color: #f8fafc !important;
 }
 
-/* Custom Table Styling matching ManagementTables */
-::v-deep .custom-table table {
-    margin-bottom: 0;
-    border-collapse: separate;
-    border-spacing: 0;
-    table-layout: fixed !important;
-    width: 100% !important;
-}
-
-::v-deep .custom-table table td {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Header Styling */
-::v-deep .custom-table thead th {
-    background-color: #ffffff !important;
-    color: #475569 !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    text-transform: capitalize !important;
-    letter-spacing: normal;
-    border: none !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    padding: 16px 24px !important;
-    vertical-align: middle;
-}
-
-::v-deep .custom-table thead th:first-child {
-    border-top-left-radius: 8px;
-}
-
-::v-deep .custom-table thead th:last-child {
-    border-top-right-radius: 8px;
-}
-
-/* Body Styling */
-::v-deep .custom-table tbody td {
-    background-color: #ffffff !important;
-    color: #1e293b !important;
-    font-size: 14px;
-    font-weight: 500;
-    border: none !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    padding: 18px 24px !important;
-    vertical-align: middle;
-    height: 76px;
-}
-
-/* Hover Effect */
-::v-deep .custom-table tbody tr:hover td {
-    background-color: #ffffff !important;
-}
-
 .action-icon-btn {
     width: 38px;
     height: 38px;
@@ -707,11 +621,6 @@ export default {
 .visi-org {
     background-color: #f0f7ff;
     color: #1e40af;
-}
-
-/* Remove bottom border from the very last row */
-::v-deep .custom-table tbody tr:last-child td {
-    border-bottom: none !important;
 }
 </style>
 ```

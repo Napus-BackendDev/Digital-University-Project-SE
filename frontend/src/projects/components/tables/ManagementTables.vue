@@ -4,120 +4,117 @@
             :endDate.sync="endDate" :managementMode="true" />
 
         <!-- Table -->
-        <div class="user-tables-container">
-            <CDataTable class="custom-table mb-0" :items="tableData" :fields="fields" :items-per-page="itemsPerPage"
-                :pagination="false" hover :activePage.sync="activePage"
-                :no-items-view="{ noItems: 'No questionnaires yet. Create one to get started.' }">
+        <CDataTable class="user-tables-container mb-0" :items="tableData" :fields="fields"
+            :items-per-page="itemsPerPage" :pagination="false" hover :activePage.sync="activePage"
+            :no-items-view="{ noItems: 'No questionnaires yet. Create one to get started.' }">
 
-                <!-- Questionnaire (Title & Description) -->
-                <template #title="{ item }">
-                    <td class="py-3">
-                        <template v-if="!item.isEmpty">
-                            <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
-                            <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
-                        </template>
-                    </td>
-                </template>
+            <!-- Questionnaire (Title & Description) -->
+            <template #title="{ item }">
+                <td class="py-3">
+                    <template v-if="!item.isEmpty">
+                        <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
+                        <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                    </template>
+                </td>
+            </template>
 
-                <!-- Created By (Name + Email) -->
-                <template #createBy="{ item }">
-                    <td class="py-3">
-                        <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
-                        <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
-                    </td>
-                </template>
+            <!-- Created By (Name + Email) -->
+            <template #createBy="{ item }">
+                <td class="py-3">
+                    <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
+                    <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
+                </td>
+            </template>
 
-                <!-- Time Range -->
-                <template #timeRange="{ item }">
-                    <td class="py-3">
-                        <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
-                        <div class="small text-muted mt-1">{{ item.daysLeft || '' }}</div>
-                    </td>
-                </template>
+            <!-- Time Range -->
+            <template #timeRange="{ item }">
+                <td class="py-3">
+                    <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
+                    <div class="small text-muted mt-1">{{ item.daysLeft || '' }}</div>
+                </td>
+            </template>
 
-                <!-- Status Label -->
-                <template #status="{ item }">
-                    <td class="py-3">
-                        <span v-if="!item.isEmpty" class="status-badge" :class="getStatusClass(item.status)">
-                            <span class="status-dot"></span>
-                            {{ item.status }}
+            <!-- Status Label -->
+            <template #status="{ item }">
+                <td class="py-3">
+                    <span v-if="!item.isEmpty" class="status-badge" :class="getStatusClass(item.status)">
+                        <span class="status-dot"></span>
+                        {{ item.status }}
+                    </span>
+                </td>
+            </template>
+
+            <!-- Access -->
+            <template #access="{ item }">
+                <td class="py-3">
+                    <div v-if="!item.isEmpty" class="access-stack">
+                        <span v-for="(acc, i) in (Array.isArray(item.access) ? item.access : [item.access])" :key="i"
+                            class="visibility-badge" :class="getVisibilityClass(acc)">
+                            {{ acc }}
                         </span>
-                    </td>
-                </template>
+                    </div>
+                </td>
+            </template>
 
-                <!-- Access -->
-                <template #access="{ item }">
-                    <td class="py-3">
-                        <div v-if="!item.isEmpty" class="access-stack">
-                            <span v-for="(acc, i) in (Array.isArray(item.access) ? item.access : [item.access])" :key="i"
-                                class="visibility-badge" :class="getVisibilityClass(acc)">
-                                {{ acc }}
-                            </span>
-                        </div>
-                    </td>
-                </template>
-
-                <!-- Responses: show two rows (Completed vs Ongoing) -->
-                <template #responses="{ item }">
-                    <td class="align-middle">
-                        <div v-if="!item.isEmpty" class="d-flex flex-column">
-                            <div class="d-flex align-items-center mb-1">
-                                <div class="icon-wrapper mr-2 chart-color" style="width: 20px; height: 20px;">
-                                    <CIcon name="cil-check-alt" size="sm" class="text-success" />
-                                </div>
-                                <span class="response-count font-weight-bold mr-1">{{ getCompletedCount(item.responses)
-                                    }}</span>
-                                <small class="text-muted">Completed</small>
+            <!-- Responses: show two rows (Completed vs Ongoing) -->
+            <template #responses="{ item }">
+                <td class="align-middle">
+                    <div v-if="!item.isEmpty" class="d-flex flex-column">
+                        <div class="d-flex align-items-center mb-1">
+                            <div class="icon-wrapper mr-2 chart-color" style="width: 20px; height: 20px;">
+                                <CIcon name="cil-check-alt" size="sm" class="text-success" />
                             </div>
-                            <div class="d-flex align-items-center">
-                                <div class="icon-wrapper mr-2"
-                                    style="width: 20px; height: 20px; background-color: #f1f5f9;">
-                                    <CIcon name="cil-history" size="sm" class="text-info" />
-                                </div>
-                                <span class="response-count font-weight-bold mr-1">{{ getOngoingCount(item.responses)
-                                    }}</span>
-                                <small class="text-muted">Ongoing</small>
+                            <span class="response-count font-weight-bold mr-1">{{ getCompletedCount(item.responses)
+                            }}</span>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="icon-wrapper mr-2"
+                                style="width: 20px; height: 20px; background-color: #f1f5f9;">
+                                <CIcon name="cil-history" size="sm" class="text-info" />
                             </div>
+                            <span class="response-count font-weight-bold mr-1">{{ getOngoingCount(item.responses)
+                            }}</span>
+                            <small class="text-muted">Ongoing</small>
                         </div>
-                    </td>
-                </template>
+                    </div>
+                </td>
+            </template>
 
-                <!-- Actions: individual icon buttons like FormTables -->
-                <template #actions="{ item }">
-                    <td class="align-middle text-right pr-4">
-                        <div class="d-flex align-items-center justify-content-end">
-                            <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn"
-                                @click.stop="goToPreviewForm(item)" v-c-tooltip="'Preview'" aria-label="Preview">
-                                <CIcon name="cil-magnifying-glass" />
-                            </CButton>
-                            <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn"
-                                @click.stop="goToDuplicationForm(item)" v-c-tooltip="'Duplicate'"
-                                aria-label="Duplicate">
-                                <CIcon name="cil-copy" />
-                            </CButton>
-                            <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn"
-                                @click.stop="goToEditForm(item)" v-c-tooltip="'Edit'" aria-label="Edit">
-                                <CIcon name="cil-pencil" />
-                            </CButton>
-                            <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn"
-                                @click.stop="confirmDeleteItem(item)" v-c-tooltip="'Delete'" aria-label="Delete">
-                                <CIcon name="cil-trash" />
-                            </CButton>
-                        </div>
-                    </td>
-                </template>
+            <!-- Actions: individual icon buttons like FormTables -->
+            <template #actions="{ item }">
+                <td class="align-middle text-right pr-4">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn"
+                            @click.stop="goToPreviewForm(item)" v-c-tooltip="'Preview'" aria-label="Preview">
+                            <CIcon name="cil-magnifying-glass" />
+                        </CButton>
+                        <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn"
+                            @click.stop="goToDuplicationForm(item)" v-c-tooltip="'Duplicate'" aria-label="Duplicate">
+                            <CIcon name="cil-copy" />
+                        </CButton>
+                        <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn"
+                            @click.stop="goToEditForm(item)" v-c-tooltip="'Edit'" aria-label="Edit">
+                            <CIcon name="cil-pencil" />
+                        </CButton>
+                        <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn"
+                            @click.stop="confirmDeleteItem(item)" v-c-tooltip="'Delete'" aria-label="Delete">
+                            <CIcon name="cil-trash" />
+                        </CButton>
+                    </div>
+                </td>
+            </template>
 
-                <!-- Custom empty state -->
-                <template #empty>
-                    <tr>
-                        <td :colspan="fields.length" class="text-center py-5">
-                            <div class="h5 mb-2">No questionnaires yet. Create one to get started.</div>
-                            <div class="text-muted">Create one to get started.</div>
-                        </td>
-                    </tr>
-                </template>
-            </CDataTable>
-        </div>
+            <!-- Custom empty state -->
+            <template #empty>
+                <tr>
+                    <td :colspan="fields.length" class="text-center py-5">
+                        <div class="h5 mb-2">No questionnaires yet. Create one to get started.</div>
+                        <div class="text-muted">Create one to get started.</div>
+                    </td>
+                </tr>
+            </template>
+        </CDataTable>
 
         <!-- Pagination -->
         <Pagination :activePage.sync="activePage" :pages="totalPages" />
@@ -462,6 +459,7 @@ export default {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
     padding: 0;
+    overflow: hidden;
 }
 
 .text-muted {
@@ -511,7 +509,6 @@ export default {
     background-color: #dc2626;
 }
 
-/* Visibility Badges */
 .access-stack {
     display: flex;
     flex-direction: column;
@@ -548,7 +545,6 @@ export default {
     color: #64748b;
 }
 
-/* Responses badge */
 .response-badge {
     background-color: #f1f5f9;
     border: 1px solid #e2e8f0;
@@ -568,8 +564,7 @@ export default {
     color: #475569;
 }
 
-/* Delete modal specific styles */
-.delete-modal >>> .modal-icon-wrapper {
+.delete-modal>>>.modal-icon-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -580,9 +575,11 @@ export default {
     border: 1px solid #dc2626;
     color: #dc2626;
 }
-.delete-modal >>> .modal-icon-wrapper .c-icon {
+
+.delete-modal>>>.modal-icon-wrapper .c-icon {
     font-size: 20px;
 }
+
 .delete-modal .btn-cancel {
     background-color: #f1f5f9 !important;
     border: 1px solid #cbd5e1 !important;
@@ -590,15 +587,12 @@ export default {
     padding: 0.45rem 0.9rem;
     border-radius: 6px;
 }
+
 .delete-modal .btn-confirm {
     padding: 0.45rem 0.9rem;
     border-radius: 6px;
 }
-.delete-modal .c-modal__content {
-    /* slightly larger modal and centered content spacing */
-}
 
-/* Action Buttons */
 .action-icon-btn {
     width: 38px;
     height: 38px;
@@ -614,33 +608,5 @@ export default {
     background-color: #f1f5f9 !important;
     color: #3c4b64 !important;
     transform: translateY(-1px);
-}
-
-.custom-table thead th {
-    background-color: #f8fafc;
-    border-bottom: 1px solid #edf2f7;
-    color: #64748b;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    border-top: none;
-}
-
-/* Clickable Rows */
-.custom-table tbody tr {
-    transition: background-color 0.2s ease;
-    cursor: pointer;
-}
-
-.custom-table tbody tr:hover {
-    background-color: #f8fafc;
-}
-
-.custom-table tbody td {
-    border-top: 1px solid #edf2f7;
-    vertical-align: middle;
 }
 </style>

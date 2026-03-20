@@ -19,7 +19,7 @@ const CreateForm = () => import('@/projects/views/page/CreateForm.vue')
 const Response = () => import('@/projects/views/Responsedetail.vue')
 
 // Admin
-const Analytics = () => import('@/projects/views/Statistic.vue')
+const Analytics = () => import('@/projects/views/Analytics.vue')
 const Permissions = () => import('@/projects/views/Permissions.vue')
 
 Vue.use(Router)
