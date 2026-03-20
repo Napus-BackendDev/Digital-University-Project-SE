@@ -1,7 +1,7 @@
 <template>
     <CRow>
         <CCol col="12" class="d-flex justify-content-between align-items-center">
-            <div class="back" style="cursor: pointer" @click="$router.back()">
+            <div class="back" @click="$router.back()">
                 <CIcon name="cil-chevron-left" class="text-danger" />
                 <span class="px-1 text-danger">Back</span>
             </div>
@@ -29,15 +29,23 @@ export default {
 </script>
 
 <style>
+
 .back {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    padding: 0.375rem 0.75rem;
+    padding: 0.25rem 0.6rem;
     border-radius: 0.5rem;
-    transition: background-color 0.2s ease;
+    background-color: #ffffff;
+    border: 1px solid #e6eef6;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
 }
 
 .back:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
 }
 </style>

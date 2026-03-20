@@ -1,8 +1,8 @@
 <template>
     <CButton size="sm" color="light" class="btn-preview"
         style="border-radius: 0.5rem;" @click="goToPreview">
-        <CIcon name="cil-media-play" class="mr-2 text-dark" />
-        <span class="text-dark">Preview</span>
+        <CIcon name="cil-magnifying-glass" class="mr-2 text-primary" />
+        <span class="text-primary preview-text">Preview</span>
     </CButton>
 </template>
 
@@ -23,14 +23,20 @@ export default {
 .btn-preview {
     display: flex;
     align-items: center;
-    padding: 0.375rem 0.75rem;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
+    padding: 0.25rem 0.6rem;
+    background-color: #ffffff;
+    border: 1px solid #e6eef6;
+    transition: all 0.12s ease;
 }
 
 .btn-preview:hover {
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
     border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.preview-text {
+    font-size: 0.95rem;
+    font-weight: 600;
 }
 </style>

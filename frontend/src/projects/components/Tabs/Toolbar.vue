@@ -28,8 +28,6 @@
                     </CButton>
                 </div>
 
-
-
                 <!-- Sharing Section (New) -->
                 <div class="mb-4" v-if="activeTab === 'setting'">
                     <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Form Sharing</label>

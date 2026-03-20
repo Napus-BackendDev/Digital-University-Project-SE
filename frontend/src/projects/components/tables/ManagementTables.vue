@@ -123,12 +123,12 @@
         <Pagination :activePage.sync="activePage" :pages="totalPages" />
 
         <!-- Confirm Delete modal -->
-        <CModal :show.sync="deleteModal" :centered="true">
+        <CModal class="delete-modal" :show.sync="deleteModal" :centered="true">
             <template #header-wrapper>
                 <div class="align-items-start p-3">
                     <div class="d-flex flex-column align-items-center">
-                        <div class="icon-wrapper border-danger m-1">
-                            <CIcon name="cil-x" />
+                        <div class="modal-icon-wrapper m-1">
+                            <CIcon name="cil-x" class="text-danger" />
                         </div>
                         <span class="font-weight-bold">{{ $t('modal.deleteTitle') }}</span>
                     </div>
@@ -141,10 +141,10 @@
             </template>
             <template #footer-wrapper>
                 <div class="d-flex justify-content-center p-3">
-                    <CButton color="secondary" @click="deleteModal = false">
+                    <CButton color="secondary" class="btn-cancel" @click="deleteModal = false">
                         {{ $t('modal.cancel') }}
                     </CButton>
-                    <CButton color="danger" class="ml-2" @click="confirmDelete()">
+                    <CButton color="danger" class="ml-2 btn-confirm" @click="confirmDelete()">
                         {{ $t('modal.confirm') }}
                     </CButton>
                 </div>
@@ -566,6 +566,36 @@ export default {
     border-radius: 6px;
     background-color: #f1f5f9;
     color: #475569;
+}
+
+/* Delete modal specific styles */
+.delete-modal >>> .modal-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background-color: #ffffff;
+    border: 1px solid #dc2626;
+    color: #dc2626;
+}
+.delete-modal >>> .modal-icon-wrapper .c-icon {
+    font-size: 20px;
+}
+.delete-modal .btn-cancel {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+}
+.delete-modal .btn-confirm {
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+}
+.delete-modal .c-modal__content {
+    /* slightly larger modal and centered content spacing */
 }
 
 /* Action Buttons */
