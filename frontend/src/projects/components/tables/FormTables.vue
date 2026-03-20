@@ -5,7 +5,7 @@
             :endDate.sync="endDate" />
 
         <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
-            :pagination="false" hover class="mb-0 user-tables-container"
+            :pagination="false" hover class="mb-0 tables-container"
             :no-items-view="{ noItems: 'No questionnaires yet. Create one to get started.' }">
 
             <!-- Form Name (Title & Description) Slot -->
@@ -480,7 +480,7 @@ export default {
 </script>
 
 <style scoped>
-.user-tables-container {
+.tables-container {
     background: white;
     border-radius: 1rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);

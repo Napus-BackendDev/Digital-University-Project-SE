@@ -8,66 +8,66 @@
         </div>
 
         <!-- Table -->
-        <div class="table-responsive">
-            <CDataTable :items="paginatedData" :fields="fields" :items-per-page="pageSize" :activePage="1"
-                :pagination="false" hover class="mb-0 custom-table">
-                <!-- Form Title Slot -->
-                <template #form="{ item }">
-                    <td class="py-3 pl-3">
-                        <div class="font-weight-bold text-dark">{{ item.title }}</div>
-                        <div class="small text-muted" v-if="item.description">{{ item.description }}</div>
-                    </td>
-                </template>
+        <CDataTable :items="paginatedData" :fields="fields" :items-per-page="pageSize" :activePage="1"
+            :pagination="false" hover class="mb-0 tables-container">
+            <!-- Form Title Slot -->
+            <template #form="{ item }">
+                <td class="py-3 pl-3">
+                    <div class="font-weight-bold text-dark">{{ item.title }}</div>
+                    <div class="small text-muted" v-if="item.description">{{ item.description }}</div>
+                </td>
+            </template>
 
-                <!-- Status Slot -->
-                <template #status="{ item }">
-                    <td class="align-middle py-3">
-                        <div class="d-flex align-items-center"
-                            :class="{ 'text-dark': item.status === 'Active' || item.status === 'Draft', 'text-muted': item.status === 'Closed' }">
-                            <CIcon :name="getStatusIcon(item.status)" size="sm" class="mr-1" />
-                            {{ $t(`status.${item.status.toLowerCase()}`) }}
-                        </div>
-                    </td>
-                </template>
+            <!-- Status Slot -->
+            <template #status="{ item }">
+                <td class="align-middle py-3">
+                    <div class="d-flex align-items-center"
+                        :class="{ 'text-dark': item.status === 'Active' || item.status === 'Draft', 'text-muted': item.status === 'Closed' }">
+                        <CIcon :name="getStatusIcon(item.status)" size="sm" class="mr-1" />
+                        {{ $t(`status.${item.status.toLowerCase()}`) }}
+                    </div>
+                </td>
+            </template>
 
-                <!-- Access Slot -->
-                <template #access="{ item }">
-                    <td class="align-middle py-3">
-                        <span class="badge badge-pill badge-light border px-3 py-1">{{ item.access }}</span>
-                    </td>
-                </template>
+            <!-- Access Slot -->
+            <template #access="{ item }">
+                <td class="align-middle py-3">
+                    <span class="badge badge-pill badge-light border px-3 py-1">{{ item.access }}</span>
+                </td>
+            </template>
 
-                <!-- Responses Slot -->
-                <template #responses="{ item }">
-                    <td class="align-middle py-3 text-center">
-                        <div class="response-circle">
-                            {{ item.responses }}
-                        </div>
-                    </td>
-                </template>
+            <!-- Responses Slot -->
+            <template #responses="{ item }">
+                <td class="align-middle py-3 text-center">
+                    <div class="response-circle">
+                        {{ item.responses }}
+                    </div>
+                </td>
+            </template>
 
-                <!-- Created Slot -->
-                <template #created="{ item }">
-                    <td class="align-middle py-3 text-right text-muted pr-4">
-                        {{ item.created }}
-                    </td>
-                </template>
-            </CDataTable>
-        </div>
-        
+            <!-- Created Slot -->
+            <template #created="{ item }">
+                <td class="align-middle py-3 text-right text-muted pr-4">
+                    {{ item.created }}
+                </td>
+            </template>
+        </CDataTable>
+
         <!-- Pagination -->
-        <div class="d-flex justify-content-center mt-3">
-            <CPagination :active-page.sync="currentPage" :pages="totalPages" responsive />
-        </div>
+        <Pagination :activePage.sync="currentPage" :pages="totalPages" />
     </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+    import { mapGetters } from 'vuex'
+    import Pagination from '@/projects/components/Util/Pagination.vue'
 import moment from 'moment'
 
 export default {
     name: 'AdminTables',
+    components: {
+        Pagination
+    },
     data() {
         return {
             currentPage: 1,
@@ -146,41 +146,13 @@ export default {
 </script>
 
 <style scoped>
-.response-trends-container {
+.tables-container {
     background: white;
     border-radius: 1rem;
-    padding: 0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
+    padding: 0;
     overflow: hidden;
-}
-
-.response-trends-container .header {
-    padding: 20px 24px;
-}
-
-.response-trends-container .table-responsive {
-    padding: 0 24px 20px 24px;
-}
-
-.custom-table thead th {
-    border-top: none;
-    border-bottom: 1px solid #edf2f7;
-    color: #4a5568;
-    font-weight: 600;
-    font-size: 0.875rem;
-    padding-bottom: 1rem;
-}
-
-.custom-table tbody td {
-    border-top: 1px solid #edf2f7;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    vertical-align: top;
-}
-
-.custom-table tbody tr:hover {
-    background-color: #fafbfc;
 }
 
 .response-circle {
