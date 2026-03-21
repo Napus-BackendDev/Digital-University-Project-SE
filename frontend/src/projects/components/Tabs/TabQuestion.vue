@@ -1,7 +1,7 @@
 <template>
     <div>
         <CCard class="mb-4 rounded-20 shadow-sm border">
-            <CCardBody class="p-4">
+            <CCardBody>
                 <div>
                     <!-- ── Form Title  ── -->
                     <div class="mb-3">
@@ -45,14 +45,15 @@
             </CCardBody>
         </CCard>
 
-        <!-- Left Side Tab -->
-        <CCard md="9" class="questions-wrapper">
-            <div v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)">
-                <CCard :id="'question-' + (question._id || qIndex)" class="mb-3 position-relative rounded-20 shadow-sm border"
+        <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }" :row-height="10"
+            :is-draggable="true" :is-resizable="false" :responsive="true"  @dragstop="onDragStop">
+            <GridItem v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)"
+                v-bind="getLayoutItem(question, qIndex)">
+                <CCard :id="'question-' + (question._id || qIndex)"
+                    class="mb-3 position-relative rounded-20 shadow-sm border"
                     :class="{ 'followup-card': getParentForFollowUp(question) }"
                     :style="getParentForFollowUp(question) ? { backgroundColor: '#FFF3CD', border: '1px solid #F7C948' } : {}">
                     <CCardBody class="p-4">
-
                         <!-- Question Title -->
                         <div v-if="getParentForFollowUp(question)" class="mb-2 d-flex align-items-center">
                             <div class="followup-header">Follow-up Question</div>
@@ -61,8 +62,8 @@
                             </small>
                         </div>
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div :class="['number-question', { 'followup-number': getParentForFollowUp(question) }]">{{
-                                displayQuestionNumber(question, qIndex) }}</div>
+                            <div :class="['number-question', { 'followup-number': getParentForFollowUp(question) }]">
+                                {{ displayQuestionNumber(question, qIndex) }}</div>
 
                             <div class="flex-grow-1">
                                 <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
@@ -104,8 +105,8 @@
                         <div v-else-if="
                             getQuestionType(question.type).toLowerCase() === 'multiple_choice' ||
                             getQuestionType(question.type).toLowerCase() === 'checkbox'">
-                            <div v-for="(choice, choiceIndex) in question.config.choices" :key="choice.key || choiceIndex"
-                                class="mb-2">
+                            <div v-for="(choice, choiceIndex) in question.config.choices"
+                                :key="choice.key || choiceIndex" class="mb-2">
                                 <div class="d-flex align-items-center">
                                     <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
                                         class="border rounded-circle mr-2 flex-shrink-0 mb-1"
@@ -136,7 +137,8 @@
                                 <div class="d-flex align-items-start mt-1">
                                     <div v-if="!findFollowUp(question, choiceIndex) && getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
                                         class="mb-2 mr-1">
-                                        <CButton size="sm" variant="ghost" color="warning" class="icon-btn followup-add-btn"
+                                        <CButton size="sm" variant="ghost" color="warning"
+                                            class="icon-btn followup-add-btn"
                                             @click="addFollowUp(question, choiceIndex)"
                                             v-c-tooltip="'Add follow-up question'" aria-label="Add follow-up question">
                                             <CIcon name="cil-speech" />
@@ -146,20 +148,22 @@
                                     <div v-else-if="findFollowUp(question, choiceIndex)" class="mb-2 mr-1">
                                         <CButton size="sm" variant="ghost" color="info" class="icon-btn followup-go-btn"
                                             @click="goToFollowUp(question, choiceIndex)"
-                                            v-c-tooltip="'Go to follow-up question'" aria-label="Go to follow-up question">
+                                            v-c-tooltip="'Go to follow-up question'"
+                                            aria-label="Go to follow-up question">
                                             <CIcon name="cil-arrow-right" />
                                         </CButton>
                                     </div>
 
                                     <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn"
-                                        style="width: 3.2rem;" @click="addOptionLanguage(question, choiceIndex)" size="sm"
-                                        v-c-tooltip="'Add language'" aria-label="Add language">
+                                        style="width: 3.2rem;" @click="addOptionLanguage(question, choiceIndex)"
+                                        size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
                                         <CIcon name="cil-globe-alt" />
                                     </CButton>
                                 </div>
                             </div>
                             <CButton color="primary" variant="ghost" class="icon-btn add-option-btn mt-1"
-                                @click="addOption(question)" size="sm" v-c-tooltip="'Add option'" aria-label="Add option">
+                                @click="addOption(question)" size="sm" v-c-tooltip="'Add option'"
+                                aria-label="Add option">
                                 <CIcon name="cil-list" />
                             </CButton>
                         </div>
@@ -244,9 +248,9 @@
                                 </CButton>
                             </div>
 
-                            <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
-                                @click="addConfigDesc(question)" size="sm" v-c-tooltip="'Add language'"
-                                aria-label="Add language">
+                            <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn"
+                                style="width: 3.2rem;" @click="addConfigDesc(question)" size="sm"
+                                v-c-tooltip="'Add language'" aria-label="Add language">
                                 <CIcon name="cil-globe-alt" />
                             </CButton>
                         </div>
@@ -300,18 +304,17 @@
                                     @update:checked="val => { question.isRequired = val; putQuestion(question); }" />
                             </div>
                         </div>
-
                     </CCardBody>
                 </CCard>
-            </div>
+            </GridItem>
+        </GridLayout>
 
-            <!-- Empty state -->
-            <div v-if="!localQuestions || localQuestions.length === 0"
-                class="text-center py-5 text-muted bg-white rounded-20 shadow-sm">
-                <CIcon name="cil-notes" :height="40" class="mb-3 text-muted" />
-                <p class="mb-0">You haven’t added any questions yet. Try adding one from the sidebar.</p>
-            </div>
-        </CCard>
+        <!-- Empty state -->
+        <div v-if="!localQuestions || localQuestions.length === 0"
+            class="text-center py-5 text-muted bg-white rounded-20 shadow-sm">
+            <CIcon name="cil-notes" :height="40" class="mb-3 text-muted" />
+            <p class="mb-0">You haven’t added any questions yet. Try adding one from the sidebar.</p>
+        </div>
 
         <!-- Image Select modal -->
         <CModal :show.sync="showImageModal" :centered="true">
@@ -352,14 +355,17 @@
 
 <script>
 import { mapGetters } from 'vuex';
-
-const layoutKey = 'TabQuestion-Layouts'
+import { GridLayout, GridItem } from 'vue-grid-layout'
+import { loadStoredLayout, saveGridLayout, buildGridLayoutFromQuestions, getLayoutItem as svcGetLayoutItem, onDragStop as svcOnDragStop } from '../../service/draggable'
 
 export default {
     name: 'TabQuestion',
-    components: {},
     props: {
         form: { type: Object, required: true }
+    },
+    components: {
+        GridLayout,
+        GridItem
     },
     data() {
         return {
@@ -378,8 +384,8 @@ export default {
             modalImageIndex: null,
             modalFiles: '',
             layout: [],
+            storedLayout: null,
             gridKey: 0,
-            storedLayout: null
         };
     },
     watch: {
@@ -442,13 +448,8 @@ export default {
 
                         this.localQuestions = built;
                         try {
-                            const l = [];
-                            for (let i = 0; i < this.localQuestions.length; i++) {
-                                const q = this.localQuestions[i];
-                                l.push({ i: this.convertIdToStr(q._id || i), x: 0, y: i * 8, w: 12, h: 8 });
-                            }
-                            this.layout = l;
-                            this.gridKey++;
+                            this.loadStoredLayout();
+                            this.buildGridLayoutFromQuestions();
                         } catch (e) {
                             // ignore layout build errors
                         }
@@ -463,10 +464,23 @@ export default {
                     this.$nextTick(() => this.addFormDesc());
                 }
             }
+        },
+        localQuestions: {
+            deep: true,
+            handler() {
+                try {
+                    this.buildGridLayoutFromQuestions();
+                } catch (e) {
+                    // ignore
+                }
+            }
         }
     },
     created() {
         this.$store.dispatch('Setting/question_type/get');
+        try {
+            this.loadStoredLayout();
+        } catch (e) { }
     },
     computed: {
         ...mapGetters('Setting/question_type', { question_type: 'item' }),
@@ -519,15 +533,57 @@ export default {
     },
     methods: {
         saveGrid() {
-            this.storedLayout = this.layout
-            localStorage.setItem(layoutKey, JSON.stringify(this.layout))
+            try {
+                this.storedLayout = this.layout;
+                saveGridLayout(this.form, this.layout);
+            } catch (e) {
+                console.error('saveGrid failed', e);
+            }
         },
+
+        loadStoredLayout() {
+            try {
+                this.storedLayout = loadStoredLayout(this.form);
+            } catch (e) {
+                this.storedLayout = null;
+            }
+        },
+
+        buildGridLayoutFromQuestions() {
+            try {
+                this.layout = buildGridLayoutFromQuestions(this.localQuestions, this.storedLayout, (t) => this.getQuestionType(t));
+                this.gridKey++;
+            } catch (e) {
+                this.layout = [];
+                this.gridKey++;
+            }
+        },
+
+        getLayoutItem(question, qIndex) {
+            return svcGetLayoutItem(this.layout, question, qIndex);
+        },
+
+        onDragStop(newLayout) {
+            try {
+                const reordered = svcOnDragStop(newLayout, this.localQuestions, this.convertIdToStr, (newQuestions) => {
+                    if (typeof this.updateOrdersAndPersist === 'function') {
+                        try { this.updateOrdersAndPersist(newQuestions); } catch (e) { console.error(e); }
+                    }
+                });
+                if (Array.isArray(reordered)) this.localQuestions = reordered;
+            } catch (e) {
+                console.error('onDragStop error', e);
+            }
+        },
+
         triggerAutoSave() {
             this.$emit('auto-save');
         },
+
         async updateFormMeta() {
             this.triggerAutoSave();
         },
+
         addFormTitle() {
             if (!this.form) return;
             if (!Array.isArray(this.form.title)) {
@@ -544,6 +600,7 @@ export default {
             this.form.title.splice(idx, 1);
             this.updateFormMeta();
         },
+
         addFormDesc() {
             if (!this.form) return;
             if (!Array.isArray(this.form.description)) {
@@ -553,12 +610,14 @@ export default {
             }
             this.updateFormMeta();
         },
+
         removeFormDesc(idx) {
             if (!this.form || !Array.isArray(this.form.description)) return;
             if (this.form.description.length <= 1) return;
             this.form.description.splice(idx, 1);
             this.updateFormMeta();
         },
+
         async putQuestion(question) {
             if (!question || !question._id) return;
             try {
@@ -571,6 +630,7 @@ export default {
                 console.error('Failed to update question', err);
             }
         },
+
         convertIdToStr(val) {
             if (!val && val !== 0) return null;
             if (typeof val === 'string') return val;
@@ -580,6 +640,7 @@ export default {
             }
             return String(val);
         },
+
         getFollowUpChildId(entry) {
             if (!entry && entry !== 0) return null;
             if (typeof entry === 'object') {
@@ -594,6 +655,7 @@ export default {
             }
             return this.convertIdToStr(entry);
         },
+
         async updateQuestionTitle(question) {
             if (!question || !question._id) return;
             try {
@@ -614,6 +676,7 @@ export default {
                 console.error('Failed to update question title', err);
             }
         },
+
         async addQuestion(typeId) {
             const foundType = this.questionTypes.find(type => type._id === typeId || type.type === typeId);
 
@@ -676,6 +739,7 @@ export default {
                 return null;
             }
         },
+
         async removeQuestion(qId) {
             if (!qId) {
                 console.warn('removeQuestion: qId is undefined or null');
@@ -750,6 +814,7 @@ export default {
 
             await this.updateOrdersAndPersist();
         },
+
         setQuestionType(question, typeId) {
             if (!question) return;
 
@@ -786,6 +851,7 @@ export default {
             this.$set(question, 'type', typeId);
             this.putQuestion(question);
         },
+
         getQuestionType(typeObjOrId) {
             if (!typeObjOrId) return '';
             if (typeof typeObjOrId === 'object') return typeObjOrId.type || typeObjOrId.label || '';
@@ -890,9 +956,6 @@ export default {
             this.putQuestion(question);
         },
         updateOption(question, oIndex, val) {
-            // Support two call signatures:
-            // updateOption(question, oIndex, val)
-            // updateOption(question, oIndex, langIndex, event)
             if (!question || !Array.isArray(question.config.choices)) return;
             let langIndex = 0;
             let value = '';
@@ -1350,9 +1413,7 @@ export default {
 
 .number-question {
     background: #f8fafc;
-    /* grey-like bg to match card */
     border: 1px solid #e6eef6;
-    /* subtle border */
     color: #374151;
     border-radius: 999px;
     padding: 0.45rem 0.55rem;
@@ -1369,36 +1430,36 @@ export default {
 .icon-btn {
     width: 34px;
     height: 34px;
-    display: inline-flex !important;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 !important;
-    border-radius: 6px !important;
+    padding: 0;
+    border-radius: 6px;
 }
 
 .add-lang-btn {
-    background: rgba(250, 251, 255, 0.816) !important;
-    color: #0ea5e9 !important;
-    border: 1px solid rgba(153, 211, 255, 0.289) !important;
+    background: rgba(250, 251, 255, 0.816);
+    color: #0ea5e9;
+    border: 1px solid rgba(153, 211, 255, 0.289);
 }
 
 .add-option-btn {
-    background: rgba(139, 174, 255, 0.244) !important;
-    color: #150ee9 !important;
-    border: 1px solid rgba(14, 54, 233, 0.2) !important;
-    width: 100% !important;
+    background: rgba(139, 174, 255, 0.244);
+    color: #150ee9;
+    border: 1px solid rgba(14, 54, 233, 0.2);
+    width: 100%;
 }
 
 .followup-add-btn {
-    background: rgba(245, 158, 11, 0.06) !important;
-    color: #b45309 !important;
-    border: 1px solid rgba(244, 206, 130, 0.6) !important;
+    background: rgba(245, 158, 11, 0.06);
+    color: #b45309;
+    border: 1px solid rgba(244, 206, 130, 0.6);
 }
 
 .followup-go-btn {
-    background: rgba(14, 165, 233, 0.06) !important;
-    color: #0369a1 !important;
-    border: 1px solid rgba(14, 165, 233, 0.12) !important;
+    background: rgba(14, 165, 233, 0.06);
+    color: #0369a1;
+    border: 1px solid rgba(14, 165, 233, 0.12);
 }
 
 .followup-add-btn:hover,
@@ -1406,5 +1467,10 @@ export default {
 .add-option-btn:hover,
 .add-lang-btn:hover {
     transform: translateY(-1px);
+}
+
+::v-deep .vue-grid-item.vue-grid-placeholder {
+    background: gray;
+    border-radius: 20px;
 }
 </style>
