@@ -51,8 +51,8 @@ export default {
 
   response(method, data, configs) {
     switch (method) {
-      case 'get-by-form-id':
-        return instance.post('response/getByFormId', data)
+      case 'exp':
+        return instance.get('response/exp', data)
       case 'get':
         return instance.post('response/get', data)
       case 'submit':

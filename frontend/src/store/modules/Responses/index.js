@@ -11,19 +11,22 @@ const module = {
         }
     },
     actions: {
-        get({ commit }, data) {
-            return Service.response('get-by-form-id', data, {})
+        exp({ commit }, data) {
+            return Service.response('exp', data, {})
                 .then(response => {
                     commit('responses', response.data.data || []);
                     return response;
                 })
                 .catch(err => { throw err; });
         },
-        getById({ commit }, data) {
-            return Service.response('get-by-id', data, {})
+        get({ commit }, data) {
+            return Service.response('get', data, {})
                 .then(response => {
-                    commit('responses', response.data.data || []);
-                    return response.data.data;
+                    const result = response.data.data;
+                    if (Array.isArray(result)) {
+                        commit('responses', result);
+                    }
+                    return result;
                 })
                 .catch(err => { throw err; });
         },
@@ -92,56 +95,56 @@ const module = {
                 .catch(err => { throw err; });
         },
         update({ commit }, data) {
-                const hasFile = (data.answers || []).some(ans =>
-                    ans.response instanceof File ||
-                    (Array.isArray(ans.response) && ans.response.some(r => r instanceof File))
-                );
+            const hasFile = (data.answers || []).some(ans =>
+                ans.response instanceof File ||
+                (Array.isArray(ans.response) && ans.response.some(r => r instanceof File))
+            );
 
-                let payload = data;
-                if (hasFile) {
-                    const formData = new FormData();
-                    formData.append('responder', data.responder);
-                    formData.append('form', data.form);
-                    if (data._id) formData.append('_id', data._id);
+            let payload = data;
+            if (hasFile) {
+                const formData = new FormData();
+                formData.append('responder', data.responder);
+                formData.append('form', data.form);
+                if (data._id) formData.append('_id', data._id);
 
-                    // collect all files and their question ids
-                    const files = [];
-                    const fileQuestions = [];
-                    (data.answers || []).forEach(ans => {
-                        if (ans.response instanceof File) {
-                            files.push(ans.response);
-                            fileQuestions.push(ans.question);
-                        } else if (Array.isArray(ans.response)) {
-                            ans.response.forEach(r => {
-                                if (r instanceof File) {
-                                    files.push(r);
-                                    fileQuestions.push(ans.question);
-                                }
-                            });
-                        }
-                    });
+                // collect all files and their question ids
+                const files = [];
+                const fileQuestions = [];
+                (data.answers || []).forEach(ans => {
+                    if (ans.response instanceof File) {
+                        files.push(ans.response);
+                        fileQuestions.push(ans.question);
+                    } else if (Array.isArray(ans.response)) {
+                        ans.response.forEach(r => {
+                            if (r instanceof File) {
+                                files.push(r);
+                                fileQuestions.push(ans.question);
+                            }
+                        });
+                    }
+                });
 
-                    const answersPayload = (data.answers || []).map(ans => ({
-                        question: ans.question,
-                        response: Array.isArray(ans.response)
-                            ? JSON.stringify(ans.response.map(r => r instanceof File ? (r.name || '') : r))
-                            : (ans.response instanceof File ? (ans.response.name || '') : String(ans.response ?? ''))
-                    }));
+                const answersPayload = (data.answers || []).map(ans => ({
+                    question: ans.question,
+                    response: Array.isArray(ans.response)
+                        ? JSON.stringify(ans.response.map(r => r instanceof File ? (r.name || '') : r))
+                        : (ans.response instanceof File ? (ans.response.name || '') : String(ans.response ?? ''))
+                }));
 
-                    formData.append('answers', JSON.stringify(answersPayload));
-                    files.forEach((file, idx) => {
-                        formData.append('answers[question]', fileQuestions[idx]);
-                        formData.append('answers[response]', file, file.name);
-                    });
-                    payload = formData;
-                }
+                formData.append('answers', JSON.stringify(answersPayload));
+                files.forEach((file, idx) => {
+                    formData.append('answers[question]', fileQuestions[idx]);
+                    formData.append('answers[response]', file, file.name);
+                });
+                payload = formData;
+            }
 
-                return Service.response(hasFile ? 'update-multipart' : 'update', payload, {})
-                    .then(response => {
-                        commit('responses', response.data.data);
-                        return response;
-                    })
-                    .catch(err => { throw err; });
+            return Service.response(hasFile ? 'update-multipart' : 'update', payload, {})
+                .then(response => {
+                    commit('responses', response.data.data);
+                    return response;
+                })
+                .catch(err => { throw err; });
         },
         delete({ commit }, data) {
             return Service.response('delete', data, {})

@@ -36,14 +36,18 @@
                 </CRow>
             </div>
 
-            <div class="bg-light p-3 rounded">
-                <div class="mb-1" style="color: #4f4f4f;">
-                    <strong class="text-dark">Editor :</strong> Can edit form and view
-                    responses
-                </div>
-                <div style="color: #4f4f4f;">
-                    <strong class="text-dark">Viewer :</strong> Can only view form and view
-                    responses
+            <!-- Permission Info Hint -->
+            <div class="info-hint">
+                <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
+                <div class="hint-content">
+                    <div class="mb-1">
+                        <span class="role-badge editor">Editor</span>
+                        <span class="role-desc">: Can edit form and view responses</span>
+                    </div>
+                    <div>
+                        <span class="role-badge viewer">Viewer</span>
+                        <span class="role-desc">: Can only view form and view responses</span>
+                    </div>
                 </div>
             </div>
         </CCardBody>
@@ -139,5 +143,46 @@ export default {
 .rounded-20 {
     border-radius: 20px !important;
     overflow: hidden;
+}
+
+.info-hint {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem 1.25rem;
+    background-color: #f0f7ff;
+    border-radius: 12px;
+    border-left: 4px solid #3b82f6;
+    color: #1e40af;
+}
+
+.hint-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.role-badge {
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-right: 4px;
+}
+
+.role-badge.editor {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.role-badge.viewer {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+.role-desc {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #334155;
 }
 </style>

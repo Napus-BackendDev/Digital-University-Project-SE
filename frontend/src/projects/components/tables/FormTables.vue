@@ -10,7 +10,7 @@
 
             <!-- Form Name (Title & Description) Slot -->
             <template #form="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
                     <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
                 </td>
@@ -18,7 +18,7 @@
 
             <!-- Create By Slot (match ManagementTables) -->
             <template #createBy="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
                     <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
                 </td>
@@ -26,7 +26,7 @@
 
             <!-- Access Slot -->
             <template #access="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="access-stack">
                         <span v-for="(v, idx) in item.access" :key="idx" class="visibility-badge"
                             :class="getVisibilityClass(v)">
@@ -38,7 +38,7 @@
 
             <!-- Time Range Slot (match ManagementTables) -->
             <template #timeRange="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
                     <div class="small text-muted mt-1" v-if="item.daysLeft">{{ item.daysLeft }}</div>
                 </td>
@@ -46,7 +46,7 @@
 
             <!-- Status Slot (match ManagementTables display) -->
             <template #status="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <span v-if="item && item.status" class="status-badge" :class="getStatusClass(item.status)">
                         <span class="status-dot"></span>
                         {{ item.status }}
@@ -55,7 +55,7 @@
             </template>
 
             <template #progress="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1 mr-3" v-if="typeof item.progress === 'number'">
                             <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px"
@@ -70,7 +70,7 @@
 
             <!-- Action Slot -->
             <template #action="{ item }">
-                <td class="py-3 text-right pr-4">
+                <td class="align-middle text-right pr-4">
                     <div class="d-flex align-items-center justify-content-end">
                         <CIcon v-if="item.requireEmail" name="cil-warning" class="text-danger mr-2" style="width: 20px;"
                             v-c-tooltip="'Email required'" />
@@ -309,17 +309,28 @@ export default {
 
             // apply Quick Range / From-To date filtering if provided (based on schedule overlap)
             let filtered = mapped;
-            if (this.startDate || this.endDate) {
-                const start = this.startDate ? new Date(this.startDate + 'T00:00:00') : new Date(-8640000000000000);
-                const end = this.endDate ? new Date(this.endDate + 'T23:59:59') : new Date(8640000000000000);
+            if ((this.startDate && this.startDate.trim() !== '') || (this.endDate && this.endDate.trim() !== '')) {
+                // Parse filter dates strictly as local start (00:00) and end (23:59)
+                const filterStart = this.startDate ? new Date(`${this.startDate}T00:00:00`) : new Date(-8640000000000000);
+                const filterEnd = this.endDate ? new Date(`${this.endDate}T23:59:59`) : new Date(8640000000000000);
+                
                 filtered = filtered.filter(row => {
                     const raw = row._raw || {};
-                    const s = raw.schedule && raw.schedule.startAt ? new Date(raw.schedule.startAt) : null;
-                    const e = raw.schedule && raw.schedule.endAt ? new Date(raw.schedule.endAt) : null;
-                    const formStart = s || e;
-                    const formEnd = e || s;
-                    if (!formStart && !formEnd) return false;
-                    return (formStart <= end) && (formEnd >= start);
+                    const sched = raw.schedule || {};
+                    
+                    // Identify the effective range of the form
+                    const s = sched.startAt ? new Date(sched.startAt) : null;
+                    const e = sched.endAt ? new Date(sched.endAt) : null;
+                    
+                    // If no schedule information available at all, hide when filter is active
+                    if (!s && !e) return false;
+
+                    // Effective form boundaries (handle open-ended schedules)
+                    const formStart = s || new Date(-8640000000000000);
+                    const formEnd = e || new Date(8640000000000000);
+
+                    // Overlap logic: (Form starts before filter ends) AND (Form ends after filter starts)
+                    return (formStart <= filterEnd) && (formEnd >= filterStart);
                 });
             }
 
@@ -328,13 +339,11 @@ export default {
                 filtered = filtered.filter(f => f.status === this.selectedStatus);
             }
 
-            // apply search filter (title, organization, createdBy)
+            // apply search filter (title only)
             if (this.searchQuery) {
                 const q = this.searchQuery.toLowerCase();
                 filtered = filtered.filter(f => {
-                    return (f.title && f.title.toString().toLowerCase().includes(q)) ||
-                        (f.organization && f.organization.toString().toLowerCase().includes(q)) ||
-                        (f.createdBy && f.createdBy.toString().toLowerCase().includes(q));
+                    return f.title && f.title.toString().toLowerCase().includes(q);
                 });
             }
 
@@ -349,9 +358,6 @@ export default {
                 // Always hide if no schedule at all (requested)
                 if (!sched.startAt && !sched.endAt) return false;
 
-                // Always show completed questionnaires
-                if (f.status === 'Completed') return true;
-
                 // Check if current time is within schedule
                 let isInTimeRange = true;
                 if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
@@ -363,57 +369,14 @@ export default {
             return filtered;
         },
         stats() {
-            const fallback = { total: 0, pending: 0, completed: 0, inProgress: 0 };
-            if (!this.forms || !Array.isArray(this.forms)) return fallback;
+            const data = this.tableData || [];
+            
+            let total = data.length;
+            let pending = data.filter(f => f.status === 'Pending').length;
+            let completed = data.filter(f => f.status === 'Completed').length;
+            let inProgress = data.filter(f => f.status === 'In Progress').length;
 
-            const currentUser = this.user;
-            const userResponses = currentUser?.response || [];
-            const now = new Date();
-
-            let total = 0;
-            let pending = 0;
-            let completed = 0;
-            let inProgress = 0;
-
-            this.forms.forEach(f => {
-                if (!f) return;
-
-                // UNIFIED LOGIC: Match tableData's schedule and status detection
-                const sched = f.schedule || {};
-                const start = sched.startAt ? new Date(sched.startAt) : null;
-                const end = sched.endAt ? new Date(sched.endAt) : null;
-
-                // Identify Status based on User's response list
-                let s = 'Pending';
-                const userRes = userResponses.find(r => {
-                    if (!r || !r.form) return false;
-                    const resFormId = (typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form).toString();
-                    return resFormId === (f._id || f.id).toString();
-                });
-
-                if (userRes) {
-                    if (userRes.submit === true) s = 'Completed';
-                    else s = 'In Progress';
-                }
-
-                // UNIFIED LOGIC: Determine if it's currently live or historially completed
-                let isLive = true;
-                if (start && now < start) isLive = false;
-                if (end && now > end) isLive = false;
-
-                // Requirement: Must have schedule dates to be counted at all
-                if (start || end) {
-                    // Only count if it's currently live OR it's already completed
-                    if (s === 'Completed' || isLive) {
-                        total++;
-                        if (s === 'Completed') completed++;
-                        else if (s === 'In Progress') inProgress++;
-                        else pending++;
-                    }
-                }
-            });
-            const result = { total, pending, completed, inProgress };
-            return result;
+            return { total, pending, completed, inProgress };
         }
     },
     watch: {

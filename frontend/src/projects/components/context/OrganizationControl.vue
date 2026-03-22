@@ -105,15 +105,33 @@ export default {
     },
     methods: {
         getOrgName(orgId) {
-            if (!this.organizations) return '...';
-            const org = this.organizations.find(o => o._id === orgId);
-            if (!org) return orgId; // Fallback to ID if not found
+            if (!orgId) return '...';
             
-            if (Array.isArray(org.title)) {
-                const en = org.title.find(t => t && t.key === 'en');
-                return en ? en.value : (org.title[0] ? org.title[0].value : 'Unnamed');
+            // Check if orgId is already an object (populated by backend)
+            let org = null;
+            if (typeof orgId === 'object' && orgId !== null) {
+                org = orgId;
+            } else if (this.organizations) {
+                // If it's an ID string/ObjectId, find it in the cached list
+                org = this.organizations.find(o => (o._id === orgId || o.id === orgId));
             }
-            return org.name || org.title || 'Unnamed';
+
+            // Fallback: If not found in memory but it's an object, return name or title
+            if (!org) {
+                if (typeof orgId === 'string') return orgId;
+                return 'Unknown Org';
+            }
+            
+            // Extract Name based on language/title structure
+            if (Array.isArray(org.title)) {
+                // Try to find English title first, or any first title available
+                const en = org.title.find(t => t && t.key === 'en');
+                if (en && en.value) return en.value;
+                const th = org.title.find(t => t && t.key === 'th');
+                if (th && th.value) return th.value;
+                return org.title[0] ? org.title[0].value : 'Unnamed';
+            }
+            return org.name || org.title || (org._id ? String(org._id) : 'Unnamed');
         },
         addOrganization() {
             if (!this.selectedOrgId) return;

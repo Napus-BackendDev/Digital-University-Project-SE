@@ -7,24 +7,41 @@
                     <CIcon name="cil-layers" size="xl" />
                 </div>
                 <div class="flex-grow-1">
-                    <h1 class="header-title mb-1">{{ title }}</h1>
+                    <div class="d-flex align-items-center mb-1">
+                        <h1 class="header-title mb-0 mr-3">{{ title }}</h1>
+                        <transition name="fade" mode="out-in">
+                            <div v-if="isSaving" key="saving" class="saving-indicator d-flex align-items-center">
+                                <CSpinner size="sm" color="primary" class="mr-2" style="width: 1rem; height: 1rem;" />
+                                <span class="text-primary font-weight-bold small">Saving...</span>
+                            </div>
+                            <div v-else-if="isSaved" key="saved" class="saved-indicator d-flex align-items-center">
+                                <CIcon name="cil-check-circle" size="sm" class="mr-2 text-success" />
+                                <span class="text-success font-weight-bold small">All changes saved</span>
+                            </div>
+                        </transition>
+                    </div>
                     <p class="header-description mb-0 text-muted-custom">{{ description }}</p>
                 </div>
                 
-                <!-- Explicit Create Button for Management -->
-                <div v-if="showCreateButton" class="ml-3">
-                    <CButton 
-                        color="primary" 
-                        size="lg"
-                        class="d-flex align-items-center shadow-sm px-4 py-2"
-                        style="border-radius: 12px; font-weight: 600; transition: all 0.2s ease; background-color: #2563eb; border-color: #2563eb;"
-                        @click="createNewForm"
-                        :disabled="isCreating"
-                    >
-                        <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
-                        <CSpinner v-else size="sm" class="mr-2" />
-                        {{ $t('button.create') }}
-                    </CButton>
+                <!-- Actions Slot for Custom Buttons -->
+                <div class="header-actions ml-auto d-flex align-items-center">
+                    <slot name="actions"></slot>
+                    
+                    <!-- Explicit Create Button for Management -->
+                    <div v-if="showCreateButton" class="ml-3">
+                        <CButton 
+                            color="primary" 
+                            size="lg"
+                            class="d-flex align-items-center shadow-sm px-4 py-2"
+                            style="border-radius: 12px; font-weight: 600; transition: all 0.2s ease; background-color: #2563eb; border-color: #2563eb;"
+                            @click="createNewForm"
+                            :disabled="isCreating"
+                        >
+                            <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
+                            <CSpinner v-else size="sm" class="mr-2" />
+                            {{ $t('button.create') }}
+                        </CButton>
+                    </div>
                 </div>
             </div>
         </CCardBody>
@@ -44,6 +61,14 @@ export default {
             default: ""
         },
         showCreateButton: {
+            type: Boolean,
+            default: false
+        },
+        isSaving: {
+            type: Boolean,
+            default: false
+        },
+        isSaved: {
             type: Boolean,
             default: false
         }
@@ -133,5 +158,24 @@ export default {
     background: rgba(60, 75, 100, 0.03);
     border-radius: 50%;
     z-index: 0;
+}
+
+.saving-indicator {
+    padding: 3px 10px;
+    background: #ebf5ff;
+    border-radius: 50px;
+}
+
+.saved-indicator {
+    padding: 3px 10px;
+    background: #ecfdf5;
+    border-radius: 50px;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
     <div class="flex-grow-1">
-        <Header :title="headerTitle" :description="headerDescription" />
+        <Header :title="headerTitle" :description="headerDescription" :isSaving="isSaving" :isSaved="isSaved" />
         <Container>
             <Tab :form="formData" :activeTab.sync="activeTab" @auto-save="triggerAutoSave" />
         </Container>
@@ -21,7 +21,11 @@ export default {
     data() {
         return {
             formData: {},
-            activeTab: 'question'
+            activeTab: 'question',
+            isNewDuplication: false,
+            isSaving: false,
+            isSaved: false,
+            saveTimer: null
         };
     },
     created() {
@@ -29,7 +33,19 @@ export default {
     },
     methods: {
         async onInit() {
+            // Check if we have duplicated data from the buffer
+            if (this.duplicateBuffer) {
+                console.log("[CreateForm] Initializing with duplicate buffer");
+                this.formData = JSON.parse(JSON.stringify(this.duplicateBuffer));
+                this.isNewDuplication = true;
+                // Clear the buffer after taking the data
+                this.$store.commit('Forms/setDuplicateBuffer', null);
+                return;
+            }
+
             const formId = this.$route.params._id;
+            if (!formId || formId === 'new') return;
+
             try {
                 this.formData = await this.$store.dispatch('Forms/getById', { _id: formId });
             } catch (error) {
@@ -37,15 +53,73 @@ export default {
             }
         },
         async triggerAutoSave() {
+            if (!this.formData || Object.keys(this.formData).length === 0) return;
+            this.isSaving = true;
+            this.isSaved = false;
+            
+            if (this.saveTimer) clearTimeout(this.saveTimer);
+
             try {
-                await this.$store.dispatch('Forms/update', this.formData);
+                if (this.isNewDuplication) {
+                    console.log("[CreateForm] Performing first-time save for duplication");
+                    
+                    // 1. Create the Form
+                    const formPayload = {
+                        title: this.formData.title,
+                        description: this.formData.description,
+                        settings: this.formData.settings,
+                        organization: this.formData.organization || [],
+                        status: this.formData.status || '69b0e3adf864c1088c19da36',
+                        creator: this.user?._id
+                    };
+                    const formRes = await this.$store.dispatch('Forms/create', formPayload);
+                    const newForm = formRes?.data?.data || formRes?.data || formRes;
+                    const newId = newForm?._id || newForm?.id;
+
+                    if (!newId) throw new Error("Failed to create new form");
+
+                    // 2. Create the Questions
+                    const questions = this.formData.questions || [];
+                    for (const q of questions) {
+                        const qPayload = {
+                            ...q,
+                            form: newId
+                        };
+                        // Remove temporary ID so DB can create a new one
+                        if (qPayload._id && String(qPayload._id).startsWith('tmp-')) {
+                            delete qPayload._id;
+                        }
+                        await this.$store.dispatch('Questions/create', qPayload);
+                    }
+
+                    // 3. Finalize and Redirect
+                    this.isNewDuplication = false;
+                    this.formData._id = newId;
+                    this.$router.replace({ name: 'EditorCreateForm', params: { _id: newId } });
+                    
+                    console.log("[CreateForm] Duplication finalized with ID:", newId);
+                } else {
+                    await this.$store.dispatch('Forms/update', this.formData);
+                }
             } catch (error) {
-                console.error("Error auto-saving form:", error);
+                console.error("Error saving form:", error);
+            } finally {
+                // Delay showing "Saved" slightly for better visual transition
+                setTimeout(() => {
+                    this.isSaving = false;
+                    this.isSaved = true;
+                    
+                    // Clear "Saved" message after 3 seconds
+                    this.saveTimer = setTimeout(() => {
+                        this.isSaved = false;
+                    }, 3000);
+                }, 500);
             }
         }
     },
     computed: {
         ...mapGetters('User', ['user']),
+        ...mapGetters('Forms', ['duplicateBuffer']),
         headerTitle() {
             if (this.activeTab === 'question') return "Form Questions";
             if (this.activeTab === 'response') return "Form Responses";

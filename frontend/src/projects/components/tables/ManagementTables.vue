@@ -10,7 +10,7 @@
 
             <!-- Questionnaire (Title & Description) -->
             <template #title="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <template v-if="!item.isEmpty">
                         <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
                         <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
@@ -20,7 +20,7 @@
 
             <!-- Created By (Name + Email) -->
             <template #createBy="{ item }">
-                <td class="py-3">
+                <td class="align-middle ">
                     <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
                     <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
                 </td>
@@ -28,7 +28,7 @@
 
             <!-- Time Range -->
             <template #timeRange="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
                     <div class="small text-muted mt-1">{{ item.daysLeft || '' }}</div>
                 </td>
@@ -36,7 +36,7 @@
 
             <!-- Status Label -->
             <template #status="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <span v-if="!item.isEmpty" class="status-badge" :class="getStatusClass(item.status)">
                         <span class="status-dot"></span>
                         {{ item.status }}
@@ -46,7 +46,7 @@
 
             <!-- Access -->
             <template #access="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div v-if="!item.isEmpty" class="access-stack">
                         <span v-for="(acc, i) in (Array.isArray(item.access) ? item.access : [item.access])" :key="i"
                             class="visibility-badge" :class="getVisibilityClass(acc)">
@@ -343,34 +343,43 @@ export default {
                 };
             });
 
-            // apply quick date / from-to filtering (based on schedule)
+            // apply Quick Range / From-To date filtering if provided (based on schedule overlap)
             let filtered = mapped;
-            if (this.startDate || this.endDate) {
-                const start = this.startDate ? new Date(this.startDate + 'T00:00:00') : new Date(-8640000000000000);
-                const end = this.endDate ? new Date(this.endDate + 'T23:59:59') : new Date(8640000000000000);
-                filtered = filtered.filter(f => {
-                    if (!f) return false;
-                    // attempt to find original schedule on the source item (stored in responses mapping)
-                    const rawSched = f._raw && f._raw.schedule ? f._raw.schedule : null;
-                    const s = rawSched && rawSched.startAt ? new Date(rawSched.startAt) : null;
-                    const e = rawSched && rawSched.endAt ? new Date(rawSched.endAt) : null;
-                    const formStart = s || e;
-                    const formEnd = e || s;
-                    if (!formStart && !formEnd) return false;
-                    return (formStart <= end) && (formEnd >= start);
-                });
+            if ((this.startDate && this.startDate.trim() !== '') || (this.endDate && this.endDate.trim() !== '')) {
+                // Parse filter dates strictly as local start (00:00) and end (23:59)
+                const filterStart = this.startDate ? new Date(`${this.startDate}T00:00:00`) : new Date(-8640000000000000);
+                const filterEnd = this.endDate ? new Date(`${this.endDate}T23:59:59`) : new Date(8640000000000000);
+                
+                // Safety check: ensure we didn't get "Invalid Date"
+                if (!isNaN(filterStart.getTime()) && !isNaN(filterEnd.getTime())) {
+                    filtered = filtered.filter(f => {
+                        const rawSched = f._raw && f._raw.schedule ? f._raw.schedule : {};
+                        const s = rawSched.startAt ? new Date(rawSched.startAt) : null;
+                        const e = rawSched.endAt ? new Date(rawSched.endAt) : null;
+                        
+                        // Hide forms without any schedule if a filter is active
+                        if (!s && !e) return false;
+
+                        // Boundaries (handle open-ended)
+                        const formStart = s || new Date(-8640000000000000);
+                        const formEnd = e || new Date(8640000000000000);
+
+                        return (formStart <= filterEnd) && (formEnd >= filterStart);
+                    });
+                }
             }
 
             // apply status filter
-            if (this.selectedStatus !== 'All') filtered = filtered.filter(f => f.status === this.selectedStatus);
+            if (this.selectedStatus && this.selectedStatus !== 'All') {
+                filtered = filtered.filter(f => f.status === this.selectedStatus);
+            }
 
-            // search
-            if (this.searchQuery) {
+            // search (title only)
+            if (this.searchQuery && this.searchQuery.trim() !== '') {
                 const q = this.searchQuery.toLowerCase();
                 filtered = filtered.filter(f => {
-                    return (f.title && f.title.toString().toLowerCase().includes(q)) ||
-                        (f.organization && f.organization.toString().toLowerCase().includes(q)) ||
-                        (f.createdBy && f.createdBy.toString().toLowerCase().includes(q));
+                    const titleText = f.title ? String(f.title).toLowerCase() : '';
+                    return titleText.includes(q);
                 });
             }
 

@@ -519,56 +519,63 @@ export default {
             return false;
         },
         async duplicateForm() {
+            if (!this.form) return;
             this.submitting = true;
             try {
-                // 1. Create a new form without questions
-                const formPayload = {
-                    title: this.form.title.map(t => ({ ...t, value: (this.getLang(t) || t.value) + ' (Copy)' })),
-                    description: [...this.form.description],
-                    settings: { ...this.form.settings },
-                    status: this.form.status ? (typeof this.form.status === 'object' ? this.form.status._id : this.form.status) : '69b0e3adf864c1088c19da36',
-                    originalFormId: this.form._id,
-                    creator: 'ewfopkwoefkwoefk'
-                };
+                // 1. Deep copy the entire form object to preserve ALL properties
+                const baseData = JSON.parse(JSON.stringify(this.form));
 
-                const formRes = await this.$store.dispatch('Forms/create', formPayload);
-                const newFormId = formRes.data.data._id;
+                // 2. Prepare the questions with unique temporary IDs
+                const clonedQuestions = (baseData.questions || []).map((q, index) => {
+                    const newQ = { ...q };
+                    
+                    // We assign a temporary ID so TabQuestion.vue can distinguish and render them all.
+                    // TabQuestion logic filters out duplicates based on ID.
+                    newQ._id = `tmp-${Date.now()}-${index}`;
+                    
+                    delete newQ.id;
+                    delete newQ.createdAt;
+                    delete newQ.updatedAt;
 
-                // 2. Clone each question
-                // Since the Questions model has a post-save hook that updates the Form, 
-                // creating them one-by-one is sufficient.
-                if (this.form.questions && this.form.questions.length > 0) {
-                    for (const q of this.form.questions) {
-                        const questionPayload = {
-                            form: newFormId,
-                            title: q.title.map(t => ({ ...t })),
-                            description: q.description ? q.description.map(d => ({ ...d })) : [],
-                            type: q.type ? (typeof q.type === 'object' ? q.type._id : q.type) : null,
-                            config: JSON.parse(JSON.stringify(q.config || {})),
-                            isRequired: !!q.isRequired,
-                            order: q.order || 1
-                        };
-                        await this.$store.dispatch('Questions/create', questionPayload);
+                    // Ensure type is just the ID for the creation payload if it was populated
+                    if (newQ.type && typeof newQ.type === 'object') {
+                        newQ.type = newQ.type._id || newQ.type.id;
                     }
-                }
 
-                this.modalTitle = this.$t('common.success');
-                this.modalMessage = this.$t('form.duplicateSuccess');
-                this.modalType = 'success';
-                this.showModal = true;
+                    // Handle followUp if they are objects (convert to IDs for consistency if needed, 
+                    // though CreateForm will likely re-link them on first save)
+                    return newQ;
+                });
 
-                // Set custom OK handler to go to editor
-                this.onModalOk = () => {
-                    this.showModal = false;
-                    this.$router.push({ name: 'EditorCreateForm', params: { _id: newFormId } });
+                // 3. Prepare the form payload
+                const duplicateData = {
+                    ...baseData,
+                    title: baseData.title.map(t => ({ ...t, value: (this.getLang(t) || t.value) + ' (Copy)' })),
+                    questions: clonedQuestions,
+                    organization: Array.isArray(baseData.organization) 
+                        ? baseData.organization.map(o => (typeof o === 'object' ? o._id : o)) 
+                        : []
                 };
+
+                // Clean up metadata
+                delete duplicateData._id;
+                delete duplicateData.id;
+                delete duplicateData.responses;
+                delete duplicateData.creator;
+                delete duplicateData.createdAt;
+                delete duplicateData.updatedAt;
+
+                // 4. Navigate and set buffer
+                this.$router.push({ 
+                    name: 'EditorCreateForm', 
+                    params: { _id: 'new' },
+                    query: { mode: 'duplicate' }
+                });
+
+                this.$store.commit('Forms/setDuplicateBuffer', duplicateData);
 
             } catch (err) {
-                console.error('Duplication failed:', err);
-                this.modalTitle = this.$t('common.error');
-                this.modalMessage = this.$t('common.error'); // Or a more specific key if I add it
-                this.modalType = 'error';
-                this.showModal = true;
+                console.error('Duplication preparation failed:', err);
             } finally {
                 this.submitting = false;
             }

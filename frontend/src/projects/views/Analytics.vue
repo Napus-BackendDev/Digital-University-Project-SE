@@ -2,8 +2,8 @@
     <div class="flex-grow-1">
         <Header title="Admin Dashboard" description="Overview of all forms and responses" />
         <WidgetsDropdown class="mb-4" />
-        <CRow class="mb-4">
-            <CCol lg="12">
+        <CRow class="mb-4 no-gutters">
+            <CCol lg="12" class="px-0">
                 <AdminLineCharts />
             </CCol>
         </CRow>
