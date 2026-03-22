@@ -45,9 +45,10 @@
             </CCardBody>
         </CCard>
 
-        <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }" :row-height="10"
-            :is-draggable="true" :is-resizable="false" :responsive="true"  @dragstop="onDragStop">
+        <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }"
+            :row-height="10" :is-draggable="true" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
             <GridItem v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)"
+                :is-draggable="!getParentForFollowUp(question)"
                 v-bind="getLayoutItem(question, qIndex)">
                 <CCard :id="'question-' + (question._id || qIndex)"
                     class="mb-3 position-relative rounded-20 shadow-sm border"
@@ -445,13 +446,33 @@ export default {
                             if (qId && pushedIds.has(qId)) continue;
                             pushWithFollow(q);
                         }
+                        built.sort((a, b) => {
+                            const orderA = typeof a.order === 'number' ? a.order : 9999;
+                            const orderB = typeof b.order === 'number' ? b.order : 9999;
+                            return orderA - orderB;
+                        });
 
-                        this.localQuestions = built;
-                        try {
-                            this.loadStoredLayout();
-                            this.buildGridLayoutFromQuestions();
-                        } catch (e) {
-                            // ignore layout build errors
+                        const newIds = built.map(x => this.convertIdToStr(x && x._id));
+                        const oldIds = (this.localQuestions || []).map(x => this.convertIdToStr(x && x._id));
+                        const sameOrder = newIds.length === oldIds.length && newIds.every((id, idx) => id === oldIds[idx]);
+
+                        if (sameOrder && this.localQuestions && this.localQuestions.length > 0) {
+                            for (let i = 0; i < built.length; i++) {
+                                const src = built[i];
+                                const dst = this.localQuestions[i];
+                                if (!dst || !src) continue;
+                                for (const key of Object.keys(src)) {
+                                    this.$set(dst, key, src[key]);
+                                }
+                            }
+                        } else {
+                            this.localQuestions = built;
+                            try {
+                                this.loadStoredLayout();
+                                this.buildGridLayoutFromQuestions();
+                            } catch (e) {
+                                // ignore layout build errors
+                            }
                         }
                     } catch (err) {
                         console.error('Failed to merge missing follow-ups:', err);
@@ -466,7 +487,6 @@ export default {
             }
         },
         localQuestions: {
-            deep: true,
             handler() {
                 try {
                     this.buildGridLayoutFromQuestions();
@@ -481,6 +501,21 @@ export default {
         try {
             this.loadStoredLayout();
         } catch (e) { }
+    },
+    mounted() {
+        try {
+            console.warn('TabQuestion mounted — debug hook installed');
+            window.__TABQUESTION_INVOKE_ONDRAG = () => {
+                try {
+                    console.warn('Invoking onDragStop via window.__TABQUESTION_INVOKE_ONDRAG');
+                    return this.onDragStop(this.layout);
+                } catch (e) {
+                    console.error('invoke onDragStop failed', e);
+                }
+            };
+        } catch (e) {
+            /* ignore */
+        }
     },
     computed: {
         ...mapGetters('Setting/question_type', { question_type: 'item' }),
@@ -551,8 +586,38 @@ export default {
 
         buildGridLayoutFromQuestions() {
             try {
-                this.layout = buildGridLayoutFromQuestions(this.localQuestions, this.storedLayout, (t) => this.getQuestionType(t));
-                this.gridKey++;
+                const newLayout = buildGridLayoutFromQuestions(
+                    this.localQuestions, 
+                    this.storedLayout, 
+                    (t) => this.getQuestionType(t),
+                    (q) => !!this.getParentForFollowUp(q)
+                );
+                
+                if (!this.layout || this.layout.length === 0) {
+                    this.layout = newLayout;
+                    this.gridKey++;
+                } else {
+                    for (let i = this.layout.length - 1; i >= 0; i--) {
+                        if (!newLayout.find(nl => String(nl.i) === String(this.layout[i].i))) {
+                            this.layout.splice(i, 1);
+                        }
+                    }
+                    for (let i = 0; i < newLayout.length; i++) {
+                        const newItem = newLayout[i];
+                        const oldIndex = this.layout.findIndex(l => String(l.i) === String(newItem.i));
+                        if (oldIndex === -1) {
+                            this.layout.splice(i, 0, { ...newItem });
+                        } else {
+                            const oldItem = this.layout[oldIndex];
+                            if (oldItem.h !== newItem.h) this.$set(oldItem, 'h', newItem.h);
+                            if (oldItem.y !== newItem.y) this.$set(oldItem, 'y', newItem.y);
+                            if (oldIndex !== i) {
+                                this.layout.splice(oldIndex, 1);
+                                this.layout.splice(i, 0, oldItem);
+                            }
+                        }
+                    }
+                }
             } catch (e) {
                 this.layout = [];
                 this.gridKey++;
@@ -563,14 +628,52 @@ export default {
             return svcGetLayoutItem(this.layout, question, qIndex);
         },
 
-        onDragStop(newLayout) {
+        async onDragStop(newLayout) {
             try {
-                const reordered = svcOnDragStop(newLayout, this.localQuestions, this.convertIdToStr, (newQuestions) => {
-                    if (typeof this.updateOrdersAndPersist === 'function') {
-                        try { this.updateOrdersAndPersist(newQuestions); } catch (e) { console.error(e); }
+                let reordered = await svcOnDragStop(newLayout, this.localQuestions, this.convertIdToStr);
+                
+                const grouped = [];
+                const added = new Set();
+                const addWithChildren = (q) => {
+                    if (!q) return;
+                    const qId = this.convertIdToStr(q._id);
+                    if (added.has(qId)) return;
+                    grouped.push(q);
+                    added.add(qId);
+                    
+                    if (Array.isArray(q.followUp)) {
+                        for (const childRef of q.followUp) {
+                            if (!childRef) continue;
+                            const childId = this.getFollowUpChildId(childRef);
+                            if (childId) {
+                                const childQ = reordered.find(x => this.convertIdToStr(x._id) === childId) 
+                                            || this.localQuestions.find(x => this.convertIdToStr(x._id) === childId);
+                                if (childQ) addWithChildren(childQ);
+                            }
+                        }
                     }
-                });
-                if (Array.isArray(reordered)) this.localQuestions = reordered;
+                };
+                
+                for (const q of reordered) {
+                    if (!this.getParentForFollowUp(q)) addWithChildren(q);
+                }
+                for (const q of reordered) {
+                    const qId = this.convertIdToStr(q._id);
+                    if (!added.has(qId)) addWithChildren(q);
+                }
+                reordered = grouped;
+
+                const oldIds = (this.localQuestions || []).map(q => this.convertIdToStr(q._id || ''));
+                const newIds = (reordered || []).map(q => this.convertIdToStr(q._id || ''));
+                if (oldIds.join(',') === newIds.join(',')) {
+                    return;
+                }
+                if (Array.isArray(reordered)) {
+                    this.localQuestions = reordered;
+                    try {
+                        await this.updateOrdersAndPersist(reordered);
+                    } catch (e) { console.error(e); }
+                }
             } catch (e) {
                 console.error('onDragStop error', e);
             }
@@ -582,6 +685,29 @@ export default {
 
         async updateFormMeta() {
             this.triggerAutoSave();
+        },
+
+        async updateOrdersAndPersist(newQuestions) {
+            console.log(newQuestions)
+            const list = Array.isArray(newQuestions) ? newQuestions : this.localQuestions || [];
+            if (!Array.isArray(list)) return;
+            const updates = [];
+            try {
+                for (let i = 0; i < list.length; i++) {
+                    const q = list[i];
+                    if (!q) continue;
+                    const newOrder = i + 1;
+                    if (q.order !== newOrder) {
+                        this.$set(q, 'order', newOrder);
+                        if (q._id && !(String(q._id).startsWith && String(q._id).startsWith('tmp-'))) {
+                            updates.push(this.$store.dispatch('Questions/update', { _id: q._id, order: newOrder }));
+                        }
+                    }
+                }
+                if (updates.length) await Promise.all(updates);
+            } catch (err) {
+                console.error('updateOrdersAndPersist failed', err);
+            }
         },
 
         addFormTitle() {
@@ -619,6 +745,7 @@ export default {
         },
 
         async putQuestion(question) {
+            this.buildGridLayoutFromQuestions();
             if (!question || !question._id) return;
             try {
                 const payload = JSON.parse(JSON.stringify(question));
@@ -717,6 +844,7 @@ export default {
                     ...payload,
                 };
                 this.localQuestions.push(tmp);
+                this.buildGridLayoutFromQuestions();
                 return tmp;
             }
 
@@ -729,6 +857,7 @@ export default {
                         if (foundType) created.type = foundType;
                     }
                     this.localQuestions.push(created);
+                    this.buildGridLayoutFromQuestions();
                     return created;
                 } else {
                     console.error('addQuestion: backend did not return a created document with _id', res);
@@ -774,18 +903,23 @@ export default {
                 }
             }
 
-            try {
+            const indices = toDelete.map(item => this.localQuestions.findIndex(q => q === item || (q._id && item._id && String(q._id) === String(item._id)))).filter(i => i !== -1).sort((a, b) => b - a);
+            const remainingQuestions = [...this.localQuestions];
+            for (const i of indices) remainingQuestions.splice(i, 1);
+            this.localQuestions = remainingQuestions; // ทริกเกอร์ Watcher ตี UI ใหม่ทันที
+            this.buildGridLayoutFromQuestions();
+
+            if (this.form && Array.isArray(this.form.questions)) {
                 for (const item of toDelete) {
-                    if (item && item._id && !String(item._id).startsWith('tmp-')) {
-                        await this.$store.dispatch('Questions/delete', { _id: item._id });
+                    const idStr = this.convertIdToStr(item._id || item);
+                    if (idStr) {
+                        const formIdx = this.form.questions.findIndex(q => this.convertIdToStr(q && q._id) === idStr);
+                        if (formIdx !== -1) {
+                            this.form.questions.splice(formIdx, 1);
+                        }
                     }
                 }
-            } catch (e) {
-                console.error('removeQuestion failed:', e);
             }
-
-            const indices = toDelete.map(item => this.localQuestions.findIndex(q => q === item)).filter(i => i !== -1).sort((a, b) => b - a);
-            for (const i of indices) this.localQuestions.splice(i, 1);
 
             const deletedIdSet = new Set(toDelete.map(d => this.convertIdToStr(d._id || d)));
             const parentsToPersist = [];
@@ -803,7 +937,15 @@ export default {
                 }
                 if (changed && parent._id) parentsToPersist.push(parent);
             }
-
+            try {
+                for (const item of toDelete) {
+                    if (item && item._id && !String(item._id).startsWith('tmp-')) {
+                        await this.$store.dispatch('Questions/delete', { _id: item._id });
+                    }
+                }
+            } catch (e) {
+                console.error('removeQuestion delete endpoint failed:', e);
+            }
             for (const p of parentsToPersist) {
                 try {
                     await this.$store.dispatch('Questions/update', { _id: p._id, followUp: p.followUp });
@@ -1048,6 +1190,7 @@ export default {
                 return lastIdx + 1;
             }).call(this);
             this.localQuestions.splice(insertAt, 0, newQ);
+            this.buildGridLayoutFromQuestions();
             if (!this.form || !this.form._id) {
                 const parentLocal = this.localQuestions[parentIndex];
                 if (parentLocal) {
@@ -1066,6 +1209,7 @@ export default {
                     if (created && created._id) {
                         // replace the inserted temp/newQ at insertAt with created
                         this.$set(this.localQuestions, insertAt, created);
+                        this.buildGridLayoutFromQuestions();
 
                         // update parent locally and persist: push created._id into parent.followUp
                         const parentLocal = this.localQuestions[parentIndex];
@@ -1119,7 +1263,10 @@ export default {
             } catch (e) {
                 console.error('delete follow-up failed', e);
             }
-            if (fIndex !== -1) this.localQuestions.splice(fIndex, 1);
+            if (fIndex !== -1) {
+                this.localQuestions.splice(fIndex, 1);
+                this.buildGridLayoutFromQuestions();
+            }
 
             try {
                 const parentLocal = question;

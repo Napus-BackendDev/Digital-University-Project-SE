@@ -47,31 +47,68 @@ export function saveGridLayout(form, gridLayout) {
  * Accepts a `getQuestionType` callback to read the effective type.
  * Returns an array of layout items { i, x, y, w, h }
  */
-export function buildGridLayoutFromQuestions(localQuestions = [], storedLayout = null, getQuestionType = (t) => t) {
-    const typeHeights = {
-        short_answer: 13,
-        paragraph: 15,
-        multiple_choice: 17.5,
-        checkbox: 17.5,
-        rating: 13,
-        file_upload: 17.5,
-        title_description: 16.5,
-        image: 52,
+export function buildGridLayoutFromQuestions(localQuestions = [], storedLayout = null, getQuestionType = (t) => t, isFollowUp = (q) => false) {
+    const calculateHeight = (q, type) => {
+        if (!q) return 6;
+        let h = 6;
+
+        if (isFollowUp(q)) {
+            h += 1;
+        }
+
+        const titleLangs = Array.isArray(q.title) ? q.title.length : 1;
+        h += (titleLangs * 2.2) + 2;
+
+        const safeType = (type || '').toLowerCase();
+        if (safeType === 'short_answer') h += 2.5;
+        else if (safeType === 'paragraph') h += 4.5;
+        else if (safeType === 'multiple_choice' || safeType === 'checkbox') {
+            const choices = (q.config && Array.isArray(q.config.choices)) ? q.config.choices : [{}];
+            for (const c of choices) {
+                const langs = Array.isArray(c.lang) ? c.lang.length : 1;
+                if (safeType === 'multiple_choice') {
+                    h += (langs * 2.2) + 2.8;
+                } else if (safeType === 'checkbox') {
+                    h += (langs * 2.2) + 2.61;
+                }
+            }
+            h += 2;
+        }
+        else if (safeType === 'rating') h += 2;
+        else if (safeType === 'file_upload') h += 7;
+        else if (safeType === 'title_description') {
+            const descLangs = (q.config && Array.isArray(q.config.description)) ? q.config.description.length : 1;
+            h += (descLangs * 2.2) + 4;
+        }
+        else if (safeType === 'image') h += 60;
+        else h += 3;
+
+        return Math.ceil(h);
     };
 
+    // determine order based on stored layout if available
+    let orderedQuestions = [...(localQuestions || [])];
     if (Array.isArray(storedLayout) && storedLayout.length > 0) {
         const storedIds = new Set(storedLayout.map(s => String(s.i)));
-        const allIdsPresent = localQuestions.every((q, idx) => storedIds.has(String(q && (q._id || idx))));
-        if (allIdsPresent) return JSON.parse(JSON.stringify(storedLayout));
+        const allIdsPresent = orderedQuestions.every((q, idx) => storedIds.has(String(q && (q._id != null ? q._id : idx))));
+        if (allIdsPresent) {
+            const layoutOrder = storedLayout.slice().sort((a, b) => a.y - b.y).map(s => String(s.i));
+            orderedQuestions.sort((a, b) => {
+                const idA = String(a && (a._id != null ? a._id : ''));
+                const idB = String(b && (b._id != null ? b._id : ''));
+                return layoutOrder.indexOf(idA) - layoutOrder.indexOf(idB);
+            });
+        }
     }
 
     const l = [];
     let yCursor = 0;
-    for (let i = 0; i < localQuestions.length; i++) {
-        const q = localQuestions[i];
-        const type = (getQuestionType(q && q.type) || '').toLowerCase();
-        const h = typeHeights[type] || 13;
-        l.push({ i: String(q && (q._id != null ? q._id : i)), x: 0, y: yCursor, w: 12, h });
+    for (let i = 0; i < orderedQuestions.length; i++) {
+        const q = orderedQuestions[i];
+        const typeStr = getQuestionType(q && q.type);
+        const h = calculateHeight(q, typeStr);
+        const qId = String(q && (q._id != null ? q._id : i));
+        l.push({ i: qId, x: 0, y: yCursor, w: 12, h });
         yCursor += h + 1;
     }
     return l;
@@ -95,7 +132,7 @@ export function getLayoutItem(gridLayout = [], question, qIndex) {
  * - updateOrdersAndPersist: optional async function to call after reorder
  * Returns reordered array (or mutates and returns the provided one)
  */
-export function onDragStop(newLayout = [], localQuestions = [], convertIdToStr = (v) => String(v), updateOrdersAndPersist = null) {
+export async function onDragStop(newLayout = [], localQuestions = [], convertIdToStr = (v) => String(v), updateOrdersAndPersist = null) {
     if (!Array.isArray(newLayout) || !Array.isArray(localQuestions)) return localQuestions;
     const sorted = newLayout.slice().sort((a, b) => (a.y - b.y) || (a.x - b.x));
     const idOrder = sorted.map(s => String(s.i));
@@ -106,15 +143,15 @@ export function onDragStop(newLayout = [], localQuestions = [], convertIdToStr =
     }
     for (const q of localQuestions) if (!newQuestions.includes(q)) newQuestions.push(q);
 
-    // if caller supplied an update function, call it (may be async)
     if (typeof updateOrdersAndPersist === 'function') {
         try {
-            const res = updateOrdersAndPersist(newQuestions);
-            // don't await here; caller can await if they want
+            await updateOrdersAndPersist(newQuestions);
         } catch (e) {
             console.error('updateOrdersAndPersist threw', e);
         }
     }
+
+    console.log(newQuestions)
 
     return newQuestions;
 }
