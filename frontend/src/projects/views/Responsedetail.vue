@@ -92,7 +92,6 @@
 import { mapGetters } from 'vuex';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
-import api from '@/service/api';
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue';
 import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
 import ButtonBack from '@/projects/components/Button/ButtonBack.vue';
@@ -136,7 +135,7 @@ export default {
             this.loading = true;
             this.error = null;
             try {
-                // 1. First attempt: Find in the Vuex store for speed
+                // Find response directly from the Vuex store
                 const resArray = this.responsesList;
                 if (resArray && Array.isArray(resArray) && resArray.length > 0) {
                     const found = resArray.find(r => (r._id || r.id) === this.id);
@@ -147,18 +146,11 @@ export default {
                     }
                 }
 
-                // 2. Second attempt: Fallback to direct API if not in store (e.g., page refresh)
-                console.log('[Responsedetail] Not found in store, fetching via API...');
-                const res = await api.response('get', { _id: this.id });
-                if (res && res.data) {
-                    this.response = res.data;
-                } else {
-                    this.error = "Response not found or has been removed.";
-                }
+                this.error = "Response not found or please navigate from the Responses table.";
 
             } catch (err) {
-                console.error('[Responsedetail] Error loading response:', err);
-                this.error = "Failed to load response details. Please try again later.";
+                console.error('[Responsedetail] Error searching store:', err);
+                this.error = "Failed to load response details from store.";
             } finally {
                 this.loading = false;
             }

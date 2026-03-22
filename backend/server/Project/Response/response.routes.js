@@ -9,11 +9,6 @@ router.get("/exp", function (req, res, next) {
     next();
 }, response.onQuerys);
 
-router.post("/getByFormId", function (req, res, next) {
-    req.body.apiId = 1;
-    next();
-}, response.onGetByFormId);
-
 router.post("/get", function (req, res, next) {
     req.body.apiId = 2;
     next();

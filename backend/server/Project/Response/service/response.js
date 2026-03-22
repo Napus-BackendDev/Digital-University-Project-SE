@@ -23,18 +23,6 @@ exports.onQuerys = async function (request, response) {
     }
 }
 
-exports.onGetByFormId = async function (request, response) {
-    try {
-        let query = {};
-        query.form = request.body.form_id;
-        const doc = await responseService.onQuerys(query);
-        console.log(doc);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses by form ID", err.message);
-    }
-};
-
 exports.onGetById = async function (request, response) {
     try {
         let query = {};
@@ -118,7 +106,7 @@ exports.onUpdate = async function (request, response) {
     try {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
-        
+
         // Fetch existing response to merge answers instead of replacing
         const existingResponse = await responseService.onQuery(query);
         if (!existingResponse) {
