@@ -10,7 +10,7 @@
 
             <!-- Form Name (Title & Description) Slot -->
             <template #form="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
                     <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
                 </td>
@@ -18,7 +18,7 @@
 
             <!-- Create By Slot (match ManagementTables) -->
             <template #createBy="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
                     <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
                 </td>
@@ -26,7 +26,7 @@
 
             <!-- Access Slot -->
             <template #access="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="access-stack">
                         <span v-for="(v, idx) in item.access" :key="idx" class="visibility-badge"
                             :class="getVisibilityClass(v)">
@@ -38,7 +38,7 @@
 
             <!-- Time Range Slot (match ManagementTables) -->
             <template #timeRange="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
                     <div class="small text-muted mt-1" v-if="item.daysLeft">{{ item.daysLeft }}</div>
                 </td>
@@ -46,7 +46,7 @@
 
             <!-- Status Slot (match ManagementTables display) -->
             <template #status="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <span v-if="item && item.status" class="status-badge" :class="getStatusClass(item.status)">
                         <span class="status-dot"></span>
                         {{ item.status }}
@@ -55,7 +55,7 @@
             </template>
 
             <template #progress="{ item }">
-                <td class="py-3">
+                <td class="align-middle">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1 mr-3" v-if="typeof item.progress === 'number'">
                             <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px"
@@ -70,7 +70,7 @@
 
             <!-- Action Slot -->
             <template #action="{ item }">
-                <td class="py-3 text-right pr-4">
+                <td class="align-middle text-right pr-4">
                     <div class="d-flex align-items-center justify-content-end">
                         <CIcon v-if="item.requireEmail" name="cil-warning" class="text-danger mr-2" style="width: 20px;"
                             v-c-tooltip="'Email required'" />

@@ -3,9 +3,13 @@ var objSchema = require("../model/response.model");
 const createBaseService = require("../../../../helpers/base.service")
 
 const defaultPopulate = [
-    { path: 'answers.question', select: 'title type', populate: { path: 'type' } },
+    { path: 'answers.question', select: 'title type config', populate: { path: 'type' } },
     { path: 'form'},
-    { path: 'responder'},
+    { 
+        path: 'responder', 
+        select: 'name email organization',
+        populate: { path: 'organization', select: 'title' }
+    },
 ]
 
 module.exports = createBaseService(objSchema, defaultPopulate);

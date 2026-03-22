@@ -11,7 +11,7 @@ const module = {
         }
     },
     actions: {
-        get({ commit }, data) {
+        getbyform({ commit }, data) {
             return Service.response('get-by-form-id', data, {})
                 .then(response => {
                     commit('responses', response.data.data || []);
@@ -19,8 +19,8 @@ const module = {
                 })
                 .catch(err => { throw err; });
         },
-        getById({ commit }, data) {
-            return Service.response('get-by-id', data, {})
+        get({ commit }, data) {
+            return Service.response('get', data, {})
                 .then(response => {
                     commit('responses', response.data.data || []);
                     return response.data.data;

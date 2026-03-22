@@ -17,101 +17,73 @@
         </div>
 
         <!-- Content -->
-        <div v-else-if="response" class="response-detail-body pb-5">
+        <div v-else-if="response" class="response-detail-body pb-5 px-3">
 
-            <!-- Wrapper for Section 1 (Header) & Section 2 (Answers) -->
-            <div>
-                <!-- Section 1: Header Card (Form Info) -->
-                <CCard>
-                    <CCardBody class="">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                            <div>
-                                <h1 class="h3 font-weight-bold text-dark mb-1">
-                                    Response Details
-                                </h1>
-                                <p class="text-muted mb-0" style="font-size: 0.95rem;">
-                                    Submitted on {{ formatDate(response.createdAt) }}
-                                </p>
-                            </div>
+            <!-- Shared Standard Header -->
+            <Header 
+                title="Response Details" 
+                :description="'Submitted on ' + formatDate(response.createdAt)"
+            >
+                <template #actions>
+                    <div class="d-flex align-items-center" style="gap: 12px;">
+                        <!-- Minimal Navigation -->
+                        <div class="nav-minimal bg-light px-2 py-1 rounded-pill d-flex align-items-center mr-2 shadow-sm border">
+                            <button class="btn-nav-small" :disabled="currentIndex <= 0" @click="goToResponse(currentIndex - 1)">
+                                <CIcon name="cil-chevron-left" size="sm" />
+                            </button>
+                            <span class="mx-2 font-weight-bold text-dark" style="font-size: 0.85rem;">{{ currentIndex + 1 }} / {{ totalResponses }}</span>
+                            <button class="btn-nav-small" :disabled="currentIndex >= totalResponses - 1" @click="goToResponse(currentIndex + 1)">
+                                <CIcon name="cil-chevron-right" size="sm" />
+                            </button>
+                        </div>
 
-                            <div class="d-flex align-items-center flex-wrap" style="gap: 12px;">
-                                <!-- Navigation -->
-                                <div class="d-flex align-items-center mr-2">
-                                    <CButton color="light" class="nav-btn" :disabled="currentIndex <= 0"
-                                        @click="goToResponse(currentIndex - 1)">
-                                        <CIcon name="cil-chevron-left" size="sm" />
-                                    </CButton>
-                                    <span class="text-dark mx-3 font-weight-500" style="font-size: 0.95rem;">
-                                        {{ currentIndex + 1 }} of {{ totalResponses }}
-                                    </span>
-                                    <CButton color="light" class="nav-btn"
-                                        :disabled="currentIndex >= totalResponses - 1"
-                                        @click="goToResponse(currentIndex + 1)">
-                                        <CIcon name="cil-chevron-right" size="sm" />
-                                    </CButton>
-                                </div>
-
-                                <!-- Vertical Divider -->
-                                <div class="border-right"
-                                    style="height: 32px; margin: 0 4px; border-color: #e2e8f0 !important;"></div>
-
-                                <!-- Export Dropdown -->
-                                <CDropdown class="custom-dropdown ml-2">
-                                    <template #toggler>
-                                        <CButton color="light"
-                                            class="d-flex align-items-center action-btn text-dark font-weight-500">
-                                            Export
-                                            <CIcon name="cil-chevron-bottom" size="sm" class="ml-2 text-muted" />
-                                        </CButton>
-                                    </template>
-                                    <CDropdownItem @click="exportXlsx">
-                                        <CIcon name="cil-data-transfer-down" size="sm" class="mr-2" />
-                                        Export Excel
-                                    </CDropdownItem>
-                                    <CDropdownItem @click="copyApiLink">
-                                        <CIcon name="cil-copy" size="sm" class="mr-2" />
-                                        Copy API Link
-                                    </CDropdownItem>
-                                </CDropdown>
-
-                                <!-- Delete Button -->
-                                <CButton variant="outline" color="danger"
-                                    class="d-flex align-items-center action-btn text-danger font-weight-500 ml-1"
-                                    @click="deleteResponse">
-                                    <CIcon name="cil-trash" size="sm" class="mr-2" />
-                                    Delete
+                        <!-- Export Dropdown -->
+                        <CDropdown class="custom-dropdown">
+                            <template #toggler>
+                                <CButton color="primary" class="d-flex align-items-center action-btn-header transition-all shadow-sm">
+                                    <CIcon name="cil-cloud-download" size="sm" class="mr-2" />
+                                    Export
+                                    <CIcon name="cil-chevron-bottom" size="sm" class="ml-2 opacity-50" />
                                 </CButton>
+                            </template>
+                            <CDropdownItem @click="exportXlsx" class="dropdown-item-modern">
+                                <CIcon name="cil-spreadsheet" size="sm" class="mr-2 text-success" />
+                                Export Excel
+                            </CDropdownItem>
+                            <CDropdownItem @click="copyApiLink" class="dropdown-item-modern">
+                                <CIcon name="cil-link" size="sm" class="mr-2 text-primary" />
+                                Copy API Link
+                            </CDropdownItem>
+                        </CDropdown>
+
+                        <!-- Delete Button -->
+                        <CButton color="danger" variant="outline" class="d-flex align-items-center action-btn-danger-header transition-all shadow-sm" @click="deleteResponse">
+                            <CIcon name="cil-trash" size="sm" class="mr-2" />
+                            Delete
+                        </CButton>
+                    </div>
+                </template>
+            </Header>
+
+            <!-- Content Area -->
+            <div class="detail-cards-wrapper">
+                <CCard class="mb-4 shadow-sm border-0 rounded-24 overflow-hidden">
+                    <div class="card-header-gradient p-4 text-white">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar-circle mr-3">
+                                <CIcon name="cil-user" size="lg" />
+                            </div>
+                            <div>
+                                <h5 class="mb-1 font-weight-bold">Respondent Identification</h5>
+                                <p class="mb-0 opacity-80 small">Details for user submission</p>
                             </div>
                         </div>
-                    </CCardBody>
-                </CCard>
-
-                <CCard class="mb-3 shadow-sm border-0">
-                    <CCardHeader>
-                        <h5 class="font-weight-bold text-dark">
-                            Email address
-                        </h5>
-                        <h6 class="text-muted">
-                            สมชาย@gmail.com
-                        </h6>
-                    </CCardHeader>
-                    <CCardBody class="">
-                        <!-- Answers Table matching Design -->
+                    </div>
+                    <CCardBody class="p-0">
                         <AnswerTable :answers="response.answers" />
                     </CCardBody>
                 </CCard>
-
             </div>
-
-            <CCard class="mt-3">
-                <CCardHeader>
-                    <h5 class="font-weight-bold text-dark">All Responses Overview</h5>
-                </CCardHeader>
-                <CCardBody>
-                    <ResponseTables />
-                </CCardBody>
-            </CCard>
-
         </div>
     </div>
 </template>
@@ -120,13 +92,15 @@
 import { mapGetters } from 'vuex';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
+import api from '@/service/api';
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue';
 import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
 import ButtonBack from '@/projects/components/Button/ButtonBack.vue';
+import Header from '@/projects/components/Util/Header.vue';
 
 export default {
     name: 'Response',
-    components: { ResponseTables, AnswerTable, ButtonBack },
+    components: { ResponseTables, AnswerTable, ButtonBack, Header },
     props: {
         id: {
             type: String,
@@ -149,7 +123,8 @@ export default {
             return this.responsesList.length;
         },
         currentIndex() {
-            return this.responsesList.findIndex(r => r._id === this.id);
+            if (!this.responsesList || !this.id) return -1;
+            return this.responsesList.findIndex(r => (r._id || r.id) === this.id);
         }
     },
 
@@ -161,9 +136,10 @@ export default {
             this.loading = true;
             this.error = null;
             try {
+                // 1. First attempt: Find in the Vuex store for speed
                 const resArray = this.responsesList;
-                if (resArray && resArray.length > 0) {
-                    const found = resArray.find(r => r._id === this.id);
+                if (resArray && Array.isArray(resArray) && resArray.length > 0) {
+                    const found = resArray.find(r => (r._id || r.id) === this.id);
                     if (found) {
                         this.response = found;
                         this.loading = false;
@@ -171,11 +147,18 @@ export default {
                     }
                 }
 
-                this.error = "Response not found or please navigate from the Responses table.";
+                // 2. Second attempt: Fallback to direct API if not in store (e.g., page refresh)
+                console.log('[Responsedetail] Not found in store, fetching via API...');
+                const res = await api.response('get', { _id: this.id });
+                if (res && res.data) {
+                    this.response = res.data;
+                } else {
+                    this.error = "Response not found or has been removed.";
+                }
 
             } catch (err) {
-                console.error(err);
-                this.error = "Failed to load response details.";
+                console.error('[Responsedetail] Error loading response:', err);
+                this.error = "Failed to load response details. Please try again later.";
             } finally {
                 this.loading = false;
             }

@@ -3,184 +3,223 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env.dev') });
 const mongoose = require('mongoose');
+
+// Import Models
 const Form = require('./server/Project/Form/models/form.model');
 const Response = require('./server/Project/Response/model/response.model');
-// Role and User models may not exist as files; will resolve dynamically below
-// const Role = require('./server/Project/User/models/role.model');
-// const User = require('./server/Project/User/models/user.model');
+const User = require('./server/Project/User/models/user.model');
+const Role = require('./server/Project/User/models/roles.model');
 const Questions = require('./server/Project/Questions/models/questions.model');
-const Question_Types = require('./server/Project/Settings/models/question_type.model');
+const QuestionType = require('./server/Project/Settings/models/question_type.model');
+const Organization = require('./server/Project/Organizations/models/organization.model');
 
-// MongoDB connection
 const mongoURI = process.env.MONGODB;
 
 async function seedDatabase() {
     try {
-        // Connect to MongoDB
+        // 1. Connect to MongoDB
         await mongoose.connect(mongoURI, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
         console.log('✅ Connected to MongoDB');
 
-        // Clear existing data (optional - comment out if you want to keep existing data)
-        await Form.deleteMany({});
-        await Response.deleteMany({});
-        await Questions.deleteMany({});
+        // 2. Clear existing data
+        await Promise.all([
+            Organization.deleteMany({}),
+            Role.deleteMany({}),
+            User.deleteMany({}),
+            QuestionType.deleteMany({}),
+            Questions.deleteMany({}),
+            Form.deleteMany({}),
+            Response.deleteMany({})
+        ]);
         console.log('🗑️  Cleared existing data');
 
-        // 0.1 CREATE USERS, ORGANIZATION, QUESTION TYPES, FORMS, QUESTIONS, RESPONSES
-        // ============================================
-        // Create Question Types
-        const questionTypeNames = ['short_answer', 'paragraph', 'multiple_choice', 'checkbox', 'rating', 'file_upload', 'image', 'title_description'];
-        await Question_Types.deleteMany({});
-        const createdTypes = await Question_Types.insertMany(questionTypeNames.map(t => ({ type: t })));
-        console.log(`✅ Created ${createdTypes.length} question types`);
+        // 3. Seed Organizations
+        const orgTemplates = [
+            { en: 'General', th: 'ทั่วไป' },
+            { en: 'Information Technology Center', th: 'ศูนย์เทคโนโลยีสารสนเทศ' },
+            { en: 'Faculty of Engineering', th: 'คณะวิศวกรรมศาสตร์' },
+            { en: 'Faculty of Science', th: 'คณะวิทยาศาสตร์' },
+            { en: 'Faculty of Medicine', th: 'คณะแพทยศาสตร์' },
+            { en: 'Graduate School', th: 'บัณฑิตวิทยาลัย' },
+            { en: 'Office of the Registrar', th: 'สำนักทะเบียนและประมวลผล' },
+            { en: 'Main Library', th: 'ห้องสมุดกลาง' },
+            { en: 'Student Affairs Division', th: 'กองกิจการนักศึกษา' }
+        ];
 
-        // Create a placeholder Organization model if not present in the repo
-        let Organization;
-        try {
-            Organization = mongoose.model('Organizations');
-        } catch (e) {
-            const OrgSchema = new mongoose.Schema({ name: String }, { timestamps: true });
-            Organization = mongoose.model('Organizations', OrgSchema, 'Organizations');
-        }
-        await Organization.deleteMany({});
-        const org = await Organization.create({ name: 'Default Organization' });
+        const orgsData = orgTemplates.map((org, index) => ({
+            // Keep the first one with a fixed ID if referenced elsewhere
+            _id: index === 0 ? new mongoose.Types.ObjectId("69baf8349050b9215c700b96") : new mongoose.Types.ObjectId(),
+            title: [
+                { key: 'en', value: org.en },
+                { key: 'th', value: org.th }
+            ]
+        }));
 
-        // Create Roles (Admin, Staff, User)
-        let Role;
-        try {
-            Role = mongoose.model('Roles');
-        } catch (e) {
-            const RoleSchema = new mongoose.Schema({ name: String, description: String, permissions: [String] }, { timestamps: true });
-            Role = mongoose.model('Roles', RoleSchema, 'Roles');
-        }
-        await Role.deleteMany({});
-        const roles = await Role.insertMany([
-            { name: 'ADMIN', description: 'Administrator with full access', permissions: ['*'] },
-            { name: 'STAFF', description: 'Staff member with management privileges', permissions: ['VIEW_FORMS','CREATE_FORM','UPDATE_FORM','DELETE_FORM'] },
-            { name: 'USER', description: 'Regular user', permissions: ['SUBMIT_RESPONSES','VIEW_OWN_RESPONSES'] }
-        ]);
-        console.log('✅ Created roles');
+        const createdOrgs = await Organization.insertMany(orgsData);
+        console.log(`✅ Seeded ${createdOrgs.length} diverse organizations`);
 
-        // Create a single user
-        let User;
-        try {
-            User = mongoose.model('Users');
-        } catch (e) {
-            User = require('./server/Project/User/models/user.model');
-        }
-        await User.deleteMany({});
-        const user = await User.create({ name: 'Seed Admin', email: 'seed@local.test', password: 'seedpass', organization: org._id });
-        console.log('✅ Created user and organization');
+        // 4. Seed Roles (using title array as per roles.model.js)
+        const rolesData = [
+            {
+                _id: new mongoose.Types.ObjectId("69aec1c73996270d703db3d7"), // Default role ID from user.model.js
+                title: [
+                    { key: 'en', value: 'Admin' },
+                    { key: 'th', value: 'ผู้ดูแลระบบ' }
+                ]
+            },
+            {
+                title: [
+                    { key: 'en', value: 'Staff' },
+                    { key: 'th', value: 'เจ้าหน้าที่' }
+                ]
+            },
+            {
+                title: [
+                    { key: 'en', value: 'User' },
+                    { key: 'th', value: 'ผู้ใช้งานทั่วไป' }
+                ]
+            }
+        ];
+        const createdRoles = await Role.insertMany(rolesData);
+        console.log(`✅ Seeded ${createdRoles.length} roles`);
 
-        // Clear existing Question, Form, Response collections
-        await Questions.deleteMany({});
-        await Form.deleteMany({});
-        await Response.deleteMany({});
+        // 5. Seed Question Types
+        const typeNames = ['short_answer', 'paragraph', 'multiple_choice', 'checkbox', 'rating', 'file_upload', 'image', 'title_description'];
+        const createdTypes = await QuestionType.insertMany(typeNames.map(t => ({ type: t })));
+        console.log(`✅ Seeded ${createdTypes.length} question types`);
 
-        // Create 10 Forms (with schedule dates)
-        const forms = [];
+        // 6. Seed Users
+        const users = [];
+
+        // Main Admin (Fixed ID)
+        const adminUser = await User.create({
+            _id: new mongoose.Types.ObjectId("69aec1c73996270d703db3aa"),
+            name: 'System Admin',
+            email: 'admin@digital.uni',
+            password: 'password123',
+            role: createdRoles[0]._id, // Admin
+            organization: createdOrgs[1]._id // Digital University
+        });
+        users.push(adminUser);
+
+        // 10 more users distributed across organizations
         for (let i = 1; i <= 10; i++) {
+            const roleIdx = (i % 2) + 1; // Cycle between Staff (1) and User (2)
+            const orgIdx = i % createdOrgs.length; // Cycle through all organizations
+            
+            const u = await User.create({
+                name: `User Demo ${i}`,
+                email: `user${i}@demo.uni`,
+                password: 'password123',
+                role: createdRoles[roleIdx]._id,
+                organization: createdOrgs[Math.floor(Math.random() * createdOrgs.length)]._id
+            });
+            users.push(u);
+        }
+
+        console.log(`✅ Seeded ${users.length} users distributed across all organizations`);
+
+        // 7. Seed Forms
+        const forms = [];
+        const formTemplates = [
+            { en: 'Student Satisfaction Survey 2024', th: 'แบบประเมินความพึงพอใจนักศึกษา 2567' },
+            { en: 'Library Service Feedback', th: 'ความเห็นการใช้บริการห้องสมุด' },
+            { en: 'Digital Literacy Assessment', th: 'แบบทดสอบทักษะดิจิทัล' },
+            { en: 'Campus Facilities Evaluation', th: 'ประเมินสิ่งอำนวยความสะดวกในวิทยาเขต' },
+            { en: 'Canteen Food Quality Survey', th: 'สำรวจคุณภาพอาหารในโรงอาหาร' }
+        ];
+
+        for (let i = 0; i < formTemplates.length; i++) {
             const f = await Form.create({
-                title: [{ key: 'en', value: `Mock Form ${i}` }],
-                description: [{ key: 'en', value: `This is mock form number ${i}` }],
-                creator: user._id,
-                status: null,
-                // set schedule to now + i days for start, + (i+7) days for end
+                title: [
+                    { key: 'en', value: formTemplates[i].en },
+                    { key: 'th', value: formTemplates[i].th }
+                ],
+                description: [
+                    { key: 'en', value: `Official feedback form for ${formTemplates[i].en}` },
+                    { key: 'th', value: `แบบฟอร์มรับฟังความคิดเห็นอย่างเป็นทางการสำหรับ ${formTemplates[i].th}` }
+                ],
+                creator: adminUser._id,
+                organization: createdOrgs[Math.floor(Math.random() * createdOrgs.length)]._id,
                 schedule: {
-                    startAt: new Date(Date.now() + (i - 1) * 24 * 60 * 60 * 1000),
-                    endAt: new Date(Date.now() + (i + 6) * 24 * 60 * 60 * 1000)
+                    startAt: new Date(Date.now() - 24 * 60 * 60 * 1000), 
+                    endAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                 }
             });
             forms.push(f);
         }
-        console.log('✅ Created 10 forms');
+        console.log(`✅ Seeded ${forms.length} diverse forms`);
 
-        // Helper: get type id by name
-        const typeByName = (name) => (createdTypes.find(t => t.type === name) || {})._id || null;
+        // 8 & 9. Seed Questions and Responses for EACH form
+        const departments = ['IT Support', 'Human Resources', 'Accounting', 'Public Relations', 'Student Development', 'Academic Office'];
+        const choicesList = ['0', '1', '2'];
 
-        // Create 10 Questions (distributed across forms)
-        const questions = [];
-        for (let i = 1; i <= 10; i++) {
-            const form = forms[(i - 1) % forms.length];
-            const typeName = questionTypeNames[(i - 1) % questionTypeNames.length];
-            const qTypeId = typeByName(typeName);
-            const config = {};
-            if (typeName === 'multiple_choice' || typeName === 'checkbox') {
-                config.choices = [
-                    { key: '0', lang: [{ key: 'en', value: 'Option A' }] },
-                    { key: '1', lang: [{ key: 'en', value: 'Option B' }] }
-                ];
-                config.allowMultipleSelect = typeName === 'checkbox';
-            }
-            if (typeName === 'rating') config.maxRating = 5;
-            if (typeName === 'file_upload') { config.maxFiles = 1; config.maxFileSize = 1; config.fileTypes = ['img', 'pdf']; }
-            if (typeName === 'title_description') config.description = [{ key: 'en', value: 'Section description' }];
-            if (typeName === 'image') config.image = '';
-
-            const q = await Questions.create({
-                form: form._id,
-                order: i,
-                title: [{ key: 'en', value: `Question ${i} (${typeName})` }],
-                type: qTypeId,
-                config,
-                isRequired: i % 2 === 0
-            });
-            // ensure Form.questions contains this question id so Form doc has proper references
-            try {
-                await Form.findByIdAndUpdate(form._id, { $push: { questions: q._id } });
-            } catch (pushErr) {
-                console.warn('Warning: could not push question to form.questions', pushErr);
-            }
-            questions.push(q);
-        }
-        console.log('✅ Created 10 questions');
-
-        // Create 10 Responses (attach to forms and questions)
-        for (let i = 1; i <= 10; i++) {
-            const targetForm = forms[(i - 1) % forms.length];
-            // pick questions for this form
-            const qs = questions.filter(q => q.form.toString() === targetForm._id.toString());
-            const answers = qs.map((q, idx) => {
-                const qType = createdTypes.find(t => t._id.toString() === q.type.toString());
-                const tname = qType ? qType.type : 'short_answer';
-                let respVal = null;
-                switch (tname) {
-                    case 'short_answer': respVal = `Answer ${i}-${idx}`; break;
-                    case 'paragraph': respVal = `Long answer for ${i}-${idx}`; break;
-                    case 'multiple_choice': respVal = q.config && Array.isArray(q.config.choices) && q.config.choices[0] ? q.config.choices[0].lang[0].value : 'Option A'; break;
-                    case 'checkbox': respVal = q.config && Array.isArray(q.config.choices) ? q.config.choices.map(c => c.lang[0].value) : ['Option A']; break;
-                    case 'rating': respVal = 4; break;
-                    case 'file_upload': respVal = [{ name: 'file1.png', url: '/uploads/file1.png' }]; break;
-                    case 'image': respVal = '/uploads/img.png'; break;
-                    case 'title_description': respVal = 'Section read'; break;
-                    default: respVal = `Answer ${i}-${idx}`;
+        for (let formIdx = 0; formIdx < forms.length; formIdx++) {
+            const currentForm = forms[formIdx];
+            
+            const questionsData = [
+                {
+                    form: currentForm._id,
+                    order: 1,
+                    title: [{ key: 'en', value: 'Department' }, { key: 'th', value: 'หน่วยงานสังกัด' }],
+                    type: createdTypes.find(t => t.type === 'short_answer')._id,
+                    isRequired: true
+                },
+                {
+                    form: currentForm._id,
+                    order: 2,
+                    title: [{ key: 'en', value: 'Service Satisfaction' }, { key: 'th', value: 'ความพึงพอใจต่อบริการ' }],
+                    type: createdTypes.find(t => t.type === 'rating')._id,
+                    config: { maxRating: 5 },
+                    isRequired: true
+                },
+                {
+                    form: currentForm._id,
+                    order: 3,
+                    title: [{ key: 'en', value: 'Tools used most often?' }, { key: 'th', value: 'เครื่องมือที่ใช้บ่อยที่สุด' }],
+                    type: createdTypes.find(t => t.type === 'checkbox')._id,
+                    config: {
+                        choices: [
+                            { key: '0', lang: [{ key: 'en', value: 'ERP' }, { key: 'th', value: 'ระบบ ERP' }] },
+                            { key: '1', lang: [{ key: 'en', value: 'LMS' }, { key: 'th', value: 'ระบบ LMS' }] },
+                            { key: '2', lang: [{ key: 'en', value: 'E-Office' }, { key: 'th', value: 'ระบบงานสารบรรณ' }] }
+                        ],
+                        allowMultipleSelect: true
+                    }
                 }
-                return { question: q._id, response: respVal };
-            });
-            try {
-                console.log(`Creating response ${i} for form ${targetForm._id} with ${answers.length} answers`);
-                // Ensure answers are plain objects (strip any model prototypes)
-                const payload = { responder: user._id, form: targetForm._id, answers: JSON.parse(JSON.stringify(answers)), submit: true };
-                await Response.create(payload);
-            } catch (respErr) {
-                console.error(`Error creating response ${i}:`, respErr);
-                console.error('Payload:', { responder: user._id, form: targetForm._id, answersLength: answers.length });
-                throw respErr;
+            ];
+            const createdQuestions = await Questions.insertMany(questionsData);
+            await Form.findByIdAndUpdate(currentForm._id, { $push: { questions: { $each: createdQuestions.map(q => q._id) } } });
+
+            const responsesPerForm = 3 + (formIdx % 3);
+            for (let r = 0; r < responsesPerForm; r++) {
+                const responder = users[(formIdx * 3 + r) % users.length];
+                await Response.create({
+                    responder: responder._id,
+                    form: currentForm._id,
+                    answers: [
+                        { question: createdQuestions[0]._id, response: departments[(formIdx + r) % departments.length] },
+                        { question: createdQuestions[1]._id, response: ((formIdx + r) % 5) + 1 },
+                        { question: createdQuestions[2]._id, response: r % 2 === 0 ? [choicesList[r % 3]] : [choicesList[r % 3], choicesList[(r + 1) % 3]] }
+                    ],
+                    submit: true
+                });
             }
+            console.log(`✅ Seeded ${createdQuestions.length} questions and ${responsesPerForm} responses for: ${currentForm.title.find(t => t.key === 'en').value}`);
         }
-        console.log('✅ Created 10 responses');
+
+        console.log('\n🌟 Database seeding completed successfully!');
+
     } catch (error) {
-        console.error('❌ Error seeding database:', error);
+        console.error('❌ Error during database seeding:', error);
     } finally {
-        // Close connection
         await mongoose.connection.close();
-        console.log('\n🔌 Database connection closed');
+        console.log('🔌 Database connection closed\n');
         process.exit(0);
     }
 }
 
-// Run the seed function
 seedDatabase();

@@ -151,7 +151,7 @@ export default {
         },
         copyLink() {
             if (!this.form || !this.form._id) return;
-            const url = `${window.location.origin}/forms/${this.form._id}`;
+            const url = `${window.location.origin}/forms/${this.form._id}?mode=public`;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(() => this.showCopied());
@@ -171,7 +171,7 @@ export default {
         },
         sendEmail() {
             if (!this.form || !this.form._id) return;
-            const url = `${window.location.origin}/forms/${this.form._id}`;
+            const url = `${window.location.origin}/forms/${this.form._id}?mode=public`;
             const title = this.getTitle(this.form.title) || 'Form';
             const subject = encodeURIComponent(`Please fill out this form: ${title}`);
             const body = encodeURIComponent(`You can access the form here:\n${url}`);
