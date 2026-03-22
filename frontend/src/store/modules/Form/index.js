@@ -7,12 +7,16 @@ const ServerModule = {
     namespaced: true,
 
     state: {
-        forms: []
+        forms: [],
+        duplicateBuffer: null
     },
 
     mutations: {
         forms(state, forms) {
             state.forms = forms;
+        },
+        setDuplicateBuffer(state, data) {
+            state.duplicateBuffer = data;
         }
     },
     actions: {
@@ -55,7 +59,8 @@ const ServerModule = {
         }
     },
     getters: {
-        forms: (state) => state.forms
+        forms: (state) => state.forms,
+        duplicateBuffer: (state) => state.duplicateBuffer
     }
 }
 
