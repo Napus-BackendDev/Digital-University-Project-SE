@@ -66,10 +66,18 @@
                     <!-- Actions column -->
                     <template #actions="{ item }">
                         <td class="align-middle text-right pr-4 border-0">
-                            <button v-if="!item.isEmpty" @click="viewResponse(item)" class="btn-action-view">
-                                <CIcon name="cil-chevron-right" size="sm" class="mr-1" />
-                                Details
-                            </button>
+                            <div v-if="!item.isEmpty">
+                                <!-- Viewing Status -->
+                                <div v-if="item.isActive" class="btn-action-viewing">
+                                    <CIcon name="cil-check-alt" size="sm" class="mr-1" />
+                                    Viewing
+                                </div>
+                                <!-- View Details Action -->
+                                <button v-else @click="viewResponse(item)" class="btn-action-view">
+                                    <CIcon name="cil-chevron-right" size="sm" class="mr-1" />
+                                    Details
+                                </button>
+                            </div>
                         </td>
                     </template>
                 </CDataTable>
@@ -97,6 +105,10 @@ export default {
     props: {
         responseList: {
             type: Array,
+            default: null
+        },
+        currentId: {
+            type: String,
             default: null
         }
     },
@@ -153,6 +165,7 @@ export default {
                 return {
                     id: idx + 1,
                     _id: r._id,
+                    isActive: r._id === this.currentId,
                     responder: responder || '-',
                     responderEmail: responderEmail,
                     submitted: r.createdAt ? moment(r.createdAt).format('DD/MM/YYYY, HH:mm') : '-',
@@ -297,6 +310,18 @@ export default {
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
     cursor: pointer;
+}
+
+.btn-action-viewing {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 18px;
+    background-color: #f0fdf4; /* Soft Green */
+    color: #166534; /* Strong Green */
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
 }
 
 /* Premium Table Core */

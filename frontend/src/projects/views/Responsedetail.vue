@@ -2,7 +2,7 @@
     <div class="flex-grow-1">
 
         <!-- Back Button -->
-        <ButtonBack />
+        <ButtonBack :to="backRoute" />
 
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-5 text-muted">
@@ -17,73 +17,93 @@
         </div>
 
         <!-- Content -->
-        <div v-else-if="response" class="response-detail-body pb-5 px-3">
-
-            <!-- Shared Standard Header -->
+        <div v-else-if="response" class="pb-5 px-3 pt-4">
+            <!-- Header Section -->
             <Header 
-                title="Response Details" 
-                :description="'Submitted on ' + formatDate(response.createdAt)"
-            >
-                <template #actions>
-                    <div class="d-flex align-items-center" style="gap: 12px;">
-                        <!-- Minimal Navigation -->
-                        <div class="nav-minimal bg-light px-2 py-1 rounded-pill d-flex align-items-center mr-2 shadow-sm border">
-                            <button class="btn-nav-small" :disabled="currentIndex <= 0" @click="goToResponse(currentIndex - 1)">
-                                <CIcon name="cil-chevron-left" size="sm" />
-                            </button>
-                            <span class="mx-2 font-weight-bold text-dark" style="font-size: 0.85rem;">{{ currentIndex + 1 }} / {{ totalResponses }}</span>
-                            <button class="btn-nav-small" :disabled="currentIndex >= totalResponses - 1" @click="goToResponse(currentIndex + 1)">
-                                <CIcon name="cil-chevron-right" size="sm" />
-                            </button>
-                        </div>
+                :title="getTitle(response.form && response.form.title) || 'Response Details'" 
+                :description="getTitle(response.form && response.form.description)" 
+            />
 
-                        <!-- Export Dropdown -->
-                        <CDropdown class="custom-dropdown">
-                            <template #toggler>
-                                <CButton color="primary" class="d-flex align-items-center action-btn-header transition-all shadow-sm">
-                                    <CIcon name="cil-cloud-download" size="sm" class="mr-2" />
-                                    Export
-                                    <CIcon name="cil-chevron-bottom" size="sm" class="ml-2 opacity-50" />
-                                </CButton>
-                            </template>
-                            <CDropdownItem @click="exportXlsx" class="dropdown-item-modern">
-                                <CIcon name="cil-spreadsheet" size="sm" class="mr-2 text-success" />
-                                Export Excel
-                            </CDropdownItem>
-                            <CDropdownItem @click="copyApiLink" class="dropdown-item-modern">
-                                <CIcon name="cil-link" size="sm" class="mr-2 text-primary" />
-                                Copy API Link
-                            </CDropdownItem>
-                        </CDropdown>
-
-                        <!-- Delete Button -->
-                        <CButton color="danger" variant="outline" class="d-flex align-items-center action-btn-danger-header transition-all shadow-sm" @click="deleteResponse">
-                            <CIcon name="cil-trash" size="sm" class="mr-2" />
-                            Delete
-                        </CButton>
-                    </div>
-                </template>
-            </Header>
-
-            <!-- Content Area -->
-            <div class="detail-cards-wrapper">
-                <CCard class="mb-4 shadow-sm border-0 rounded-24 overflow-hidden">
-                    <div class="card-header-gradient p-4 text-white">
-                        <div class="d-flex align-items-center">
-                            <div class="user-avatar-circle mr-3">
-                                <CIcon name="cil-user" size="lg" />
+            <CRow class="mt-5">
+                <CCol lg="12">
+                    <!-- Response Information Card -->
+                    <CCard class="mb-5 border-0 shadow-sm rounded-20">
+                        <CCardBody class="p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h4 class="m-0 font-weight-bold text-dark">Submission Overview</h4>
+                                    <p class="text-muted small mb-0">General metadata about this form submission</p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <CButton color="primary" variant="outline" size="sm" class="rounded-pill px-3 mr-2" @click="exportXlsx">
+                                        <CIcon name="cil-cloud-download" class="mr-1" /> Export XLSX
+                                    </CButton>
+                                    <CButton color="danger" variant="outline" size="sm" class="rounded-pill px-3" @click="deleteResponse">
+                                        <CIcon name="cil-trash" class="mr-1" /> Delete
+                                    </CButton>
+                                </div>
                             </div>
-                            <div>
-                                <h5 class="mb-1 font-weight-bold">Respondent Identification</h5>
-                                <p class="mb-0 opacity-80 small">Details for user submission</p>
-                            </div>
+                            
+                            <CRow class="bg-light p-3 rounded-16 mx-0">
+                                <CCol md="4" class="py-2 border-right-md d-flex flex-column justify-content-center">
+                                    <label class="small text-uppercase font-weight-bold text-muted d-block mb-1">Responder</label>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle mr-3" style="background-color: #f1f5f9; color: #475569; min-width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                            {{ (response.responder ? (response.responder.name || response.responder.email || 'A') : (response.responderName || 'A')).charAt(0).toUpperCase() }}
+                                        </div>
+                                        <div class="d-flex flex-column overflow-hidden">
+                                            <div class="font-weight-bold text-dark text-truncate" style="font-size: 0.95rem; line-height: 1.2;">
+                                                {{ response.responder ? (response.responder.name || response.responder.email.split('@')[0]) : (response.responderName || 'Anonymous') }}
+                                            </div>
+                                            <div class="text-muted small text-truncate" style="font-size: 0.8rem;">
+                                                {{ response.responder ? response.responder.email : '' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CCol>
+                                <CCol md="4" class="py-2 border-right-md d-flex flex-column justify-content-center">
+                                    <label class="small text-uppercase font-weight-bold text-muted d-block mb-1">Submitted at</label>
+                                    <div class="font-weight-bold text-dark">
+                                        <CIcon name="cil-calendar" class="mr-1 text-primary" />
+                                        {{ formatDate(response.createdAt) }}
+                                    </div>
+                                </CCol>
+                                <CCol md="4" class="py-2 d-flex flex-column justify-content-center">
+                                    <label class="small text-uppercase font-weight-bold text-muted d-block mb-1">Status & Progress</label>
+                                    <div class="d-flex align-items-center">
+                                        <CBadge :color="response.submit ? 'success' : 'warning'" class="px-3 py-2 rounded-pill mr-2 shadow-sm">
+                                            {{ response.submit ? 'Completed' : 'Draft' }}
+                                        </CBadge>
+                                        <span class="text-muted small font-weight-bold">{{ (response.answers || []).length }} Questions Answered</span>
+                                    </div>
+                                </CCol>
+                            </CRow>
+                        </CCardBody>
+                    </CCard>
+
+                    <!-- Detailed Answers Table -->
+                    <CCard class="mb-5 border-0 shadow-sm rounded-20 overflow-hidden">
+                        <CCardHeader class="bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
+                            <h4 class="m-0 font-weight-bold text-dark">Detailed Answers</h4>
+                            <span class="badge badge-light p-2 px-3 rounded-pill text-primary font-weight-bold">
+                                {{ (response.answers || []).length }} Submissions
+                            </span>
+                        </CCardHeader>
+                        <CCardBody class="p-0">
+                            <AnswerTable :answers="response.answers || []" />
+                        </CCardBody>
+                    </CCard>
+
+                    <!-- Other Responses for this Form -->
+                    <div class="mb-5">
+                        <div class="mb-4">
+                            <h4 class="font-weight-bold text-dark mb-1">Other Submissions</h4>
+                            <p class="text-muted">Browse through other responses for "{{ getTitle(response.form && response.form.title) }}"</p>
                         </div>
+                        <ResponseTables :responseList="responsesList" :currentId="id" />
                     </div>
-                    <CCardBody class="p-0">
-                        <AnswerTable :answers="response.answers" />
-                    </CCardBody>
-                </CCard>
-            </div>
+                </CCol>
+            </CRow>
         </div>
     </div>
 </template>
@@ -116,17 +136,41 @@ export default {
     computed: {
         ...mapGetters('Setting', ['lang']),
         responsesList() {
-            return this.$store.getters['Responses/responses'] || [];
+            return (this.response && this.response.form && Array.isArray(this.response.form.responses)) 
+                ? this.response.form.responses 
+                : [];
         },
         totalResponses() {
             return this.responsesList.length;
         },
         currentIndex() {
-            if (!this.responsesList || !this.id) return -1;
-            return this.responsesList.findIndex(r => (r._id || r.id) === this.id);
+            if (!this.id) return -1;
+            // First search in list
+            let idx = this.responsesList.findIndex(r => (r._id || r.id) === this.id);
+            // If not found in list (e.g. refresh), but match current response, return 0
+            if (idx === -1 && this.response && (this.response._id || this.response.id) === this.id) {
+                return 0;
+            }
+            return idx;
+        },
+        backRoute() {
+            if (this.response && this.response.form) {
+                const formId = this.response.form._id || (typeof this.response.form === 'string' ? this.response.form : null);
+                if (formId) {
+                    return { name: 'EditorCreateForm', params: { _id: formId } };
+                }
+            }
+            return null;
         }
     },
 
+    watch: {
+        // Watch for ID changes to refresh data when navigating between different responses
+        id: {
+            handler: 'fetchResponseDetail',
+            immediate: false
+        }
+    },
     created() {
         this.fetchResponseDetail();
     },
@@ -135,22 +179,19 @@ export default {
             this.loading = true;
             this.error = null;
             try {
-                // Find response directly from the Vuex store
-                const resArray = this.responsesList;
-                if (resArray && Array.isArray(resArray) && resArray.length > 0) {
-                    const found = resArray.find(r => (r._id || r.id) === this.id);
-                    if (found) {
-                        this.response = found;
-                        this.loading = false;
-                        return;
-                    }
+                // Dispatch 'get' action from store to fetch or retrieve the response
+                const result = await this.$store.dispatch('Responses/get', { _id: this.id });
+                console.log(result)
+                
+                if (result) {
+                    this.response = result;
+                } else {
+                    this.error = "Response not found.";
                 }
 
-                this.error = "Response not found or please navigate from the Responses table.";
-
             } catch (err) {
-                console.error('[Responsedetail] Error searching store:', err);
-                this.error = "Failed to load response details from store.";
+                console.error('[Responsedetail] Error fetching from store:', err);
+                this.error = "Failed to load response details.";
             } finally {
                 this.loading = false;
             }
@@ -221,7 +262,8 @@ export default {
 
             // Format filename with responder info and date
             const dateStr = moment(this.response.form.createdAt).format('YYYYMMDD');
-            const responderName = this.response.user && this.response.user.email ? this.response.user.email.split('@')[0] : 'Anonymous';
+            const responder = this.response.responder;
+            const responderName = responder ? (responder.name || responder.email || 'Anonymous').split('@')[0] : (this.response.responderName || 'Anonymous');
             const filename = `response_${responderName}_${dateStr}.xlsx`;
 
             XLSX.writeFile(workbook, filename);
@@ -261,79 +303,60 @@ export default {
 </script>
 
 <style scoped>
-.border-top-3 {
-    border-top-width: 4px !important;
+.rounded-20 {
+    border-radius: 20px !important;
+}
+.rounded-16 {
+    border-radius: 16px !important;
+}
+.rounded-pill {
+    border-radius: 50rem !important;
 }
 
-.answer-box {
-    border: 1px solid #f1f5f9;
-    font-size: 0.95rem;
-    color: #334155;
-}
-
-/* Header Action Buttons */
-.nav-btn {
+.bg-light {
     background-color: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #64748b !important;
-    padding: 6px 10px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
-    transition: all 0.2s;
 }
 
-.nav-btn:hover:not(:disabled) {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
-}
-
-.nav-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.action-btn {
-    background-color: #fff !important;
-    border: 1px solid #e2e8f0 !important;
-    padding: 6px 16px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
-    transition: all 0.2s;
-}
-
-.action-btn:hover {
-    background-color: #f8fafc !important;
-    border-color: #cbd5e1 !important;
-}
-
-.action-btn.text-danger:hover {
-    background-color: #fff1f2 !important;
-    color: #e11d48 !important;
-    border-color: #fecdd3 !important;
-}
-
-.font-weight-500 {
-    font-weight: 500;
-}
-
-::v-deep .custom-dropdown .dropdown-toggle {
-    background-color: #fff !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #0f172a !important;
-    font-weight: 500;
-    padding: 6px 16px !important;
-    border-radius: 8px !important;
+.avatar-circle {
+    width: 38px;
+    height: 38px;
+    background: #e0e7ff;
+    color: #4338ca;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    box-shadow: 0 2px 4px rgba(67, 56, 202, 0.1);
 }
 
-::v-deep .custom-dropdown .dropdown-toggle::after {
-    display: none;
+.border-right-md {
+    border-right: 1px solid #e2e8f0;
 }
 
-::v-deep .custom-dropdown .dropdown-toggle:hover {
-    background-color: #f8fafc !important;
-    border-color: #cbd5e1 !important;
+@media (max-width: 767.98px) {
+    .border-right-md {
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+    }
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+h4 {
+    letter-spacing: -0.02em;
+}
+
+::v-deep .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+::v-deep .card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
 }
 </style>

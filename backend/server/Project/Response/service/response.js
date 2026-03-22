@@ -23,7 +23,7 @@ exports.onQuerys = async function (request, response) {
     }
 }
 
-exports.onGetById = async function (request, response) {
+exports.onQuery = async function (request, response) {
     try {
         let query = {};
         query._id = new mongo.ObjectId(request.body._id);

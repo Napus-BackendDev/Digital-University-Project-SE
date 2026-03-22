@@ -93,6 +93,9 @@ async function seedDatabase() {
 
         // 6. Seed Users
         const users = [];
+        
+        const firstNames = ['Somchai', 'Somsri', 'Wichai', 'Malee', 'Anan', 'Pitsanu', 'Kanya', 'Thana', 'Santi', 'Pornchai', 'Siriporn', 'Nicha', 'Somsak', 'Patcharee', 'Narong', 'Prasert', 'Wanna', 'Prayoon', 'Sunee', 'Ubon'];
+        const lastNames = ['Srakaew', 'Sripai', 'Rakdee', 'Maneerat', 'Kongka', 'Kerdphol', 'Choojai', 'Noppakun', 'Saengsom', 'Sukjai', 'Prathum', 'Kamsin', 'Wongkaew', 'Sinthan', 'Boonmee', 'Chaisri', 'Saethang', 'Promdee', 'Yindee', 'Saengdao'];
 
         // Main Admin (Fixed ID)
         const adminUser = await User.create({
@@ -105,14 +108,18 @@ async function seedDatabase() {
         });
         users.push(adminUser);
 
-        // 10 more users distributed across organizations
-        for (let i = 1; i <= 10; i++) {
+        // 30 more users distributed across organizations
+        for (let i = 1; i <= 30; i++) {
+            const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+            const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+            const fullName = `${firstName} ${lastName}`;
+            const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@demo.uni`;
+            
             const roleIdx = (i % 2) + 1; // Cycle between Staff (1) and User (2)
-            const orgIdx = i % createdOrgs.length; // Cycle through all organizations
             
             const u = await User.create({
-                name: `User Demo ${i}`,
-                email: `user${i}@demo.uni`,
+                name: fullName,
+                email: email,
                 password: 'password123',
                 role: createdRoles[roleIdx]._id,
                 organization: createdOrgs[Math.floor(Math.random() * createdOrgs.length)]._id
@@ -120,7 +127,7 @@ async function seedDatabase() {
             users.push(u);
         }
 
-        console.log(`✅ Seeded ${users.length} users distributed across all organizations`);
+        console.log(`✅ Seeded ${users.length} users with randomized names`);
 
         // 7. Seed Forms
         const forms = [];
@@ -194,9 +201,16 @@ async function seedDatabase() {
             const createdQuestions = await Questions.insertMany(questionsData);
             await Form.findByIdAndUpdate(currentForm._id, { $push: { questions: { $each: createdQuestions.map(q => q._id) } } });
 
-            const responsesPerForm = 3 + (formIdx % 3);
+            const responsesPerForm = 15 + (formIdx % 5);
             for (let r = 0; r < responsesPerForm; r++) {
                 const responder = users[(formIdx * 3 + r) % users.length];
+                
+                // Randomize creation date within last 7 days
+                const daysAgo = Math.floor(Math.random() * 7);
+                const randomDate = new Date();
+                randomDate.setDate(randomDate.getDate() - daysAgo);
+                randomDate.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+
                 await Response.create({
                     responder: responder._id,
                     form: currentForm._id,
@@ -205,7 +219,8 @@ async function seedDatabase() {
                         { question: createdQuestions[1]._id, response: ((formIdx + r) % 5) + 1 },
                         { question: createdQuestions[2]._id, response: r % 2 === 0 ? [choicesList[r % 3]] : [choicesList[r % 3], choicesList[(r + 1) % 3]] }
                     ],
-                    submit: true
+                    submit: true,
+                    createdAt: randomDate
                 });
             }
             console.log(`✅ Seeded ${createdQuestions.length} questions and ${responsesPerForm} responses for: ${currentForm.title.find(t => t.key === 'en').value}`);

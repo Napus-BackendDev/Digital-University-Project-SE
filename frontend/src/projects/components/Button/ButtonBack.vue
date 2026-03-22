@@ -1,6 +1,6 @@
 <template>
     <div class="mt-3 mb-2 px-1">
-        <div class="back-pill" @click="$router.back()">
+        <div class="back-pill" @click="handleBack">
             <CIcon name="cil-chevron-left" size="sm" class="mr-1" />
             <span>Back</span>
         </div>
@@ -9,7 +9,22 @@
 
 <script>
 export default {
-    name: "ButtonBack"
+    name: "ButtonBack",
+    props: {
+        to: {
+            type: [String, Object],
+            default: null
+        }
+    },
+    methods: {
+        handleBack() {
+            if (this.to) {
+                this.$router.push(this.to);
+            } else {
+                this.$router.back();
+            }
+        }
+    }
 }
 </script>
 

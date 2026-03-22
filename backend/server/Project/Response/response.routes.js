@@ -12,7 +12,7 @@ router.get("/exp", function (req, res, next) {
 router.post("/get", function (req, res, next) {
     req.body.apiId = 2;
     next();
-}, response.onGetById);
+}, response.onQuery);
 
 router.post("", function (req, res, next) {
     req.body.apiId = 3;
