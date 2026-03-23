@@ -49,6 +49,8 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
     name: "Header",
     props: {
@@ -87,6 +89,7 @@ export default {
                     description: [{ key: 'en', value: 'Description' }],
                     questions: [],
                     responses: [],
+                    creator: this.user?._id,
                     settings: {
                         startDateTime: '',
                         endDateTime: '',
@@ -108,6 +111,9 @@ export default {
                 this.isCreating = false
             }
         }
+    },
+    computed: {
+        ...mapGetters('User', ['user'])
     }
 }
 </script>

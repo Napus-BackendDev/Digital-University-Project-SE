@@ -17,25 +17,38 @@
 
         <CSidebarFooter class="p-3">
             <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <div class="font-weight-bold text-white">{{ username }}</div>
-                    <div class="text-white-50 small">{{ userEmail }}</div>
+                <div class="overflow-hidden">
+                    <div class="font-weight-bold text-white text-truncate" style="max-width: 140px;">{{ username }}</div>
+                    <div class="text-white-50 small text-truncate" style="max-width: 140px;">{{ userEmail }}</div>
                 </div>
-                <CButton color="ghost" variant="ghost" class="text-white" @click="logout">
-                    <CIcon name="cil-account-logout" />
-                </CButton>
+                <CDropdown placement="top-end" :caret="false">
+                    <template #toggler>
+                        <CButton color="ghost" variant="ghost" class="text-white mb-0 ml-2 p-1">
+                            <CIcon name="cil-account-logout" />
+                        </CButton>
+                    </template>
+                    <CDropdownHeader>Select User</CDropdownHeader>
+                    <CDropdownItem v-for="u in usersList" :key="u._id" @click="switchUser(u)">
+                        {{ u.name }}
+                    </CDropdownItem>
+                    <CDropdownDivider v-if="usersList.length > 0" />
+                    <CDropdownItem @click="logout" class="text-danger">
+                        <CIcon name="cil-account-logout" class="mr-2" /> Logout
+                    </CDropdownItem>
+                </CDropdown>
             </div>
         </CSidebarFooter>
     </CSidebar>
 </template>
 
 <script>
+import api from '@/service/api';
+
 export default {
     name: 'TheSidebar',
     data() {
         return {
-            username: 'John Doe',
-            userEmail: 'user@example.com',
+            usersList: [],
             navs: [{
                 _name: 'CSidebarNav',
                 _children: [
@@ -67,6 +80,20 @@ export default {
             }]
         }
     },
+    async created() {
+        try {
+            const res = await api.user('exp');
+            const data = res && res.data && res.data.data;
+            if (Array.isArray(data)) {
+                this.usersList = data;
+                if (!this.$store.state.User.user && data.length > 0) {
+                    this.$store.commit('User/user', data[0]);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load user info', e);
+        }
+    },
     methods: {
         isActive(path) {
             const currentPath = this.$route.path.split('/')
@@ -84,6 +111,9 @@ export default {
         permissions() {
             this.$router.push('/permissions')
         },
+        switchUser(u) {
+            this.$store.commit('User/user', u);
+        },
         logout() {
             this.$router.push('/pages/login')
         },
@@ -95,6 +125,15 @@ export default {
         sidebarMinimize() {
             return this.$store.state.sidebarMinimize
         },
+        user() {
+            return this.$store.state.User.user || {};
+        },
+        username() {
+            return this.user.name || 'Select a user...';
+        },
+        userEmail() {
+            return this.user.email || 'Welcome to E-Questionnaires';
+        }
     },
 }
 </script>
