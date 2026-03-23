@@ -26,6 +26,7 @@ const th = {
         header: "แนวโน้มการตอบกลับ",
         responses: "การตอบกลับ",
         lastUpdated: "แก้ไขล่าสุด",
+        created: "แก้ไขล่าสุด",
         actions: "เครื่องมือ",
         view: "ดู",
         duplicate: "คัดลอก",

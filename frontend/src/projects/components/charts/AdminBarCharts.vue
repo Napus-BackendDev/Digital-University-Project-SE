@@ -118,9 +118,11 @@ export default {
 <style scoped>
 .chart-wrapper-container {
     background: white;
-    border-radius: 8px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
     padding: 20px;
     height: 100%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header h4 {

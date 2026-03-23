@@ -1,5 +1,5 @@
 <template>
-    <div class="chart-wrapper-container premium-card shadow-sm border-0">
+    <div class="chart-wrapper-container premium-card shadow-sm">
         <div class="header mb-4 pt-1">
             <div class="d-flex align-items-center mb-1">
                 <h4 class="m-0 font-weight-bold text-dark-blue">Responses Over Time</h4>
@@ -181,6 +181,7 @@ export default {
     display: flex;
     flex-direction: column;
     overflow: hidden; /* Ensure anything bleeding is clipped by rounded corners */
+    border: 1px solid #e2e8f0;
 }
 
 .premium-card {

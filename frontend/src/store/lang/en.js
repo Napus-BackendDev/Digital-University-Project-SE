@@ -26,6 +26,7 @@ const en = {
         header: "Response Trends",
         responses: "Responses",
         lastUpdated: "Last Updated",
+        created: "Last Updated",
         actions: "Actions",
         view: "View",
         duplicate: "Duplication",
