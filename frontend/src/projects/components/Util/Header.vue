@@ -93,12 +93,13 @@ export default {
                     settings: {
                         startDateTime: '',
                         endDateTime: '',
-                        accessType: 'Anyone with the link',
-                        newCollaborator: { email: '', role: 'Editor' },
-                        collectEmails: false,
-                        limitOneResponse: false,
-                        allowEditing: false,
-                        showProgressBar: false
+                        whoCanRespond: null,
+                        collectEmail: false,
+                        limitResponse: false,
+                        emailNotifications: false,
+                        requireResponse: false,
+                        confirmMessage: 'Thank you for completing this survey. Your response has been recorded.',
+                        showAnotherResponseLink: true
                     }
                 }
 

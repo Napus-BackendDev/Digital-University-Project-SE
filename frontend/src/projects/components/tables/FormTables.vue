@@ -73,10 +73,16 @@
                 <td class="align-middle text-right pr-4">
                     <div class="d-flex align-items-center justify-content-end">
                         <CIcon v-if="item.requireEmail" name="cil-warning" class="text-danger mr-2" style="width: 20px;"
-                            v-c-tooltip="'Email required'" />
-                        <CButton :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
-                            @click.stop="goToForm(item._id)" v-c-tooltip="getActionTooltip(item.status)">
-                            <CIcon :name="getActionIcon(item.status)" size="lg" />
+                            v-c-tooltip="$t('form.collectEmail')" />
+                        
+                        <div v-if="!item.canEnter" v-c-tooltip="$t('form.accessDenied')">
+                            <CButton color="secondary" variant="ghost" class="p-2 action-icon-btn disabled" disabled>
+                                <CIcon name="cil-lock-locked" size="lg" />
+                            </CButton>
+                        </div>
+                        <CButton v-else :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
+                            @click.stop="goToForm(item._id)" v-c-tooltip="getActionTooltip(item.status, item.limitResponse)">
+                            <CIcon :name="getActionIcon(item.status, item.limitResponse)" size="lg" />
                         </CButton>
                     </div>
                 </td>
@@ -289,6 +295,13 @@ export default {
 
                 const createdAt = f.updatedAt || f.createdAt || '-';
 
+                // Access Control Logic
+                const userOrgId = currentUser?.organization?._id || currentUser?.organization;
+                const formOrgIds = (Array.isArray(f.organization) ? f.organization : [f.organization]).map(o => (o?._id || o)?.toString());
+                const isPublic = orgNames.includes('General');
+                const isMember = userOrgId && formOrgIds.includes(userOrgId.toString());
+                const canEnter = isPublic || isMember;
+
                 return {
                     _id: f._id,
                     title: title || '-',
@@ -303,6 +316,9 @@ export default {
                     createdName: createdName || '-',
                     createdEmail: createdEmail || '',
                     access: access,
+                    canEnter: canEnter,
+                    limitResponse: f.settings?.limitResponse || false,
+                    requireEmail: f.settings?.collectEmail || false,
                     _raw: f
                 };
             });
@@ -349,10 +365,14 @@ export default {
 
             // apply final default filtering:
             // 1. Hide if no schedule is provided (always)
-            // 2. If 'Completed', always show for historical records 
-            // 3. Otherwise, only show if current time is within [startAt, endAt]
+            // 2. Hide if the user does not have organization access (requested)
+            // 3. If 'Completed', always show for historical records 
+            // 4. Otherwise, only show if current time is within [startAt, endAt]
             const now = new Date();
             filtered = filtered.filter(f => {
+                // Must have access to see it
+                if (!f.canEnter) return false;
+
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
 
                 // Always hide if no schedule at all (requested)
@@ -426,16 +446,20 @@ export default {
             if (s === 'pending') return 'warning';
             return 'primary';
         },
-        getActionIcon(status) {
+        getActionIcon(status, limitResponse) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'completed') return 'cil-check-circle';
+            if (s === 'completed') {
+                return limitResponse ? 'cil-check-circle' : 'cil-reload';
+            }
             if (s === 'inprogress') return 'cil-pencil';
             return 'cil-input';
         },
-        getActionTooltip(status) {
+        getActionTooltip(status, limitResponse) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'completed') return 'View Summary';
-            if (s === 'inprogress') return 'Continue โorm';
+            if (s === 'completed') {
+                return limitResponse ? 'View Summary' : 'Submit Again';
+            }
+            if (s === 'inprogress') return 'Continue Form';
             return 'Start Form';
         }
     }

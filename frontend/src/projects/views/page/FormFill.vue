@@ -16,8 +16,40 @@
 
         <!-- Content -->
         <div v-else-if="form" class="fillform-body">
+            
+            <!-- Login Required Overlay -->
+            <div v-if="isLoginRequired" class="fillform-center text-center mt-5">
+                <CCard class="border-0 shadow p-4 mx-auto" style="border-radius: 20px; max-width: 450px;">
+                    <CCardBody>
+                        <div class="mb-4">
+                            <CIcon name="cil-lock-locked" size="3xl" class="text-primary mb-3" style="width: 60px; height: 60px;" />
+                            <h4 class="font-weight-bold">{{ $t('form.loginRequired') }}</h4>
+                            <p class="text-muted">{{ $t('form.collectEmail') }}</p>
+                        </div>
+                        <CButton color="primary" block size="lg" style="border-radius: 12px; font-weight: 600;" @click="onAuthenGoogle">
+                            {{ $t('form.signInWithGoogle') }}
+                        </CButton>
+                    </CCardBody>
+                </CCard>
+            </div>
 
-            <!-- Header Card -->
+            <!-- Already Submitted Message -->
+            <div v-else-if="isAlreadySubmitted" class="fillform-center text-center mt-5">
+                <CCard class="border-0 shadow p-4 mx-auto" style="border-radius: 20px; max-width: 500px;">
+                    <CCardBody>
+                        <div class="mb-4">
+                            <CIcon name="cil-check-circle" size="3xl" class="text-success mb-3" style="width: 60px; height: 60px;" />
+                            <h4 class="font-weight-bold">{{ $t('form.alreadySubmitted') }}</h4>
+                        </div>
+                        <CButton color="secondary" variant="outline" style="border-radius: 12px;" @click="$router.push({ name: 'Forms' })">
+                            {{ $t('button.back') }}
+                        </CButton>
+                    </CCardBody>
+                </CCard>
+            </div>
+
+            <!-- Header Card (shown only if can fill) -->
+            <template v-else>
             <CCard class="mb-3 border header-card">
                 <div v-if="isPreviewMode" class="preview-banner p-2 text-center text-white font-weight-bold">
                     <CIcon name="cil-magnifying-glass" class="mr-2" />
@@ -129,6 +161,7 @@
                 </CButton>
             </div>
 
+            </template>
         </div>
 
         <!-- Modal -->
@@ -180,7 +213,8 @@ export default {
             isSaving: false,
             error: null,
             errorIds: new Set(),
-            responderId: null
+            responderId: null,
+            isAlreadySubmitted: false, // New state for Limit to One Response
         };
     },
     created() {
@@ -198,6 +232,16 @@ export default {
 
                 this.form = data;
 
+                // 2. Check for "Limit to One Response" and "Collect Email" requirements
+                const settings = this.form.settings || {};
+                const currentResponder = this.user?._id || this.responderId;
+
+                // If collectEmail is true and user is not logged in, we stay in a "Login Required" state
+                if (settings.collectEmail && !currentResponder && !this.isPreviewMode) {
+                    this.loading = false;
+                    return;
+                }
+
                 if (this.isDuplicateMode || this.isPreviewMode) {
                     this.loading = false;
                     return;
@@ -214,7 +258,23 @@ export default {
                 try {
                     await this.$store.dispatch('Responses/get', { form_id: this.form._id });
                     const responses = this.$store.getters['Responses/responses'] || [];
-                    const currentResponder = this.user?._id || this.responderId;
+                    
+                    // Check if already submitted (for Limit to One Response)
+                    if (settings.limitResponse) {
+                        const submitted = (responses || []).find(r => {
+                            if (!r) return false;
+                            const fId = (typeof r.form === 'object' ? r.form._id : r.form);
+                            const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
+                            return String(fId) === String(this.form._id) && 
+                                   String(rId) === String(currentResponder) && 
+                                   r.submit;
+                        });
+                        if (submitted) {
+                            this.isAlreadySubmitted = true;
+                            this.loading = false;
+                            return;
+                        }
+                    }
 
                     const draft = (responses || []).find(r => {
                         if (!r) return false;
@@ -298,8 +358,27 @@ export default {
 
         onRate(questionId, n) {
             this.$set(this.answers, questionId, n);
-            this.clearError(questionId);
-            this.autoSave();
+        },
+
+        async onAuthenGoogle() {
+            try {
+                const googleUser = await this.$gAuth.signIn();
+                if (googleUser) {
+                    const profile = googleUser.getBasicProfile();
+                    const body = {
+                        email: profile.getEmail(),
+                        name: profile.getName()
+                    };
+                    // Sync user with backend and update store
+                    const user = await this.$store.dispatch('User/get', body);
+                    if (user) {
+                        this.responderId = user._id;
+                        this.onInit(); // Refresh form state with new user
+                    }
+                }
+            } catch (err) {
+                console.error('Google sign-in error:', err);
+            }
         },
 
         getTitle(arr) {
@@ -767,6 +846,11 @@ export default {
             }
 
             return built;
+        },
+        isLoginRequired() {
+            const settings = this.form?.settings || {};
+            const currentResponder = this.user?._id || this.responderId;
+            return settings.collectEmail && !currentResponder && !this.isPreviewMode;
         }
     },
     watch: {

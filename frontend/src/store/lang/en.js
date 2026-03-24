@@ -75,6 +75,13 @@ const en = {
         question: "Question",
         notAuthenticated: "Not authenticated",
         loginRequired: "You must be logged in to submit this form.",
+        alreadySubmitted: "You have already submitted this form.",
+        accessDenied: "Access denied. This form is restricted to specific organizations.",
+        signInWithGoogle: "Sign in with Google",
+        collectEmail: "Collect email addresses",
+        limitResponse: "Limit to one response",
+        emailNotifications: "Email Notifications",
+        requireResponse: "Require Response"
     },
 
     chart: {

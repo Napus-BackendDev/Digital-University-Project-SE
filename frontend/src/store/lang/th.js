@@ -74,6 +74,13 @@ const th = {
         question: "คำถามที่",
         notAuthenticated: "ยังไม่ได้เข้าสู่ระบบ",
         loginRequired: "คุณต้องเข้าสู่ระบบเพื่อส่งฟอร์มนี้",
+        alreadySubmitted: "คุณได้ส่งแบบสอบถามนี้ไปแล้ว",
+        accessDenied: "คุณไม่มีสิทธิ์เข้าถึงฟอร์มนี้ เนื่องจากจำกัดเฉพาะบางองค์กรเท่านั้น",
+        signInWithGoogle: "เข้าสู่ระบบด้วย Google",
+        collectEmail: "รวบรวมอีเมล",
+        limitResponse: "จำกัดการตอบเพียงครั้งเดียว",
+        emailNotifications: "การแจ้งเตือนทางอีเมล",
+        requireResponse: "บังคับตอบทุกข้อ"
     },
 
     chart: {
