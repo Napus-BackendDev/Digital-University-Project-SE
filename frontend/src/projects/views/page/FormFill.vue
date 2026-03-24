@@ -892,18 +892,6 @@ export default {
     position: relative;
 }
 
-.header-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-    background: linear-gradient(180deg, #1a73e8 0%, #0f62fe 100%);
-    border-top-left-radius: 12px;
-    border-bottom-left-radius: 12px;
-}
-
 .form-main-title {
     font-size: 1.9rem;
     font-weight: 700;

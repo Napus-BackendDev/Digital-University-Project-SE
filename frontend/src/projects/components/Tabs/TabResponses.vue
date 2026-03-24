@@ -93,10 +93,10 @@
                             </div>
 
                             <!-- Pagination for Text Responses -->
-                            <div v-if="q.responses.length > 5" class="d-flex justify-content-center mt-4">
-                                <CPagination :active-page="currentPageMap[q._id] || 1" :pages="Math.ceil(q.responses.length / 5)"
-                                    @update:active-page="(v) => handlePageChange(q._id, v)" size="sm" align="center"
-                                    class="custom-pagination-modern" />
+                            <div v-if="q.responses.length > 5">
+                                <Pagination :activePage="currentPageMap[q._id] || 1"
+                                    :pages="Math.ceil(q.responses.length / 5)"
+                                    @update:activePage="(v) => handlePageChange(q._id, v)" />
                             </div>
                         </template>
 
@@ -163,10 +163,11 @@ import moment from 'moment'
 import * as XLSX from 'xlsx'
 import { CChartBar } from '@coreui/vue-chartjs'
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue'
+import Pagination from '@/projects/components/Util/Pagination.vue'
 
 export default {
     name: 'TabResponses',
-    components: { ResponseTables, CChartBar },
+    components: { ResponseTables, CChartBar, Pagination },
     props: {
         responses: {
             type: Object,
@@ -646,31 +647,7 @@ export default {
     font-weight: 500;
 }
 
-/* Pagination styles */
-::v-deep .custom-pagination .page-item .page-link {
-    border: none !important;
-    background-color: transparent !important;
-    color: #475569 !important;
-    font-weight: 500;
-    padding: 8px 14px;
-    border-radius: 50%;
-    margin: 0 4px;
-}
-
-::v-deep .custom-pagination .page-item.active .page-link {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
-    font-weight: 600;
-}
-
-::v-deep .custom-pagination .page-item:not(.active) .page-link:hover {
-    background-color: #f8fafc !important;
-    color: #1e293b !important;
-}
-
-::v-deep .custom-pagination .page-item.disabled .page-link {
-    color: #94a3b8 !important;
-}
+/* Pagination styles are now handled by Util/Pagination.vue component */
 
 /* Donut Chart & Legend */
 .donut-chart {
