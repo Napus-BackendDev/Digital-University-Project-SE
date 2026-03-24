@@ -2,7 +2,7 @@
     <CButton size="sm" color="light" class="btn-preview"
         style="border-radius: 0.5rem;" @click="goToPreview">
         <CIcon name="cil-magnifying-glass" class="mr-2 text-primary" />
-        <span class="text-primary preview-text">Preview</span>
+        <span class="text-primary preview-text">{{ $t('button.preview') }}</span>
     </CButton>
 </template>
 

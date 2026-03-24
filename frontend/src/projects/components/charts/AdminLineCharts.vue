@@ -2,12 +2,12 @@
     <div class="chart-wrapper-container premium-card shadow-sm">
         <div class="header mb-4 pt-1">
             <div class="d-flex align-items-center mb-1">
-                <h4 class="m-0 font-weight-bold text-dark-blue">Responses Over Time</h4>
+                <h4 class="m-0 font-weight-bold text-dark-blue">{{ $t('analytics.responsesOverTime') }}</h4>
                 <div class="ml-auto">
-                    <span class="badge badge-soft-maroon px-3 py-2">7 Days View</span>
+                    <span class="badge badge-soft-maroon px-3 py-2">{{ $t('analytics.sevenDaysView') }}</span>
                 </div>
             </div>
-            <p class="text-muted-modern small mb-0">Daily responses monitored over the past week</p>
+            <p class="text-muted-modern small mb-0">{{ $t('analytics.responsesOverTimeDesc') }}</p>
         </div>
 
         <div class="chart-container">
@@ -20,10 +20,12 @@
 import { CChartLine } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
 import moment from 'moment'
+import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'AdminLineCharts',
     components: { CChartLine },
+    mixins: [localeMixin],
     computed: {
         ...mapGetters('Forms', ['forms']),
 
@@ -33,6 +35,7 @@ export default {
             const dataMap = {};
 
             for (let i = 6; i >= 0; i--) {
+                moment.locale(this.$i18n.locale);
                 const dateKey = moment().subtract(i, 'days').format('YYYY-MM-DD');
                 const displayKey = moment().subtract(i, 'days').format('DD MMM');
                 labels.push(displayKey);
@@ -41,10 +44,10 @@ export default {
 
             let totalResponses = 0;
             this.forms.forEach(form => {
-                if (form.responses && form.responses.length) {
-                    totalResponses += form.responses.length;
-
-                    form.responses.forEach(res => {
+                const submittedResponses = (form.responses || []).filter(r => r && (r.submit === true || r.submit === 'true'));
+                if (submittedResponses.length) {
+                    totalResponses += submittedResponses.length;
+                    submittedResponses.forEach(res => {
                         if (res && res.createdAt) {
                             const dKey = moment(res.createdAt).format('YYYY-MM-DD');
                             if (dataMap[dKey] !== undefined) {
@@ -79,7 +82,7 @@ export default {
         defaultDatasets() {
             return [
                 {
-                    label: 'Responses',
+                    label: this.$t('table.responses'),
                     backgroundColor: 'rgba(155, 27, 48, 0.08)', // Premium Soft Maroon
                     borderColor: '#9B1B30', // Theme Maroon
                     pointBackgroundColor: '#ffffff',

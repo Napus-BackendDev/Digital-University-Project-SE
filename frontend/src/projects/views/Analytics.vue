@@ -1,6 +1,6 @@
 <template>
     <div class="flex-grow-1">
-        <Header title="Admin Dashboard" description="Overview of all forms and responses" />
+        <Header :title="$t('analytics.title')" :description="$t('analytics.description')" />
         <WidgetsDropdown class="mb-4" />
         <CRow class="mb-4 no-gutters">
             <CCol lg="12" class="px-0">

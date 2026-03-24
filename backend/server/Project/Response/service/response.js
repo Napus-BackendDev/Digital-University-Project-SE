@@ -25,15 +25,33 @@ exports.onQuerys = async function (request, response) {
 
 exports.onQuery = async function (request, response) {
     try {
-        let query = {};
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await responseService.onQuery(query);
-        if (!doc) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found");
-        }
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        let query = request.body || {};
+
+        const systemFields = ['apiId', 'token', 'user'];
+        const cleanQuery = {};
+        Object.keys(query).forEach(key => {
+            if (!systemFields.includes(key) && query[key] !== undefined) {
+                if (key === '_id' || key === 'form' || key === 'responder' || key === 'question') {
+                    try {
+                        if (mongo.ObjectId.isValid(query[key])) {
+                            cleanQuery[key] = new mongo.ObjectId(query[key]);
+                        } else {
+                            cleanQuery[key] = query[key];
+                        }
+                    } catch (e) {
+                        cleanQuery[key] = query[key];
+                    }
+                } else {
+                    cleanQuery[key] = query[key];
+                }
+            }
+        });
+
+        const doc = await responseService.onQuery(cleanQuery);
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc || null);
     } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch response by ID", err.message);
+        console.error("Query response error:", err);
+        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch response", err.message);
     }
 };
 

@@ -28,7 +28,14 @@ const module = {
                     }
                     return result;
                 })
-                .catch(err => { throw err; });
+                .catch(err => {
+                    const statusCode = err?.response?.status || err?.response?.data?.httpcode;
+                    if (statusCode === 404) {
+                        commit('responses', []);
+                        return [];
+                    }
+                    throw err;
+                });
         },
         create({ commit }, data) {
             const hasFile = (data.answers || []).some(ans =>

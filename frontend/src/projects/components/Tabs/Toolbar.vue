@@ -10,33 +10,33 @@
 
                 <!-- Tab Selectors -->
                 <div class="tab-buttons mb-4">
-                    <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Main Navigation</label>
+                    <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">{{ $t('toolbar.mainNav') }}</label>
                     <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
                         :variant="activeTab === 'question' ? 'solid' : 'ghost'"
                         @click="$emit('update:activeTab', 'question')">
-                        <CIcon name="cil-description" class="mr-2" /> Questions
+                        <CIcon name="cil-description" class="mr-2" /> {{ $t('toolbar.questions') }}
                     </CButton>
                     <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
                         :variant="activeTab === 'response' ? 'solid' : 'ghost'"
                         @click="$emit('update:activeTab', 'response')">
-                        <CIcon name="cil-chart-pie" class="mr-2" /> Responses
+                        <CIcon name="cil-chart-pie" class="mr-2" /> {{ $t('toolbar.responses') }}
                     </CButton>
                     <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
                         :variant="activeTab === 'setting' ? 'solid' : 'ghost'"
                         @click="$emit('update:activeTab', 'setting')">
-                        <CIcon name="cil-settings" class="mr-2" /> Settings
+                        <CIcon name="cil-settings" class="mr-2" /> {{ $t('toolbar.settings') }}
                     </CButton>
                 </div>
 
                 <!-- Sharing Section (New) -->
                 <div class="mb-4" v-if="activeTab === 'setting'">
-                    <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">Form Sharing</label>
+                    <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">{{ $t('toolbar.sharing') }}</label>
                     <CButton variant="ghost" color="dark" class="w-100 mb-1 text-left type-btn d-flex align-items-center"
                         @click="copyLink">
                         <div class="icon-circle mr-3">
                             <CIcon :name="copied ? 'cil-check' : 'cil-link'" size="sm" />
                         </div>
-                        <span class="font-weight-medium">{{ copied ? 'Copied!' : 'Copy link' }}</span>
+                        <span class="font-weight-medium">{{ copied ? $t('toolbar.copied') : $t('toolbar.copyLink') }}</span>
                     </CButton>  
 
                     <CButton variant="ghost" color="dark" class="w-100 mb-1 text-left type-btn d-flex align-items-center"
@@ -44,7 +44,7 @@
                         <div class="icon-circle mr-3">
                             <CIcon name="cil-envelope-closed" size="sm" />
                         </div>
-                        <span class="font-weight-medium">Send Email</span>
+                        <span class="font-weight-medium">{{ $t('toolbar.sendEmail') }}</span>
                     </CButton>
                 </div>
 
@@ -52,7 +52,7 @@
                 <div class="toolbar-scroll-area flex-grow-1 pr-2" v-if="activeTab === 'question'">
                     <div class="mb-4">
                         <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">
-                            Question Types
+                            {{ $t('toolbar.questionTypes') }}
                         </label>
                         <div class="d-flex flex-column">
                             <CButton v-for="type in questionTypes" :key="type._id"
@@ -69,7 +69,7 @@
 
                     <div class="pt-3 border-top">
                         <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">
-                            Content Elements
+                            {{ $t('toolbar.contentElements') }}
                         </label>
                         <div class="d-flex flex-column">
                             <CButton variant="ghost" color="dark"
@@ -78,7 +78,7 @@
                                 <div class="icon-circle mr-3">
                                     <CIcon name="cil-text" size="sm" />
                                 </div>
-                                <span class="font-weight-medium">Title & Description</span>
+                                <span class="font-weight-medium">{{ $t('types.title_description') }}</span>
                             </CButton>
                             <CButton variant="ghost" color="dark"
                                 class="w-100 mb-1 text-left type-btn d-flex align-items-center"
@@ -86,7 +86,7 @@
                                 <div class="icon-circle mr-3">
                                     <CIcon name="cil-image-1" size="sm" />
                                 </div>
-                                <span class="font-weight-medium">Image</span>
+                                <span class="font-weight-medium">{{ $t('types.image') }}</span>
                             </CButton>
                         </div>
                     </div>
@@ -130,6 +130,10 @@ export default {
     methods: {
         formatTypeLabel(rawType) {
             if (!rawType) return '';
+            const key = rawType.toLowerCase().replace(/ /g, '_');
+            if (this.$te(`types.${key}`)) {
+                return this.$t(`types.${key}`);
+            }
             return rawType
                 .split(/[_\s]+/)
                 .map(seg => seg ? seg.charAt(0).toUpperCase() + seg.slice(1) : '')

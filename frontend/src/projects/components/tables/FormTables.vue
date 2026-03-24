@@ -6,7 +6,7 @@
 
         <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
             :pagination="false" hover class="mb-0 tables-container"
-            :no-items-view="{ noItems: 'No questionnaires yet. Create one to get started.' }">
+            :no-items-view="{ noItems: $t('table.noForms') }">
 
             <!-- Form Name (Title & Description) Slot -->
             <template #form="{ item }">
@@ -30,7 +30,7 @@
                     <div class="access-stack">
                         <span v-for="(v, idx) in item.access" :key="idx" class="visibility-badge"
                             :class="getVisibilityClass(v)">
-                            {{ v }}
+                            {{ $t('accessLabel.' + v.toLowerCase()) }}
                         </span>
                     </div>
                 </td>
@@ -49,7 +49,7 @@
                 <td class="align-middle">
                     <span v-if="item && item.status" class="status-badge" :class="getStatusClass(item.status)">
                         <span class="status-dot"></span>
-                        {{ item.status }}
+                        {{ $t('status.' + item.status.toLowerCase().replace(/\s/g, '')) }}
                     </span>
                 </td>
             </template>
@@ -73,11 +73,26 @@
                 <td class="align-middle text-right pr-4">
                     <div class="d-flex align-items-center justify-content-end">
                         <CIcon v-if="item.requireEmail" name="cil-warning" class="text-danger mr-2" style="width: 20px;"
-                            v-c-tooltip="'Email required'" />
-                        <CButton :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
-                            @click.stop="goToForm(item._id)" v-c-tooltip="getActionTooltip(item.status)">
-                            <CIcon :name="getActionIcon(item.status)" size="lg" />
-                        </CButton>
+                            v-c-tooltip="$t('table.emailRequired')" />
+                        <!-- Case 1: Form allows multiple responses AND is already completed -> Show "Add more" -->
+                        <template
+                            v-if="item._raw && item._raw.settings && item._raw.settings.limitResponse === false && item.status && item.status.toLowerCase() === 'completed'">
+                            <CButton color="success" variant="ghost" class="action-icon-btn plus-btn"
+                                @click.stop="goToForm(item._id, true)" v-c-tooltip="$t('table.addAnswer')">
+                                <div class="plus-circle">
+                                    <CIcon name="cil-plus" />
+                                </div>
+                            </CButton>
+                        </template>
+
+                        <!-- Case 2: In-progress forms OR forms limited to one response -->
+                        <template v-else>
+                            <CButton :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
+                                :disabled="item.status && item.status.toLowerCase() === 'completed'"
+                                @click.stop="goToForm(item._id)" v-c-tooltip="getActionTooltip(item.status)">
+                                <CIcon :name="getActionIcon(item.status)" size="lg" />
+                            </CButton>
+                        </template>
                     </div>
                 </td>
             </template>
@@ -115,7 +130,7 @@ export default {
         fields() {
             return [
                 { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:22%' },
-                { key: 'access', label: 'Access', _style: 'width:15%' },
+                { key: 'access', label: this.$t('table.access'), _style: 'width:15%' },
                 { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:18%' },
                 { key: 'status', label: this.$t('table.status'), _style: 'width:12%' },
                 { key: 'progress', label: this.$t('table.progress'), _style: 'width:12%' },
@@ -140,31 +155,8 @@ export default {
                 if (!f) f = {};
                 const missingFields = [];
 
-                let title = '-';
-                if (Array.isArray(f.title) && f.title.length > 0) {
-                    const en = f.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
-                    title = en ? (en.value || '-') : (f.title[0] && f.title[0].value) || '-';
-                } else if (typeof f.title === 'string' && f.title.trim()) {
-                    title = f.title;
-                } else if (f.title && typeof f.title === 'object') {
-                    title = f.title.value || f.title.en || '-';
-                } else {
-                    missingFields.push('title');
-                }
-
-                // Description
-                let description = '-';
-                if (Array.isArray(f.description) && f.description.length > 0) {
-                    const en = f.description.find(d => d && d.key && d.key.toLowerCase() === 'en');
-                    description = en ? (en.value || '-') : (f.description[0] && f.description[0].value) || '-';
-                } else if (typeof f.description === 'string' && f.description.trim()) {
-                    description = f.description;
-                } else if (f.description && typeof f.description === 'object') {
-                    description = f.description.value || '-';
-                } else {
-                    // description is optional but show '-' if absent
-                    description = '-';
-                }
+                let title = this.getLang(f.title) || this.$t('common.untitled');
+                let description = this.getLang(f.description) || '-';
 
                 // Organization
                 let organization = '-';
@@ -194,16 +186,16 @@ export default {
                     missingFields.push('createdBy');
                 }
 
-                // Time Range: show schedule start - end and compute daysLeft
                 let timeRange = '-';
                 let daysLeft = '';
                 if (f.schedule && (f.schedule.startAt || f.schedule.endAt)) {
-                    const startAt = f.schedule.startAt ? new Date(f.schedule.startAt).toLocaleDateString() : '';
-                    const endAt = f.schedule.endAt ? new Date(f.schedule.endAt).toLocaleDateString() : '';
+                    const locale = this.$i18n.locale === 'th' ? 'th-TH' : 'en-US';
+                    const startAt = f.schedule.startAt ? new Date(f.schedule.startAt).toLocaleDateString(locale) : '';
+                    const endAt = f.schedule.endAt ? new Date(f.schedule.endAt).toLocaleDateString(locale) : '';
                     timeRange = startAt || endAt ? `${startAt}${endAt ? ' - ' + endAt : ''}` : '-';
                     if (f.schedule.endAt) {
                         const diff = Math.ceil((new Date(f.schedule.endAt) - new Date()) / (1000 * 60 * 60 * 24));
-                        daysLeft = diff > 0 ? `${diff} days left` : 'Closed';
+                        daysLeft = diff > 0 ? `${diff} ${this.$t('table.daysLeft')}` : this.$t('table.closed');
                     }
                 } else if (f.timeRange && typeof f.timeRange === 'string' && f.timeRange.trim()) {
                     timeRange = f.timeRange;
@@ -307,39 +299,30 @@ export default {
                 };
             });
 
-            // apply Quick Range / From-To date filtering if provided (based on schedule overlap)
             let filtered = mapped;
             if ((this.startDate && this.startDate.trim() !== '') || (this.endDate && this.endDate.trim() !== '')) {
-                // Parse filter dates strictly as local start (00:00) and end (23:59)
                 const filterStart = this.startDate ? new Date(`${this.startDate}T00:00:00`) : new Date(-8640000000000000);
                 const filterEnd = this.endDate ? new Date(`${this.endDate}T23:59:59`) : new Date(8640000000000000);
-                
+
                 filtered = filtered.filter(row => {
                     const raw = row._raw || {};
                     const sched = raw.schedule || {};
-                    
-                    // Identify the effective range of the form
+
                     const s = sched.startAt ? new Date(sched.startAt) : null;
                     const e = sched.endAt ? new Date(sched.endAt) : null;
-                    
-                    // If no schedule information available at all, hide when filter is active
+
                     if (!s && !e) return false;
 
-                    // Effective form boundaries (handle open-ended schedules)
                     const formStart = s || new Date(-8640000000000000);
                     const formEnd = e || new Date(8640000000000000);
 
-                    // Overlap logic: (Form starts before filter ends) AND (Form ends after filter starts)
                     return (formStart <= filterEnd) && (formEnd >= filterStart);
                 });
             }
-
-            // apply status filter (same behavior as ManagementTables)
             if (this.selectedStatus && this.selectedStatus !== 'All') {
                 filtered = filtered.filter(f => f.status === this.selectedStatus);
             }
 
-            // apply search filter (title only)
             if (this.searchQuery) {
                 const q = this.searchQuery.toLowerCase();
                 filtered = filtered.filter(f => {
@@ -347,18 +330,11 @@ export default {
                 });
             }
 
-            // apply final default filtering:
-            // 1. Hide if no schedule is provided (always)
-            // 2. If 'Completed', always show for historical records 
-            // 3. Otherwise, only show if current time is within [startAt, endAt]
             const now = new Date();
             filtered = filtered.filter(f => {
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
-
-                // Always hide if no schedule at all (requested)
                 if (!sched.startAt && !sched.endAt) return false;
 
-                // Check if current time is within schedule
                 let isInTimeRange = true;
                 if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
                 if (sched.endAt && now > new Date(sched.endAt)) isInTimeRange = false;
@@ -370,7 +346,7 @@ export default {
         },
         stats() {
             const data = this.tableData || [];
-            
+
             let total = data.length;
             let pending = data.filter(f => f.status === 'Pending').length;
             let completed = data.filter(f => f.status === 'Completed').length;
@@ -393,9 +369,11 @@ export default {
                 this.goToForm(item._id);
             }
         },
-        async goToForm(id) {
+        async goToForm(id, isNew = false) {
             if (!id) return;
-            this.$router.push({ name: 'FormFill', params: { id: id }, query: { source: 'internal' } });
+            const query = { source: 'internal' };
+            if (isNew) query.new = 'true';
+            this.$router.push({ name: 'FormFill', params: { id: id }, query: query });
         },
         filterStatus(status) {
             this.selectedStatus = status;
@@ -423,20 +401,20 @@ export default {
         getActionColor(status) {
             const s = status ? status.toLowerCase() : '';
             if (s === 'completed') return 'success';
-            if (s === 'pending') return 'warning';
-            return 'primary';
+            if (s === 'pending') return 'primary';
+            return 'warning';
         },
         getActionIcon(status) {
             const s = status ? status.toLowerCase() : '';
             if (s === 'completed') return 'cil-check-circle';
-            if (s === 'inprogress') return 'cil-pencil';
+            if (s === 'in progress' || s === 'inprogress') return 'cil-pencil';
             return 'cil-input';
         },
         getActionTooltip(status) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'completed') return 'View Summary';
-            if (s === 'inprogress') return 'Continue โorm';
-            return 'Start Form';
+            if (s === 'completed') return this.$t('table.viewAnswer');
+            if (s === 'in progress' || s === 'inprogress') return this.$t('table.continueForm');
+            return this.$t('table.startForm');
         }
     }
 }
@@ -476,7 +454,6 @@ export default {
     margin-right: 6px;
 }
 
-/* Status Colors */
 .status-completed {
     background-color: #d1fae5;
     color: #065f46;
@@ -487,24 +464,43 @@ export default {
 }
 
 .status-pending {
-    background-color: #fef9c3;
-    color: #854d0e;
-}
-
-.status-pending .status-dot {
-    background-color: #eab308;
-}
-
-.status-inprogress {
     background-color: #dbeafe;
     color: #1e40af;
 }
 
-.status-inprogress .status-dot {
+.status-pending .status-dot {
     background-color: #2563eb;
 }
 
-/* Pagination customization to match clean theme */
+.status-inprogress {
+    background-color: #fef9c3;
+    color: #854d0e;
+}
+
+.status-inprogress .status-dot {
+    background-color: #eab308;
+}
+
+.plus-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: white;
+    background-color: #ecfdf5;
+    border: 1.5px solid #10b981;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.plus-btn:hover .plus-circle {
+    border-color: #3C4B64;
+    color: #3C4B64;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
 ::v-deep .page-link {
     border: none;
     color: #64748b;
@@ -534,27 +530,24 @@ export default {
 }
 
 .search-input-group input {
-    background-color: #f8fafc !important;
+    background-color: #f8fafc;
 }
 
 .action-icon-btn {
     width: 38px;
     height: 38px;
-    padding: 0 !important;
-    display: inline-flex !important;
+    padding: 0;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50% !important;
-    transition: all 0.2s ease;
+    border-radius: 50%;
 }
 
 .action-icon-btn:hover {
-    background-color: #f1f5f9 !important;
-    color: #3c4b64 !important;
-    transform: translateY(-1px);
+    background-color: #f1f5f9;
+    color: #3c4b64;
 }
 
-/* Visibility Badges for Access column */
 .access-stack {
     display: flex;
     flex-direction: column;

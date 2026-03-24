@@ -2,7 +2,7 @@
     <div class="mt-3 mb-2 px-1">
         <div class="back-pill" @click="handleBack">
             <CIcon name="cil-chevron-left" size="sm" class="mr-1" />
-            <span>Back</span>
+            <span>{{ $t('button.back') }}</span>
         </div>
     </div>
 </template>

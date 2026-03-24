@@ -9,7 +9,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.total }}</h2>
-                    <div class="stat-label">Total Forms</div>
+                    <div class="stat-label">{{ $t('widget.manage.total') }}</div>
                 </div>
             </div>
         </CCol>
@@ -22,7 +22,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.active }}</h2>
-                    <div class="stat-label">Active Forms</div>
+                    <div class="stat-label">{{ $t('widget.manage.active') }}</div>
                 </div>
             </div>
         </CCol>
@@ -35,7 +35,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.draft }}</h2>
-                    <div class="stat-label">Draft Forms</div>
+                    <div class="stat-label">{{ $t('widget.manage.draft') }}</div>
                 </div>
             </div>
         </CCol>
@@ -48,7 +48,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.closed }}</h2>
-                    <div class="stat-label">Closed Forms</div>
+                    <div class="stat-label">{{ $t('widget.manage.closed') }}</div>
                 </div>
             </div>
         </CCol>

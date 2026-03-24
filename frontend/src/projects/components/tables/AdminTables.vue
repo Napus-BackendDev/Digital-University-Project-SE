@@ -4,7 +4,7 @@
             <div class="d-flex align-items-center mb-1">
                 <h4 class="m-0 font-weight-bold">{{ $t('nav.analytics') }}</h4>
             </div>
-            <div class="text-muted small ">Daily responses over the last week</div>
+            <div class="text-muted small ">{{ $t('analytics.responsesOverTimeDesc') }}</div>
         </div>
 
         <!-- Table -->
@@ -62,12 +62,14 @@
     import { mapGetters } from 'vuex'
     import Pagination from '@/projects/components/Util/Pagination.vue'
 import moment from 'moment'
+import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'AdminTables',
     components: {
         Pagination
     },
+    mixins: [localeMixin],
     data() {
         return {
             currentPage: 1,
@@ -112,11 +114,12 @@ export default {
                     }
                 }
 
+                moment.locale(this.$i18n.locale === 'th' ? 'th' : 'en');
                 return {
-                    title: this.getLang(form.title) || 'Untitled Form',
+                    title: this.getLang(form.title) || this.$t('common.untitled'),
                     description: this.getLang(form.description) || '',
                     status: statusTitle,
-                    access: form.isPublic ? 'Public' : 'Private',
+                    access: form.isPublic ? this.$t('accessLabel.public') : this.$t('accessLabel.private'),
                     responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
                     created: form.updatedAt ? moment(form.updatedAt).format('D MMM YYYY') : '-'
                 }
