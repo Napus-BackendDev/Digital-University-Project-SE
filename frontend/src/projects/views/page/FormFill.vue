@@ -17,126 +17,151 @@
         <!-- Content -->
         <div v-else-if="form" class="fillform-body">
 
-            <!-- Header Card -->
-            <CCard class="mb-3 border header-card"
-                :class="isFirstTime ? 'header-card--first' : 'header-card--continue'">
-                <div v-if="isPreviewMode" class="preview-banner p-2 text-center text-white font-weight-bold">
-                    <CIcon name="cil-magnifying-glass" class="mr-2" />
-                    {{ $t('form.previewBanner') }}
-                </div>
-                <div v-if="isDuplicateMode" class="preview-banner p-2 text-center text-white font-weight-bold">
-                    <CIcon name="cil-copy" class="mr-2" />
-                    {{ $t('form.duplicateBanner') }}
-                </div>
-                <CCardBody class="p-4">
-                    <h1 class="form-main-title">{{ getLang(form.title) || $t('common.untitled') }}</h1>
-                    <p v-if="getLang(form.description)" class="form-main-desc mb-0">
-                        {{ getLang(form.description) }}
-                    </p>
-                </CCardBody>
-            </CCard>
-
-            <!-- Question Cards -->
-            <transition-group name="fade-slide" tag="div">
-                <CCard v-for="(question, index) in visibleQuestions" :key="question._id || index"
-                    v-if="isQuestionVisible(question)" :id="'question-card-' + question._id" class="mb-3"
-                    :class="['question-card border', { 'card-error': errorIds.has(question._id), 'followup-card': isFollowUp(question) }]">
-                    <CCardBody class="p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <p v-if="!isType(question, 'title_description', 'image')"
-                                :class="['question-index', { 'followup-number': isFollowUp(question) }]">
-                                {{ $t('form.question') }} {{ getQuestionNumber(question, index) }}
-                            </p>
-                            <!-- Answered Badge -->
-                            <span v-if="hasAnswer(question._id)" class="answered-badge">
-                                <CIcon name="cil-check-circle" size="sm" class="mr-1" />
-                                {{ $t('form.answered') || 'ตอบแล้ว' }}
-                            </span>
+            <!-- Login Required Overlay -->
+            <div v-if="isLoginRequired" class="fillform-center text-center mt-5">
+                <CCard class="border-0 shadow p-4 mx-auto" style="border-radius: 20px; max-width: 450px;">
+                    <CCardBody>
+                        <div class="mb-4">
+                            <CIcon name="cil-lock-locked" size="3xl" class="text-primary mb-3"
+                                style="width: 60px; height: 60px;" />
+                            <h4 class="font-weight-bold">{{ $t('form.loginRequired') }}</h4>
+                            <p class="text-muted">{{ $t('form.collectEmail') }}</p>
                         </div>
-                        <p v-if="!isType(question, 'title_description', 'image')" class="question-title mb-1">
-                            {{ getLang(question.title) }}
-                            <span v-if="question.isRequired" class="text-danger ml-1">*</span>
-                        </p>
-                        <p v-if="!isType(question, 'title_description', 'image') && question.description && question.description.length && getLang(question.description)"
-                            class="text-muted small mb-3">
-                            {{ getLang(question.description) }}
-                        </p>
-
-                        <!-- Short Answer -->
-                        <CInput v-if="isType(question, 'short_answer')" v-model="answers[question._id]"
-                            :placeholder="$t('form.yourAnswer')" class="mb-0" :disabled="isPreviewMode"
-                            @input="(e) => { clearError(question._id); autoSave(); }" />
-
-                        <!-- Paragraph -->
-                        <CTextarea v-else-if="isType(question, 'paragraph')" v-model="answers[question._id]"
-                            placeholder="Your answer" rows="4" class="mb-0" :disabled="isPreviewMode"
-                            @input="(e) => { clearError(question._id); autoSave(); }" />
-
-                        <!-- Multiple Choice / Checkboxes -->
-                        <div v-else-if="isType(question, 'multiple_choice', 'checkbox')" class="options-container">
-                            <label v-for="(opt, oIdx) in (question.config && question.config.choices || [])" :key="oIdx"
-                                class="option-row">
-                                <input
-                                    :type="(question.config && question.config.allowMultipleSelect) ? 'checkbox' : 'radio'"
-                                    :name="'q_' + question._id" :value="getOptionKey(opt, oIdx)"
-                                    v-model="answers[question._id]" class="option-input" :disabled="isPreviewMode"
-                                    @change="(e) => { clearError(question._id); autoSave(); }" />
-                                <span>{{ getOptionLabel(opt) }}</span>
-                            </label>
-                        </div>
-
-                        <!-- Rating -->
-                        <div v-else-if="isType(question, 'rating')">
-                            <div class="rating-container">
-                                <button v-for="n in (question.config && question.config.maxRating || 5)" :key="n"
-                                    class="star-btn" :class="{ 'star-active': answers[question._id] >= n }"
-                                    @click="onRate(question._id, n)" type="button" :disabled="isPreviewMode">★</button>
-                            </div>
-                            <small v-if="answers[question._id]" class="d-block text-center text-muted mt-1">
-                                {{ answers[question._id] }} / {{ question.config && question.config.maxRating || 5 }}
-                            </small>
-                        </div>
-
-                        <!-- File Upload -->
-                        <div v-else-if="isType(question, 'file_upload')">
-                            <input type="file" :multiple="(question.config && Number(question.config.maxFiles) > 1)"
-                                :accept="getAcceptString(question)" class="text-muted" :disabled="isPreviewMode"
-                                @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); autoSave(); }" />
-                        </div>
-
-                        <!-- Title & Description -->
-                        <div v-else-if="isType(question, 'title_description')">
-                            <h2 class="section-display-title">{{ getLang(question.title) }}</h2>
-                            <p v-if="question.config && question.config.description && question.config.description.length"
-                                class="section-display-desc mb-0">{{ getLang(question.config.description) }}</p>
-                        </div>
-
-                        <!-- Image -->
-                        <img v-else-if="isType(question, 'image') && question.config && question.config.image"
-                            :src="question.config.image" class="question-full-image" alt="" />
-
-                        <!-- Fallback -->
-                        <CInput v-else v-model="answers[question._id]" :placeholder="$t('form.yourAnswer')"
-                            class="mb-0" />
+                        <CButton color="primary" block size="lg" style="border-radius: 12px; font-weight: 600;"
+                            @click="onAuthenGoogle">
+                            {{ $t('form.signInWithGoogle') }}
+                        </CButton>
                     </CCardBody>
                 </CCard>
-            </transition-group>
-
-            <!-- Submit / Duplicate Button -->
-            <div v-if="!isPreviewMode" class="p-3 d-flex justify-content-end">
-                <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm" :disabled="submitting"
-                    class="px-5">
-                    <CSpinner v-if="submitting" size="sm" class="mr-1" />
-                    {{ submitting ? $t('common.submitting') : $t('form.submit') }}
-                </CButton>
-                <CButton v-else color="info" @click="duplicateForm" :disabled="submitting"
-                    class="px-5 text-white font-weight-bold">
-                    <CSpinner v-if="submitting" size="sm" class="mr-1" />
-                    <CIcon name="cil-copy" class="mr-2" />
-                    {{ submitting ? $t('common.submitting') : $t('form.copyForm') }}
-                </CButton>
             </div>
 
+            <!-- Content below replaces the blocking overlay -->
+            <template v-if="true">
+                <CCard class="mb-3 border header-card">
+                    <div v-if="isPreviewMode" class="preview-banner p-2 text-center text-white font-weight-bold">
+                        <CIcon name="cil-magnifying-glass" class="mr-2" />
+                        {{ $t('form.previewBanner') }}
+                    </div>
+                    <div v-if="isDuplicateMode" class="preview-banner p-2 text-center text-white font-weight-bold">
+                        <CIcon name="cil-copy" class="mr-2" />
+                        {{ $t('form.duplicateBanner') }}
+                    </div>
+                    <div v-if="isAlreadySubmitted" class="summary-banner p-2 text-center text-white font-weight-bold">
+                        <CIcon name="cil-check-circle" class="mr-2" />
+                        {{ $t('form.alreadySubmitted') }}
+                    </div>
+                    <CCardBody class="p-4">
+                        <h1 class="form-main-title">{{ getLang(form.title) || $t('common.untitled') }}</h1>
+                        <p v-if="getLang(form.description)" class="form-main-desc mb-0">
+                            {{ getLang(form.description) }}
+                        </p>
+                    </CCardBody>
+                </CCard>
+
+                <!-- Question Cards -->
+                <transition-group name="fade-slide" tag="div">
+                    <CCard v-for="(question, index) in visibleQuestions" :key="question._id || index"
+                        v-if="isQuestionVisible(question)" :id="'question-card-' + question._id" class="mb-3"
+                        :class="['question-card border', { 'card-error': errorIds.has(question._id), 'followup-card': isFollowUp(question) }]">
+                        <CCardBody class="p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <p v-if="!isType(question, 'title_description', 'image')"
+                                    :class="['question-index', { 'followup-number': isFollowUp(question) }]">
+                                    {{ $t('form.question') }} {{ getQuestionNumber(question, index) }}
+                                </p>
+                                <!-- Answered Badge -->
+                                <span v-if="hasAnswer(question._id)" class="answered-badge">
+                                    <CIcon name="cil-check-circle" size="sm" class="mr-1" />
+                                    {{ $t('form.answered') || 'ตอบแล้ว' }}
+                                </span>
+                            </div>
+                            <p v-if="!isType(question, 'title_description', 'image')" class="question-title mb-1">
+                                {{ getLang(question.title) }}
+                                <span v-if="question.isRequired" class="text-danger ml-1">*</span>
+                            </p>
+                            <p v-if="!isType(question, 'title_description', 'image') && question.description && question.description.length && getLang(question.description)"
+                                class="text-muted small mb-3">
+                                {{ getLang(question.description) }}
+                            </p>
+
+                            <!-- Short Answer -->
+                            <CInput v-if="isType(question, 'short_answer')" v-model="answers[question._id]"
+                                :placeholder="$t('form.yourAnswer')" class="mb-0" :disabled="isPreviewMode || isAlreadySubmitted"
+                                @input="(e) => { clearError(question._id); autoSave(); }" />
+
+                            <!-- Paragraph -->
+                            <CTextarea v-else-if="isType(question, 'paragraph')" v-model="answers[question._id]"
+                                placeholder="Your answer" rows="4" class="mb-0" :disabled="isPreviewMode || isAlreadySubmitted"
+                                @input="(e) => { clearError(question._id); autoSave(); }" />
+
+                            <!-- Multiple Choice / Checkboxes -->
+                            <div v-else-if="isType(question, 'multiple_choice', 'checkbox')" class="options-container">
+                                <label v-for="(opt, oIdx) in (question.config && question.config.choices || [])"
+                                    :key="oIdx" class="option-row">
+                                    <input
+                                        :type="(question.config && question.config.allowMultipleSelect) ? 'checkbox' : 'radio'"
+                                        :name="'q_' + question._id" :value="getOptionKey(opt, oIdx)"
+                                        v-model="answers[question._id]" class="option-input" :disabled="isPreviewMode || isAlreadySubmitted"
+                                        @change="(e) => { clearError(question._id); autoSave(); }" />
+                                    <span>{{ getOptionLabel(opt) }}</span>
+                                </label>
+                            </div>
+
+                            <!-- Rating -->
+                            <div v-else-if="isType(question, 'rating')">
+                                <div class="rating-container">
+                                    <button v-for="n in (question.config && question.config.maxRating || 5)" :key="n"
+                                        class="star-btn" :class="{ 'star-active': answers[question._id] >= n }"
+                                        @click="onRate(question._id, n)" type="button"
+                                        :disabled="isPreviewMode || isAlreadySubmitted">★</button>
+                                </div>
+                                <small v-if="answers[question._id]" class="d-block text-center text-muted mt-1">
+                                    {{ answers[question._id] }} / {{ question.config && question.config.maxRating || 5
+                                    }}
+                                </small>
+                            </div>
+
+                            <!-- File Upload -->
+                            <div v-else-if="isType(question, 'file_upload')">
+                                <input type="file" :multiple="(question.config && Number(question.config.maxFiles) > 1)"
+                                    :accept="getAcceptString(question)" class="text-muted" :disabled="isPreviewMode || isAlreadySubmitted"
+                                    @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); autoSave(); }" />
+                            </div>
+
+                            <!-- Title & Description -->
+                            <div v-else-if="isType(question, 'title_description')">
+                                <h2 class="section-display-title">{{ getLang(question.title) }}</h2>
+                                <p v-if="question.config && question.config.description && question.config.description.length"
+                                    class="section-display-desc mb-0">{{ getLang(question.config.description) }}</p>
+                            </div>
+
+                            <!-- Image -->
+                            <img v-else-if="isType(question, 'image') && question.config && question.config.image"
+                                :src="question.config.image" class="question-full-image" alt="" />
+
+                            <!-- Fallback -->
+                            <CInput v-else v-model="answers[question._id]" :placeholder="$t('form.yourAnswer')"
+                                class="mb-0" />
+                        </CCardBody>
+                    </CCard>
+                </transition-group>
+
+                <!-- Submit / Duplicate Button -->
+                <div v-if="!isPreviewMode && !isAlreadySubmitted" class="p-3 d-flex justify-content-end">
+                    <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm" :disabled="submitting"
+                        class="px-5">
+                        <CSpinner v-if="submitting" size="sm" class="mr-1" />
+                        {{ submitting ? $t('common.submitting') : $t('form.submit') }}
+                    </CButton>
+                    <CButton v-else color="info" @click="duplicateForm" :disabled="submitting"
+                        class="px-5 text-white font-weight-bold">
+                        <CSpinner v-if="submitting" size="sm" class="mr-1" />
+                        <CIcon name="cil-copy" class="mr-2" />
+                        {{ submitting ? $t('common.submitting') : $t('form.copyForm') }}
+                    </CButton>
+                </div>
+
+            </template>
         </div>
 
         <!-- Modal -->
@@ -192,7 +217,8 @@ export default {
             error: null,
             isNewMode: false,
             errorIds: new Set(),
-            responderId: null
+            responderId: null,
+            isAlreadySubmitted: false, // New state for Limit to One Response
         };
     },
     created() {
@@ -213,6 +239,16 @@ export default {
                     questions: [...(data.questions || [])].sort((a, b) => (a.order || 0) - (b.order || 0))
                 };
 
+                // 2. Check for "Limit to One Response" and "Collect Email" requirements
+                const settings = this.form.settings || {};
+                let currentResponder = this.user?._id || this.responderId;
+
+                // If collectEmail is true and user is not logged in, we stay in a "Login Required" state
+                if (settings.collectEmail && !currentResponder && !this.isPreviewMode) {
+                    this.loading = false;
+                    return;
+                }
+
                 if (this.isDuplicateMode || this.isPreviewMode) {
                     this.loading = false;
                     return;
@@ -227,11 +263,40 @@ export default {
                 });
                 this.answers = init;
                 try {
-                    // Check if we are starting a completely fresh response
-                    this.isNewMode = this.$route.query.new === 'true';
+                    // 3. Fetch user responses for this form
+                    await this.$store.dispatch('Responses/get', { form_id: this.form._id });
+                    const allFormResponses = this.$store.getters['Responses/responses'] || [];
+                    
+                    // Check if already submitted (for Limit to One Response)
+                    if (settings.limitResponse) {
+                        const submitted = allFormResponses.find(r => {
+                            if (!r) return false;
+                            const fId = (typeof r.form === 'object' ? r.form._id : r.form);
+                            const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
+                            return String(fId) === String(this.form._id) &&
+                                String(rId) === String(currentResponder) &&
+                                r.submit;
+                        });
+                        if (submitted) {
+                            this.isAlreadySubmitted = true;
+                            this.loading = false;
+                            
+                            // Load submitted answers
+                            if (submitted.answers) {
+                                const submittedInit = {};
+                                submitted.answers.forEach(ans => {
+                                    if (ans && ans.question) {
+                                        const qId = typeof ans.question === 'object' ? ans.question._id : ans.question;
+                                        submittedInit[qId] = ans.value;
+                                    }
+                                });
+                                this.answers = { ...this.answers, ...submittedInit };
+                            }
+                            return; // Stop here as we just want to view
+                        }
+                    }
 
-                    // Ensure user is loaded
-                    let currentResponder = this.user?._id || this.responderId;
+                    // 4. Ensure user is loaded (if not already found)
                     if (!currentResponder) {
                         await this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
                         currentResponder = this.user?._id;
@@ -239,22 +304,25 @@ export default {
 
                     // If New Mode is active, we don't load any existing draft
                     if (this.isNewMode) {
+                        this.loading = false;
                         return;
                     }
 
-                    // Fetch the response for this specific form and user
-                    const res = await this.$store.dispatch('Responses/get', { 
-                        form: this.form._id,
-                        responder: currentResponder
-                    });
-
-                    // Ensure responses is an array (the backend might return a single object)
-                    let responses = this.$store.getters['Responses/responses'] || [];
-                    if (res && !Array.isArray(res)) {
-                        responses = [res];
+                    // 5. Build/Find draft from the responses we already fetched
+                    let responsesToProcess = allFormResponses;
+                    // If we need to fetch specifically for THIS user (though dispatching Responses/get with form_id usually gets all for that form)
+                    if (!responsesToProcess || responsesToProcess.length === 0) {
+                        const res = await this.$store.dispatch('Responses/get', {
+                            form: this.form._id,
+                            responder: currentResponder
+                        });
+                        responsesToProcess = this.$store.getters['Responses/responses'] || [];
+                        if (res && !Array.isArray(res)) {
+                            responsesToProcess = [res];
+                        }
                     }
 
-                    let draft = (responses || []).find(r => {
+                    let draft = (responsesToProcess || []).find(r => {
                         if (!r) return false;
                         const fId = (typeof r.form === 'object' ? r.form._id : r.form);
                         const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
@@ -361,7 +429,7 @@ export default {
                     const res = await this.$store.dispatch('Responses/create', payload);
                     const rawData = res && res.data ? res.data : res;
                     const createdNode = rawData && rawData.data ? rawData.data : rawData;
-                    
+
                     let id = null;
                     if (Array.isArray(createdNode)) {
                         id = createdNode[0]?._id;
@@ -393,8 +461,27 @@ export default {
 
         onRate(questionId, n) {
             this.$set(this.answers, questionId, n);
-            this.clearError(questionId);
-            this.autoSave();
+        },
+
+        async onAuthenGoogle() {
+            try {
+                const googleUser = await this.$gAuth.signIn();
+                if (googleUser) {
+                    const profile = googleUser.getBasicProfile();
+                    const body = {
+                        email: profile.getEmail(),
+                        name: profile.getName()
+                    };
+                    // Sync user with backend and update store
+                    const user = await this.$store.dispatch('User/get', body);
+                    if (user) {
+                        this.responderId = user._id;
+                        this.onInit(); // Refresh form state with new user
+                    }
+                }
+            } catch (err) {
+                console.error('Google sign-in error:', err);
+            }
         },
 
         getTitle(arr) {
@@ -869,6 +956,11 @@ export default {
             }
 
             return built;
+        },
+        isLoginRequired() {
+            const settings = this.form?.settings || {};
+            const currentResponder = this.user?._id || this.responderId;
+            return settings.collectEmail && !currentResponder && !this.isPreviewMode;
         }
     },
     watch: {
@@ -908,36 +1000,6 @@ export default {
     transition: border-left-color 0.3s, background 0.3s, box-shadow 0.3s;
 }
 
-.header-card--first {
-    background: linear-gradient(90deg, #e3f4ff 0%, #ffffff 100%);
-    box-shadow: 0 10px 30px rgba(26, 115, 232, 0.06);
-}
-
-.header-card--first::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-    background: linear-gradient(180deg, #1a73e8 0%, #0f62fe 100%);
-}
-
-.header-card--continue {
-    background: linear-gradient(90deg, #fffbeb 0%, #ffffff 100%);
-    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.10);
-}
-
-.header-card--continue::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-    background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
-}
-
 .form-main-title {
     font-size: 1.9rem;
     font-weight: 700;
@@ -974,6 +1036,11 @@ export default {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.summary-banner {
+    background: linear-gradient(90deg, #2eb85c 0%, #1b8d44 100%);
+    border-radius: 8px 8px 0 0;
 }
 
 .preview-banner {

@@ -7,8 +7,24 @@
                     <div class="mb-3">
                         <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
                             class="d-flex align-items-center mb-1">
-                            <CInput class="lang-key-input flex-shrink-0  mb-0 mr-2" v-model="titleItem.key"
-                                @change="updateFormMeta" maxlength="3" style="width: 3.2rem;" />
+                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
+                                <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                    <template #toggler>
+                                        <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                            {{ (titleItem.key || 'EN').toUpperCase() }}
+                                        </CButton>
+                                    </template>
+                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value" @click="setLangKey(titleItem, lang.value, updateFormMeta)">
+                                        {{ lang.label }}
+                                    </CDropdownItem>
+                                    <CDropdownDivider />
+                                    <CDropdownItem @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">Other...</CDropdownItem>
+                                </CDropdown>
+                                <div v-else class="manual-lang-input d-flex align-items-center">
+                                    <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateFormMeta" @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
+                                    <CButton @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', updateFormMeta)" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                </div>
+                            </div>
                             <CInput class="form-title-input flex-grow-1 border-bottom mb-0" v-model="titleItem.value"
                                 @change="updateFormMeta" />
                             <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
@@ -26,8 +42,24 @@
                     <div>
                         <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
                             class="d-flex align-items-start mb-1">
-                            <CInput class="lang-key-input flex-shrink-0 mb-0 mr-2" v-model="descItem.key"
-                                @change="updateFormMeta" maxlength="3" style="width: 3.2rem;" />
+                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
+                                <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                    <template #toggler>
+                                        <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                            {{ (descItem.key || 'EN').toUpperCase() }}
+                                        </CButton>
+                                    </template>
+                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value" @click="setLangKey(descItem, lang.value, updateFormMeta)">
+                                        {{ lang.label }}
+                                    </CDropdownItem>
+                                    <CDropdownDivider />
+                                    <CDropdownItem @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">Other...</CDropdownItem>
+                                </CDropdown>
+                                <div v-else class="manual-lang-input d-flex align-items-center">
+                                    <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="updateFormMeta" @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
+                                    <CButton @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', updateFormMeta)" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                </div>
+                            </div>
                             <CTextarea class="form-desc-input flex-grow-1 border-bottom mb-0" v-model="descItem.value"
                                 @change="updateFormMeta" rows="2" />
                             <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
@@ -68,8 +100,24 @@
                             <div class="flex-grow-1">
                                 <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
                                     class="d-flex align-items-center mb-1">
-                                    <CInput class="lang-key-input flex-shrink-0 mb-0 mr-1" v-model="titleItem.key"
-                                        @change="updateQuestionTitle(question)" maxlength="3" style="width: 3.2rem;" />
+                                    <div class="lang-key-wrapper flex-shrink-0 mr-1">
+                                        <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                            <template #toggler>
+                                                <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                                    {{ (titleItem.key || 'EN').toUpperCase() }}
+                                                </CButton>
+                                            </template>
+                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value" @click="setLangKey(titleItem, lang.value, () => updateQuestionTitle(question))">
+                                                {{ lang.label }}
+                                            </CDropdownItem>
+                                            <CDropdownDivider />
+                                            <CDropdownItem @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">Other...</CDropdownItem>
+                                        </CDropdown>
+                                        <div v-else class="manual-lang-input d-flex align-items-center">
+                                            <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateQuestionTitle(question)" @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
+                                            <CButton @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', () => updateQuestionTitle(question))" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                        </div>
+                                    </div>
                                     <CInput class="flex-grow-1 mb-0" v-model="titleItem.value"
                                         @change="updateQuestionTitle(question)" style="background-color: #f8fafc;" />
                                     <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0"
@@ -116,8 +164,24 @@
                                     <div class="option-langs flex-grow-1">
                                         <div v-for="(lang, li) in (choice.lang || [])" :key="li"
                                             class="d-flex align-items-center mb-1">
-                                            <CInput class="lang-key-input flex-shrink-0 mr-2 mb-0" v-model="lang.key"
-                                                @change="putQuestion(question)" maxlength="3" style="width: 3.2rem;" />
+                                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
+                                                <CDropdown v-if="isCommonLang(lang.key) && !lang.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                                    <template #toggler>
+                                                        <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                                            {{ (lang.key || 'EN').toUpperCase() }}
+                                                        </CButton>
+                                                    </template>
+                                                    <CDropdownItem v-for="l in commonLangs" :key="l.value" @click="setLangKey(lang, l.value, () => putQuestion(question))">
+                                                        {{ l.label }}
+                                                    </CDropdownItem>
+                                                    <CDropdownDivider />
+                                                    <CDropdownItem @click="$set(lang, 'isManualMode', true); $set(lang, 'key', '')">Other...</CDropdownItem>
+                                                </CDropdown>
+                                                <div v-else class="manual-lang-input d-flex align-items-center">
+                                                    <CInput class="lang-key-input mb-0" v-model="lang.key" @change="putQuestion(question)" @blur="checkManualKey(lang)" maxlength="3" style="width: 3.2rem;" />
+                                                    <CButton @click="$set(lang, 'isManualMode', false); setLangKey(lang, 'en', () => putQuestion(question))" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                                </div>
+                                            </div>
                                             <CInput class="flex-grow-1 mb-0" v-model="lang.value"
                                                 @input="(e) => updateOption(question, choiceIndex, li, e)" />
                                             <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0"
@@ -237,8 +301,24 @@
 
                             <div v-for="(descItem, dIdx) in (question.config.description || [])" :key="'qd-' + dIdx"
                                 class="d-flex align-items-start">
-                                <CInput class="lang-key-input flex-shrink-0 mr-2" v-model="descItem.key"
-                                    @change="putQuestion(question)" maxlength="3" style="width: 3.2rem;" />
+                                <div class="lang-key-wrapper flex-shrink-0 mr-2">
+                                    <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                        <template #toggler>
+                                            <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                                {{ (descItem.key || 'EN').toUpperCase() }}
+                                            </CButton>
+                                        </template>
+                                        <CDropdownItem v-for="lang in commonLangs" :key="lang.value" @click="setLangKey(descItem, lang.value, () => putQuestion(question))">
+                                            {{ lang.label }}
+                                        </CDropdownItem>
+                                        <CDropdownDivider />
+                                        <CDropdownItem @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">Other...</CDropdownItem>
+                                    </CDropdown>
+                                    <div v-else class="manual-lang-input d-flex align-items-center">
+                                        <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="putQuestion(question)" @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
+                                        <CButton @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', () => putQuestion(question))" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                    </div>
+                                </div>
                                 <CTextarea class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
                                     rows="2" />
                                 <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
@@ -386,6 +466,10 @@ export default {
             layout: [],
             storedLayout: null,
             gridKey: 0,
+            commonLangs: [
+                { value: 'th', label: 'TH' },
+                { value: 'en', label: 'EN' },
+            ],
         };
     },
     watch: {
@@ -1478,6 +1562,22 @@ export default {
         },
         getPlaceholder(type, lang) {
             return 'Untitled Question';
+        },
+        isCommonLang(key) {
+            if (!key) return true; // Default to common (EN) if empty
+            return this.commonLangs.some(l => l.value.toLowerCase() === key.toLowerCase());
+        },
+        setLangKey(item, key, updateFn) {
+            this.$set(item, 'key', key);
+            this.$set(item, 'isManualMode', false);
+            if (typeof updateFn === 'function') updateFn();
+            else this.updateFormMeta();
+        },
+        checkManualKey(item) {
+            if (!item.key) {
+                this.$set(item, 'key', 'en');
+                this.$set(item, 'isManualMode', false);
+            }
         }
     }
 }
@@ -1515,12 +1615,27 @@ export default {
     object-fit: contain;
 }
 
+.lang-key-btn {
+    padding: 0.45rem 0.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: #f1f3f5;
+    color: #495057;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.lang-key-dropdown .dropdown-toggle::after {
+    display: none;
+}
+
 .lang-key-input>>>input {
     text-align: center;
     text-transform: uppercase;
     font-weight: 700;
     background-color: #f1f3f5;
     color: #495057;
+    padding: 0.45rem 0;
 }
 
 .lang-key-input>>>input::placeholder {

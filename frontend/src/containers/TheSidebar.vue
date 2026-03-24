@@ -19,7 +19,8 @@
             <div class="d-flex align-items-center justify-content-between">
                 <div class="overflow-hidden">
                     <div class="font-weight-bold text-white text-truncate" style="max-width: 140px;">{{ username }}</div>
-                    <div class="text-white-50 small text-truncate" style="max-width: 140px;">{{ userEmail }}</div>
+                    <div v-if="userOrganization" class="text-white-50 small text-truncate" style="max-width: 140px; font-weight: 500;">{{ userOrganization }}</div>
+                    <div class="text-white-50 small text-truncate" style="max-width: 140px; opacity: 0.8;">{{ userEmail }}</div>
                 </div>
                 <CDropdown placement="top-end" :caret="false">
                     <template #toggler>
@@ -135,6 +136,19 @@ export default {
         },
         userEmail() {
             return this.user.email || this.$t('nav.welcome');
+        },
+        userOrganization() {
+            const org = this.user.organization;
+            if (!org) return '';
+            if (typeof org === 'string') return org;
+            if (typeof org === 'object') {
+                if (Array.isArray(org.title)) {
+                    const en = org.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
+                    return en ? en.value : (org.title[0] ? org.title[0].value : (org.name || ''));
+                }
+                return org.name || org.title || '';
+            }
+            return '';
         }
     },
 }

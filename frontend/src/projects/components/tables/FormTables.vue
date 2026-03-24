@@ -5,8 +5,7 @@
             :endDate.sync="endDate" />
 
         <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
-            :pagination="false" hover class="mb-0 tables-container"
-            :no-items-view="{ noItems: $t('table.noForms') }">
+            :pagination="false" hover class="mb-0 tables-container" :no-items-view="{ noItems: $t('table.noForms') }">
 
             <!-- Form Name (Title & Description) Slot -->
             <template #form="{ item }">
@@ -73,26 +72,18 @@
                 <td class="align-middle text-right pr-4">
                     <div class="d-flex align-items-center justify-content-end">
                         <CIcon v-if="item.requireEmail" name="cil-warning" class="text-danger mr-2" style="width: 20px;"
-                            v-c-tooltip="$t('table.emailRequired')" />
-                        <!-- Case 1: Form allows multiple responses AND is already completed -> Show "Add more" -->
-                        <template
-                            v-if="item._raw && item._raw.settings && item._raw.settings.limitResponse === false && item.status && item.status.toLowerCase() === 'completed'">
-                            <CButton color="success" variant="ghost" class="action-icon-btn plus-btn"
-                                @click.stop="goToForm(item._id, true)" v-c-tooltip="$t('table.addAnswer')">
-                                <div class="plus-circle">
-                                    <CIcon name="cil-plus" />
-                                </div>
-                            </CButton>
-                        </template>
+                            v-c-tooltip="$t('form.collectEmail')" />
 
-                        <!-- Case 2: In-progress forms OR forms limited to one response -->
-                        <template v-else>
-                            <CButton :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
-                                :disabled="item.status && item.status.toLowerCase() === 'completed'"
-                                @click.stop="goToForm(item._id)" v-c-tooltip="getActionTooltip(item.status)">
-                                <CIcon :name="getActionIcon(item.status)" size="lg" />
+                        <div v-if="!item.canEnter" v-c-tooltip="$t('form.accessDenied')">
+                            <CButton color="secondary" variant="ghost" class="p-2 action-icon-btn disabled" disabled>
+                                <CIcon name="cil-lock-locked" size="lg" />
                             </CButton>
-                        </template>
+                        </div>
+                        <CButton v-else :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
+                            @click.stop="goToForm(item._id)"
+                            v-c-tooltip="getActionTooltip(item.status, item.limitResponse)">
+                            <CIcon :name="getActionIcon(item.status, item.limitResponse)" size="lg" />
+                        </CButton>
                     </div>
                 </td>
             </template>
@@ -281,6 +272,13 @@ export default {
 
                 const createdAt = f.updatedAt || f.createdAt || '-';
 
+                // Access Control Logic
+                const userOrgId = currentUser?.organization?._id || currentUser?.organization;
+                const formOrgIds = (Array.isArray(f.organization) ? f.organization : [f.organization]).map(o => (o?._id || o)?.toString());
+                const isPublic = orgNames.includes('General');
+                const isMember = userOrgId && formOrgIds.includes(userOrgId.toString());
+                const canEnter = isPublic || isMember;
+
                 return {
                     _id: f._id,
                     title: title || '-',
@@ -295,6 +293,9 @@ export default {
                     createdName: createdName || '-',
                     createdEmail: createdEmail || '',
                     access: access,
+                    canEnter: canEnter,
+                    limitResponse: f.settings?.limitResponse || false,
+                    requireEmail: f.settings?.collectEmail || false,
                     _raw: f
                 };
             });
@@ -332,6 +333,9 @@ export default {
 
             const now = new Date();
             filtered = filtered.filter(f => {
+                // Must have access to see it
+                if (!f.canEnter) return false;
+
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
                 if (!sched.startAt && !sched.endAt) return false;
 
@@ -404,17 +408,21 @@ export default {
             if (s === 'pending') return 'primary';
             return 'warning';
         },
-        getActionIcon(status) {
+        getActionIcon(status, limitResponse) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'completed') return 'cil-check-circle';
-            if (s === 'in progress' || s === 'inprogress') return 'cil-pencil';
+            if (s === 'completed') {
+                return limitResponse ? 'cil-check-circle' : 'cil-reload';
+            }
+            if (s === 'inprogress') return 'cil-pencil';
             return 'cil-input';
         },
-        getActionTooltip(status) {
+        getActionTooltip(status, limitResponse) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'completed') return this.$t('table.viewAnswer');
-            if (s === 'in progress' || s === 'inprogress') return this.$t('table.continueForm');
-            return this.$t('table.startForm');
+            if (s === 'completed') {
+                return limitResponse ? 'View Summary' : 'Submit Again';
+            }
+            if (s === 'inprogress') return 'Continue Form';
+            return 'Start Form';
         }
     }
 }

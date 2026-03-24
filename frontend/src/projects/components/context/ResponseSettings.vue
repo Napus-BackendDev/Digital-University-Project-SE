@@ -15,6 +15,16 @@
 
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
+                    <h6 class="mb-1 font-weight-bold">Email Notifications</h6>
+                    <small class="text-muted">Send email notifications to respondents after submission</small>
+                </div>
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedEmailNotifications"
+                    @update:checked="val => { mappedEmailNotifications = val; triggerAutoSave(); }" />
+            </div>
+
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
                     <h6 class="mb-1 font-weight-bold">Limit to one response</h6>
                     <small class="text-muted">Only allow one response per person</small>
                 </div>
@@ -22,19 +32,9 @@
                     @update:checked="val => { mappedLimitResponse = val; triggerAutoSave(); }" />
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h6 class="mb-1 font-weight-bold">Show progress bar</h6>
-                    <small class="text-muted">Display completion progress to
-                        respondents</small>
-                </div>
-                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedProgressBar"
-                    @update:checked="val => { mappedProgressBar = val; triggerAutoSave(); }" />
-            </div>
-
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h6 class="mb-1 font-weight-bold">Require Email</h6>
+                    <h6 class="mb-1 font-weight-bold">Require Response</h6>
                     <small class="text-muted">Ensure all questions have a response before submission</small>
                 </div>
                 <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedRequireResponse"
@@ -72,13 +72,13 @@ export default {
                 this.$set(this.settings.settings, 'limitResponse', val);
             }
         },
-        mappedProgressBar: {
+        mappedEmailNotifications: {
             get() {
-                return !!(this.settings.settings && this.settings.settings.progressBar);
+                return !!(this.settings.settings && this.settings.settings.emailNotifications);
             },
             set(val) {
                 if (!this.settings.settings) this.$set(this.settings, 'settings', {});
-                this.$set(this.settings.settings, 'progressBar', val);
+                this.$set(this.settings.settings, 'emailNotifications', val);
             }
         },
         mappedRequireResponse: {
