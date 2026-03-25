@@ -470,6 +470,7 @@ export default {
             commonLangs: [
                 { value: 'th', label: 'TH' },
                 { value: 'en', label: 'EN' },
+                { value: 'uk', label: 'UK' },
             ],
         };
     },

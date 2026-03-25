@@ -34,6 +34,14 @@ const th = {
         delete: "ลบ",
         search: "ค้นหา...",
         allStatus: "สถานะทั้งหมด",
+        noItems: "ยังไม่มีแบบสอบถามในขณะนี้ เริ่มต้นสร้างได้เลย",
+        daysLeft: "เหลืออีก {count} วัน",
+        completed: "เสร็จสิ้น",
+        ongoing: "กำลังดำเนินการ",
+        viewSummary: "ดูสรุปผล",
+        submitAgain: "ทำอีกครั้ง",
+        continueForm: "ทำต่อจากที่ค้างไว้",
+        startForm: "เริ่มทำแบบสอบถาม",
         visibility: "การเข้าถึง",
         dateFrom: "จากวันที่",
         dateTo: "ถึงวันที่",
@@ -42,6 +50,7 @@ const th = {
             all: "ทั้งหมด",
             today: "วันนี้",
             thisWeek: "อาทิตย์นี้",
+            last7Days: "7 วันที่ผ่านมา",
             last30Days: "30 วันก่อน"
         }
     },
@@ -111,10 +120,23 @@ const th = {
 
     widget: {
         total: "ฟอร์มทั้งหมด",
+        active: "เปิด",
         draft: "ฟอร์มร่าง",
+        closed: "ปิด",
         pending: "ฟอร์มร่าง",
         completed: "เสร็จสิ้น",
-        inprogress: "กำลังดำเนินการ"
+        inprogress: "กำลังดำเนินการ",
+        totalResponses: "การตอบกลับทั้งหมด",
+        totalUsers: "ผู้ใช้งานทั้งหมด",
+        avgResponses: "เฉลี่ยต่อฟอร์ม"
+    },
+    analytics: {
+        responsesOverTime: "แนวโน้มการตอบกลับ",
+        sevenDaysView: "ดูย้อนหลัง 7 วัน",
+        dailyResponsesDesc: "การตอบกลับรายวันในช่วงสัปดาห์ที่ผ่านมา",
+        mostResponded: "ฟอร์มที่มีการตอบกลับสูงสุด",
+        mostRespondedDesc: "ฟอร์มที่ได้รับความสนใจสูงสุด",
+        dailyResponsesTrend: "แนวโน้มการตอบกลับรายวันในสัปดาห์ล่าสุด"
     },
     description: "รายละเอียด"
 }

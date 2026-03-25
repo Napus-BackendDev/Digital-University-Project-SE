@@ -111,6 +111,11 @@ export default {
             } finally {
                 this.isCreating = false
             }
+        },
+        setLanguage(lang) {
+            this.$i18n.locale = lang;
+            localStorage.setItem('lang', lang);
+            this.$store.commit('Setting/lang', lang);
         }
     },
     computed: {
@@ -154,17 +159,43 @@ export default {
     color: #3c4b64;
 }
 
-/* Subtle background decoration */
-.header-card::after {
-    content: "";
-    position: absolute;
-    top: -20px;
-    right: -20px;
-    width: 100px;
-    height: 100px;
-    background: rgba(60, 75, 100, 0.03);
-    border-radius: 50%;
-    z-index: 0;
+/* Language Switcher Styles */
+.lang-switcher-container {
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border: 1px solid #e2e8f0;
+}
+
+.lang-pill {
+    border: none;
+    background: transparent;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.lang-pill.active {
+    background: #fff;
+    color: #2563eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.lang-divider {
+    width: 1px;
+    height: 14px;
+    background: #e2e8f0;
+    margin: 0 2px;
 }
 
 .saving-indicator {
@@ -184,5 +215,18 @@ export default {
 }
 .fade-enter, .fade-leave-to {
   opacity: 0;
+}
+
+/* Subtle background decoration */
+.header-card::after {
+    content: "";
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 100px;
+    height: 100px;
+    background: rgba(60, 75, 100, 0.03);
+    border-radius: 50%;
+    z-index: 0;
 }
 </style>

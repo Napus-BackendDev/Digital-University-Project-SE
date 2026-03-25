@@ -124,10 +124,10 @@ export default {
         return {
             currentShortcut: 'all',
             dateShortcuts: [
-                { id: 'all', label: 'All' },
-                { id: 'today', label: 'Today' },
-                { id: 'last7Days', label: 'Last 7 Days' },
-                { id: 'last30Days', label: 'Last 30 Days' }
+                { id: 'all' },
+                { id: 'today' },
+                { id: 'last7Days' },
+                { id: 'last30Days' }
             ]
         }
     },

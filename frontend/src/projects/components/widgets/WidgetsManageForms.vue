@@ -1,58 +1,60 @@
 <template>
-    <CRow class="mb-4">
-        <CCol sm="6" lg="3" @click="$emit('filter', 'All')" style="cursor: pointer;">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="icon-box bg-primary-light text-primary">
-                        <CIcon name="cil-description" size="xl" />
+    <div class="widgets-wrapper">
+        <CRow class="mb-4">
+            <CCol sm="6" lg="3" @click="$emit('filter', 'All')" style="cursor: pointer;">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="icon-box bg-primary-light text-primary">
+                            <CIcon name="cil-description" size="xl" />
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h2 class="stat-value">{{ stats.total }}</h2>
+                        <div class="stat-label">{{ $t('widget.total') }}</div>
                     </div>
                 </div>
-                <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.total }}</h2>
-                    <div class="stat-label">Total Forms</div>
-                </div>
-            </div>
-        </CCol>
-        <CCol sm="6" lg="3" @click="$emit('filter', 'Active')" style="cursor: pointer;">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="icon-box bg-success-light text-success">
-                        <CIcon name="cil-check-circle" size="xl" />
+            </CCol>
+            <CCol sm="6" lg="3" @click="$emit('filter', 'Active')" style="cursor: pointer;">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="icon-box bg-success-light text-success">
+                            <CIcon name="cil-check-circle" size="xl" />
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h2 class="stat-value">{{ stats.active }}</h2>
+                        <div class="stat-label">{{ $t('widget.active') }}</div>
                     </div>
                 </div>
-                <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.active }}</h2>
-                    <div class="stat-label">Active Forms</div>
-                </div>
-            </div>
-        </CCol>
-        <CCol sm="6" lg="3" @click="$emit('filter', 'Draft')" style="cursor: pointer;">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="icon-box bg-warning-light text-warning">
-                        <CIcon name="cil-clock" size="xl" />
+            </CCol>
+            <CCol sm="6" lg="3" @click="$emit('filter', 'Draft')" style="cursor: pointer;">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="icon-box bg-warning-light text-warning">
+                            <CIcon name="cil-clock" size="xl" />
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h2 class="stat-value">{{ stats.draft }}</h2>
+                        <div class="stat-label">{{ $t('widget.draft') }}</div>
                     </div>
                 </div>
-                <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.draft }}</h2>
-                    <div class="stat-label">Draft Forms</div>
-                </div>
-            </div>
-        </CCol>
-        <CCol sm="6" lg="3" @click="$emit('filter', 'Closed')" style="cursor: pointer;">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="icon-box bg-danger-light text-danger">
-                        <CIcon name="cil-lock-locked" size="xl" />
+            </CCol>
+            <CCol sm="6" lg="3" @click="$emit('filter', 'Closed')" style="cursor: pointer;">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="icon-box bg-danger-light text-danger">
+                            <CIcon name="cil-lock-locked" size="xl" />
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h2 class="stat-value">{{ stats.closed }}</h2>
+                        <div class="stat-label">{{ $t('widget.closed') }}</div>
                     </div>
                 </div>
-                <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.closed }}</h2>
-                    <div class="stat-label">Closed Forms</div>
-                </div>
-            </div>
-        </CCol>
-    </CRow>
+            </CCol>
+        </CRow>
+    </div>
 </template>
 
 <script>
@@ -64,6 +66,7 @@ export default {
             default: () => []
         }
     },
+    methods: {},
     computed: {
         stats() {
             const forms = this.forms || [];
@@ -105,6 +108,7 @@ export default {
 </script>
 
 <style scoped>
+
 /* Matching WidgetsDropdownUser premium styling */
 .stat-card {
     background: #ffffff;

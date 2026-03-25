@@ -35,6 +35,14 @@ const en = {
         search: "Search...",
         searchPlaceholder: "Search forms...",
         allStatus: "All Status",
+        noItems: "No questionnaires yet. Create one to get started.",
+        daysLeft: "{count} days left",
+        completed: "Completed",
+        ongoing: "Ongoing",
+        viewSummary: "View Summary",
+        submitAgain: "Submit Again",
+        continueForm: "Continue Form",
+        startForm: "Start Form",
         visibility: "Visibility",
         dateFrom: "From",
         dateTo: "To",
@@ -43,6 +51,7 @@ const en = {
             all: "All",
             today: "Today",
             thisWeek: "This Week",
+            last7Days: "Last 7 Days",
             last30Days: "Last 30 Days"
         }
     },
@@ -112,10 +121,23 @@ const en = {
 
     widget: {
         total: "Total Forms",
-        draft: "Draft",
+        active: "Active Forms",
+        draft: "Draft Forms",
+        closed: "Closed Forms",
         pending: "Pending",
         completed: "Completed",
-        inprogress: "In Progress"
+        inprogress: "In Progress",
+        totalResponses: "Total Responses",
+        totalUsers: "Total Users",
+        avgResponses: "Avg Responses/Form"
+    },
+    analytics: {
+        responsesOverTime: "Responses Over Time",
+        sevenDaysView: "7 Days View",
+        dailyResponsesDesc: "Daily responses monitored over the past week",
+        mostResponded: "Most Responded Form",
+        mostRespondedDesc: "Forms with the most responses",
+        dailyResponsesTrend: "Daily responses over the last week"
     },
     description: "Description"
 }

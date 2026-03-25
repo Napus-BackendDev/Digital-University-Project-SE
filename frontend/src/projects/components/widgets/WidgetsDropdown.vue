@@ -10,7 +10,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalForms }}</h2>
-                    <div class="stat-label">Total Forms</div>
+                    <div class="stat-label">{{ $t('widget.total') }}</div>
                 </div>
             </div>
         </CCol>
@@ -25,7 +25,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalResponses }}</h2>
-                    <div class="stat-label">Total Responses</div>
+                    <div class="stat-label">{{ $t('widget.totalResponses') }}</div>
                 </div>
             </div>
         </CCol>
@@ -40,7 +40,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalUsers }}</h2>
-                    <div class="stat-label">Total Users</div>
+                    <div class="stat-label">{{ $t('widget.totalUsers') }}</div>
                 </div>
             </div>
         </CCol>
@@ -55,7 +55,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.avgResponses }}</h2>
-                    <div class="stat-label">Avg Responses/Form</div>
+                    <div class="stat-label">{{ $t('widget.avgResponses') }}</div>
                 </div>
             </div>
         </CCol>

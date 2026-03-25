@@ -3,9 +3,9 @@
         <div class="header mb-4">
             <div class="d-flex align-items-center mb-1">
                 <CIcon name="cil-chart" class="text-danger mr-2" size="lg" />
-                <h4 class="m-0 font-weight-bold">Most Responded Form</h4>
+                <h4 class="m-0 font-weight-bold">{{ $t('analytics.mostResponded') }}</h4>
             </div>
-            <div class="text-muted small ">Forms with the most responses</div>
+            <div class="text-muted small ">{{ $t('analytics.mostRespondedDesc') }}</div>
         </div>
 
         <div class="chart-container">
@@ -18,10 +18,12 @@
 <script>
 import { CChartHorizontalBar } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
+import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'AdminBarCharts',
     components: { CChartHorizontalBar },
+    mixins: [localeMixin],
     computed: {
         ...mapGetters('Forms', ['forms']),
 
@@ -42,18 +44,7 @@ export default {
             const data = []
 
             this.topForms.forEach(form => {
-                // Initial title logic
-                let title = 'default'
-                if (form.title) {
-                    if (Array.isArray(form.title)) {
-                        const enItem = form.title.find(item => item.key === 'en')
-                        title = enItem ? enItem.value : (form.title[0]?.value)
-                    } else {
-                        title = form.title
-                    }
-                }
-                labels.push(title)
-
+                labels.push(this.getLang(form.title) || 'Untitled Form')
                 data.push(form.responses ? form.responses.length : 0)
             })
 
@@ -63,7 +54,7 @@ export default {
         defaultDatasets() {
             return [
                 {
-                    label: 'Responses',
+                    label: this.$t('table.responses'),
                     backgroundColor: '#9B1B30',
                     data: this.chartData.data,
                     barPercentage: 0.6,
