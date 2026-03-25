@@ -198,6 +198,31 @@ exports.onUpdate = async function (request, response) {
         if (!doc) {
             return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found after update");
         }
+
+        // Email Notification Logic
+        if (request.body.submit === true && !existingResponse.submit) {
+            try {
+                // Fetch to get form settings and user email
+                const formCtrl = require('../../Form/controller/form');
+                const userCtrl = require('../../User/controller/user');
+                const mailer = require('../../../../helpers/mailer');
+
+                const formInfo = await formCtrl.onQuery({ _id: doc.form });
+                if (formInfo && formInfo.settings && formInfo.settings.emailNotifications) {
+                    const responderInfo = await userCtrl.onQuery({ _id: doc.responder });
+                    if (responderInfo && responderInfo.email) {
+                        const titleObj = formInfo.title && formInfo.title.find(t => t.value) || { value: 'Form' };
+                        const subject = `Confirmation: ${titleObj.value} Submitted`;
+                        const textMessage = formInfo.settings.emailMessage || formInfo.settings.confirmMessage || "Thank you for completing this survey. Your response has been recorded.";
+                        
+                        await mailer.sendMail(responderInfo.email, subject, textMessage);
+                    }
+                }
+            } catch (mailErr) {
+                console.error("Error dispatching email:", mailErr);
+            }
+        }
+
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
     } catch (err) {
         console.error("Update response error:", err);

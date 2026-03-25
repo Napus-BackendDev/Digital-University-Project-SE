@@ -68,6 +68,50 @@
                 </div>
             </div>
 
+            <!-- Selected Emails List -->
+            <div class="mb-4 mt-4">
+                <label class="mb-3 font-weight-bold">Allowed Emails</label>
+                <div class="org-list">
+                    <span v-for="(email, index) in settings.allowedEmails" :key="index" class="badge-custom border">
+                        {{ email }}
+                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeEmail(index)" title="Remove">
+                            <CIcon name="cil-x" size="sm" class="delete-icon" />
+                        </span>
+                    </span>
+                    <div v-if="!settings.allowedEmails || settings.allowedEmails.length === 0" class="text-muted small my-auto">
+                        No specific emails added.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Email Selection Section -->
+            <div class="mb-4">
+                <h6 class="font-weight-bold mb-3">Specify User Can Response</h6>
+
+                <CRow>
+                    <CCol md="10" class="mb-3">
+                        <label class="mb-2 font-weight-bold small">Email Address</label>
+                        <input type="email" 
+                               placeholder="Enter user's email address to allow access" 
+                               v-model="newEmail"
+                               class="form-control form-select-custom px-3" 
+                               @keyup.enter="addEmail" />
+                    </CCol>
+                    <CCol md="2" class="mb-3">
+                        <CButton color="primary" block style="height: 45px; border-radius: 8px;"
+                            class="font-weight-bold mt-4" @click="addEmail">
+                            Add
+                        </CButton>
+                    </CCol>
+                </CRow>
+            </div>
+
+            <!-- Info Hint -->
+            <div class="info-hint mb-3">
+                <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
+                <h6 class="mb-0 ">ถ้าคุณใส่ข้อมูล User โดยตรง <strong> User จะทำฟอร์มได้แค่คนเดียว</strong> คนอื่นจะไม่เห็น สามารถทำได้เลือก User นอก Organization ได้</h6>
+            </div>
+
         </CCardBody>
     </CCard>
 </template>
@@ -86,6 +130,7 @@ export default {
     data() {
         return {
             selectedOrgId: null,
+            newEmail: ''
         }
     },
     computed: {
@@ -153,15 +198,39 @@ export default {
             this.settings.organization.splice(index, 1);
             this.triggerAutoSave();
         },
+        addEmail() {
+            if (!this.newEmail || !this.newEmail.trim().includes('@')) return;
+
+            if (!this.settings.allowedEmails) {
+                this.$set(this.settings, 'allowedEmails', []);
+            }
+
+            const emailToAdd = this.newEmail.toLowerCase().trim();
+            if (this.settings.allowedEmails.includes(emailToAdd)) {
+                this.newEmail = '';
+                return;
+            }
+
+            this.settings.allowedEmails.push(emailToAdd);
+            this.newEmail = '';
+            this.triggerAutoSave();
+        },
+        removeEmail(index) {
+            this.settings.allowedEmails.splice(index, 1);
+            this.triggerAutoSave();
+        },
         async triggerAutoSave() {
             this.$emit('auto-save');
         }
     },
     mounted() {
         this.$store.dispatch('Organizations/getAll');
-        // Ensure organization array exists
+        // Ensure arrays exist
         if (!this.settings.organization) {
             this.$set(this.settings, 'organization', []);
+        }
+        if (!this.settings.allowedEmails) {
+            this.$set(this.settings, 'allowedEmails', []);
         }
     }
 }

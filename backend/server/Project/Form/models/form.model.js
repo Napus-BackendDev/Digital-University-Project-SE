@@ -15,11 +15,13 @@ var objSchema = new Schema({
         type: [{ type: Schema.Types.ObjectId, ref: 'Organizations' }],
         default: ["69baf8349050b9215c700b96"]
     },
+    allowedEmails: { type: [String], default: [] },
     settings: {
         whoCanRespond: { type: Schema.Types.ObjectId, ref: 'Setting_Respond', default: null },
         collectEmail: { type: Boolean, default: false },
         limitResponse: { type: Boolean, default: false },
         emailNotifications: { type: Boolean, default: false },
+        emailMessage: { type: String, default: '' },
         requireResponse: { type: Boolean, default: false },
         confirmMessage: { type: String, default: 'Thank you for completing this survey. Your response has been recorded.' },
         showAnotherResponseLink: { type: Boolean, default: true }

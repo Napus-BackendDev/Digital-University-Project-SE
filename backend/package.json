@@ -29,6 +29,7 @@
     "multer": "^2.0.2",
     "nocache": "^4.0.0",
     "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.4",
     "primeicons": "^7.0.0",
     "sass-middleware": "^0.0.3",
     "swagger-ui-express": "^5.0.1",

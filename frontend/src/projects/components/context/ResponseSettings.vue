@@ -22,6 +22,18 @@
                     @update:checked="val => { mappedEmailNotifications = val; triggerAutoSave(); }" />
             </div>
 
+            <div v-if="mappedEmailNotifications" class="mb-4 pl-3" style="border-left: 3px solid #e2e8f0; animation: fadeIn 0.3s ease;">
+                <label class="font-weight-bold small mb-2">Email Message</label>
+                <textarea 
+                    v-model="mappedEmailMessage" 
+                    placeholder="Write the message that will be sent to respondents" 
+                    rows="4" 
+                    class="form-control p-3" 
+                    style="border-radius: 8px; border: 1px solid #e2e8f0; background-color: #f8f9fa; resize: vertical;"
+                    @change="triggerAutoSave" 
+                ></textarea>
+            </div>
+
 
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
@@ -81,6 +93,15 @@ export default {
                 this.$set(this.settings.settings, 'emailNotifications', val);
             }
         },
+        mappedEmailMessage: {
+            get() {
+                return (this.settings.settings && this.settings.settings.emailMessage) || '';
+            },
+            set(val) {
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'emailMessage', val);
+            }
+        },
         mappedRequireResponse: {
             get() {
                 return !!(this.settings.settings && this.settings.settings.requireResponse);
@@ -103,5 +124,15 @@ export default {
 .rounded-20 {
     border-radius: 20px !important;
     overflow: hidden;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.form-control:focus {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
 }
 </style>

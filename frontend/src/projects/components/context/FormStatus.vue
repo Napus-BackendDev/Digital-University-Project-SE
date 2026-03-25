@@ -22,6 +22,14 @@
                         :value="formattedEnd" @input="updateEnd" @change="triggerAutoSave" />
                 </CCol>
             </CRow>
+
+            <div class="info-hint mb-0 mt-4" :class="statusColorClass">
+                <CIcon name="cil-info" size="xl" class="mr-3" :class="statusIconColor" />
+                <div>
+                    <h6 class="mb-1 font-weight-bold">Status: {{ currentStatusText }}</h6>
+                    <p class="mb-0 small" style="line-height: 1.4;">{{ currentStatusDescription }}</p>
+                </div>
+            </div>
         </CCardBody>
     </CCard>
 </template>
@@ -43,6 +51,56 @@ export default {
         formattedEnd() {
             if (!this.settings || !this.settings.schedule || !this.settings.schedule.endAt) return '';
             return this.formatDateForInput(this.settings.schedule.endAt);
+        },
+        currentStatus() {
+            const start = this.settings?.schedule?.startAt;
+            const end = this.settings?.schedule?.endAt;
+            
+            if (!start || !end) return 'draft';
+            
+            const now = new Date().getTime();
+            const startTime = new Date(start).getTime();
+            const endTime = new Date(end).getTime();
+            
+            if (now >= startTime && now <= endTime) return 'open';
+            if (now < startTime) return 'scheduled';
+            return 'closed';
+        },
+        currentStatusText() {
+            switch(this.currentStatus) {
+                case 'draft': return 'Draft';
+                case 'open': return 'Open';
+                case 'scheduled': return 'Scheduled';
+                case 'closed': return 'Closed';
+                default: return 'Draft';
+            }
+        },
+        currentStatusDescription() {
+            switch(this.currentStatus) {
+                case 'draft': return "Start and end dates are not defined. The form is not actively accepting responses yet.";
+                case 'open': return "The current time is within the start and end dates. The form is actively accepting responses.";
+                case 'scheduled': return "The start date is in the future. The form will open automatically at the specified time.";
+                case 'closed': return "The current time is not within the specified dates. The form is closed and no longer accepting responses.";
+                default: return "";
+            }
+        },
+        statusColorClass() {
+            switch(this.currentStatus) {
+                case 'draft': return 'hint-secondary';
+                case 'open': return 'hint-success';
+                case 'scheduled': return 'hint-info';
+                case 'closed': return 'hint-danger';
+                default: return 'hint-info';
+            }
+        },
+        statusIconColor() {
+            switch(this.currentStatus) {
+                case 'draft': return 'text-secondary';
+                case 'open': return 'text-success';
+                case 'scheduled': return 'text-info';
+                case 'closed': return 'text-danger';
+                default: return 'text-info';
+            }
         }
     },
     methods: {
@@ -78,5 +136,32 @@ export default {
 .rounded-20 {
     border-radius: 20px !important;
     overflow: hidden;
+}
+.info-hint {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+.hint-secondary {
+    background-color: #f8fafc;
+    border-left: 4px solid #94a3b8;
+    color: #475569;
+}
+.hint-success {
+    background-color: #f0fdf4;
+    border-left: 4px solid #22c55e;
+    color: #166534;
+}
+.hint-info {
+    background-color: #f0f9ff;
+    border-left: 4px solid #3b82f6;
+    color: #1e40af;
+}
+.hint-danger {
+    background-color: #fef2f2;
+    border-left: 4px solid #ef4444;
+    color: #991b1b;
 }
 </style>
