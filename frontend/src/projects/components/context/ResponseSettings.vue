@@ -32,6 +32,7 @@
                     style="border-radius: 8px; border: 1px solid #e2e8f0; background-color: #f8f9fa; resize: vertical;"
                     @change="triggerAutoSave" 
                 ></textarea>
+                <small class="text-muted mt-2 d-inline-block">Tip: You can use <code v-pre>{{ User.name }}</code> or <code v-pre>{{ User.email }}</code> to personalize the message.</small>
             </div>
 
 

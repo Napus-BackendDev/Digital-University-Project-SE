@@ -213,7 +213,17 @@ exports.onUpdate = async function (request, response) {
                     if (responderInfo && responderInfo.email) {
                         const titleObj = formInfo.title && formInfo.title.find(t => t.value) || { value: 'Form' };
                         const subject = `Confirmation: ${titleObj.value} Submitted`;
-                        const textMessage = formInfo.settings.emailMessage || formInfo.settings.confirmMessage || "Thank you for completing this survey. Your response has been recorded.";
+                        let textMessage = formInfo.settings.emailMessage || formInfo.settings.confirmMessage || "Thank you for completing this survey. Your response has been recorded.";
+                        
+                        // Process template variables e.g. {{ User.name }}, {{ User.email }}
+                        if (textMessage.includes('{{')) {
+                            textMessage = textMessage.replace(/\{\{\s*User\.(\w+)\s*\}\}/gi, (match, field) => {
+                                const key = field.toLowerCase();
+                                if (key === 'name') return responderInfo.name || match;
+                                if (key === 'email') return responderInfo.email || match;
+                                return responderInfo[field] !== undefined ? responderInfo[field] : match;
+                            });
+                        }
                         
                         await mailer.sendMail(responderInfo.email, subject, textMessage);
                     }

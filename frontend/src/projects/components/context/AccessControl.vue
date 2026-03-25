@@ -3,16 +3,7 @@
         <CCardBody class="p-4">
             <h5 class="mb-4 font-weight-bold text-dark">Access Control</h5>
 
-            <CRow class="mb-4">
-                <CCol>
-                    <h6 class="font-weight-bold mb-2">Who can respond?</h6>
-                    <CSelect :options="accessTypeOptions" :value="settings.settings.whoCanRespond"
-                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
-                        @update:value="(val) => { settings.settings.whoCanRespond = val; triggerAutoSave(); }" />
-                </CCol>
-            </CRow>
 
-            <hr class="my-4" />
 
             <div class="mb-4">
                 <h6 class="font-weight-bold mb-1">Collaborators</h6>
@@ -20,12 +11,14 @@
                     form</p>
                 <CRow>
                     <CCol md="6" class="mb-2 mb-md-0">
-                        <CInput placeholder="Email address" v-model="newCollaborator.email"
-                            style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;" />
+                        <input type="email" placeholder="Email address" v-model="newCollaborator.email" class="form-control px-3"
+                               style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;" @keyup.enter="addCollaborator" />
                     </CCol>
                     <CCol md="4" class="mb-2 mb-md-0">
-                        <CSelect :options="roleOptions" v-model="newCollaborator.role"
-                            style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;" />
+                        <select v-model="newCollaborator.role" class="form-control px-3"
+                                style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <option v-for="opt in roleOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                        </select>
                     </CCol>
                     <CCol md="2">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
@@ -34,6 +27,23 @@
                         </CButton>
                     </CCol>
                 </CRow>
+
+                <!-- Selected Collaborators List -->
+                <div class="mt-4">
+                    <label class="mb-2 font-weight-bold small text-muted">Selected Collaborators</label>
+                    <div class="org-list">
+                        <span v-for="(collab, index) in settings.collaborators" :key="index" class="badge-custom border d-inline-flex align-items-center mb-2">
+                            <span class="mr-2">{{ collab.email || collab.name }}</span>
+                            <span class="role-badge" :class="collab.role ? collab.role.toLowerCase() : ''" style="text-transform: capitalize;">{{ collab.role }}</span>
+                            <span class="ml-2 delete-icon-wrapper" @click.stop="removeCollaborator(index)" title="Remove">
+                                <CIcon name="cil-x" size="sm" class="delete-icon" />
+                            </span>
+                        </span>
+                        <div v-if="!settings.collaborators || settings.collaborators.length === 0" class="text-muted small my-auto">
+                            No collaborators added.
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Permission Info Hint -->
@@ -69,12 +79,8 @@ export default {
         return {
             newCollaborator: {
                 email: '',
-                role: 'Editor'
+                role: 'editor'
             },
-            accessTypeOptions: [
-                { value: 'anyone', label: 'Anyone with the link' },
-                { value: 'specific', label: 'Specific people' }
-            ],
             roleOptions: [
                 { value: 'editor', label: 'Editor' },
                 { value: 'viewer', label: 'Viewer' }
@@ -83,6 +89,9 @@ export default {
     },
     created() {
         this.$store.dispatch('Setting/status/get');
+        if (!this.settings.collaborators) {
+            this.$set(this.settings, 'collaborators', []);
+        }
     },
     computed: {
         ...mapGetters('Setting', ['visionOptions']),
@@ -113,8 +122,7 @@ export default {
             }
         },
         addCollaborator() {
-            if (!this.newCollaborator.email) {
-                alert('Please enter an email address');
+            if (!this.newCollaborator.email || !this.newCollaborator.email.includes('@')) {
                 return;
             }
 
@@ -128,8 +136,12 @@ export default {
             });
 
             this.newCollaborator.email = '';
-            this.newCollaborator.role = 'Editor';
+            this.newCollaborator.role = 'editor';
 
+            this.triggerAutoSave();
+        },
+        removeCollaborator(index) {
+            this.settings.collaborators.splice(index, 1);
             this.triggerAutoSave();
         },
         async triggerAutoSave() {
@@ -143,6 +155,48 @@ export default {
 .rounded-20 {
     border-radius: 20px !important;
     overflow: hidden;
+}
+
+.org-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    min-height: 50px;
+}
+
+.badge-custom {
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #475569;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.delete-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.delete-icon-wrapper:hover {
+    background-color: #fee2e2;
+    color: #ef4444;
+    transform: scale(1.1);
+}
+
+.delete-icon {
+    font-size: 10px;
 }
 
 .info-hint {
