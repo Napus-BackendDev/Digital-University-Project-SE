@@ -69,11 +69,7 @@ const th = {
             all: "ทั้งหมด",
             today: "วันนี้",
             thisWeek: "อาทิตย์นี้",
-<<<<<<< HEAD
-            last7Days: "7 วันที่ผ่านมา",
-=======
             last7Days: "7 วันล่าสุด",
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
             last30Days: "30 วันก่อน"
         }
     },
@@ -150,26 +146,15 @@ const th = {
         pending: "ฟอร์มร่าง",
         completed: "เสร็จสิ้น",
         inprogress: "กำลังดำเนินการ",
-<<<<<<< HEAD
         totalResponses: "การตอบกลับทั้งหมด",
         totalUsers: "ผู้ใช้งานทั้งหมด",
-        avgResponses: "เฉลี่ยต่อฟอร์ม"
-    },
-    analytics: {
-        responsesOverTime: "แนวโน้มการตอบกลับ",
-        sevenDaysView: "ดูย้อนหลัง 7 วัน",
-        dailyResponsesDesc: "การตอบกลับรายวันในช่วงสัปดาห์ที่ผ่านมา",
-        mostResponded: "ฟอร์มที่มีการตอบกลับสูงสุด",
-        mostRespondedDesc: "ฟอร์มที่ได้รับความสนใจสูงสุด",
-        dailyResponsesTrend: "แนวโน้มการตอบกลับรายวันในสัปดาห์ล่าสุด"
-=======
+        avgResponses: "เฉลี่ยต่อฟอร์ม",
         manage: {
             total: "แบบฟอร์มทั้งหมด",
             active: "เปิดใช้งานอยู่",
             draft: "แบบฟอร์มร่าง",
             closed: "ปิดรับไปแล้ว"
         }
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
     },
     description: "รายละเอียด",
     editor: {

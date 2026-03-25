@@ -39,11 +39,7 @@
                 <td class="align-middle">
                     <span v-if="!item.isEmpty" class="status-badge" :class="getStatusClass(item.status)">
                         <span class="status-dot"></span>
-<<<<<<< HEAD
-                        {{ $t('status.' + item.status.toLowerCase()) }}
-=======
                         {{ $t('status.' + item.status.toLowerCase().replace(/\s/g, '')) }}
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                     </span>
                 </td>
             </template>
@@ -54,7 +50,7 @@
                     <div v-if="!item.isEmpty" class="access-stack">
                         <span v-for="(acc, i) in (Array.isArray(item.access) ? item.access : [item.access])" :key="i"
                             class="visibility-badge" :class="getVisibilityClass(acc)">
-                            {{ $t('accessLabel.' + acc.toLowerCase()) }}
+                            {{ $te('accessLabel.' + acc.toLowerCase()) ? $t('accessLabel.' + acc.toLowerCase()) : acc }}
                         </span>
                     </div>
                 </td>
@@ -70,11 +66,7 @@
                             </div>
                             <span class="response-count font-weight-bold mr-1">{{ getCompletedCount(item.responses)
                             }}</span>
-<<<<<<< HEAD
-                            <small class="text-muted">{{ $t('table.completed') }}</small>
-=======
                             <small class="text-muted">{{ $t('table.completedResponse') }}</small>
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                         </div>
                         <div class="d-flex align-items-center">
                             <div class="icon-wrapper mr-2"
@@ -83,11 +75,7 @@
                             </div>
                             <span class="response-count font-weight-bold mr-1">{{ getOngoingCount(item.responses)
                             }}</span>
-<<<<<<< HEAD
-                            <small class="text-muted">{{ $t('table.ongoing') }}</small>
-=======
                             <small class="text-muted">{{ $t('table.ongoingResponse') }}</small>
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                         </div>
                     </div>
                 </td>
@@ -98,11 +86,7 @@
                 <td class="align-middle text-right pr-4">
                     <div class="d-flex align-items-center justify-content-end">
                         <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn"
-<<<<<<< HEAD
-                            @click.stop="goToPreviewForm(item)" v-c-tooltip="$t('table.view')" aria-label="Preview">
-=======
                             @click.stop="goToPreviewForm(item)" v-c-tooltip="$t('button.preview')" aria-label="Preview">
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                             <CIcon name="cil-magnifying-glass" />
                         </CButton>
                         <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn"
@@ -110,11 +94,7 @@
                             <CIcon name="cil-copy" />
                         </CButton>
                         <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn"
-<<<<<<< HEAD
-                            @click.stop="goToEditForm(item)" v-c-tooltip="$t('table.edit')" aria-label="Edit">
-=======
                             @click.stop="goToEditForm(item)" v-c-tooltip="$t('button.edit')" aria-label="Edit">
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                             <CIcon name="cil-pencil" />
                         </CButton>
                         <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn"
@@ -128,12 +108,8 @@
             <template #empty>
                 <tr>
                     <td :colspan="fields.length" class="text-center py-5">
-<<<<<<< HEAD
-                        <div class="h5 mb-2">{{ $t('table.noItems') }}</div>
-                        <div class="text-muted">{{ $t('table.createOne') }}</div>
-=======
                         <div class="h5 mb-2">{{ $t('table.noForms') }}</div>
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
+                        <div class="text-muted">{{ $t('table.createOne') }}</div>
                     </td>
                 </tr>
             </template>
@@ -236,26 +212,8 @@ export default {
             const mapped = raw.map(f => {
                 if (!f) return { isEmpty: true };
 
-<<<<<<< HEAD
-                // Title extraction
-                let title = '-';
-                if (Array.isArray(f.title) && f.title.length > 0) {
-                    const localTitle = f.title.find(t => t && t.key && t.key.toLowerCase() === locale);
-                    title = localTitle ? (localTitle.value || '-') : (f.title[0] && f.title[0].value) || '-';
-                } else if (typeof f.title === 'string' && f.title.trim()) title = f.title;
-                else if (f.title && typeof f.title === 'object') title = f.title.value || '-';
-
-                // Description
-                let description = '-';
-                if (Array.isArray(f.description) && f.description.length > 0) {
-                    const localDesc = f.description.find(d => d && d.key && d.key.toLowerCase() === locale);
-                    description = localDesc ? (localDesc.value || '-') : (f.description[0] && f.description[0].value) || '-';
-                } else if (typeof f.description === 'string' && f.description.trim()) description = f.description;
-                else if (f.description && typeof f.description === 'object') description = f.description.value || '-';
-=======
                 let title = this.getLang(f.title) || this.$t('common.untitled');
                 let description = this.getLang(f.description) || '-';
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
 
                 // Created By / Organization (extract name + email)
                 let createdBy = '-';
@@ -289,7 +247,6 @@ export default {
                 let timeRange = '-';
                 let daysLeft = '';
                 if (f.schedule && (f.schedule.startAt || f.schedule.endAt)) {
-<<<<<<< HEAD
                     const localFormat = locale === 'th' ? 'th-TH' : 'en-GB';
                     const startAt = f.schedule.startAt ? new Date(f.schedule.startAt).toLocaleDateString(localFormat) : '';
                     const endAt = f.schedule.endAt ? new Date(f.schedule.endAt).toLocaleDateString(localFormat) : '';
@@ -297,15 +254,6 @@ export default {
                     if (f.schedule.endAt) {
                         const diff = Math.ceil((new Date(f.schedule.endAt) - new Date()) / (1000 * 60 * 60 * 24));
                         daysLeft = diff > 0 ? this.$t('table.daysLeft', { count: diff }) : this.$t('table.closed');
-=======
-                    const locale = this.$i18n.locale === 'th' ? 'th-TH' : 'en-US';
-                    const startAt = f.schedule.startAt ? new Date(f.schedule.startAt).toLocaleDateString(locale) : '';
-                    const endAt = f.schedule.endAt ? new Date(f.schedule.endAt).toLocaleDateString(locale) : '';
-                    timeRange = startAt || endAt ? `${startAt}${endAt ? ' - ' + endAt : ''}` : '-';
-                    if (f.schedule.endAt) {
-                        const diff = Math.ceil((new Date(f.schedule.endAt) - new Date()) / (1000 * 60 * 60 * 24));
-                        daysLeft = diff > 0 ? `${diff} ${this.$t('table.daysLeft')}` : this.$t('table.closed');
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                     }
                 } else if (f.timeRange && typeof f.timeRange === 'string') {
                     timeRange = f.timeRange;
@@ -354,7 +302,7 @@ export default {
                     return null;
                 }).filter(Boolean);
 
-                if (orgNames.includes('General')) {
+                if (orgNames.includes('General') || orgNames.includes('ทั่วไป')) {
                     access = ['Public'];
                 } else if (orgNames.length > 0) {
                     access = orgNames;
@@ -441,11 +389,7 @@ export default {
                 const end = new Date(endAt);
                 const now = new Date();
                 const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-<<<<<<< HEAD
                 return diff > 0 ? this.$t('table.daysLeft', { count: diff }) : this.$t('table.closed');
-=======
-                return diff > 0 ? `${diff} ${this.$t('table.daysLeft')}` : this.$t('table.closed');
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
             } catch (e) {
                 return '';
             }

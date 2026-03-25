@@ -146,26 +146,15 @@ const en = {
         pending: "Pending",
         completed: "Completed",
         inprogress: "In Progress",
-<<<<<<< HEAD
         totalResponses: "Total Responses",
         totalUsers: "Total Users",
-        avgResponses: "Avg Responses/Form"
-    },
-    analytics: {
-        responsesOverTime: "Responses Over Time",
-        sevenDaysView: "7 Days View",
-        dailyResponsesDesc: "Daily responses monitored over the past week",
-        mostResponded: "Most Responded Form",
-        mostRespondedDesc: "Forms with the most responses",
-        dailyResponsesTrend: "Daily responses over the last week"
-=======
+        avgResponses: "Avg Responses/Form",
         manage: {
             total: "Total Forms",
             active: "Active Forms",
             draft: "Draft Forms",
             closed: "Closed Forms"
         }
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
     },
     description: "Description",
     editor: {

@@ -29,7 +29,7 @@
                     <div class="access-stack">
                         <span v-for="(v, idx) in item.access" :key="idx" class="visibility-badge"
                             :class="getVisibilityClass(v)">
-                            {{ $t('accessLabel.' + v.toLowerCase()) }}
+                            {{ $te('accessLabel.' + v.toLowerCase()) ? $t('accessLabel.' + v.toLowerCase()) : v }}
                         </span>
                     </div>
                 </td>
@@ -136,7 +136,7 @@ export default {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
         },
 
-        tableData() {
+        baseTableData() {
             if (!this.forms || this.forms.length === 0) return [];
             console.log(JSON.parse(JSON.stringify(this.forms))); // log raw forms data for debugging
 
@@ -186,7 +186,7 @@ export default {
                     timeRange = startAt || endAt ? `${startAt}${endAt ? ' - ' + endAt : ''}` : '-';
                     if (f.schedule.endAt) {
                         const diff = Math.ceil((new Date(f.schedule.endAt) - new Date()) / (1000 * 60 * 60 * 24));
-                        daysLeft = diff > 0 ? `${diff} ${this.$t('table.daysLeft')}` : this.$t('table.closed');
+                        daysLeft = diff > 0 ? this.$t('table.daysLeft', { count: diff }) : this.$t('table.closed');
                     }
                 } else if (f.timeRange && typeof f.timeRange === 'string' && f.timeRange.trim()) {
                     timeRange = f.timeRange;
@@ -300,7 +300,25 @@ export default {
                 };
             });
 
-            let filtered = mapped;
+            const now = new Date();
+            const withAccess = mapped.filter(f => {
+                // Must have access to see it
+                if (!f.canEnter) return false;
+
+                const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
+                if (!sched.startAt && !sched.endAt) return false;
+
+                let isInTimeRange = true;
+                if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
+                if (sched.endAt && now > new Date(sched.endAt)) isInTimeRange = false;
+
+                return isInTimeRange;
+            });
+
+            return withAccess;
+        },
+        tableData() {
+            let filtered = this.baseTableData;
             if ((this.startDate && this.startDate.trim() !== '') || (this.endDate && this.endDate.trim() !== '')) {
                 const filterStart = this.startDate ? new Date(`${this.startDate}T00:00:00`) : new Date(-8640000000000000);
                 const filterEnd = this.endDate ? new Date(`${this.endDate}T23:59:59`) : new Date(8640000000000000);
@@ -331,25 +349,10 @@ export default {
                 });
             }
 
-            const now = new Date();
-            filtered = filtered.filter(f => {
-                // Must have access to see it
-                if (!f.canEnter) return false;
-
-                const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
-                if (!sched.startAt && !sched.endAt) return false;
-
-                let isInTimeRange = true;
-                if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
-                if (sched.endAt && now > new Date(sched.endAt)) isInTimeRange = false;
-
-                return isInTimeRange;
-            });
-
             return filtered;
         },
         stats() {
-            const data = this.tableData || [];
+            const data = this.baseTableData || [];
 
             let total = data.length;
             let pending = data.filter(f => f.status === 'Pending').length;
@@ -472,21 +475,21 @@ export default {
 }
 
 .status-pending {
-    background-color: #dbeafe;
-    color: #1e40af;
-}
-
-.status-pending .status-dot {
-    background-color: #2563eb;
-}
-
-.status-inprogress {
     background-color: #fef9c3;
     color: #854d0e;
 }
 
-.status-inprogress .status-dot {
+.status-pending .status-dot {
     background-color: #eab308;
+}
+
+.status-inprogress {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-inprogress .status-dot {
+    background-color: #2563eb;
 }
 
 .plus-circle {

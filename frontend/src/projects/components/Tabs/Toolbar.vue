@@ -40,11 +40,11 @@
                     </CButton>  
 
                     <CButton variant="ghost" color="dark" class="w-100 mb-1 text-left type-btn d-flex align-items-center"
-                        @click="sendEmail">
+                        @click="showQRModal = true">
                         <div class="icon-circle mr-3">
-                            <CIcon name="cil-envelope-closed" size="sm" />
+                            <CIcon name="cil-qr-code" size="sm" />
                         </div>
-                        <span class="font-weight-medium">{{ $t('toolbar.sendEmail') }}</span>
+                        <span class="font-weight-medium">QR Code Scan</span>
                     </CButton>
                 </div>
 
@@ -93,6 +93,38 @@
                 </div>
             </CCardBody>
         </CCard>
+
+        <CModal :show.sync="showQRModal" centered class="premium-modal">
+            <template #header>
+                <div class="w-100 d-flex justify-content-between align-items-center border-bottom-0 pb-0">
+                    <h5 class="mb-0 font-weight-bold text-dark d-flex align-items-center">
+                        <div class="icon-circle-header mr-3">
+                            <CIcon name="cil-qr-code" class="text-primary" size="lg" />
+                        </div>
+                        QR Code Share
+                    </h5>
+                    <CButton class="text-secondary p-0 shadow-none border-0" @click="showQRModal = false">
+                        <CIcon name="cil-x" size="lg" />
+                    </CButton>
+                </div>
+            </template>
+            <div class="d-flex justify-content-center align-items-center flex-column py-4 px-3">
+                <div class="qr-wrapper mb-4 text-center">
+                    <qr-code v-if="showQRModal" :text="formUrl" :size="200" level="H" render-as="canvas" />
+                </div>
+                <h4 class="font-weight-bold text-dark text-center mb-2">{{ formTitle }}</h4>
+                <p class="text-muted text-center mb-0 px-2" style="font-size: 0.95rem;">
+                    Scan this QR code with your phone's camera to easily access and fill out this form.
+                </p>
+            </div>
+            <template #footer>
+                <div class="w-100 d-flex justify-content-center border-top-0 pt-0 pb-2">
+                    <CButton color="primary" variant="outline" shape="pill" class="px-5 font-weight-bold btn-done shadow-sm" @click="showQRModal = false">
+                        Done
+                    </CButton>
+                </div>
+            </template>
+        </CModal>
     </CCol>
 </template>
 
@@ -124,7 +156,17 @@ export default {
     },
     data() {
         return {
-            copied: false
+            copied: false,
+            showQRModal: false
+        }
+    },
+    computed: {
+        formUrl() {
+            if (!this.form || !this.form._id) return '';
+            return `${window.location.origin}/forms/${this.form._id}?mode=public`;
+        },
+        formTitle() {
+            return this.getTitle(this.form.title) || 'Form';
         }
     },
     methods: {
@@ -276,5 +318,41 @@ export default {
     background-color: #1d4ed8 !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.premium-modal /deep/ .modal-content {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.icon-circle-header {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #eff6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-wrapper {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 24px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01) !important;
+}
+
+.btn-done {
+    border-width: 2px !important;
+    transition: all 0.2s ease;
+}
+
+.btn-done:hover {
+    background-color: #e0e7ff !important;
+    border-color: #4f46e5 !important;
+    color: #4f46e5 !important;
+    transform: translateY(-1px);
 }
 </style>
