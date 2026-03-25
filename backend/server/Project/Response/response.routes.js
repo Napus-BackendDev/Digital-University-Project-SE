@@ -29,14 +29,4 @@ router.delete("", function (req, res, next) {
     next();
 }, response.onDelete);
 
-router.get("/download/:form_id/response/:_id", function (req, res, next) {
-    req.body.apiId = 7;
-    next();
-}, response.downloadResponseJSON);
-
-router.get("/download/:form_id", function (req, res, next) {
-    req.body.apiId = 8;
-    next();
-}, response.downloadFormJSON);
-
 module.exports = router;

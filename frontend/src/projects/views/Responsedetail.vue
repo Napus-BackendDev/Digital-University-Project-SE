@@ -34,11 +34,25 @@
                                     <h4 class="m-0 font-weight-bold text-dark">Submission Overview</h4>
                                     <p class="text-muted small mb-0">General metadata about this form submission</p>
                                 </div>
-                                <div class="d-flex gap-2">
-                                    <CButton color="primary" variant="outline" size="sm" class="rounded-pill px-3 mr-2" @click="exportXlsx">
-                                        <CIcon name="cil-cloud-download" class="mr-1" /> Export XLSX
-                                    </CButton>
-                                    <CButton color="danger" variant="outline" size="sm" class="rounded-pill px-3" @click="deleteResponse">
+                                <div class="d-flex gap-2 align-items-center">
+                                    <CDropdown
+                                        class="mr-2 dropdown-export"
+                                        add-toggler-classes="btn-export-custom d-flex align-items-center"
+                                        :caret="false"
+                                    >
+                                        <template #toggler-content>
+                                            <CIcon name="cil-data-transfer-down" class="text-dark mr-2" style="width: 1.1rem; height: 1.1rem;" />
+                                            <span class="font-weight-medium mx-1" style="color: #0f172a; font-size: 1rem; letter-spacing: 0.3px;">Export</span>
+                                            <CIcon name="cil-chevron-bottom" class="text-dark ml-2" style="width: 0.9rem; height: 0.9rem; stroke-width: 2px;" />
+                                        </template>
+                                        <CDropdownItem @click="exportXlsx">
+                                            <CIcon name="cil-spreadsheet" class="mr-2 text-success" /> Export XLSX
+                                        </CDropdownItem>
+                                        <CDropdownItem @click="downloadJson">
+                                            <CIcon name="cil-code" class="mr-2 text-primary" /> Download JSON
+                                        </CDropdownItem>
+                                    </CDropdown>
+                                    <CButton color="danger" variant="outline" size="sm" class="px-3" style="height: 40px; border-width: 1.5px" @click="deleteResponse">
                                         <CIcon name="cil-trash" class="mr-1" /> Delete
                                     </CButton>
                                 </div>
@@ -224,6 +238,25 @@ export default {
             if (!dateStr) return '-';
             return moment(dateStr).format('D/M/YYYY, h:mm:ss');
         },
+        downloadJson() {
+            if (!this.response || !this.response.answers) {
+                alert("No data available to export.");
+                return;
+            }
+            const dateStr = moment(this.response.form?.createdAt || new Date()).format('YYYYMMDD');
+            const responder = this.response.responder;
+            const responderName = responder ? (responder.name || responder.email || 'Anonymous').split('@')[0] : (this.response.responderName || 'Anonymous');
+            const filename = `response_${responderName}_${dateStr}.json`;
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.response, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", filename);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        },
+
         // ── Export XLSX ───────────────────────────────────────────────────
         exportXlsx() {
             if (!this.response || !this.response.answers) {
@@ -358,5 +391,30 @@ h4 {
 
 ::v-deep .card:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.btn-export-custom {
+    background-color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+    border-radius: 100px !important;
+    padding: 0.5rem 1.4rem !important;
+    color: #0f172a !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-export-custom:hover {
+    background-color: #f8fafc !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+    transform: translateY(-2px);
+}
+
+.dropdown-export /deep/ .dropdown-toggle::after {
+    display: none !important;
+}
+
+.font-weight-medium {
+    font-weight: 500;
 }
 </style>

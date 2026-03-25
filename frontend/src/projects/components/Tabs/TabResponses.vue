@@ -38,9 +38,9 @@
                         <CIcon name="cil-spreadsheet" size="sm" class="mr-2 text-success" />
                         Microsoft Excel (.xlsx)
                     </CDropdownItem>
-                    <CDropdownItem @click="copyApiLink" class="dropdown-item-modern">
+                    <CDropdownItem @click="downloadJson" class="dropdown-item-modern">
                         <CIcon name="cil-code" size="sm" class="mr-2 text-primary" />
-                        Copy API Endpoint
+                        Download JSON
                     </CDropdownItem>
                 </CDropdown>
             </div>
@@ -323,28 +323,23 @@ export default {
             XLSX.writeFile(workbook, filename);
         },
 
-        // ── Copy API Link ─────────────────────────────────────────────────
-        copyApiLink() {
-            const formId = this.responses && this.responses._id;
-            if (!formId) { alert('Form ID not available yet.'); return; }
-            const BASE = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
-            const url = `${BASE}/response/download/${formId}`;
-
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(() => this.showCopied());
-            } else {
-                const el = document.createElement('textarea');
-                el.value = url;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-                this.showCopied();
+        // ── Download JSON ─────────────────────────────────────────────────
+        downloadJson() {
+            if (!this.allSubmittedResponses.length) {
+                alert('No responses to export.');
+                return;
             }
-        },
-        showCopied() {
-            this.copied = true;
-            setTimeout(() => { this.copied = false; }, 2000);
+            const formTitle = this.getTitle(this.responses.title) || 'responses';
+            const timestamp = moment().format('YYYY-MM-DD');
+            const filename = `${formTitle}(${timestamp}).json`;
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.allSubmittedResponses, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", filename);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
         },
 
         formatDate(dateStr) {
