@@ -10,7 +10,11 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalForms }}</h2>
+<<<<<<< HEAD
                     <div class="stat-label">{{ $t('widget.total') }}</div>
+=======
+                    <div class="stat-label">{{ $t('analytics.widgets.totalForms') }}</div>
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                 </div>
             </div>
         </CCol>
@@ -25,7 +29,11 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalResponses }}</h2>
+<<<<<<< HEAD
                     <div class="stat-label">{{ $t('widget.totalResponses') }}</div>
+=======
+                    <div class="stat-label">{{ $t('analytics.widgets.totalResponses') }}</div>
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                 </div>
             </div>
         </CCol>
@@ -40,7 +48,11 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalUsers }}</h2>
+<<<<<<< HEAD
                     <div class="stat-label">{{ $t('widget.totalUsers') }}</div>
+=======
+                    <div class="stat-label">{{ $t('analytics.widgets.totalUsers') }}</div>
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                 </div>
             </div>
         </CCol>
@@ -55,7 +67,11 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.avgResponses }}</h2>
+<<<<<<< HEAD
                     <div class="stat-label">{{ $t('widget.avgResponses') }}</div>
+=======
+                    <div class="stat-label">{{ $t('analytics.widgets.avgResponses') }}</div>
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                 </div>
             </div>
         </CCol>
@@ -86,7 +102,7 @@ export default {
             this.forms.forEach(form => {
                 // Count responses
                 if (form.responses) {
-                    totalResponses += form.responses.length;
+                    totalResponses += form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length;
                 }
 
                 // Count active forms

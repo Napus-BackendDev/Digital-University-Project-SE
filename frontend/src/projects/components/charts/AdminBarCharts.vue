@@ -3,7 +3,7 @@
         <div class="header mb-4">
             <div class="d-flex align-items-center mb-1">
                 <CIcon name="cil-chart" class="text-danger mr-2" size="lg" />
-                <h4 class="m-0 font-weight-bold">{{ $t('analytics.mostResponded') }}</h4>
+                <h4 class="m-0 font-weight-bold">Most Responded Form</h4>
             </div>
             <div class="text-muted small ">{{ $t('analytics.mostRespondedDesc') }}</div>
         </div>
@@ -31,8 +31,8 @@ export default {
             if (!this.forms) return []
             // Sort by response count descending
             const sorted = [...this.forms].sort((a, b) => {
-                const countA = a.responses ? a.responses.length : 0
-                const countB = b.responses ? b.responses.length : 0
+                const countA = a.responses ? a.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0
+                const countB = b.responses ? b.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0
                 return countB - countA
             })
             // Take top 5
@@ -44,7 +44,18 @@ export default {
             const data = []
 
             this.topForms.forEach(form => {
-                labels.push(this.getLang(form.title) || 'Untitled Form')
+                // Initial title logic
+                let title = 'default'
+                if (form.title) {
+                    if (Array.isArray(form.title)) {
+                        const enItem = form.title.find(item => item.key === 'en')
+                        title = enItem ? enItem.value : (form.title[0]?.value)
+                    } else {
+                        title = form.title
+                    }
+                }
+                labels.push(title)
+
                 data.push(form.responses ? form.responses.length : 0)
             })
 

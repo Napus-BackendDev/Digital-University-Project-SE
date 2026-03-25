@@ -4,7 +4,11 @@
             <div class="d-flex align-items-center mb-1">
                 <h4 class="m-0 font-weight-bold">{{ $t('nav.analytics') }}</h4>
             </div>
+<<<<<<< HEAD
             <div class="text-muted small ">{{ $t('analytics.dailyResponsesTrend') }}</div>
+=======
+            <div class="text-muted small ">{{ $t('analytics.responsesOverTimeDesc') }}</div>
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
         </div>
 
         <!-- Table -->
@@ -114,13 +118,17 @@ export default {
                     }
                 }
 
+<<<<<<< HEAD
                 const localFormat = this.$i18n.locale === 'th' ? 'th-TH' : 'en-GB';
 
+=======
+                moment.locale(this.$i18n.locale === 'th' ? 'th' : 'en');
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
                 return {
-                    title: this.getLang(form.title) || 'Untitled Form',
+                    title: this.getLang(form.title) || this.$t('common.untitled'),
                     description: this.getLang(form.description) || '',
                     status: statusTitle,
-                    access: form.isPublic ? 'Public' : 'Private',
+                    access: form.isPublic ? this.$t('accessLabel.public') : this.$t('accessLabel.private'),
                     responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
                     created: form.updatedAt ? new Date(form.updatedAt).toLocaleDateString(localFormat, { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
                 }

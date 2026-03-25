@@ -1,6 +1,10 @@
 <template>
     <div class="flex-grow-1">
+<<<<<<< HEAD
         <Header :title="$t('analytics.dailyResponsesTrend')" :description="$t('analytics.dailyResponsesDesc')" />
+=======
+        <Header :title="$t('analytics.title')" :description="$t('analytics.description')" />
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
         <WidgetsDropdown class="mb-4" />
         <CRow class="mb-4 no-gutters">
             <CCol lg="12" class="px-0">

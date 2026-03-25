@@ -7,7 +7,11 @@
                     <span class="badge badge-soft-maroon px-3 py-2">{{ $t('analytics.sevenDaysView') }}</span>
                 </div>
             </div>
+<<<<<<< HEAD
             <p class="text-muted-modern small mb-0">{{ $t('analytics.dailyResponsesDesc') }}</p>
+=======
+            <p class="text-muted-modern small mb-0">{{ $t('analytics.responsesOverTimeDesc') }}</p>
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
         </div>
 
         <div class="chart-container">
@@ -20,10 +24,12 @@
 import { CChartLine } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
 import moment from 'moment'
+import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'AdminLineCharts',
     components: { CChartLine },
+    mixins: [localeMixin],
     computed: {
         ...mapGetters('Forms', ['forms']),
 
@@ -33,6 +39,7 @@ export default {
             const dataMap = {};
 
             for (let i = 6; i >= 0; i--) {
+                moment.locale(this.$i18n.locale);
                 const dateKey = moment().subtract(i, 'days').format('YYYY-MM-DD');
                 const displayKey = moment().subtract(i, 'days').format('DD MMM');
                 labels.push(displayKey);
@@ -41,10 +48,10 @@ export default {
 
             let totalResponses = 0;
             this.forms.forEach(form => {
-                if (form.responses && form.responses.length) {
-                    totalResponses += form.responses.length;
-
-                    form.responses.forEach(res => {
+                const submittedResponses = (form.responses || []).filter(r => r && (r.submit === true || r.submit === 'true'));
+                if (submittedResponses.length) {
+                    totalResponses += submittedResponses.length;
+                    submittedResponses.forEach(res => {
                         if (res && res.createdAt) {
                             const dKey = moment(res.createdAt).format('YYYY-MM-DD');
                             if (dataMap[dKey] !== undefined) {

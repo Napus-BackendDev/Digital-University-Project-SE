@@ -28,13 +28,13 @@
                             <CIcon name="cil-account-logout" />
                         </CButton>
                     </template>
-                    <CDropdownHeader>Select User</CDropdownHeader>
+                    <CDropdownHeader>{{ $t('nav.selectUser') }}</CDropdownHeader>
                     <CDropdownItem v-for="u in usersList" :key="u._id" @click="switchUser(u)">
                         {{ u.name }}
                     </CDropdownItem>
                     <CDropdownDivider v-if="usersList.length > 0" />
                     <CDropdownItem @click="logout" class="text-danger">
-                        <CIcon name="cil-account-logout" class="mr-2" /> Logout
+                        <CIcon name="cil-account-logout" class="mr-2" /> {{ $t('nav.logout') }}
                     </CDropdownItem>
                 </CDropdown>
             </div>
@@ -50,35 +50,6 @@ export default {
     data() {
         return {
             usersList: [],
-            navs: [{
-                _name: 'CSidebarNav',
-                _children: [
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: 'Forms',
-                        to: '/forms',
-                        icon: 'cil-description',
-                    },
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: 'Form Management',
-                        to: '/manage',
-                        icon: 'cib-ghost',
-                    },
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: 'Analytics',
-                        to: '/analytics',
-                        icon: 'cil-chart',
-                    },
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: 'Permissions',
-                        to: '/permissions',
-                        icon: 'cil-lock-locked',
-                    },
-                ]
-            }]
         }
     },
     async created() {
@@ -120,6 +91,37 @@ export default {
         },
     },
     computed: {
+        navs() {
+            return [{
+                _name: 'CSidebarNav',
+                _children: [
+                    {
+                        _name: 'CSidebarNavItem',
+                        name: this.$t('nav.forms'),
+                        to: '/forms',
+                        icon: 'cil-description',
+                    },
+                    {
+                        _name: 'CSidebarNavItem',
+                        name: this.$t('nav.manage'),
+                        to: '/manage',
+                        icon: 'cib-ghost',
+                    },
+                    {
+                        _name: 'CSidebarNavItem',
+                        name: this.$t('nav.analytics'),
+                        to: '/analytics',
+                        icon: 'cil-chart',
+                    },
+                    {
+                        _name: 'CSidebarNavItem',
+                        name: this.$t('nav.permissions'),
+                        to: '/permissions',
+                        icon: 'cil-lock-locked',
+                    },
+                ]
+            }];
+        },
         show() {
             return this.$store.state.sidebarShow
         },
@@ -130,10 +132,10 @@ export default {
             return this.$store.state.User.user || {};
         },
         username() {
-            return this.user.name || 'Select a user...';
+            return this.user.name || this.$t('nav.selectUser');
         },
         userEmail() {
-            return this.user.email || 'Welcome to E-Questionnaires';
+            return this.user.email || this.$t('nav.welcome');
         },
         userOrganization() {
             const org = this.user.organization;

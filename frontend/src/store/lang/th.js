@@ -11,12 +11,30 @@ const th = {
         manage: "จัดการฟอร์ม",
         analytics: "การวิเคราะห์",
         permissions: "สิทธิ์การเข้าถึง",
-        logout: "ออกจากระบบ"
+        logout: "ออกจากระบบ",
+        selectUser: "เลือกผู้ใช้งาน",
+        welcome: "ยินดีต้อนรับสู่ระบบแบบสอบถาม"
+    },
+    accessLabel: {
+        public: "สาธารณะ",
+        private: "ส่วนตัว",
+        general: "ทั่วไป"
     },
 
     table: {
         title: "ฟอร์มทั้งหมด",
         access: "การเข้าถึง",
+        noForms: "ยังไม่มีแบบสอบถาม เริ่มสร้างเพื่อใช้งาน!",
+        emailRequired: "จำเป็นต้องระบุอีเมล",
+        addAnswer: "เพิ่มคำตอบ",
+        viewAnswer: "ดูคำตอบ",
+        continueForm: "ทำแบบฟอร์มต่อ",
+        startForm: "เริ่มทำแบบฟอร์ม",
+        daysLeft: "วันคงเหลือ",
+        closed: "ปิดรับแล้ว",
+        completedResponse: "เสร็จสิ้น",
+        ongoingResponse: "กำลังทำ",
+        duplicate: "คัดลอก",
         questionnaire: "ชื่อแบบสอบถาม",
         status: "สถานะ",
         timeRange: "ช่วงเวลา",
@@ -33,6 +51,7 @@ const th = {
         edit: "แก้ไข",
         delete: "ลบ",
         search: "ค้นหา...",
+        searchPlaceholder: "ค้นหาแบบฟอร์ม...",
         allStatus: "สถานะทั้งหมด",
         noItems: "ยังไม่มีแบบสอบถามในขณะนี้ เริ่มต้นสร้างได้เลย",
         daysLeft: "เหลืออีก {count} วัน",
@@ -43,14 +62,18 @@ const th = {
         continueForm: "ทำต่อจากที่ค้างไว้",
         startForm: "เริ่มทำแบบสอบถาม",
         visibility: "การเข้าถึง",
-        dateFrom: "จากวันที่",
-        dateTo: "ถึงวันที่",
+        dateFrom: "จาก",
+        dateTo: "ถึง",
         rangeShortcuts: "ช่วงเวลาด่วน",
         quickDate: {
             all: "ทั้งหมด",
             today: "วันนี้",
             thisWeek: "อาทิตย์นี้",
+<<<<<<< HEAD
             last7Days: "7 วันที่ผ่านมา",
+=======
+            last7Days: "7 วันล่าสุด",
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
             last30Days: "30 วันก่อน"
         }
     },
@@ -81,6 +104,7 @@ const th = {
         successMessage: "ขอบคุณสำหรับการส่งข้อมูล!",
         duplicateSuccess: "คัดลอกฟอร์มเรียบร้อยแล้ว!",
         question: "คำถามที่",
+        answered: "ตอบแล้ว",
         notAuthenticated: "ยังไม่ได้เข้าสู่ระบบ",
         loginRequired: "คุณต้องเข้าสู่ระบบเพื่อส่งฟอร์มนี้",
         alreadySubmitted: "คุณได้ส่งแบบสอบถามนี้ไปแล้ว",
@@ -126,6 +150,7 @@ const th = {
         pending: "ฟอร์มร่าง",
         completed: "เสร็จสิ้น",
         inprogress: "กำลังดำเนินการ",
+<<<<<<< HEAD
         totalResponses: "การตอบกลับทั้งหมด",
         totalUsers: "ผู้ใช้งานทั้งหมด",
         avgResponses: "เฉลี่ยต่อฟอร์ม"
@@ -137,7 +162,86 @@ const th = {
         mostResponded: "ฟอร์มที่มีการตอบกลับสูงสุด",
         mostRespondedDesc: "ฟอร์มที่ได้รับความสนใจสูงสุด",
         dailyResponsesTrend: "แนวโน้มการตอบกลับรายวันในสัปดาห์ล่าสุด"
+=======
+        manage: {
+            total: "แบบฟอร์มทั้งหมด",
+            active: "เปิดใช้งานอยู่",
+            draft: "แบบฟอร์มร่าง",
+            closed: "ปิดรับไปแล้ว"
+        }
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
     },
-    description: "รายละเอียด"
+    description: "รายละเอียด",
+    editor: {
+        header: {
+            questionTitle: "คำถามของแบบฟอร์ม",
+            questionDesc: "เพิ่มและจัดการคำถามเพื่อรวบรวมคำตอบ",
+            responseTitle: "การตอบกลับของแบบฟอร์ม",
+            responseDesc: "ดูและวิเคราะห์ข้อมูลการส่งแบบฟอร์มและประสิทธิภาพ",
+            settingTitle: "การตั้งค่าแบบฟอร์ม",
+            settingDesc: "กำหนดค่าการเข้าถึง กำหนดเวลา และการควบคุมองค์กร"
+        }
+    },
+    toolbar: {
+        mainNav: "เมนูหลัก",
+        questions: "คำถาม",
+        responses: "การตอบกลับ",
+        settings: "การตั้งค่า",
+        sharing: "การแชร์แบบฟอร์ม",
+        copyLink: "คัดลอกลิงก์",
+        copied: "คัดลอกแล้ว!",
+        sendEmail: "ส่งอีเมล",
+        questionTypes: "ประเภทคำถาม",
+        contentElements: "องค์ประกอบเนื้อหา"
+    },
+    analytics: {
+        title: "แดชบอร์ดผู้ดูแลระบบ",
+        description: "ภาพรวมของแบบฟอร์มและการตอบกลับทั้งหมด",
+        responsesOverTime: "เทรนด์การตอบกลับ",
+        responsesOverTimeDesc: "การตอบกลับรายวันในช่วงสัปดาห์ที่ผ่านมา",
+        sevenDaysView: "ดูย้อนหลัง 7 วัน",
+        mostRespondedForm: "แบบฟอร์มที่มีการตอบกลับสูงสุด",
+        mostRespondedDesc: "แบบฟอร์มที่มีจำนวนผู้เข้าใช้งานสูงสุด",
+        widgets: {
+            totalForms: "แบบฟอร์มทั้งหมด",
+            totalResponses: "การตอบกลับทั้งหมด",
+            totalUsers: "ผู้ใช้งานทั้งหมด",
+            avgResponses: "การตอบกลับเฉลี่ยต่อฟอร์ม"
+        }
+    },
+    types: {
+        short_answer: "คำตอบสั้น",
+        paragraph: "คำบรรยาย",
+        multiple_choice: "หลายตัวเลือก",
+        checkbox: "กล่องเลือก",
+        rating: "ประเมินให้คะแนน",
+        file_upload: "อัปโหลดไฟล์",
+        title_description: "หัวข้อและคำอธิบาย",
+        image: "รูปภาพ"
+    },
+    builder: {
+        addLanguage: "เพิ่มภาษา",
+        shortAnswerPlaceholder: "คำตอบสั้นๆ",
+        paragraphPlaceholder: "คำบรรยายยาวๆ",
+        addFollowUp: "เพิ่มคำถามต่อเนื่อง",
+        goToFollowUp: "ไปยังคำถามต่อเนื่อง",
+        followUpHeader: "คำถามต่อเนื่อง",
+        followUpFrom: "จากตัวเลือก:",
+        addOption: "เพิ่มตัวเลือก",
+        fileType: "ประเภทไฟล์",
+        maxFiles: "จำนวนไฟล์สูงสุด",
+        maxFileSize: "ขนาดไฟล์สูงสุด",
+        description: "คำอธิบาย",
+        clickToChooseImage: "คลิกเพื่อเลือกรูปภาพ",
+        type: "ประเภท",
+        previewNotAvailable: "ไม่มีตัวอย่างสำหรับประเภทนี้",
+        emptyQuestions: "คุณยังไม่ได้รับรายชื่อคำถาม ลองเพิ่มได้จากแถบด้านข้าง",
+        requiredLabel: "จำเป็นต้องตอบ",
+        modal: {
+            chooseImage: "เลือกรูปภาพ",
+            cancel: "ยกเลิก",
+            ok: "ตกลง"
+        }
+    }
 }
 export default th

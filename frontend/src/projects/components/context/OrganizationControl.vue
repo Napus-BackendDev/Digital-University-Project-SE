@@ -64,7 +64,7 @@
                 <!-- Info Hint -->
                 <div class="info-hint mb-3">
                     <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
-                    <h5 class="mb-0 ">ถ้าคุณเลือก <strong>General</strong> ทุกหน่วยงานจะสามารถ ทำ ฟอร์ม ได้</h5>
+                    <h6 class="mb-0 ">ถ้าคุณเลือก <strong>General</strong> ทุกหน่วยงานจะสามารถทำฟอร์มได้</h6>
                 </div>
             </div>
 
@@ -106,7 +106,7 @@ export default {
     methods: {
         getOrgName(orgId) {
             if (!orgId) return '...';
-            
+
             // Check if orgId is already an object (populated by backend)
             let org = null;
             if (typeof orgId === 'object' && orgId !== null) {
@@ -121,7 +121,7 @@ export default {
                 if (typeof orgId === 'string') return orgId;
                 return 'Unknown Org';
             }
-            
+
             // Extract Name based on language/title structure
             if (Array.isArray(org.title)) {
                 // Try to find English title first, or any first title available
@@ -135,7 +135,7 @@ export default {
         },
         addOrganization() {
             if (!this.selectedOrgId) return;
-            
+
             // Initialize settings.organization if it doesn't exist
             if (!this.settings.organization) {
                 this.$set(this.settings, 'organization', []);

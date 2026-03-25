@@ -121,21 +121,21 @@ export default {
         ...mapGetters('User', ['user']),
         ...mapGetters('Forms', ['duplicateBuffer']),
         headerTitle() {
-            if (this.activeTab === 'question') return "Form Questions";
-            if (this.activeTab === 'response') return "Form Responses";
-            if (this.activeTab === 'setting') return "Form Settings";
+            if (this.activeTab === 'question') return this.$t('editor.header.questionTitle');
+            if (this.activeTab === 'response') return this.$t('editor.header.responseTitle');
+            if (this.activeTab === 'setting') return this.$t('editor.header.settingTitle');
             
             // Default: show form title for 'question' tab
-            if (!this.formData || !this.formData.title) return "Loading...";
+            if (!this.formData || !this.formData.title) return this.$t('common.loading');
             if (Array.isArray(this.formData.title)) {
-                return this.formData.title[0]?.value || "Untitled Form";
+                return this.formData.title[0]?.value || this.$t('common.untitled');
             }
-            return this.formData.title || "Untitled Form";
+            return this.formData.title || this.$t('common.untitled');
         },
         headerDescription() {
-            if (this.activeTab === 'question') return "Add and organize questions to collect responses";
-            if (this.activeTab === 'response') return "View and analyze form submissions and performance data";
-            if (this.activeTab === 'setting') return "Configure form access, schedule, and organization controls";
+            if (this.activeTab === 'question') return this.$t('editor.header.questionDesc');
+            if (this.activeTab === 'response') return this.$t('editor.header.responseDesc');
+            if (this.activeTab === 'setting') return this.$t('editor.header.settingDesc');
 
             // Default: show form description for 'question' tab
             if (!this.formData || !this.formData.description) return "";

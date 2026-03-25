@@ -5,7 +5,7 @@
                 <!-- Search -->
                 <CCol md="3" lg="3" class="mb-2 mb-md-0">
                     <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.search')
-                    }}</label>
+                        }}</label>
                     <CInput :value="searchQuery" @input="$emit('update:searchQuery', $event)"
                         :placeholder="$t('table.searchPlaceholder')" class="mb-0 custom-filter-input"
                         style="height: 38px;">
@@ -18,7 +18,7 @@
                 <!-- Status Dropdown -->
                 <CCol md="3" lg="2" class="mb-2 mb-md-0">
                     <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.status')
-                    }}</label>
+                        }}</label>
                     <CDropdown class="filter-dropdown w-100">
                         <template #toggler>
                             <button
@@ -38,10 +38,10 @@
                             <CDropdownItem @click="$emit('update:selectedStatus', 'Draft')">{{ $t('status.draft') }}
                             </CDropdownItem>
                             <CDropdownItem @click="$emit('update:selectedStatus', 'Active')">{{ $t('status.active')
-                            }}
+                                }}
                             </CDropdownItem>
                             <CDropdownItem @click="$emit('update:selectedStatus', 'Closed')">{{ $t('status.closed')
-                            }}
+                                }}
                             </CDropdownItem>
                         </template>
                         <template v-else>
@@ -61,7 +61,7 @@
                 <CCol md="3" lg="4" class="mb-2 mb-md-0">
                     <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{
                         $t('table.rangeShortcuts')
-                    }}</label>
+                        }}</label>
                     <CButtonGroup class="w-100">
                         <CButton v-for="shortcut in dateShortcuts" :key="shortcut.id"
                             :color="currentShortcut === shortcut.id ? 'primary' : 'secondary'"
@@ -75,7 +75,7 @@
                 <!-- Time Range: From -->
                 <CCol sm="6" md="1.5" class="mb-2 mb-md-0" style="flex: 0 0 12.5%; max-width: 12.5%;">
                     <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.dateFrom')
-                    }}</label>
+                        }}</label>
                     <CInput type="date" :value="startDate" @input="onDateInput('startDate', $event)"
                         class="mb-0 custom-filter-input" style="height: 38px;" />
                 </CCol>
@@ -83,7 +83,7 @@
                 <!-- Time Range: To -->
                 <CCol sm="6" md="1.5" lg="1.5" class="mb-2 mb-md-0" style="flex: 0 0 12.5%; max-width: 12.5%;">
                     <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.dateTo')
-                    }}</label>
+                        }}</label>
                     <CInput type="date" :value="endDate" @input="onDateInput('endDate', $event)"
                         class="mb-0 custom-filter-input" style="height: 38px;" />
                 </CCol>

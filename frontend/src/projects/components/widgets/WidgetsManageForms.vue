@@ -13,6 +13,7 @@
                         <div class="stat-label">{{ $t('widget.total') }}</div>
                     </div>
                 </div>
+<<<<<<< HEAD
             </CCol>
             <CCol sm="6" lg="3" @click="$emit('filter', 'Active')" style="cursor: pointer;">
                 <div class="stat-card">
@@ -55,6 +56,54 @@
             </CCol>
         </CRow>
     </div>
+=======
+                <div class="stat-content">
+                    <h2 class="stat-value">{{ stats.total }}</h2>
+                    <div class="stat-label">{{ $t('widget.manage.total') }}</div>
+                </div>
+            </div>
+        </CCol>
+        <CCol sm="6" lg="3" @click="$emit('filter', 'Active')" style="cursor: pointer;">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="icon-box bg-success-light text-success">
+                        <CIcon name="cil-check-circle" size="xl" />
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h2 class="stat-value">{{ stats.active }}</h2>
+                    <div class="stat-label">{{ $t('widget.manage.active') }}</div>
+                </div>
+            </div>
+        </CCol>
+        <CCol sm="6" lg="3" @click="$emit('filter', 'Draft')" style="cursor: pointer;">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="icon-box bg-warning-light text-warning">
+                        <CIcon name="cil-clock" size="xl" />
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h2 class="stat-value">{{ stats.draft }}</h2>
+                    <div class="stat-label">{{ $t('widget.manage.draft') }}</div>
+                </div>
+            </div>
+        </CCol>
+        <CCol sm="6" lg="3" @click="$emit('filter', 'Closed')" style="cursor: pointer;">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="icon-box bg-danger-light text-danger">
+                        <CIcon name="cil-lock-locked" size="xl" />
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h2 class="stat-value">{{ stats.closed }}</h2>
+                    <div class="stat-label">{{ $t('widget.manage.closed') }}</div>
+                </div>
+            </div>
+        </CCol>
+    </CRow>
+>>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
 </template>
 
 <script>

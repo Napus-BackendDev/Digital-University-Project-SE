@@ -41,7 +41,7 @@
                     <!-- ── Form Description ── -->
                     <div>
                         <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
-                            class="d-flex align-items-center mb-1">
+                            class="d-flex align-items-start mb-1">
                             <div class="lang-key-wrapper flex-shrink-0 mr-2">
                                 <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
                                     <template #toggler>
@@ -60,7 +60,7 @@
                                     <CButton @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', updateFormMeta)" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
                                 </div>
                             </div>
-                            <CInput class="form-desc-input flex-grow-1 mb-0" v-model="descItem.value"
+                            <CTextarea class="form-desc-input flex-grow-1 border-bottom mb-0" v-model="descItem.value"
                                 @change="updateFormMeta" rows="2" />
                             <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
                                 v-if="form.description && form.description.length > 1" @click="removeFormDesc(dIdx)">
@@ -80,8 +80,7 @@
         <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }"
             :row-height="10" :is-draggable="true" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
             <GridItem v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)"
-                :is-draggable="!getParentForFollowUp(question)"
-                v-bind="getLayoutItem(question, qIndex)">
+                :is-draggable="!getParentForFollowUp(question)" v-bind="getLayoutItem(question, qIndex)">
                 <CCard :id="'question-' + (question._id || qIndex)"
                     class="mb-3 position-relative rounded-20 shadow-sm border"
                     :class="{ 'followup-card': getParentForFollowUp(question) }"
@@ -89,9 +88,9 @@
                     <CCardBody class="p-4">
                         <!-- Question Title -->
                         <div v-if="getParentForFollowUp(question)" class="mb-2 d-flex align-items-center">
-                            <div class="followup-header">Follow-up Question</div>
+                            <div class="followup-header">{{ $t('builder.followUpHeader') }}</div>
                             <small class="text-muted ml-3 followup-from">
-                                From option: {{ getParentForFollowUp(question).meta.parentChoiceLabel }}
+                                {{ $t('builder.followUpFrom') }} {{ getParentForFollowUp(question).meta.parentChoiceLabel }}
                             </small>
                         </div>
                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -130,7 +129,7 @@
 
                                 <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn mt-1"
                                     style="width: 3.2rem;" @click="addTitle(question)" size="sm"
-                                    v-c-tooltip="'Add language'" aria-label="Add language">
+                                    v-c-tooltip="$t('builder.addLanguage')" aria-label="Add language">
                                     <CIcon name="cil-globe-alt" />
                                 </CButton>
                             </div>
@@ -144,11 +143,11 @@
 
                         <!-- ── Question Type ── -->
                         <div v-if="getQuestionType(question.type).toLowerCase() === 'short_answer'">
-                            <CInput disabled style="opacity: 0.55;" placeholder="Short paragraph text" />
+                            <CInput disabled style="opacity: 0.55;" :placeholder="$t('builder.shortAnswerPlaceholder')" />
                         </div>
 
                         <div v-else-if="getQuestionType(question.type).toLowerCase() === 'paragraph'">
-                            <CTextarea disabled style="opacity: 0.55;" placeholder="Long answer text" rows="3" />
+                            <CTextarea disabled style="opacity: 0.55;" :placeholder="$t('builder.paragraphPlaceholder')" rows="3" />
                         </div>
 
                         <div v-else-if="
@@ -205,7 +204,7 @@
                                         <CButton size="sm" variant="ghost" color="warning"
                                             class="icon-btn followup-add-btn"
                                             @click="addFollowUp(question, choiceIndex)"
-                                            v-c-tooltip="'Add follow-up question'" aria-label="Add follow-up question">
+                                            v-c-tooltip="$t('builder.addFollowUp')" aria-label="Add follow-up question">
                                             <CIcon name="cil-speech" />
                                         </CButton>
                                     </div>
@@ -213,7 +212,7 @@
                                     <div v-else-if="findFollowUp(question, choiceIndex)" class="mb-2 mr-1">
                                         <CButton size="sm" variant="ghost" color="info" class="icon-btn followup-go-btn"
                                             @click="goToFollowUp(question, choiceIndex)"
-                                            v-c-tooltip="'Go to follow-up question'"
+                                            v-c-tooltip="$t('builder.goToFollowUp')"
                                             aria-label="Go to follow-up question">
                                             <CIcon name="cil-arrow-right" />
                                         </CButton>
@@ -227,7 +226,7 @@
                                 </div>
                             </div>
                             <CButton color="primary" variant="ghost" class="icon-btn add-option-btn mt-1"
-                                @click="addOption(question)" size="sm" v-c-tooltip="'Add option'"
+                                @click="addOption(question)" size="sm" v-c-tooltip="$t('builder.addOption')"
                                 aria-label="Add option">
                                 <CIcon name="cil-list" />
                             </CButton>
@@ -255,7 +254,7 @@
 
                         <div v-else-if="getQuestionType(question.type).toLowerCase() === 'file_upload'">
                             <div class="mb-3">
-                                <span class="d-block mb-2 small text-muted">File Type</span>
+                                <span class="d-block mb-2 small text-muted">{{ $t('builder.fileType') }}</span>
                                 <div class="d-flex flex-wrap">
                                     <div v-for="ft in fileTypeOptions" :key="ft.key" class="mr-3 mb-2">
                                         <CInputCheckbox :id="`filetype-${qIndex}-${ft.key}`"
@@ -267,7 +266,7 @@
                                 </div>
                             </div>
                             <div class="d-flex align-items-center mb-2">
-                                <span class="mr-3 small text-muted">Max files</span>
+                                <span class="mr-3 small text-muted">{{ $t('builder.maxFiles') }}</span>
                                 <CDropdown color="secondary" variant="outline">
                                     <template #toggler>
                                         <button class="btn btn-sm border">
@@ -280,7 +279,7 @@
                                 </CDropdown>
                             </div>
                             <div class="d-flex align-items-center">
-                                <span class="mr-3 small text-muted">Max file size</span>
+                                <span class="mr-3 small text-muted">{{ $t('builder.maxFileSize') }}</span>
                                 <CDropdown color="secondary" variant="outline">
                                     <template #toggler>
                                         <button class="btn btn-sm border">
@@ -298,10 +297,10 @@
                         </div>
 
                         <div v-else-if="getQuestionType(question.type).toLowerCase() === 'title_description'">
-                            <small class="text-muted font-weight-bold d-block mb-1">Description</small>
+                            <small class="text-muted font-weight-bold d-block mb-1">{{ $t('builder.description') }}</small>
 
                             <div v-for="(descItem, dIdx) in (question.config.description || [])" :key="'qd-' + dIdx"
-                                class="d-flex align-items-center">
+                                class="d-flex align-items-start">
                                 <div class="lang-key-wrapper flex-shrink-0 mr-2">
                                     <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
                                         <template #toggler>
@@ -320,7 +319,7 @@
                                         <CButton @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', () => putQuestion(question))" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
                                     </div>
                                 </div>
-                                <CInput class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
+                                <CTextarea class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
                                     rows="2" />
                                 <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
                                     v-if="question.config.description && question.config.description.length > 1"
@@ -340,7 +339,7 @@
                             <div class="image-drop-zone" @click="openImageModal(qIndex)">
                                 <div v-if="!question.config || !question.config.image" class="image-placeholder">
                                     <CIcon name="cil-image-1" :height="40" class="mb-2" />
-                                    <span>Click to choose image</span>
+                                    <span>{{ $t('builder.clickToChooseImage') }}</span>
                                 </div>
                                 <img v-else :src="question.config.image" class="image-preview" />
                             </div>
@@ -348,7 +347,7 @@
 
                         <div v-else>
                             <span class="text-muted font-italic small">
-                                Preview not available for this type
+                                {{ $t('builder.previewNotAvailable') }}
                             </span>
                         </div>
 
@@ -356,7 +355,7 @@
                         <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
                                 <div v-if="!getParentForFollowUp(question)" class="d-flex align-items-center">
-                                    <span class="text-muted font-weight-bold mr-2">Type</span>
+                                    <span class="text-muted font-weight-bold mr-2">{{ $t('builder.type') }}</span>
                                     <CDropdown color="light" variant="outline">
                                         <template #toggler>
                                             <button class="btn d-flex align-items-center text-muted border bg-white"
@@ -380,7 +379,7 @@
 
                             <div v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'"
                                 class="d-flex align-items-center">
-                                <small class="text-muted font-weight-bold text-uppercase mr-2">Required</small>
+                                <small class="text-muted font-weight-bold text-uppercase mr-2">{{ $t('builder.requiredLabel') }}</small>
                                 <CSwitch class="mx-1" color="dark" shape="pill" :checked="question.isRequired"
                                     @update:checked="val => { question.isRequired = val; putQuestion(question); }" />
                             </div>
@@ -394,14 +393,14 @@
         <div v-if="!localQuestions || localQuestions.length === 0"
             class="text-center py-5 text-muted bg-white rounded-20 shadow-sm">
             <CIcon name="cil-notes" :height="40" class="mb-3 text-muted" />
-            <p class="mb-0">You haven’t added any questions yet. Try adding one from the sidebar.</p>
+            <p class="mb-0">{{ $t('builder.emptyQuestions') }}</p>
         </div>
 
         <!-- Image Select modal -->
         <CModal :show.sync="showImageModal" :centered="true">
             <template #header-wrapper>
                 <div class="d-flex justify-content-between align-items-center font-weight-bold pl-3 border-bottom">
-                    <span>Choose Image</span>
+                    <span>{{ $t('builder.modal.chooseImage') }}</span>
                     <CButton color="secondary" variant="ghost" @click="showImageModal = false">
                         <CIcon name="cil-x" />
                     </CButton>
@@ -412,7 +411,7 @@
                     <div class="image-drop-zone" @click="$refs.imageFileInput.click()">
                         <div v-if="!modalFiles" class="image-placeholder">
                             <CIcon name="cil-image-1" :height="40" class="mb-2" />
-                            <span>Choose Image</span>
+                            <span>{{ $t('builder.modal.chooseImage') }}</span>
                         </div>
                         <img v-else :src="modalFiles" class="image-preview" />
                     </div>
@@ -423,10 +422,10 @@
             <template #footer-wrapper>
                 <div class="d-flex justify-content-end p-2 border-top">
                     <CButton color="danger" variant="ghost" @click="showImageModal = false">
-                        Cancel
+                        {{ $t('builder.modal.cancel') }}
                     </CButton>
                     <CButton color="primary" class="ml-2" @click="confirmImageQuestion()">
-                        OK
+                        {{ $t('builder.modal.ok') }}
                     </CButton>
                 </div>
             </template>
@@ -672,12 +671,12 @@ export default {
         buildGridLayoutFromQuestions() {
             try {
                 const newLayout = buildGridLayoutFromQuestions(
-                    this.localQuestions, 
-                    this.storedLayout, 
+                    this.localQuestions,
+                    this.storedLayout,
                     (t) => this.getQuestionType(t),
                     (q) => !!this.getParentForFollowUp(q)
                 );
-                
+
                 if (!this.layout || this.layout.length === 0) {
                     this.layout = newLayout;
                     this.gridKey++;
@@ -716,7 +715,7 @@ export default {
         async onDragStop(newLayout) {
             try {
                 let reordered = await svcOnDragStop(newLayout, this.localQuestions, this.convertIdToStr);
-                
+
                 const grouped = [];
                 const added = new Set();
                 const addWithChildren = (q) => {
@@ -725,20 +724,20 @@ export default {
                     if (added.has(qId)) return;
                     grouped.push(q);
                     added.add(qId);
-                    
+
                     if (Array.isArray(q.followUp)) {
                         for (const childRef of q.followUp) {
                             if (!childRef) continue;
                             const childId = this.getFollowUpChildId(childRef);
                             if (childId) {
-                                const childQ = reordered.find(x => this.convertIdToStr(x._id) === childId) 
-                                            || this.localQuestions.find(x => this.convertIdToStr(x._id) === childId);
+                                const childQ = reordered.find(x => this.convertIdToStr(x._id) === childId)
+                                    || this.localQuestions.find(x => this.convertIdToStr(x._id) === childId);
                                 if (childQ) addWithChildren(childQ);
                             }
                         }
                     }
                 };
-                
+
                 for (const q of reordered) {
                     if (!this.getParentForFollowUp(q)) addWithChildren(q);
                 }
@@ -942,6 +941,9 @@ export default {
                         if (foundType) created.type = foundType;
                     }
                     this.localQuestions.push(created);
+                    if (this.form && Array.isArray(this.form.questions)) {
+                        this.form.questions.push(created);
+                    }
                     this.buildGridLayoutFromQuestions();
                     return created;
                 } else {
@@ -1087,8 +1089,11 @@ export default {
         },
         formatTypeLabel(rawType) {
             if (!rawType) return '';
-            const type = rawType.toLowerCase();
-            return type.split('_').join(' ');
+            const key = rawType.toLowerCase().replace(/ /g, '_');
+            if (this.$te(`types.${key}`)) {
+                return this.$t(`types.${key}`);
+            }
+            return rawType.split('_').join(' ');
         },
         getIconForType(typeObjOrId) {
             const typeStr = (this.getQuestionType(typeObjOrId) || '').toLowerCase().replace(/ /g, '_');
@@ -1235,11 +1240,11 @@ export default {
             const newQ = {
                 _id: this.form && this.form._id ? undefined : ('tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)),
                 form: this.form && this.form._id ? this.form._id : undefined,
-                title: [{ key: 'en', value: 'Follow-up Question' }],
+                title: [{ key: this.$i18n.locale, value: this.$t('builder.followUpHeader') }],
                 type: typeId,
                 isRequired: false,
                 config: {
-                    choices: [{ key: '0', lang: [{ key: 'en', value: 'Option 1' }] }]
+                    choices: [{ key: '0', lang: [{ key: this.$i18n.locale, value: this.$t('builder.addOption') }] }]
                 }
             };
 
@@ -1294,6 +1299,9 @@ export default {
                     if (created && created._id) {
                         // replace the inserted temp/newQ at insertAt with created
                         this.$set(this.localQuestions, insertAt, created);
+                        if (this.form && Array.isArray(this.form.questions)) {
+                            this.form.questions.push(created);
+                        }
                         this.buildGridLayoutFromQuestions();
 
                         // update parent locally and persist: push created._id into parent.followUp
