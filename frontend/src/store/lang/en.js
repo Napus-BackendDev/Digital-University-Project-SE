@@ -182,6 +182,8 @@ const en = {
     analytics: {
         title: "Admin Dashboard",
         description: "Overview of all forms and responses",
+        dailyResponsesTrend: "Daily Responses Trend",
+        dailyResponsesDesc: "Visualizing questionnaire responses over the past 7 days",
         responsesOverTime: "Responses Over Time",
         responsesOverTimeDesc: "Daily responses monitored over the past week",
         sevenDaysView: "7 DAYS VIEW",

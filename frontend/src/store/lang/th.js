@@ -182,11 +182,13 @@ const th = {
     analytics: {
         title: "แดชบอร์ดผู้ดูแลระบบ",
         description: "ภาพรวมของแบบฟอร์มและการตอบกลับทั้งหมด",
+        dailyResponsesTrend: "แนวโน้มการตอบกลับรายวัน",
+        dailyResponsesDesc: "แสดงข้อมูลการตอบแบบสอบถามย้อนหลังในช่วง 7 วันที่ผ่านมา",
         responsesOverTime: "เทรนด์การตอบกลับ",
         responsesOverTimeDesc: "การตอบกลับรายวันในช่วงสัปดาห์ที่ผ่านมา",
         sevenDaysView: "ดูย้อนหลัง 7 วัน",
         mostRespondedForm: "แบบฟอร์มที่มีการตอบกลับสูงสุด",
-        mostRespondedDesc: "แบบฟอร์มที่มีจำนวนผู้เข้าใช้งานสูงสุด",
+        mostRespondedDesc: "แสดงแบบฟอร์มที่มีจำนวนการตอบกลับมากที่สุด",
         widgets: {
             totalForms: "แบบฟอร์มทั้งหมด",
             totalResponses: "การตอบกลับทั้งหมด",

@@ -7,11 +7,7 @@
                     <span class="badge badge-soft-maroon px-3 py-2">{{ $t('analytics.sevenDaysView') }}</span>
                 </div>
             </div>
-<<<<<<< HEAD
-            <p class="text-muted-modern small mb-0">{{ $t('analytics.dailyResponsesDesc') }}</p>
-=======
             <p class="text-muted-modern small mb-0">{{ $t('analytics.responsesOverTimeDesc') }}</p>
->>>>>>> 36a8da6550c6e56ca16a2631998b494be1890130
         </div>
 
         <div class="chart-container">
