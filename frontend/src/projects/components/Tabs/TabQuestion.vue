@@ -351,9 +351,10 @@
                             </span>
                         </div>
 
-                        <!-- ── Footer: Question Type dropdown + Required toggle ── -->
-                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
+                        <!-- ── Footer: Question Type dropdown + Navigation + Required toggle ── -->
+                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap">
+                            <!-- Left: Question Type -->
+                            <div class="d-flex align-items-center mb-2 mb-md-0 flex-shrink-0">
                                 <div v-if="!getParentForFollowUp(question)" class="d-flex align-items-center">
                                     <span class="text-muted font-weight-bold mr-2">{{ $t('builder.type') }}</span>
                                     <CDropdown color="light" variant="outline">
@@ -377,11 +378,30 @@
                                 </div>
                             </div>
 
-                            <div v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'"
-                                class="d-flex align-items-center">
-                                <small class="text-muted font-weight-bold text-uppercase mr-2">{{ $t('builder.requiredLabel') }}</small>
-                                <CSwitch class="mx-1" color="dark" shape="pill" :checked="question.isRequired"
-                                    @update:checked="val => { question.isRequired = val; putQuestion(question); }" />
+                            <!-- Right: Navigation Dropdown & Required Toggle -->
+                            <div class="d-flex align-items-center flex-wrap">
+                                <!-- Question Navigation Dropdown -->
+                                <div v-if="!getParentForFollowUp(question)" class="d-flex align-items-center bg-light px-2 py-1 rounded mr-3 mb-2 mb-md-0" style="border: 1px solid #e6eef6;">
+                                    <span class="small font-weight-bold text-muted mr-2 flex-shrink-0">Go to:</span>
+                                    <select class="custom-select custom-select-sm border-0 bg-transparent shadow-none font-weight-bold text-dark p-0 pr-4"
+                                        style="height: auto; cursor: pointer; min-width: 150px;"
+                                        :value="getCombinedNavigationValue(question)"
+                                        @change="setCombinedNavigationValue(question, $event.target.value)">
+                                        <option value="next">Next question</option>
+                                        <option v-for="q in getAvailableNextQuestions(question)" :key="'nav_' + q._id" :value="'question:' + q._id">
+                                            Go to question {{ displayQuestionNumber(q, localQuestions.indexOf(q)) }}
+                                        </option>
+                                        <option value="submit">Submit form</option>
+                                    </select>
+                                </div>
+
+                                <!-- Required Toggle -->
+                                <div v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'"
+                                    class="d-flex align-items-center mb-2 mb-md-0">
+                                    <small class="text-muted font-weight-bold text-uppercase mr-2">{{ $t('builder.requiredLabel') }}</small>
+                                    <CSwitch class="mx-1" color="dark" shape="pill" :checked="question.isRequired"
+                                        @update:checked="val => { question.isRequired = val; putQuestion(question); }" />
+                                </div>
                             </div>
                         </div>
                     </CCardBody>
@@ -919,6 +939,8 @@ export default {
                 order: this.localQuestions.length + 1,
                 type: foundType._id,
                 isRequired: false,
+                nextAction: 'next',
+                nextQuestion: null,
                 config,
             };
 
@@ -1579,6 +1601,36 @@ export default {
                 this.$set(item, 'key', 'en');
                 this.$set(item, 'isManualMode', false);
             }
+        },
+        getAvailableNextQuestions(question) {
+            const index = this.localQuestions.findIndex(q => this.convertIdToStr(q._id) === this.convertIdToStr(question._id));
+            if (index === -1) return [];
+            return this.localQuestions.slice(index + 1).filter(q => q && !this.getParentForFollowUp(q));
+        },
+        getQuestionTitle(q) {
+            if (!q || !Array.isArray(q.title) || q.title.length === 0) return 'Untitled';
+            const enTitle = q.title.find(t => t.key && t.key.toLowerCase() === 'en');
+            if (enTitle && enTitle.value) {
+                return enTitle.value.length > 50 ? enTitle.value.substring(0, 50) + '...' : enTitle.value;
+            }
+            return q.title[0].value ? (q.title[0].value.length > 50 ? q.title[0].value.substring(0, 50) + '...' : q.title[0].value) : 'Untitled';
+        },
+        getCombinedNavigationValue(question) {
+            if (!question.nextAction || question.nextAction === 'next') return 'next';
+            if (question.nextAction === 'submit') return 'submit';
+            if (question.nextAction === 'question' && question.nextQuestion) return 'question:' + question.nextQuestion;
+            return 'next';
+        },
+        setCombinedNavigationValue(question, val) {
+            if (!val) return;
+            if (val === 'next' || val === 'submit') {
+                this.$set(question, 'nextAction', val);
+                this.$set(question, 'nextQuestion', null);
+            } else if (val.startsWith('question:')) {
+                this.$set(question, 'nextAction', 'question');
+                this.$set(question, 'nextQuestion', val.split(':')[1]);
+            }
+            this.putQuestion(question);
         }
     }
 }

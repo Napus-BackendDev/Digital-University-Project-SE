@@ -49,6 +49,8 @@ var objSchema = new Schema({
         image: { type: String, default: null },
     },
     isRequired: { type: Boolean, default: false },
+    nextAction: { type: String, default: 'next' }, // 'next', 'submit', 'question'
+    nextQuestion: { type: mongoose.Schema.Types.ObjectId, ref: 'Questions', default: null },
     followUp: [
         {
             _id: false,
