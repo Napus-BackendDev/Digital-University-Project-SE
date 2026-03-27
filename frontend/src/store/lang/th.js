@@ -210,11 +210,8 @@ const th = {
         addLanguage: "เพิ่มภาษา",
         shortAnswerPlaceholder: "คำตอบสั้นๆ",
         paragraphPlaceholder: "คำบรรยายยาวๆ",
-        addFollowUp: "เพิ่มคำถามต่อเนื่อง",
-        goToFollowUp: "ไปยังคำถามต่อเนื่อง",
-        followUpHeader: "คำถามต่อเนื่อง",
-        followUpFrom: "จากตัวเลือก:",
         addOption: "เพิ่มตัวเลือก",
+        noAction: "ไม่มีการดำเนินการ",
         fileType: "ประเภทไฟล์",
         maxFiles: "จำนวนไฟล์สูงสุด",
         maxFileSize: "ขนาดไฟล์สูงสุด",
@@ -228,7 +225,11 @@ const th = {
             chooseImage: "เลือกรูปภาพ",
             cancel: "ยกเลิก",
             ok: "ตกลง"
-        }
+        },
+        goTo: "ไปที่:",
+        nextQuestion: "คำถามถัดไป",
+        submitForm: "ส่งแบบสอบถาม",
+        questionLabel: "ข้อที่"
     }
 }
 export default th

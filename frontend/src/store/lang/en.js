@@ -207,17 +207,14 @@ const en = {
         image: "Image"
     },
     builder: {
-        addLanguage: "Add language",
-        shortAnswerPlaceholder: "Short paragraph text",
-        paragraphPlaceholder: "Long answer text",
-        addFollowUp: "Add follow-up question",
-        goToFollowUp: "Go to follow-up question",
-        followUpHeader: "Follow-up Question",
-        followUpFrom: "From option:",
-        addOption: "Add option",
+        addLanguage: "Add Language",
+        shortAnswerPlaceholder: "Short Paragraph Text",
+        paragraphPlaceholder: "Long Answer Text",
+        addOption: "Add Option",
+        noAction: "No Action",
         fileType: "File Type",
-        maxFiles: "Max files",
-        maxFileSize: "Max file size",
+        maxFiles: "Max Files",
+        maxFileSize: "Max File Size",
         description: "Description",
         clickToChooseImage: "Click to choose image",
         type: "Type",
@@ -228,7 +225,11 @@ const en = {
             chooseImage: "Choose Image",
             cancel: "Cancel",
             ok: "OK"
-        }
+        },
+        goTo: "Next Action",
+        nextQuestion: "Next Question",
+        submitForm: "Submit Form",
+        questionLabel: "Question"
     }
 }
 export default en

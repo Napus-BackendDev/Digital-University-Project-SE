@@ -18,9 +18,12 @@
         <CSidebarFooter class="p-3">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="overflow-hidden">
-                    <div class="font-weight-bold text-white text-truncate" style="max-width: 140px;">{{ username }}</div>
-                    <div v-if="userOrganization" class="text-white-50 small text-truncate" style="max-width: 140px; font-weight: 500;">{{ userOrganization }}</div>
-                    <div class="text-white-50 small text-truncate" style="max-width: 140px; opacity: 0.8;">{{ userEmail }}</div>
+                    <div class="font-weight-bold text-white text-truncate" style="max-width: 140px;">{{ username }}
+                    </div>
+                    <div v-if="userOrganization" class="text-white-50 small text-truncate"
+                        style="max-width: 140px; font-weight: 500;">{{ userOrganization }}</div>
+                    <div class="text-white-50 small text-truncate" style="max-width: 140px; opacity: 0.8;">{{ userEmail
+                        }}</div>
                 </div>
                 <CDropdown placement="top-end" :caret="false">
                     <template #toggler>
@@ -156,7 +159,6 @@ export default {
 
 <style scoped>
 .c-sidebar {
-    background: linear-gradient(180deg, #1e3a8a 0%, #1e1b4b 100%);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(30deg, #FEC260 0%, #8c1515 60%)
 }
 </style>

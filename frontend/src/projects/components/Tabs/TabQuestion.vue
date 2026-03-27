@@ -8,21 +8,29 @@
                         <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
                             class="d-flex align-items-center mb-1">
                             <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light"
+                                    size="sm" class="lang-key-dropdown">
                                     <template #toggler>
-                                        <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                        <CButton class="lang-key-btn border shadow-none"
+                                            style="width: 3.2rem; min-width: 3.2rem;">
                                             {{ (titleItem.key || 'EN').toUpperCase() }}
                                         </CButton>
                                     </template>
-                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value" @click="setLangKey(titleItem, lang.value, updateFormMeta)">
+                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
+                                        @click="setLangKey(titleItem, lang.value, updateFormMeta)">
                                         {{ lang.label }}
                                     </CDropdownItem>
                                     <CDropdownDivider />
-                                    <CDropdownItem @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">Other...</CDropdownItem>
+                                    <CDropdownItem
+                                        @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">
+                                        Other...</CDropdownItem>
                                 </CDropdown>
                                 <div v-else class="manual-lang-input d-flex align-items-center">
-                                    <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateFormMeta" @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
-                                    <CButton @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', updateFormMeta)" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                    <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateFormMeta"
+                                        @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
+                                    <CButton
+                                        @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', updateFormMeta)"
+                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
                                 </div>
                             </div>
                             <CInput class="form-title-input flex-grow-1 border-bottom mb-0" v-model="titleItem.value"
@@ -43,21 +51,30 @@
                         <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
                             class="d-flex align-items-start mb-1">
                             <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
+                                    size="sm" class="lang-key-dropdown">
                                     <template #toggler>
-                                        <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                        <CButton class="lang-key-btn border shadow-none"
+                                            style="width: 3.2rem; min-width: 3.2rem;">
                                             {{ (descItem.key || 'EN').toUpperCase() }}
                                         </CButton>
                                     </template>
-                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value" @click="setLangKey(descItem, lang.value, updateFormMeta)">
+                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
+                                        @click="setLangKey(descItem, lang.value, updateFormMeta)">
                                         {{ lang.label }}
                                     </CDropdownItem>
                                     <CDropdownDivider />
-                                    <CDropdownItem @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">Other...</CDropdownItem>
+                                    <CDropdownItem
+                                        @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
+                                        Other...
+                                    </CDropdownItem>
                                 </CDropdown>
                                 <div v-else class="manual-lang-input d-flex align-items-center">
-                                    <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="updateFormMeta" @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
-                                    <CButton @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', updateFormMeta)" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                    <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="updateFormMeta"
+                                        @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
+                                    <CButton
+                                        @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', updateFormMeta)"
+                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
                                 </div>
                             </div>
                             <CTextarea class="form-desc-input flex-grow-1 border-bottom mb-0" v-model="descItem.value"
@@ -80,42 +97,43 @@
         <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }"
             :row-height="10" :is-draggable="true" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
             <GridItem v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)"
-                :is-draggable="!getParentForFollowUp(question)" v-bind="getLayoutItem(question, qIndex)">
+                v-bind="getLayoutItem(question, qIndex)">
                 <CCard :id="'question-' + (question._id || qIndex)"
-                    class="mb-3 position-relative rounded-20 shadow-sm border"
-                    :class="{ 'followup-card': getParentForFollowUp(question) }"
-                    :style="getParentForFollowUp(question) ? { backgroundColor: '#FFF3CD', border: '1px solid #F7C948' } : {}">
+                    class="mb-3 position-relative rounded-20 shadow-sm border">
                     <CCardBody class="p-4">
-                        <!-- Question Title -->
-                        <div v-if="getParentForFollowUp(question)" class="mb-2 d-flex align-items-center">
-                            <div class="followup-header">{{ $t('builder.followUpHeader') }}</div>
-                            <small class="text-muted ml-3 followup-from">
-                                {{ $t('builder.followUpFrom') }} {{ getParentForFollowUp(question).meta.parentChoiceLabel }}
-                            </small>
-                        </div>
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div :class="['number-question', { 'followup-number': getParentForFollowUp(question) }]">
+                            <div class="number-question">
                                 {{ displayQuestionNumber(question, qIndex) }}</div>
 
                             <div class="flex-grow-1">
                                 <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
                                     class="d-flex align-items-center mb-1">
                                     <div class="lang-key-wrapper flex-shrink-0 mr-1">
-                                        <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                        <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode"
+                                            color="light" size="sm" class="lang-key-dropdown">
                                             <template #toggler>
-                                                <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                                <CButton class="lang-key-btn border shadow-none"
+                                                    style="width: 3.2rem; min-width: 3.2rem;">
                                                     {{ (titleItem.key || 'EN').toUpperCase() }}
                                                 </CButton>
                                             </template>
-                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value" @click="setLangKey(titleItem, lang.value, () => updateQuestionTitle(question))">
+                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
+                                                @click="setLangKey(titleItem, lang.value, () => updateQuestionTitle(question))">
                                                 {{ lang.label }}
                                             </CDropdownItem>
                                             <CDropdownDivider />
-                                            <CDropdownItem @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">Other...</CDropdownItem>
+                                            <CDropdownItem
+                                                @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">
+                                                Other...</CDropdownItem>
                                         </CDropdown>
                                         <div v-else class="manual-lang-input d-flex align-items-center">
-                                            <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateQuestionTitle(question)" @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
-                                            <CButton @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', () => updateQuestionTitle(question))" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                            <CInput class="lang-key-input mb-0" v-model="titleItem.key"
+                                                @change="updateQuestionTitle(question)"
+                                                @blur="checkManualKey(titleItem)" maxlength="3"
+                                                style="width: 3.2rem;" />
+                                            <CButton
+                                                @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', () => updateQuestionTitle(question))"
+                                                size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
                                         </div>
                                     </div>
                                     <CInput class="flex-grow-1 mb-0" v-model="titleItem.value"
@@ -143,11 +161,13 @@
 
                         <!-- ── Question Type ── -->
                         <div v-if="getQuestionType(question.type).toLowerCase() === 'short_answer'">
-                            <CInput disabled style="opacity: 0.55;" :placeholder="$t('builder.shortAnswerPlaceholder')" />
+                            <CInput disabled style="opacity: 0.55;"
+                                :placeholder="$t('builder.shortAnswerPlaceholder')" />
                         </div>
 
                         <div v-else-if="getQuestionType(question.type).toLowerCase() === 'paragraph'">
-                            <CTextarea disabled style="opacity: 0.55;" :placeholder="$t('builder.paragraphPlaceholder')" rows="3" />
+                            <CTextarea disabled style="opacity: 0.55;" :placeholder="$t('builder.paragraphPlaceholder')"
+                                rows="3" />
                         </div>
 
                         <div v-else-if="
@@ -165,21 +185,31 @@
                                         <div v-for="(lang, li) in (choice.lang || [])" :key="li"
                                             class="d-flex align-items-center mb-1">
                                             <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                                <CDropdown v-if="isCommonLang(lang.key) && !lang.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                                <CDropdown v-if="isCommonLang(lang.key) && !lang.isManualMode"
+                                                    color="light" size="sm" class="lang-key-dropdown">
                                                     <template #toggler>
-                                                        <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                                        <CButton class="lang-key-btn border shadow-none"
+                                                            style="width: 3.2rem; min-width: 3.2rem;">
                                                             {{ (lang.key || 'EN').toUpperCase() }}
                                                         </CButton>
                                                     </template>
-                                                    <CDropdownItem v-for="l in commonLangs" :key="l.value" @click="setLangKey(lang, l.value, () => putQuestion(question))">
+                                                    <CDropdownItem v-for="l in commonLangs" :key="l.value"
+                                                        @click="setLangKey(lang, l.value, () => putQuestion(question))">
                                                         {{ l.label }}
                                                     </CDropdownItem>
                                                     <CDropdownDivider />
-                                                    <CDropdownItem @click="$set(lang, 'isManualMode', true); $set(lang, 'key', '')">Other...</CDropdownItem>
+                                                    <CDropdownItem
+                                                        @click="$set(lang, 'isManualMode', true); $set(lang, 'key', '')">
+                                                        Other...</CDropdownItem>
                                                 </CDropdown>
                                                 <div v-else class="manual-lang-input d-flex align-items-center">
-                                                    <CInput class="lang-key-input mb-0" v-model="lang.key" @change="putQuestion(question)" @blur="checkManualKey(lang)" maxlength="3" style="width: 3.2rem;" />
-                                                    <CButton @click="$set(lang, 'isManualMode', false); setLangKey(lang, 'en', () => putQuestion(question))" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                                    <CInput class="lang-key-input mb-0" v-model="lang.key"
+                                                        @change="putQuestion(question)" @blur="checkManualKey(lang)"
+                                                        maxlength="3" style="width: 3.2rem;" />
+                                                    <CButton
+                                                        @click="$set(lang, 'isManualMode', false); setLangKey(lang, 'en', () => putQuestion(question))"
+                                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;
+                                                    </CButton>
                                                 </div>
                                             </div>
                                             <CInput class="flex-grow-1 mb-0" v-model="lang.value"
@@ -191,38 +221,63 @@
                                             </CButton>
                                         </div>
                                     </div>
+
+
                                     <CButton color="danger" variant="ghost" size="sm" class="ml-1 mb-1"
                                         v-if="question.config.choices.length > 1 && (!choice.lang || choice.lang.length <= 1)"
                                         @click="removeOption(question, choiceIndex)">
                                         <CIcon name="cil-minus" />
                                     </CButton>
                                 </div>
-
-                                <div class="d-flex align-items-start mt-1">
-                                    <div v-if="!findFollowUp(question, choiceIndex) && getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
-                                        class="mb-2 mr-1">
-                                        <CButton size="sm" variant="ghost" color="warning"
-                                            class="icon-btn followup-add-btn"
-                                            @click="addFollowUp(question, choiceIndex)"
-                                            v-c-tooltip="$t('builder.addFollowUp')" aria-label="Add follow-up question">
-                                            <CIcon name="cil-speech" />
-                                        </CButton>
-                                    </div>
-
-                                    <div v-else-if="findFollowUp(question, choiceIndex)" class="mb-2 mr-1">
-                                        <CButton size="sm" variant="ghost" color="info" class="icon-btn followup-go-btn"
-                                            @click="goToFollowUp(question, choiceIndex)"
-                                            v-c-tooltip="$t('builder.goToFollowUp')"
-                                            aria-label="Go to follow-up question">
-                                            <CIcon name="cil-arrow-right" />
-                                        </CButton>
-                                    </div>
-
+                                <div class="d-flex align-items-center mt-1">
+                                    <div style="width: 38px;" class="flex-shrink-0" />
                                     <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn"
-                                        style="width: 3.2rem;" @click="addOptionLanguage(question, choiceIndex)"
-                                        size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
+                                        @click="addOptionLanguage(question, choiceIndex)" size="sm"
+                                        v-c-tooltip="'Add language'" aria-label="Add language">
                                         <CIcon name="cil-globe-alt" />
                                     </CButton>
+
+                                    <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
+                                        class="d-flex align-items-center ml-2 flex-shrink-0">
+                                        <CDropdown color="light" size="sm">
+                                            <template #toggler>
+                                                <CButton size="sm"
+                                                    class="border shadow-none d-flex align-items-center next-action-btn"
+                                                    v-c-tooltip="$t('builder.goTo')">
+                                                    <CIcon
+                                                        :name="!choice.nextQuestion ? 'cil-ban' : (choice.nextQuestion === 'submit' ? 'cil-check-alt' : 'cil-list-low-priority')"
+                                                        class="mr-1" />
+                                                    <span>
+                                                        {{
+                                                            choice.nextQuestion
+                                                                ? (choice.nextQuestion === 'submit' ? $t('builder.submitForm') :
+                                                                    (choice.order || localQuestions.findIndex(q =>
+                                                                        convertIdToStr(q._id) === convertIdToStr(choice.nextQuestion)) +
+                                                                        1) + '. ' + getQuestionTitle(localQuestions.find(q =>
+                                                                            convertIdToStr(q._id) === convertIdToStr(choice.nextQuestion))))
+                                                                : $t('builder.noAction')
+                                                        }}
+                                                    </span>
+                                                </CButton>
+                                            </template>
+                                            <CDropdownItem
+                                                @click="$set(choice, 'nextQuestion', null); putQuestion(question)">
+                                                <CIcon name="cil-ban" class="mr-2" />
+                                                <span>{{ $t('builder.noAction') }}</span>
+                                            </CDropdownItem>
+                                            <CDropdownDivider />
+                                            <CDropdownItem v-for="q in getAvailableNextQuestions(question)" :key="q._id"
+                                                @click="$set(choice, 'nextQuestion', q._id); putQuestion(question)">
+                                                <CIcon name="cil-list-low-priority" class="mr-2" />
+                                                <span>{{ q.order }}. {{ getQuestionTitle(q) }}</span>
+                                            </CDropdownItem>
+                                            <CDropdownItem
+                                                @click="$set(choice, 'nextQuestion', 'submit'); putQuestion(question)">
+                                                <CIcon name="cil-check-alt" class="mr-2" />
+                                                <span>{{ $t('builder.submitForm') }}</span>
+                                            </CDropdownItem>
+                                        </CDropdown>
+                                    </div>
                                 </div>
                             </div>
                             <CButton color="primary" variant="ghost" class="icon-btn add-option-btn mt-1"
@@ -297,26 +352,37 @@
                         </div>
 
                         <div v-else-if="getQuestionType(question.type).toLowerCase() === 'title_description'">
-                            <small class="text-muted font-weight-bold d-block mb-1">{{ $t('builder.description') }}</small>
+                            <small class="text-muted font-weight-bold d-block mb-1">
+                                {{ $t('builder.description') }}
+                            </small>
 
                             <div v-for="(descItem, dIdx) in (question.config.description || [])" :key="'qd-' + dIdx"
                                 class="d-flex align-items-start">
                                 <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                    <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light" size="sm" class="lang-key-dropdown">
+                                    <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
+                                        size="sm" class="lang-key-dropdown">
                                         <template #toggler>
-                                            <CButton class="lang-key-btn border shadow-none" style="width: 3.2rem; min-width: 3.2rem;">
+                                            <CButton class="lang-key-btn border shadow-none"
+                                                style="width: 3.2rem; min-width: 3.2rem;">
                                                 {{ (descItem.key || 'EN').toUpperCase() }}
                                             </CButton>
                                         </template>
-                                        <CDropdownItem v-for="lang in commonLangs" :key="lang.value" @click="setLangKey(descItem, lang.value, () => putQuestion(question))">
+                                        <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
+                                            @click="setLangKey(descItem, lang.value, () => putQuestion(question))">
                                             {{ lang.label }}
                                         </CDropdownItem>
                                         <CDropdownDivider />
-                                        <CDropdownItem @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">Other...</CDropdownItem>
+                                        <CDropdownItem
+                                            @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
+                                            Other...</CDropdownItem>
                                     </CDropdown>
                                     <div v-else class="manual-lang-input d-flex align-items-center">
-                                        <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="putQuestion(question)" @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
-                                        <CButton @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', () => putQuestion(question))" size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                        <CInput class="lang-key-input mb-0" v-model="descItem.key"
+                                            @change="putQuestion(question)" @blur="checkManualKey(descItem)"
+                                            maxlength="3" style="width: 3.2rem;" />
+                                        <CButton
+                                            @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', () => putQuestion(question))"
+                                            size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
                                     </div>
                                 </div>
                                 <CTextarea class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
@@ -355,7 +421,7 @@
                         <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap">
                             <!-- Left: Question Type -->
                             <div class="d-flex align-items-center mb-2 mb-md-0 flex-shrink-0">
-                                <div v-if="!getParentForFollowUp(question)" class="d-flex align-items-center">
+                                <div class="d-flex align-items-center">
                                     <span class="text-muted font-weight-bold mr-2">{{ $t('builder.type') }}</span>
                                     <CDropdown color="light" variant="outline">
                                         <template #toggler>
@@ -381,24 +447,46 @@
                             <!-- Right: Navigation Dropdown & Required Toggle -->
                             <div class="d-flex align-items-center flex-wrap">
                                 <!-- Question Navigation Dropdown -->
-                                <div v-if="!getParentForFollowUp(question)" class="d-flex align-items-center bg-light px-2 py-1 rounded mr-3 mb-2 mb-md-0" style="border: 1px solid #e6eef6;">
-                                    <span class="small font-weight-bold text-muted mr-2 flex-shrink-0">Go to:</span>
-                                    <select class="custom-select custom-select-sm border-0 bg-transparent shadow-none font-weight-bold text-dark p-0 pr-4"
-                                        style="height: auto; cursor: pointer; min-width: 150px;"
-                                        :value="getCombinedNavigationValue(question)"
-                                        @change="setCombinedNavigationValue(question, $event.target.value)">
-                                        <option value="next">Next question</option>
-                                        <option v-for="q in getAvailableNextQuestions(question)" :key="'nav_' + q._id" :value="'question:' + q._id">
-                                            Go to question {{ displayQuestionNumber(q, localQuestions.indexOf(q)) }}
-                                        </option>
-                                        <option value="submit">Submit form</option>
-                                    </select>
+                                <div class="d-flex align-items-center mr-3 mb-2 mb-md-0">
+                                    <span class="text-muted font-weight-bold mr-2">{{ $t('builder.goTo') }}</span>
+                                    <CDropdown color="light" variant="outline">
+                                        <template #toggler>
+                                            <button class="btn d-flex align-items-center text-muted border bg-white"
+                                                style="border-radius: 6px;">
+                                                <CIcon
+                                                    :name="!question.nextQuestion ? 'cil-check-alt' : 'cil-list-low-priority'"
+                                                    class="mr-2" />
+                                                <span class="text-dark">
+                                                    {{
+                                                        !question.nextQuestion ? $t('builder.submitForm') :
+                                                            (function () {
+                                                                const targetQ = localQuestions.find(q => convertIdToStr(q._id) === convertIdToStr(question.nextQuestion));
+                                                                return targetQ ? targetQ.order + '. ' + getQuestionTitle(targetQ) : '';
+                                                            })()
+                                                    }}
+                                                </span>
+                                            </button>
+                                        </template>
+                                        <CDropdownItem v-for="q in getAvailableNextQuestions(question)"
+                                            :key="'nav_' + q._id"
+                                            @click="setCombinedNavigationValue(question, 'question:' + convertIdToStr(q._id))">
+                                            <CIcon name="cil-list-low-priority" class="mr-2" />
+                                            <span>
+                                                {{ q.order }}. {{ getQuestionTitle(q) }}
+                                            </span>
+                                        </CDropdownItem>
+                                        <CDropdownItem @click="setCombinedNavigationValue(question, 'submit')">
+                                            <CIcon name="cil-check-alt" class="mr-2" />
+                                            <span>{{ $t('builder.submitForm') }}</span>
+                                        </CDropdownItem>
+                                    </CDropdown>
                                 </div>
 
                                 <!-- Required Toggle -->
                                 <div v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'"
                                     class="d-flex align-items-center mb-2 mb-md-0">
-                                    <small class="text-muted font-weight-bold text-uppercase mr-2">{{ $t('builder.requiredLabel') }}</small>
+                                    <small class="text-muted font-weight-bold text-uppercase mr-2">{{
+                                        $t('builder.requiredLabel') }}</small>
                                     <CSwitch class="mx-1" color="dark" shape="pill" :checked="question.isRequired"
                                         @update:checked="val => { question.isRequired = val; putQuestion(question); }" />
                                 </div>
@@ -489,7 +577,6 @@ export default {
             commonLangs: [
                 { value: 'th', label: 'TH' },
                 { value: 'en', label: 'EN' },
-                { value: 'uk', label: 'UK' },
             ],
         };
     },
@@ -500,61 +587,8 @@ export default {
             handler(newForm) {
                 if (newForm && Array.isArray(newForm.questions)) {
                     try {
-                        const built = [];
-                        const pushedIds = new Set();
-
-                        const findQuestionById = id => {
-                            if (!id) return null;
-                            const idStr = this.convertIdToStr(id);
-                            return (newForm.questions || []).find(q => this.convertIdToStr(q && q._id) === idStr) || null;
-                        };
-
-                        const pushWithFollow = q => {
-                            if (!q) return;
-                            const idStr = this.convertIdToStr(q._id || q);
-                            if (idStr && pushedIds.has(idStr)) return;
-                            if (idStr) pushedIds.add(idStr);
-                            built.push(q);
-
-                            if (Array.isArray(q.followUp) && q.followUp.length) {
-                                for (const f of q.followUp) {
-                                    try {
-                                        if (f && typeof f === 'object') {
-                                            if (f._id) {
-                                                pushWithFollow(f);
-                                            } else if (f.question !== undefined && f.question !== null) {
-                                                if (Array.isArray(f.question) && f.question.length) {
-                                                    const found = findQuestionById(f.question[0]);
-                                                    if (found) pushWithFollow(found);
-                                                } else {
-                                                    const found = findQuestionById(f.question);
-                                                    if (found) pushWithFollow(found);
-                                                }
-                                            } else {
-                                                const found = findQuestionById(f);
-                                                if (found) pushWithFollow(found);
-                                            }
-                                        } else {
-                                            const found = findQuestionById(f);
-                                            if (found) pushWithFollow(found);
-                                        }
-                                    } catch (e) {
-                                        // ignore individual follow-up errors
-                                    }
-                                }
-                            }
-                        };
-
-                        for (const q of newForm.questions) {
-                            const qId = this.convertIdToStr(q && q._id);
-                            if (qId && pushedIds.has(qId)) continue;
-                            pushWithFollow(q);
-                        }
-                        built.sort((a, b) => {
-                            const orderA = typeof a.order === 'number' ? a.order : 9999;
-                            const orderB = typeof b.order === 'number' ? b.order : 9999;
-                            return orderA - orderB;
-                        });
+                        const built = Array.isArray(newForm.questions) ? [...newForm.questions] : [];
+                        built.sort((a, b) => (a.order || 999) - (b.order || 999));
 
                         const newIds = built.map(x => this.convertIdToStr(x && x._id));
                         const oldIds = (this.localQuestions || []).map(x => this.convertIdToStr(x && x._id));
@@ -694,7 +728,7 @@ export default {
                     this.localQuestions,
                     this.storedLayout,
                     (t) => this.getQuestionType(t),
-                    (q) => !!this.getParentForFollowUp(q)
+                    (q) => false
                 );
 
                 if (!this.layout || this.layout.length === 0) {
@@ -735,43 +769,11 @@ export default {
         async onDragStop(newLayout) {
             try {
                 let reordered = await svcOnDragStop(newLayout, this.localQuestions, this.convertIdToStr);
-
-                const grouped = [];
-                const added = new Set();
-                const addWithChildren = (q) => {
-                    if (!q) return;
-                    const qId = this.convertIdToStr(q._id);
-                    if (added.has(qId)) return;
-                    grouped.push(q);
-                    added.add(qId);
-
-                    if (Array.isArray(q.followUp)) {
-                        for (const childRef of q.followUp) {
-                            if (!childRef) continue;
-                            const childId = this.getFollowUpChildId(childRef);
-                            if (childId) {
-                                const childQ = reordered.find(x => this.convertIdToStr(x._id) === childId)
-                                    || this.localQuestions.find(x => this.convertIdToStr(x._id) === childId);
-                                if (childQ) addWithChildren(childQ);
-                            }
-                        }
-                    }
-                };
-
-                for (const q of reordered) {
-                    if (!this.getParentForFollowUp(q)) addWithChildren(q);
-                }
-                for (const q of reordered) {
-                    const qId = this.convertIdToStr(q._id);
-                    if (!added.has(qId)) addWithChildren(q);
-                }
-                reordered = grouped;
+                if (!Array.isArray(reordered)) return;
 
                 const oldIds = (this.localQuestions || []).map(q => this.convertIdToStr(q._id || ''));
                 const newIds = (reordered || []).map(q => this.convertIdToStr(q._id || ''));
-                if (oldIds.join(',') === newIds.join(',')) {
-                    return;
-                }
+                if (oldIds.join(',') === newIds.join(',')) return;
                 if (Array.isArray(reordered)) {
                     this.localQuestions = reordered;
                     try {
@@ -872,21 +874,6 @@ export default {
             return String(val);
         },
 
-        getFollowUpChildId(entry) {
-            if (!entry && entry !== 0) return null;
-            if (typeof entry === 'object') {
-                // If schema uses a single ObjectId on `question`
-                if (entry.question !== undefined && entry.question !== null) {
-                    if (Array.isArray(entry.question) && entry.question.length > 0) return this.convertIdToStr(entry.question[0]);
-                    return this.convertIdToStr(entry.question);
-                }
-                // If entry is actually an embedded question object
-                if (entry._id) return this.convertIdToStr(entry._id);
-                return null;
-            }
-            return this.convertIdToStr(entry);
-        },
-
         async updateQuestionTitle(question) {
             if (!question || !question._id) return;
             try {
@@ -939,7 +926,6 @@ export default {
                 order: this.localQuestions.length + 1,
                 type: foundType._id,
                 isRequired: false,
-                nextAction: 'next',
                 nextQuestion: null,
                 config,
             };
@@ -949,6 +935,12 @@ export default {
                     _id: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
                     ...payload,
                 };
+                // Chain from the previous "end" question
+                const lastQuestion = this.localQuestions[this.localQuestions.length - 1];
+                if (lastQuestion) {
+                    this.$set(lastQuestion, 'nextQuestion', tmp._id);
+                    this.putQuestion(lastQuestion);
+                }
                 this.localQuestions.push(tmp);
                 this.buildGridLayoutFromQuestions();
                 return tmp;
@@ -962,6 +954,13 @@ export default {
                         const foundType = this.questionTypes.find(t => t._id === typeId);
                         if (foundType) created.type = foundType;
                     }
+                    // Chain from the previous "end" question
+                    const lastQuestion = this.localQuestions[this.localQuestions.length - 1];
+                    if (lastQuestion) {
+                        this.$set(lastQuestion, 'nextQuestion', created._id);
+                        this.putQuestion(lastQuestion);
+                    }
+
                     this.localQuestions.push(created);
                     if (this.form && Array.isArray(this.form.questions)) {
                         this.form.questions.push(created);
@@ -979,90 +978,28 @@ export default {
         },
 
         async removeQuestion(qId) {
-            if (!qId) {
-                console.warn('removeQuestion: qId is undefined or null');
-                return;
-            }
-            const index = this.localQuestions.findIndex(
-                q => (q._id === qId || (q._id && q._id.toString() === qId.toString()))
-            );
-            if (index === -1) {
-                console.warn('removeQuestion: question not found in localQuestions for qId', qId);
-                return;
-            }
+            if (!qId) return;
+            const index = this.localQuestions.findIndex(q => this.convertIdToStr(q._id) === this.convertIdToStr(qId));
+            if (index === -1) return;
 
-            const rootQ = this.localQuestions[index];
-            const toDelete = [];
-            const stack = [rootQ];
-            while (stack.length) {
-                const cur = stack.pop();
-                if (!cur) continue;
-                if (!toDelete.includes(cur)) toDelete.push(cur);
-                if (Array.isArray(cur.followUp)) {
-                    for (const fid of cur.followUp) {
-                        if (!fid) continue;
-                        const fidStr = this.getFollowUpChildId(fid);
-                        if (!fidStr) continue;
-                        const childIdx = this.localQuestions.findIndex(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
-                        if (childIdx !== -1) {
-                            const child = this.localQuestions[childIdx];
-                            if (child && !toDelete.includes(child)) stack.push(child);
-                        }
-                    }
-                }
-            }
-
-            const indices = toDelete.map(item => this.localQuestions.findIndex(q => q === item || (q._id && item._id && String(q._id) === String(item._id)))).filter(i => i !== -1).sort((a, b) => b - a);
-            const remainingQuestions = [...this.localQuestions];
-            for (const i of indices) remainingQuestions.splice(i, 1);
-            this.localQuestions = remainingQuestions; // ทริกเกอร์ Watcher ตี UI ใหม่ทันที
+            const q = this.localQuestions[index];
+            this.localQuestions.splice(index, 1);
             this.buildGridLayoutFromQuestions();
 
             if (this.form && Array.isArray(this.form.questions)) {
-                for (const item of toDelete) {
-                    const idStr = this.convertIdToStr(item._id || item);
-                    if (idStr) {
-                        const formIdx = this.form.questions.findIndex(q => this.convertIdToStr(q && q._id) === idStr);
-                        if (formIdx !== -1) {
-                            this.form.questions.splice(formIdx, 1);
-                        }
-                    }
+                const fIndex = this.form.questions.findIndex(item => this.convertIdToStr(item && item._id) === this.convertIdToStr(qId));
+                if (fIndex !== -1) {
+                    this.form.questions.splice(fIndex, 1);
                 }
             }
 
-            const deletedIdSet = new Set(toDelete.map(d => this.convertIdToStr(d._id || d)));
-            const parentsToPersist = [];
-            for (const parent of this.localQuestions) {
-                if (!parent || !Array.isArray(parent.followUp)) continue;
-                let changed = false;
-                for (let i = 0; i < parent.followUp.length; i++) {
-                    const fid = parent.followUp[i];
-                    if (!fid) continue;
-                    const childIdStr = this.getFollowUpChildId(fid);
-                    if (childIdStr && deletedIdSet.has(childIdStr)) {
-                        parent.followUp[i] = null;
-                        changed = true;
-                    }
-                }
-                if (changed && parent._id) parentsToPersist.push(parent);
-            }
             try {
-                for (const item of toDelete) {
-                    if (item && item._id && !String(item._id).startsWith('tmp-')) {
-                        await this.$store.dispatch('Questions/delete', { _id: item._id });
-                    }
+                if (q && q._id && !String(q._id).startsWith('tmp-')) {
+                    await this.$store.dispatch('Questions/delete', { _id: q._id });
                 }
             } catch (e) {
                 console.error('removeQuestion delete endpoint failed:', e);
             }
-            for (const p of parentsToPersist) {
-                try {
-                    await this.$store.dispatch('Questions/update', { _id: p._id, followUp: p.followUp });
-                } catch (err) {
-                    console.error('Failed to persist parent.followUp cleanup', err);
-                }
-            }
-
             await this.updateOrdersAndPersist();
         },
 
@@ -1250,279 +1187,10 @@ export default {
             question.config.choices.splice(oIndex, 1);
             this.putQuestion(question);
         },
-        async addFollowUp(question, choiceIndex) {
-            if (!question || !question.config || !Array.isArray(question.config.choices)) return;
-            const choice = question.config.choices[choiceIndex];
-            if (!choice) return;
-
-            const mcType = this.questionTypes.find(t => t.type === 'multiple_choice');
-            const typeId = mcType ? mcType._id : (typeof question.type === 'object' ? question.type._id : question.type);
-
-            const parentIndex = this.localQuestions.findIndex(q => q === question || (q._id && question._id && q._id.toString() === question._id.toString()));
-            const newQ = {
-                _id: this.form && this.form._id ? undefined : ('tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)),
-                form: this.form && this.form._id ? this.form._id : undefined,
-                title: [{ key: this.$i18n.locale, value: this.$t('builder.followUpHeader') }],
-                type: typeId,
-                isRequired: false,
-                config: {
-                    choices: [{ key: '0', lang: [{ key: this.$i18n.locale, value: this.$t('builder.addOption') }] }]
-                }
-            };
-
-            const insertAt = (function () {
-                if (parentIndex === -1) return this.localQuestions.length;
-                let lastIdx = parentIndex;
-                for (let i = parentIndex + 1; i < this.localQuestions.length; i++) {
-                    const q2 = this.localQuestions[i];
-                    if (!q2) break;
-
-                    // If q2 is a descendant of the parent (any depth), advance past it
-                    try {
-                        const ancestors = this.getAncestorChain(q2) || [];
-                        const isDescendant = ancestors.some(a => this.convertIdToStr(a._id || a) === (question._id && question._id.toString ? question._id.toString() : question._id));
-                        if (isDescendant) {
-                            lastIdx = i;
-                            continue;
-                        }
-                    } catch (e) {
-                        // ignore and fallthrough
-                    }
-
-                    if (Array.isArray(question.followUp)) {
-                        const q2IdStr = this.convertIdToStr(q2._id || q2);
-                        if (q2IdStr && question.followUp.some(entry => this.getFollowUpChildId(entry) === q2IdStr)) {
-                            lastIdx = i;
-                            continue;
-                        }
-                    }
-
-                    break;
-                }
-                return lastIdx + 1;
-            }).call(this);
-            this.localQuestions.splice(insertAt, 0, newQ);
-            this.buildGridLayoutFromQuestions();
-            if (!this.form || !this.form._id) {
-                const parentLocal = this.localQuestions[parentIndex];
-                if (parentLocal) {
-                    if (!Array.isArray(parentLocal.followUp)) parentLocal.followUp = [];
-                    while (parentLocal.followUp.length <= choiceIndex) parentLocal.followUp.push(null);
-                    parentLocal.followUp[choiceIndex] = { key: (choice && choice.key) ? choice.key : String(choiceIndex), question: newQ._id };
-                }
-            }
-
-            if (this.form && this.form._id) {
-                try {
-                    const payload = JSON.parse(JSON.stringify(newQ));
-                    if (payload.type && typeof payload.type === 'object') payload.type = payload.type._id;
-                    const res = await this.$store.dispatch('Questions/create', payload);
-                    const created = res && res.data && res.data.data;
-                    if (created && created._id) {
-                        // replace the inserted temp/newQ at insertAt with created
-                        this.$set(this.localQuestions, insertAt, created);
-                        if (this.form && Array.isArray(this.form.questions)) {
-                            this.form.questions.push(created);
-                        }
-                        this.buildGridLayoutFromQuestions();
-
-                        // update parent locally and persist: push created._id into parent.followUp
-                        const parentLocal = this.localQuestions[parentIndex];
-                        if (parentLocal) {
-                            if (!Array.isArray(parentLocal.followUp)) parentLocal.followUp = [];
-                            while (parentLocal.followUp.length <= choiceIndex) parentLocal.followUp.push(null);
-                            const followEntry = { key: (choice && choice.key) ? choice.key : String(choiceIndex), question: created._id };
-                            parentLocal.followUp[choiceIndex] = followEntry;
-
-                            try {
-                                await this.$store.dispatch('Questions/update', {
-                                    _id: parentLocal._id,
-                                    followUp: parentLocal.followUp
-                                });
-                            } catch (err) {
-                                console.error('Failed to persist parent.followUp', err);
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error('create follow-up failed', e);
-                }
-            }
-
-            await this.updateOrdersAndPersist();
-        },
-        async removeFollowUp(question, choiceIndex) {
-            if (!question || !Array.isArray(question.followUp)) return;
-            let childId = null;
-            let fIndex = -1;
-            let fq = null;
-            const parentIdStr = question._id && question._id.toString ? question._id.toString() : question._id;
-            if (Array.isArray(question.followUp)) {
-                const fid = question.followUp[choiceIndex];
-                if (fid) {
-                    const fidStr = this.getFollowUpChildId(fid);
-                    if (fidStr) {
-                        fIndex = this.localQuestions.findIndex(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
-                        if (fIndex !== -1) {
-                            fq = this.localQuestions[fIndex];
-                            childId = fq && fq._id;
-                        }
-                    }
-                }
-            }
-            if (!childId) return;
-            try {
-                if (fq && fq._id) {
-                    await this.$store.dispatch('Questions/delete', { _id: fq._id });
-                }
-            } catch (e) {
-                console.error('delete follow-up failed', e);
-            }
-            if (fIndex !== -1) {
-                this.localQuestions.splice(fIndex, 1);
-                this.buildGridLayoutFromQuestions();
-            }
-
-            try {
-                const parentLocal = question;
-                if (Array.isArray(parentLocal.followUp)) {
-                    const entry = parentLocal.followUp[choiceIndex];
-                    const entryChildId = this.getFollowUpChildId(entry);
-                    if (entry && entryChildId && this.convertIdToStr(entryChildId) === this.convertIdToStr(childId)) {
-                        parentLocal.followUp[choiceIndex] = null;
-                    } else {
-                        parentLocal.followUp = parentLocal.followUp.filter(id => {
-                            const idChild = this.getFollowUpChildId(id);
-                            return !(idChild && this.convertIdToStr(idChild) === this.convertIdToStr(childId));
-                        });
-                    }
-                }
-                if (parentLocal && parentLocal._id) {
-                    await this.$store.dispatch('Questions/update', {
-                        _id: parentLocal._id,
-                        followUp: parentLocal.followUp
-                    });
-                }
-            } catch (err) {
-                console.error('Failed to persist parent followUp removal', err);
-            }
-
-            await this.updateOrdersAndPersist();
-        },
-
-        findFollowUp(question, choiceIndex) {
-            if (!question) return null;
-            if (!Array.isArray(question.followUp)) return null;
-            const fid = question.followUp[choiceIndex];
-            if (fid) {
-                const fidStr = this.getFollowUpChildId(fid);
-                if (fidStr) {
-                    const child = this.localQuestions.find(q => q && q._id && this.convertIdToStr(q._id) === fidStr);
-                    if (child) return child;
-                }
-            }
-            return null;
-        },
-        goToFollowUp(question, choiceIndex) {
-            const fq = this.findFollowUp(question, choiceIndex);
-            if (!fq) return;
-            const idx = this.localQuestions.findIndex(q => q === fq);
-            const idToScroll = fq._id || idx;
-            this.scrollToQuestion(idToScroll);
-        },
-        getParentForFollowUp(child) {
-            if (!child) return null;
-            const childIdStr = this.convertIdToStr(child._id || child);
-            if (!childIdStr) return null;
-            for (const parent of this.localQuestions) {
-                if (!parent || !Array.isArray(parent.followUp) || parent.followUp.length === 0) continue;
-                for (let i = 0; i < parent.followUp.length; i++) {
-                    const fidStr = this.getFollowUpChildId(parent.followUp[i]);
-                    if (fidStr && fidStr === childIdStr) {
-                        let parentChoiceLabel = '';
-                        try {
-                            if (parent.config && Array.isArray(parent.config.choices)) {
-                                const choice = parent.config.choices[i] || parent.config.choices[0];
-                                if (choice && Array.isArray(choice.lang) && choice.lang[0]) parentChoiceLabel = choice.lang[0].value || '';
-                            }
-                        } catch (e) {
-                            // ignore
-                        }
-                        return { parent, meta: { parentChoiceLabel } };
-                    }
-                }
-            }
-            return null;
-        },
-        getAncestorChain(question) {
-            const chain = [];
-            try {
-                let p = this.getParentForFollowUp(question);
-                while (p && p.parent) {
-                    chain.push(p.parent);
-                    p = this.getParentForFollowUp(p.parent);
-                }
-            } catch (e) {
-                // ignore
-            }
-            return chain.reverse();
-        },
         displayQuestionNumber(question, index) {
-            try {
-                const ancestors = this.getAncestorChain(question);
-                const parts = [];
-
-                for (let aIdx = 0; aIdx < ancestors.length; aIdx++) {
-                    const anc = ancestors[aIdx];
-                    const ancParentObj = this.getParentForFollowUp(anc);
-                    if (!ancParentObj || !ancParentObj.parent) {
-                        let topNum = 0;
-                        for (let i = 0; i < this.localQuestions.length; i++) {
-                            const item = this.localQuestions[i];
-                            if (!this.getParentForFollowUp(item)) topNum++;
-                            if (item === anc) break;
-                        }
-                        parts.push(String(topNum));
-                    } else {
-                        const parentQ = ancParentObj.parent;
-                        let childPos = 0;
-                        if (Array.isArray(parentQ.followUp)) {
-                            const ancIdStr = this.convertIdToStr(anc._id || anc);
-                            for (let i = 0; i < parentQ.followUp.length; i++) {
-                                if (this.getFollowUpChildId(parentQ.followUp[i]) === ancIdStr) {
-                                    childPos = i + 1;
-                                    break;
-                                }
-                            }
-                        }
-                        parts.push(String(childPos || 1));
-                    }
-                }
-
-                const immediateParentObj = this.getParentForFollowUp(question);
-                if (immediateParentObj && immediateParentObj.parent) {
-                    const parentQ = immediateParentObj.parent;
-                    let childPos = 0;
-                    if (Array.isArray(parentQ.followUp)) {
-                        const myIdStr = this.convertIdToStr(question._id || question);
-                        for (let i = 0; i < parentQ.followUp.length; i++) {
-                            if (this.getFollowUpChildId(parentQ.followUp[i]) === myIdStr) {
-                                childPos = i + 1;
-                                break;
-                            }
-                        }
-                    }
-                    parts.push(String(childPos || 1));
-                    return parts.join('.');
-                }
-            } catch (e) {
-                // fallback to default numbering
-            }
-
             let num = 0;
             for (let i = 0; i <= index && i < this.localQuestions.length; i++) {
-                const item = this.localQuestions[i];
-                if (!this.getParentForFollowUp(item)) num++;
+                num++;
             }
             return num;
         },
@@ -1603,9 +1271,11 @@ export default {
             }
         },
         getAvailableNextQuestions(question) {
-            const index = this.localQuestions.findIndex(q => this.convertIdToStr(q._id) === this.convertIdToStr(question._id));
-            if (index === -1) return [];
-            return this.localQuestions.slice(index + 1).filter(q => q && !this.getParentForFollowUp(q));
+            if (!question || !this.localQuestions) return [];
+            const myId = this.convertIdToStr(question._id);
+            return this.localQuestions.filter(q =>
+                q && this.convertIdToStr(q._id) !== myId
+            );
         },
         getQuestionTitle(q) {
             if (!q || !Array.isArray(q.title) || q.title.length === 0) return 'Untitled';
@@ -1616,18 +1286,14 @@ export default {
             return q.title[0].value ? (q.title[0].value.length > 50 ? q.title[0].value.substring(0, 50) + '...' : q.title[0].value) : 'Untitled';
         },
         getCombinedNavigationValue(question) {
-            if (!question.nextAction || question.nextAction === 'next') return 'next';
-            if (question.nextAction === 'submit') return 'submit';
-            if (question.nextAction === 'question' && question.nextQuestion) return 'question:' + question.nextQuestion;
-            return 'next';
+            if (!question.nextQuestion) return 'submit';
+            return 'question:' + this.convertIdToStr(question.nextQuestion);
         },
         setCombinedNavigationValue(question, val) {
             if (!val) return;
-            if (val === 'next' || val === 'submit') {
-                this.$set(question, 'nextAction', val);
+            if (val === 'submit') {
                 this.$set(question, 'nextQuestion', null);
             } else if (val.startsWith('question:')) {
-                this.$set(question, 'nextAction', 'question');
                 this.$set(question, 'nextQuestion', val.split(':')[1]);
             }
             this.putQuestion(question);
@@ -1699,39 +1365,18 @@ export default {
 }
 
 .questions-wrapper {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
+    border: none;
+    box-shadow: none;
+    background: transparent;
 }
 
 .rounded-20 {
-    border-radius: 20px !important;
+    border-radius: 20px;
     overflow: visible;
 }
 
 .shadow-sm {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-}
-
-.followup-card {
-    background-color: #FFFBEB !important;
-    border: 1px solid #FDE68A !important;
-}
-
-.followup-header {
-    background: #FFF3CD;
-    border: 1px solid #F7C948;
-    color: #b45309;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-weight: 500;
-    font-size: 1rem;
-    line-height: 1;
-}
-
-.followup-from {
-    font-size: 0.95rem;
-    color: #6b7280;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .number-question {
@@ -1744,14 +1389,8 @@ export default {
     font-weight: 600;
 }
 
-.number-question.followup-number {
-    background: #FFF3CD;
-    border: 1px solid #F7C948;
-    color: #b45309;
-}
-
 .icon-btn {
-    width: 34px;
+    width: 38px;
     height: 34px;
     display: inline-flex;
     align-items: center;
@@ -1773,27 +1412,35 @@ export default {
     width: 100%;
 }
 
-.followup-add-btn {
-    background: rgba(245, 158, 11, 0.06);
-    color: #b45309;
-    border: 1px solid rgba(244, 206, 130, 0.6);
-}
-
-.followup-go-btn {
-    background: rgba(14, 165, 233, 0.06);
-    color: #0369a1;
-    border: 1px solid rgba(14, 165, 233, 0.12);
-}
-
-.followup-add-btn:hover,
-.followup-go-btn:hover,
 .add-option-btn:hover,
-.add-lang-btn:hover {
+.add-lang-btn:hover,
+.next-action-btn:hover {
     transform: translateY(-1px);
+}
+
+.next-action-btn {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    font-weight: 600;
+}
+
+::v-deep .vue-grid-item {
+    overflow: visible;
+    z-index: 1;
+}
+
+::v-deep .vue-grid-item:hover,
+::v-deep .vue-grid-item:focus-within {
+    z-index: 100;
 }
 
 ::v-deep .vue-grid-item.vue-grid-placeholder {
     background: gray;
     border-radius: 20px;
+}
+
+::v-deep .dropdown-menu.show {
+    z-index: 9999;
 }
 </style>

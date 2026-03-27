@@ -61,7 +61,7 @@ export function buildGridLayoutFromQuestions(localQuestions = [], storedLayout =
 
         const safeType = (type || '').toLowerCase();
         if (safeType === 'short_answer') h += 2.5;
-        else if (safeType === 'paragraph') h += 4.5;
+        else if (safeType === 'paragraph') h += 4.8;
         else if (safeType === 'multiple_choice' || safeType === 'checkbox') {
             const choices = (q.config && Array.isArray(q.config.choices)) ? q.config.choices : [{}];
             for (const c of choices) {
@@ -69,16 +69,16 @@ export function buildGridLayoutFromQuestions(localQuestions = [], storedLayout =
                 if (safeType === 'multiple_choice') {
                     h += (langs * 2.2) + 2.8;
                 } else if (safeType === 'checkbox') {
-                    h += (langs * 2.2) + 2.61;
+                    h += (langs * 2.2) + 2.5;
                 }
             }
             h += 2;
         }
-        else if (safeType === 'rating') h += 2;
+        else if (safeType === 'rating') h += 3;
         else if (safeType === 'file_upload') h += 7;
         else if (safeType === 'title_description') {
             const descLangs = (q.config && Array.isArray(q.config.description)) ? q.config.description.length : 1;
-            h += (descLangs * 2.2) + 4;
+            h += (descLangs * 4) + 2.5;
         }
         else if (safeType === 'image') h += 60;
         else h += 3;

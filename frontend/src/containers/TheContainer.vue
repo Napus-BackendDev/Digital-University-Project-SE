@@ -1,8 +1,8 @@
 <template>
   <div class="c-app">
-    <TheSidebar v-if="!isPublicForm" />
+    <TheSidebar />
     <CWrapper>
-      <TheHeader v-if="!isPublicForm" />
+      <TheHeader />
       <main class="c-main">
         <CContainer fluid>
           <transition name="fade">
@@ -13,8 +13,9 @@
 
     </CWrapper>
     <CenterLoading />
-    <SignIn v-if="!isPublicForm" />
-    <TwoFA v-if="!isPublicForm" />
+
+    <SignIn />
+    <TwoFA />
 
   </div>
 </template>
@@ -51,20 +52,6 @@ export default {
   computed: {
     ...mapGetters({
     }),
-    isPublicForm() {
-      // Check if we are on the form fill page
-      const isFormFillRoute = this.$route.name === 'FormFill';
-      
-      // Determine if it's an internal view (Preview, Duplicate, or Internal Source)
-      const isInternalSource = this.$route.query.source === 'internal';
-      const isInternalMode = ['preview', 'duplicate'].includes(this.$route.query.mode);
-      const isPublicMode = this.$route.query.mode === 'public';
-      
-      const isPreviewRoute = this.$route.name === 'Preview';
-
-      // It's a public form if it's the Fill route AND (it's explicitly public mode OR not an internal source/mode)
-      return isFormFillRoute && (isPublicMode || (!isInternalSource && !isInternalMode)) && !isPreviewRoute;
-    }
   },
   watch: {
   }

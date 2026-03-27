@@ -26,7 +26,8 @@ var objSchema = new Schema({
                 _id: false,
                 key: { type: String, default: null },
                 value: { type: String, default: null }
-            }]
+            }],
+            nextQuestion: { type: mongoose.Schema.Types.ObjectId, ref: 'Questions', default: null },
         }],
         // Checkbox
         allowMultipleSelect: { type: Boolean, default: null },
@@ -50,13 +51,6 @@ var objSchema = new Schema({
     },
     isRequired: { type: Boolean, default: false },
     nextQuestion: { type: mongoose.Schema.Types.ObjectId, ref: 'Questions', default: null },
-    followUp: [
-        {
-            _id: false,
-            key: { type: String, default: null },
-            question: { type: mongoose.Schema.Types.ObjectId, ref: 'Questions', default: null },
-        }
-    ],
 }, { timestamps: true });
 
 // Auto-update Form's questions array when a new Question is created
