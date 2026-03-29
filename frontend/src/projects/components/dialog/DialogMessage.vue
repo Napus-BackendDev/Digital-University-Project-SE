@@ -14,13 +14,13 @@
       <template #body-wrapper>
         <CCard class="bg-style2">
           <CCardHeader class="bg-gradient-danger text-white" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem ">
-            <span  class="font-weight-bold h6"><CIcon name="cil-speech" size="lg" class="mr-2"/> ERROR </span>
+            <span  class="font-weight-bold h6"><CIcon name="cil-speech" size="lg" class="mr-2"/> {{ message.title || 'NOTIFICATION' }} </span>
             <div class="card-header-actions">
                 <small class="text-muted"># {{message.number}}-{{message.code}}</small>
             </div>
           </CCardHeader>
           <CCardBody>
-            <CRow>
+            <CRow>  
               <CCol col="12">
                 {{message.message}}
               </CCol>
@@ -87,43 +87,16 @@ export default {
 
   methods: {
     onDismiss(){
-      var objs = {};
-      objs.code = "";
-      objs.code = 0;
-      objs.status = false
-
-      this.$store.commit("dialog/dialog",objs)
-
-      this.$store.commit("dialog/loading",false)
+      this.$store.dispatch("dialog/close");
+      this.$store.commit("dialog/loading", false);
     },
 
     onSubmit(values){
-      var objs = {};
-      objs.code = "";
-      objs.message = "";
-      objs.code = 0;
-      objs.number = "1";
-      objs.status = false;
-      objs.button =  [
-        {
-          label: "CANCEL",
-          icon: "cil-ban",
-          color: "danger",
-          code: "cancel"
-        },
-        {
-          label: "SUBMIT",
-          icon: "cil-ban",
-          color: "danger",
-          code: "cancel"
-        }
-      ]
-
-      this.$store.commit("dialog/dialog",objs)
-
+      // First, notify any listeners about the chosen action
+      this.$store.commit("dialog/isCode", values);
       
-
-      this.$store.commit("dialog/isCode",values)
+      // Then close the dialog without overriding the button array with duplicate keys
+      this.$store.dispatch("dialog/close");
     }
   },
 

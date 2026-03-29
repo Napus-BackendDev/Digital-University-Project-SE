@@ -1,7 +1,7 @@
 <template>
     <CCard class="mb-4 border-0 shadow-sm rounded-20">
         <CCardBody class="p-4">
-            <h5 class="mb-4 font-weight-bold text-dark">Organization Control</h5>
+            <h5 class="mb-4 font-weight-bold text-dark">{{ $t('editor.settings.organization.title') }}</h5>
 
             <!-- <div class="mb-4">
                 <h6 class="font-weight-bold mb-3">Organization CanEdit</h6>
@@ -29,34 +29,34 @@
 
             <!-- Selected Organizations List -->
             <div class="mb-4">
-                <label class="mb-3 font-weight-bold ">Selected Organizations</label>
+                <label class="mb-3 font-weight-bold ">{{ $t('editor.settings.organization.selectedOrgs') }}</label>
                 <div class="org-list">
                     <span v-for="(orgId, index) in settings.organization" :key="index" class="badge-custom">
                         {{ getOrgName(orgId) }}
-                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeOrganization(index)" title="Remove">
+                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeOrganization(index)" :title="$t('editor.settings.access.remove')">
                             <CIcon name="cil-x" size="sm" class="delete-icon" />
                         </span>
                     </span>
                     <div v-if="!settings.organization || settings.organization.length === 0" class="text-muted small">
-                        No organizations selected. Form will be private.
+                        {{ $t('editor.settings.organization.noOrgs') }}
                     </div>
                 </div>
             </div>
 
             <!-- Organization Selection Section -->
             <div class="mb-4">
-                <h6 class="font-weight-bold mb-3">Organization Can Response</h6>
+                <h6 class="font-weight-bold mb-3">{{ $t('editor.settings.organization.canResponse') }}</h6>
 
                 <CRow>
                     <CCol md="10" class="mb-3">
-                        <label class="mb-2 font-weight-bold small">Organization Name</label>
-                        <CSelect :options="organizationOptions" :value="selectedOrgId" placeholder="Select organization"
+                        <label class="mb-2 font-weight-bold small">{{ $t('editor.settings.organization.name') }}</label>
+                        <CSelect :options="organizationOptions" :value="selectedOrgId" :placeholder="$t('editor.settings.organization.selectPlaceholder')"
                             class="form-select-custom" @update:value="(val) => { selectedOrgId = val; }" />
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
                             class="font-weight-bold mt-4" @click="addOrganization">
-                            Add
+                            {{ $t('editor.settings.access.add') }}
                         </CButton>
                     </CCol>
                 </CRow>
@@ -64,35 +64,35 @@
                 <!-- Info Hint -->
                 <div class="info-hint mb-3">
                     <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
-                    <h6 class="mb-0 ">ถ้าคุณเลือก <strong>General</strong> ทุกหน่วยงานจะสามารถทำฟอร์มได้</h6>
+                    <h6 class="mb-0 " v-html="$t('editor.settings.organization.generalHint')"></h6>
                 </div>
             </div>
 
             <!-- Selected Emails List -->
             <div class="mb-4 mt-4">
-                <label class="mb-3 font-weight-bold">Allowed Emails</label>
+                <label class="mb-3 font-weight-bold">{{ $t('editor.settings.organization.allowedEmails') }}</label>
                 <div class="org-list">
                     <span v-for="(email, index) in settings.allowedEmails" :key="index" class="badge-custom border">
                         {{ email }}
-                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeEmail(index)" title="Remove">
+                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeEmail(index)" :title="$t('editor.settings.access.remove')">
                             <CIcon name="cil-x" size="sm" class="delete-icon" />
                         </span>
                     </span>
                     <div v-if="!settings.allowedEmails || settings.allowedEmails.length === 0" class="text-muted small my-auto">
-                        No specific emails added.
+                        {{ $t('editor.settings.organization.noEmails') }}
                     </div>
                 </div>
             </div>
 
             <!-- Personal Email Selection Section -->
             <div class="mb-4">
-                <h6 class="font-weight-bold mb-3">Specify User Can Response</h6>
+                <h6 class="font-weight-bold mb-3">{{ $t('editor.settings.organization.specifyUser') }}</h6>
 
                 <CRow>
                     <CCol md="10" class="mb-3">
-                        <label class="mb-2 font-weight-bold small">Email Address</label>
+                        <label class="mb-2 font-weight-bold small">{{ $t('editor.settings.organization.emailPlaceholder') }}</label>
                         <input type="email" 
-                               placeholder="Enter user's email address to allow access" 
+                               :placeholder="$t('editor.settings.organization.emailPlaceholder')" 
                                v-model="newEmail"
                                class="form-control form-select-custom px-3" 
                                @keyup.enter="addEmail" />
@@ -100,7 +100,7 @@
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
                             class="font-weight-bold mt-4" @click="addEmail">
-                            Add
+                            {{ $t('editor.settings.access.add') }}
                         </CButton>
                     </CCol>
                 </CRow>
@@ -109,7 +109,7 @@
             <!-- Info Hint -->
             <div class="info-hint mb-3">
                 <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
-                <h6 class="mb-0 ">ถ้าคุณใส่ข้อมูล User โดยตรง <strong> User จะทำฟอร์มได้แค่คนเดียว</strong> คนอื่นจะไม่เห็น สามารถทำได้เลือก User นอก Organization ได้</h6>
+                <h6 class="mb-0 " v-html="$t('editor.settings.organization.userHint')"></h6>
             </div>
 
         </CCardBody>

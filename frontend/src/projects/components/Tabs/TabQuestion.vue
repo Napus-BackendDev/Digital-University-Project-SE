@@ -102,8 +102,8 @@
                     class="mb-3 position-relative rounded-20 shadow-sm border">
                     <CCardBody class="p-4">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div class="number-question">
-                                {{ displayQuestionNumber(question, qIndex) }}</div>
+                                <div class="number-question" v-if="isCounted(question)">
+                                    {{ displayQuestionNumber(question, qIndex) }}</div>
 
                             <div class="flex-grow-1">
                                 <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
@@ -251,10 +251,10 @@
                                                         {{
                                                             choice.nextQuestion
                                                                 ? (choice.nextQuestion === 'submit' ? $t('builder.submitForm') :
-                                                                    (choice.order || localQuestions.findIndex(q =>
-                                                                        convertIdToStr(q._id) === convertIdToStr(choice.nextQuestion)) +
-                                                                        1) + '. ' + getQuestionTitle(localQuestions.find(q =>
-                                                                            convertIdToStr(q._id) === convertIdToStr(choice.nextQuestion))))
+                                                                    (function () {
+                                                                        const target = localQuestions.find(q => convertIdToStr(q._id) === convertIdToStr(choice.nextQuestion));
+                                                                        return target ? (isCounted(target) ? getDisplayNumber(target) + '. ' : '') + getQuestionTitle(target) : '';
+                                                                    })())
                                                                 : $t('builder.noAction')
                                                         }}
                                                     </span>
@@ -269,7 +269,7 @@
                                             <CDropdownItem v-for="q in getAvailableNextQuestions(question)" :key="q._id"
                                                 @click="$set(choice, 'nextQuestion', q._id); putQuestion(question)">
                                                 <CIcon name="cil-list-low-priority" class="mr-2" />
-                                                <span>{{ q.order }}. {{ getQuestionTitle(q) }}</span>
+                                                <span>{{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{ getQuestionTitle(q) }}</span>
                                             </CDropdownItem>
                                             <CDropdownItem
                                                 @click="$set(choice, 'nextQuestion', 'submit'); putQuestion(question)">
@@ -461,7 +461,7 @@
                                                         !question.nextQuestion ? $t('builder.submitForm') :
                                                             (function () {
                                                                 const targetQ = localQuestions.find(q => convertIdToStr(q._id) === convertIdToStr(question.nextQuestion));
-                                                                return targetQ ? targetQ.order + '. ' + getQuestionTitle(targetQ) : '';
+                                                                return targetQ ? (isCounted(targetQ) ? getDisplayNumber(targetQ) + '. ' : '') + getQuestionTitle(targetQ) : '';
                                                             })()
                                                     }}
                                                 </span>
@@ -472,7 +472,7 @@
                                             @click="setCombinedNavigationValue(question, 'question:' + convertIdToStr(q._id))">
                                             <CIcon name="cil-list-low-priority" class="mr-2" />
                                             <span>
-                                                {{ q.order }}. {{ getQuestionTitle(q) }}
+                                                {{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{ getQuestionTitle(q) }}
                                             </span>
                                         </CDropdownItem>
                                         <CDropdownItem @click="setCombinedNavigationValue(question, 'submit')">
@@ -529,10 +529,12 @@
             </template>
             <template #footer-wrapper>
                 <div class="d-flex justify-content-end p-2 border-top">
-                    <CButton color="danger" variant="ghost" @click="showImageModal = false">
+                    <CButton color="danger" variant="ghost" @click="showImageModal = false" :disabled="isImageUpdating">
                         {{ $t('builder.modal.cancel') }}
                     </CButton>
-                    <CButton color="primary" class="ml-2" @click="confirmImageQuestion()">
+                    <CButton color="primary" class="ml-2 px-4 shadow-sm font-weight-bold" @click="confirmImageQuestion()"
+                        :disabled="isImageUpdating || !modalFiles">
+                        <CSpinner v-if="isImageUpdating" size="sm" class="mr-1" />
                         {{ $t('builder.modal.ok') }}
                     </CButton>
                 </div>
@@ -578,6 +580,7 @@ export default {
                 { value: 'th', label: 'TH' },
                 { value: 'en', label: 'EN' },
             ],
+            isImageUpdating: false,
         };
     },
     watch: {
@@ -1114,18 +1117,25 @@ export default {
             this.showImageModal = true;
         },
         async confirmImageQuestion() {
-            if (!this.modalFiles) return;
-            if (this.modalImageIndex !== null) {
-                const q = this.localQuestions[this.modalImageIndex];
-                if (q) {
-                    if (!q.config) this.$set(q, 'config', {});
-                    this.$set(q.config, 'image', this.modalFiles);
-                    await this.putQuestion(q);
+            if (!this.modalFiles || this.isImageUpdating) return;
+            this.isImageUpdating = true;
+            try {
+                if (this.modalImageIndex !== null) {
+                    const q = this.localQuestions[this.modalImageIndex];
+                    if (q) {
+                        if (!q.config) this.$set(q, 'config', {});
+                        this.$set(q.config, 'image', this.modalFiles);
+                        await this.putQuestion(q);
+                    }
+                } else {
+                    await this.addQuestion('image');
                 }
-            } else {
-                await this.addQuestion('image');
+                this.showImageModal = false;
+            } catch (err) {
+                console.error('confirmImageQuestion failed:', err);
+            } finally {
+                this.isImageUpdating = false;
             }
-            this.showImageModal = false;
         },
         scrollToQuestion(questionId) {
             if (!questionId) return;
@@ -1187,10 +1197,26 @@ export default {
             question.config.choices.splice(oIndex, 1);
             this.putQuestion(question);
         },
+        isCounted(question) {
+            if (!question) return false;
+            const type = (this.getQuestionType(question.type) || '').toLowerCase().replace(/[\s&/]+/g, '_');
+            return type !== 'title_description' && type !== 'image';
+        },
+        getDisplayNumber(question) {
+            if (!question) return 0;
+            let num = 0;
+            for (let i = 0; i < this.localQuestions.length; i++) {
+                const item = this.localQuestions[i];
+                if (this.isCounted(item)) num++;
+                if (item === question) return num;
+            }
+            return num;
+        },
         displayQuestionNumber(question, index) {
             let num = 0;
             for (let i = 0; i <= index && i < this.localQuestions.length; i++) {
-                num++;
+                const item = this.localQuestions[i];
+                if (this.isCounted(item)) num++;
             }
             return num;
         },

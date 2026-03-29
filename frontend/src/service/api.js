@@ -128,6 +128,16 @@ export default {
       case 'vision-delete':
         return instance.delete('settings/status', { data })
 
+      // Controll settings
+      case 'controll-get':
+        return instance.get('settings/controll')
+      case 'controll-create':
+        return instance.post('settings/controll', data)
+      case 'controll-update':
+        return instance.put('settings/controll', data)
+      case 'controll-delete':
+        return instance.delete('settings/controll', { data })
+
       default:
         break
     }

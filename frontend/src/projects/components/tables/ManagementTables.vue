@@ -117,35 +117,6 @@
 
         <!-- Pagination -->
         <Pagination :activePage.sync="activePage" :pages="totalPages" />
-
-        <!-- Confirm Delete modal -->
-        <CModal class="delete-modal" :show.sync="deleteModal" :centered="true">
-            <template #header-wrapper>
-                <div class="align-items-start p-3">
-                    <div class="d-flex flex-column align-items-center">
-                        <div class="modal-icon-wrapper m-1">
-                            <CIcon name="cil-x" class="text-danger" />
-                        </div>
-                        <span class="font-weight-bold">{{ $t('modal.deleteTitle') }}</span>
-                    </div>
-                </div>
-            </template>
-            <template #body-wrapper>
-                <div class="d-flex justify-content-center p-4">
-                    <span>{{ $t('modal.deleteMessage') }}</span>
-                </div>
-            </template>
-            <template #footer-wrapper>
-                <div class="d-flex justify-content-center p-3">
-                    <CButton color="secondary" class="btn-cancel" @click="deleteModal = false">
-                        {{ $t('modal.cancel') }}
-                    </CButton>
-                    <CButton color="danger" class="ml-2 btn-confirm" @click="confirmDelete()">
-                        {{ $t('modal.confirm') }}
-                    </CButton>
-                </div>
-            </template>
-        </CModal>
     </div>
 </template>
 
@@ -174,7 +145,6 @@ export default {
             endDate: '',
             activePage: 1,
             itemsPerPage: 5,
-            deleteModal: false,
             deleteItem: null,
         }
     },
@@ -191,6 +161,7 @@ export default {
             ]
         },
         ...mapGetters('Forms', ['forms']),
+        ...mapGetters('dialog', ['isCode']),
 
         totalPages() {
             return Math.ceil(this.tableData.length / this.itemsPerPage) || 1;
@@ -284,31 +255,38 @@ export default {
                     status = 'Draft';
                 }
 
-                // Access/Visibility Logic (Extract plain names from populated objects or strings)
-                const rawOrgs = f.organization || [];
+                // Access/Visibility Logic
                 let access = [];
+                if (f.controll && f.controll.type) {
+                    const controllType = f.controll.type;
+                    const cTitle = this.getLang(controllType.title);
+                    if (cTitle) access = [cTitle];
+                }
 
-                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
-                    if (!o) return null;
-                    if (typeof o === 'string') return o;
-                    if (typeof o === 'object') {
-                        // Support the multi-language title structure
-                        if (Array.isArray(o.title)) {
-                            const localOrgTitle = o.title.find(t => t && t.key && t.key.toLowerCase() === locale);
-                            return localOrgTitle ? localOrgTitle.value : (o.title[0] ? o.title[0].value : null);
+                if (access.length === 0) {
+                    const rawOrgs = f.organization || [];
+                    const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
+                        if (!o) return null;
+                        if (typeof o === 'string') return o;
+                        if (typeof o === 'object') {
+                            // Support the multi-language title structure
+                            if (Array.isArray(o.title)) {
+                                const localOrgTitle = o.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                                return localOrgTitle ? localOrgTitle.value : (o.title[0] ? o.title[0].value : null);
+                            }
+                            return o.name || o.title || o.value || null;
                         }
-                        return o.name || o.title || o.value || null;
-                    }
-                    return null;
-                }).filter(Boolean);
+                        return null;
+                    }).filter(Boolean);
 
-                if (orgNames.includes('General') || orgNames.includes('ทั่วไป')) {
-                    access = ['Public'];
-                } else if (orgNames.length > 0) {
-                    access = orgNames;
-                } else {
-                    // No organizations assigned = Private
-                    access = ['Private'];
+                    if (orgNames.includes('General') || orgNames.includes('ทั่วไป')) {
+                        access = ['Public'];
+                    } else if (orgNames.length > 0) {
+                        access = orgNames;
+                    } else {
+                        // No organizations assigned = Private
+                        access = ['Private'];
+                    }
                 }
 
                 // Responses array
@@ -396,7 +374,15 @@ export default {
         },
         confirmDeleteItem(item) {
             this.deleteItem = item;
-            this.deleteModal = true;
+            const options = {
+                title: this.$t('modal.deleteTitle'),
+                message: this.$t('modal.deleteMessage'),
+                button: [
+                    { label: this.$t('modal.cancel'), icon: 'cil-ban', color: 'secondary', code: 'cancel' },
+                    { label: this.$t('modal.confirm'), icon: 'cil-check', color: 'danger', code: 'confirm' }
+                ]
+            };
+            this.$store.dispatch('dialog/open', options);
         },
         filterStatus(status) {
             this.selectedStatus = status;
@@ -425,13 +411,6 @@ export default {
         goToPreviewForm(item) {
             this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'preview', source: 'internal' } });
         },
-        async confirmDelete() {
-            if (this.deleteItem) {
-                await this.deleteForm(this.deleteItem);
-            }
-            this.deleteModal = false;
-            this.deleteItem = null;
-        },
         async deleteForm(item) {
             try {
                 const formId = item._id || (item._raw ? item._raw._id : null) || item.id;
@@ -444,6 +423,14 @@ export default {
                 await this.$store.dispatch('Forms/delete', { _id: formId });
             } catch (error) {
                 console.error("Failed to delete form:", error);
+            }
+        }
+    },
+    watch: {
+        isCode(val) {
+            if (val === 'confirm' && this.deleteItem) {
+                this.deleteForm(this.deleteItem);
+                this.deleteItem = null;
             }
         }
     }

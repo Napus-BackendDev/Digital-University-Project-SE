@@ -13,7 +13,7 @@
 
     </CWrapper>
     <CenterLoading />
-
+    <DialogMessage />
     <SignIn />
     <TwoFA />
 

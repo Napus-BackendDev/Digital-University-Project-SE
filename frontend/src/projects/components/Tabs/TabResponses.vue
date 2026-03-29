@@ -3,10 +3,10 @@
         <!-- Toolbar -->
         <div class="d-flex justify-content-between align-items-center mb-4 px-3">
             <div>
-                <h2 class="section-title mb-1">Response Summary</h2>
+                <h2 class="section-title mb-1">{{ $t('responses.title') }}</h2>
                 <div class="response-count-badge">
                     <div class="pulse-dot"></div>
-                    {{ allSubmittedResponses.length }} Total Responses
+                    {{ allSubmittedResponses.length }} {{ $t('responses.total') }}
                 </div>
             </div>
 
@@ -15,12 +15,12 @@
                     <button :class="['toggle-pill', currentView === 'summary' ? 'active' : '']"
                         @click="currentView = 'summary'">
                         <CIcon name="cil-chart-pie" size="sm" class="mr-2" />
-                        Summary
+                        {{ $t('responses.summary') }}
                     </button>
                     <button :class="['toggle-pill', currentView === 'individual' ? 'active' : '']"
                         @click="currentView = 'individual'">
                         <CIcon name="cil-list" size="sm" class="mr-2" />
-                        Individual
+                        {{ $t('responses.individual') }}
                     </button>
                 </div>
 
@@ -30,17 +30,17 @@
                     <template #toggler>
                         <CButton class="btn-export-main">
                             <CIcon name="cil-data-transfer-down" size="sm" class="mr-2" />
-                            Export
+                            {{ $t('responses.export') }}
                             <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                         </CButton>
                     </template>
                     <CDropdownItem @click="exportXlsx" class="dropdown-item-modern">
                         <CIcon name="cil-spreadsheet" size="sm" class="mr-2 text-success" />
-                        Microsoft Excel (.xlsx)
+                        {{ $t('responses.excel') }}
                     </CDropdownItem>
                     <CDropdownItem @click="downloadJson" class="dropdown-item-modern">
                         <CIcon name="cil-code" size="sm" class="mr-2 text-primary" />
-                        Download JSON
+                        {{ $t('responses.json') }}
                     </CDropdownItem>
                 </CDropdown>
             </div>
@@ -53,8 +53,8 @@
                 <div class="empty-icon-wrapper mb-3">
                     <CIcon name="cil-coffee" size="xl" class="text-muted opacity-50" />
                 </div>
-                <h4 class="text-dark font-weight-bold">No data yet</h4>
-                <p class="text-muted">Wait for participants to complete the questionnaire.</p>
+                <h4 class="text-dark font-weight-bold">{{ $t('responses.noData') }}</h4>
+                <p class="text-muted">{{ $t('responses.noDataDesc') }}</p>
             </div>
 
             <!-- Dynamic question cards -->
@@ -150,7 +150,7 @@
                     <div class="q-index-circle mr-3">
                         <CIcon name="cil-list" size="sm" />
                     </div>
-                    <h3 class="mb-0 font-weight-bold section-title-inner" style="color: #0f172a;">Individual Responses</h3>
+                    <h3 class="mb-0 font-weight-bold section-title-inner" style="color: #0f172a;">{{ $t('responses.individual') }}</h3>
                 </div>
                 <ResponseTables :responseList="allSubmittedResponses" />
             </div>
@@ -216,7 +216,7 @@ export default {
         },
         exportXlsx() {
             if (!this.allSubmittedResponses.length) {
-                alert('No responses to export.');
+                alert(this.$t('responses.noExportData'));
                 return;
             }
 
@@ -326,7 +326,7 @@ export default {
         // ── Download JSON ─────────────────────────────────────────────────
         downloadJson() {
             if (!this.allSubmittedResponses.length) {
-                alert('No responses to export.');
+                alert(this.$t('responses.noExportData'));
                 return;
             }
             const formTitle = this.getTitle(this.responses.title) || 'responses';

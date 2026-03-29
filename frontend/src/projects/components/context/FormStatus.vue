@@ -1,10 +1,10 @@
 <template>
     <CCard class="mb-4 border-0 shadow-sm rounded-20">
         <CCardBody class="p-4">
-            <h5 class="mb-4 font-weight-bold text-dark">Form Status</h5>
+            <h5 class="mb-4 font-weight-bold text-dark">{{ $t('editor.settings.status.title') }}</h5>
             <CRow class="mb-4 align-items-center">
                 <CCol md="3">
-                    <label class="mb-0 font-weight-bold text-muted-dark">Start date time</label>
+                    <label class="mb-0 font-weight-bold text-muted-dark">{{ $t('editor.settings.status.startAt') }}</label>
                 </CCol>
                 <CCol md="9">
                     <CInput type="datetime-local" class="mb-0"
@@ -14,7 +14,7 @@
             </CRow>
             <CRow class="align-items-center">
                 <CCol md="3">
-                    <label class="mb-0 font-weight-bold text-muted-dark">End date time</label>
+                    <label class="mb-0 font-weight-bold text-muted-dark">{{ $t('editor.settings.status.endAt') }}</label>
                 </CCol>
                 <CCol md="9">
                     <CInput type="datetime-local" class="mb-0"
@@ -26,7 +26,7 @@
             <div class="info-hint mb-0 mt-4" :class="statusColorClass">
                 <CIcon name="cil-info" size="xl" class="mr-3" :class="statusIconColor" />
                 <div>
-                    <h6 class="mb-1 font-weight-bold">Status: {{ currentStatusText }}</h6>
+                    <h6 class="mb-1 font-weight-bold">{{ $t('editor.settings.status.statusLabel') }}: {{ currentStatusText }}</h6>
                     <p class="mb-0 small" style="line-height: 1.4;">{{ currentStatusDescription }}</p>
                 </div>
             </div>
@@ -68,19 +68,19 @@ export default {
         },
         currentStatusText() {
             switch(this.currentStatus) {
-                case 'draft': return 'Draft';
-                case 'open': return 'Open';
-                case 'scheduled': return 'Scheduled';
-                case 'closed': return 'Closed';
-                default: return 'Draft';
+                case 'draft': return this.$t('editor.settings.status.draft');
+                case 'open': return this.$t('editor.settings.status.open');
+                case 'scheduled': return this.$t('editor.settings.status.scheduled');
+                case 'closed': return this.$t('editor.settings.status.closed');
+                default: return this.$t('editor.settings.status.draft');
             }
         },
         currentStatusDescription() {
             switch(this.currentStatus) {
-                case 'draft': return "Start and end dates are not defined. The form is not actively accepting responses yet.";
-                case 'open': return "The current time is within the start and end dates. The form is actively accepting responses.";
-                case 'scheduled': return "The start date is in the future. The form will open automatically at the specified time.";
-                case 'closed': return "The current time is not within the specified dates. The form is closed and no longer accepting responses.";
+                case 'draft': return this.$t('editor.settings.status.draftDesc');
+                case 'open': return this.$t('editor.settings.status.openDesc');
+                case 'scheduled': return this.$t('editor.settings.status.scheduledDesc');
+                case 'closed': return this.$t('editor.settings.status.closedDesc');
                 default: return "";
             }
         },

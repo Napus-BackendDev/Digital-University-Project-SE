@@ -44,7 +44,7 @@
                         <div class="icon-circle mr-3">
                             <CIcon name="cil-qr-code" size="sm" />
                         </div>
-                        <span class="font-weight-medium">QR Code Scan</span>
+                        <span class="font-weight-medium">{{ $t('toolbar.qr.scan') }}</span>
                     </CButton>
                 </div>
 
@@ -101,7 +101,7 @@
                         <div class="icon-circle-header mr-3">
                             <CIcon name="cil-qr-code" class="text-primary" size="lg" />
                         </div>
-                        QR Code Share
+                        {{ $t('toolbar.qr.share') }}
                     </h5>
                     <CButton class="text-secondary p-0 shadow-none border-0" @click="showQRModal = false">
                         <CIcon name="cil-x" size="lg" />
@@ -114,13 +114,13 @@
                 </div>
                 <h4 class="font-weight-bold text-dark text-center mb-2">{{ formTitle }}</h4>
                 <p class="text-muted text-center mb-0 px-2" style="font-size: 0.95rem;">
-                    Scan this QR code with your phone's camera to easily access and fill out this form.
+                    {{ $t('toolbar.qr.instruction') }}
                 </p>
             </div>
             <template #footer>
                 <div class="w-100 d-flex justify-content-center border-top-0 pt-0 pb-2">
                     <CButton color="primary" variant="outline" shape="pill" class="px-5 font-weight-bold btn-done shadow-sm" @click="showQRModal = false">
-                        Done
+                        {{ $t('toolbar.qr.done') }}
                     </CButton>
                 </div>
             </template>
@@ -131,14 +131,14 @@
 <script>
 import ButtonBack from '../../components/Button/ButtonBack.vue';
 import ButtonPreview from '../../components/Button/ButtonPreview.vue';
-import SendForm from '../../components/context/SendForm.vue';
+
 
 export default {
     name: 'Toolbar',
     components: {
         ButtonBack,
         ButtonPreview,
-        SendForm
+        ButtonPreview
     },
     props: {
         activeTab: {

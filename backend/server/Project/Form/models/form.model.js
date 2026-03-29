@@ -15,7 +15,10 @@ var objSchema = new Schema({
         type: [{ type: Schema.Types.ObjectId, ref: 'Organizations' }],
         default: ["69baf8349050b9215c700b96"]
     },
-    allowedEmails: { type: [String], default: [] },
+    controll: {
+        user: { type: Schema.Types.ObjectId, ref: 'Users' },
+        type: { type: Schema.Types.ObjectId, ref: 'Setting_Controll', default: null }
+    },
     settings: {
         whoCanRespond: { type: Schema.Types.ObjectId, ref: 'Setting_Respond', default: null },
         collectEmail: { type: Boolean, default: false },

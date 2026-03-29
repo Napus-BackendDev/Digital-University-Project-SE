@@ -12,6 +12,7 @@ const Role = require('./server/Project/User/models/roles.model');
 const Questions = require('./server/Project/Questions/models/questions.model');
 const QuestionType = require('./server/Project/Settings/models/question_type.model');
 const Organization = require('./server/Project/Organizations/models/organization.model');
+const SettingControll = require('./server/Project/Settings/models/controll.model');
 
 const mongoURI = process.env.MONGODB;
 
@@ -32,7 +33,8 @@ async function seedDatabase() {
             QuestionType.deleteMany({}),
             Questions.deleteMany({}),
             Form.deleteMany({}),
-            Response.deleteMany({})
+            Response.deleteMany({}),
+            SettingControll.deleteMany({})
         ]);
         console.log('🗑️  Cleared existing data');
 
@@ -90,6 +92,14 @@ async function seedDatabase() {
         const typeNames = ['short_answer', 'paragraph', 'multiple_choice', 'checkbox', 'rating', 'file_upload', 'image', 'title_description'];
         const createdTypes = await QuestionType.insertMany(typeNames.map(t => ({ type: t })));
         console.log(`✅ Seeded ${createdTypes.length} question types`);
+
+        // 6. Seed Control Types
+        const controllData = [
+            { title: [{ key: 'en', value: 'Editor' }, { key: 'th', value: 'แก้ไขฟอร์ม' }] },
+            { title: [{ key: 'en', value: 'Viewer' }, { key: 'th', value: 'ดูฟอร์ม' }] }
+        ];
+        const createdControlls = await SettingControll.insertMany(controllData);
+        console.log(`✅ Seeded ${createdControlls.length} control types`);
 
         // 6. Seed Users
         const users = [];
@@ -154,6 +164,10 @@ async function seedDatabase() {
                 schedule: {
                     startAt: new Date(Date.now() - 24 * 60 * 60 * 1000), 
                     endAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                },
+                controll: {
+                    user: adminUser._id,
+                    type: createdControlls[0]._id // Editor
                 }
             });
             forms.push(f);

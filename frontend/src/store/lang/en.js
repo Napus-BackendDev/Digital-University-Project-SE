@@ -165,6 +165,68 @@ const en = {
             responseDesc: "View and analyze form submissions and performance data",
             settingTitle: "Form Settings",
             settingDesc: "Configure form access, schedule, and organization controls"
+        },
+        settings: {
+            access: {
+                title: "Access Control",
+                collaborators: "Collaborators",
+                collaboratorsDesc: "Add people who can help you manage this form",
+                emailPlaceholder: "Email address",
+                add: "Add",
+                selectedCollaborators: "Selected Collaborators",
+                noCollaborators: "No collaborators added.",
+                remove: "Remove",
+                editor: "Editor",
+                viewer: "Viewer",
+                editorDesc: "Can edit form and view responses",
+                viewerDesc: "Can only view form and view responses",
+                role: "Role",
+                accessLevel: "Access Level",
+                accessLevelDesc: "Select the access permission level for this form.",
+                selectLevel: "Select Level..."
+            },
+            status: {
+                title: "Form Status",
+                startAt: "Start date time",
+                endAt: "End date time",
+                statusLabel: "Status",
+                draft: "Draft",
+                open: "Open",
+                scheduled: "Scheduled",
+                closed: "Closed",
+                draftDesc: "Start and end dates are not defined. The form is not actively accepting responses yet.",
+                openDesc: "The current time is within the start and end dates. The form is actively accepting responses.",
+                scheduledDesc: "The start date is in the future. The form will open automatically at the specified time.",
+                closedDesc: "The current time is not within the specified dates. The form is closed and no longer accepting responses."
+            },
+            organization: {
+                title: "Organization Control",
+                selectedOrgs: "Selected Organizations",
+                noOrgs: "No organizations selected. Form will be private.",
+                canResponse: "Organization Can Response",
+                name: "Organization Name",
+                selectPlaceholder: "Select organization",
+                generalHint: "If you choose General, every department will be able to do the form.",
+                allowedEmails: "Allowed Emails",
+                noEmails: "No specific emails added.",
+                specifyUser: "Specify User Can Response",
+                emailPlaceholder: "Enter user's email address to allow access",
+                userHint: "If you enter User information directly, only that User will be able to do the form. Others will not see it. You can choose a User outside the Organization."
+            },
+            response: {
+                title: "Response Settings",
+                collectEmail: "Collect email addresses",
+                collectEmailDesc: "Require respondents to enter their email",
+                notifications: "Email Notifications",
+                notificationsDesc: "Send email notifications to respondents after submission",
+                message: "Email Message",
+                messagePlaceholder: "Write the message that will be sent to respondents",
+                messageTip: "Tip: You can use {name} or {email} to personalize the message.",
+                limitOne: "Limit to one response",
+                limitOneDesc: "Only allow one response per person",
+                requireAll: "Require Response",
+                requireAllDesc: "Ensure all questions have a response before submission"
+            }
         }
     },
     toolbar: {
@@ -177,7 +239,13 @@ const en = {
         copied: "Copied!",
         sendEmail: "Send Email",
         questionTypes: "Question Types",
-        contentElements: "Content Elements"
+        contentElements: "Content Elements",
+        qr: {
+            scan: "QR Code Scan",
+            share: "QR Code Share",
+            instruction: "Scan this QR code with your phone's camera to easily access and fill out this form.",
+            done: "Done"
+        }
     },
     analytics: {
         title: "Admin Dashboard",
@@ -205,6 +273,18 @@ const en = {
         file_upload: "File Upload",
         title_description: "Title & Description",
         image: "Image"
+    },
+    responses: {
+        title: "Response Summary",
+        total: "Total Responses",
+        summary: "Summary",
+        individual: "Individual",
+        noData: "No data yet",
+        noDataDesc: "Wait for participants to complete the questionnaire.",
+        export: "Export",
+        excel: "Excel (.xlsx)",
+        json: "Download JSON",
+        noExportData: "No responses to export."
     },
     builder: {
         addLanguage: "Add Language",
