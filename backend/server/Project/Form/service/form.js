@@ -41,7 +41,7 @@ exports.onQuery = async function (request, response) {
     ]);
 
     const doc = await Form.onQuery({ _id: query._id }, [
-      { path: 'questions', populate: [{ path: 'type' }, { path: 'followUp.question' }] },
+      { path: 'questions', populate: [{ path: 'type' }, { path: 'nextQuestion' }] },
       {
         path: 'responses',
         populate: [
