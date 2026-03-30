@@ -494,8 +494,7 @@ export default {
         getType(q) {
             const t = q.type;
             if (!t) return '';
-            const raw = (typeof t === 'object' ? (t.type || '') : t).toLowerCase();
-            return raw.replace(/[\s&/]+/g, '_');
+            return (typeof t === 'object' ? (t.type || '') : t).toLowerCase();
         },
 
         isType(q, ...types) {
@@ -574,7 +573,7 @@ export default {
                         let topNum = 0;
                         for (let i = 0; i < this.form.questions.length; i++) {
                             const item = this.form.questions[i];
-                            if (!this.isFollowUp(item) && !this.isType(item, 'title_description', 'image')) topNum++;
+                            if (!this.isFollowUp(item)) topNum++;
                             if (item === anc) break;
                         }
                         parts.push(String(topNum));
@@ -617,7 +616,7 @@ export default {
             let num = 0;
             for (let i = 0; i <= index && i < this.visibleQuestions.length; i++) {
                 const item = this.visibleQuestions[i];
-                if (!this.isFollowUp(item) && !this.isType(item, 'title_description', 'image')) num++;
+                if (!this.isFollowUp(item)) num++;
             }
             return num;
         },
@@ -823,12 +822,6 @@ export default {
                     await this.$store.dispatch('Responses/update', payload);
                 } else {
                     await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: this.submit }));
-                }
-
-                try {
-                    await this.$store.dispatch('Forms/get');
-                } catch (e) {
-                    console.warn('Failed to refresh forms list:', e);
                 }
 
                 this.modalTitle = this.$t('common.success');
