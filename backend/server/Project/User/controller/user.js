@@ -4,9 +4,17 @@ const createBaseService = require("../../../../helpers/base.service")
 
 const defaultPopulate = [
     { path: 'role' },
-    { 
+    {
         path: 'response',
-        populate: { path: 'form' }
+        populate: {
+            path: 'form',
+            populate: {
+                path: 'questions',
+                populate: {
+                    path: 'type'
+                }
+            }
+        }
     },
     { path: 'organization', select: 'title' }
 ];

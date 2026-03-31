@@ -137,6 +137,44 @@
                                     :accept="getAcceptString(question)" class="text-muted"
                                     :disabled="isPreviewMode || isAlreadySubmitted"
                                     @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); autoSave(); }" />
+
+                                <!-- Display uploaded / selected files -->
+                                <div v-if="answers[convertIdToStr(question._id)]" class="mt-2">
+                                    <template v-if="Array.isArray(answers[convertIdToStr(question._id)])">
+                                        <div v-for="(f, idx) in answers[convertIdToStr(question._id)]" :key="idx"
+                                            class="d-flex align-items-center mb-1 text-primary small">
+                                            <CIcon name="cil-paperclip" size="sm" class="mr-2" />
+                                            <a v-if="typeof f === 'string' && f.startsWith('http')" :href="f"
+                                                target="_blank" rel="noopener noreferrer" class="text-truncate"
+                                                style="max-width: 90%;">{{ f.split('/').pop() }}</a>
+                                            <a v-else-if="f && f.url" :href="f.url" target="_blank"
+                                                rel="noopener noreferrer" class="text-truncate"
+                                                style="max-width: 90%;">{{ f.name || f.filename || 'Attachment' }}</a>
+                                            <span v-else class="text-truncate" style="max-width: 90%;">{{ f ? (f.name ||
+                                                f.filename || f) : '-' }}</span>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="d-flex align-items-center mb-1 text-primary small">
+                                            <CIcon name="cil-paperclip" size="sm" class="mr-2" />
+                                            <a v-if="typeof answers[convertIdToStr(question._id)] === 'string' && answers[convertIdToStr(question._id)].startsWith('http')"
+                                                :href="answers[convertIdToStr(question._id)]" target="_blank"
+                                                rel="noopener noreferrer" class="text-truncate"
+                                                style="max-width: 90%;">{{
+                                                    answers[convertIdToStr(question._id)].split('/').pop() }}</a>
+                                            <a v-else-if="answers[convertIdToStr(question._id)] && answers[convertIdToStr(question._id)].url"
+                                                :href="answers[convertIdToStr(question._id)].url" target="_blank"
+                                                rel="noopener noreferrer" class="text-truncate"
+                                                style="max-width: 90%;">{{ answers[convertIdToStr(question._id)].name ||
+                                                    answers[convertIdToStr(question._id)].filename || 'Attachment' }}</a>
+                                            <span v-else class="text-truncate" style="max-width: 90%;">{{
+                                                answers[convertIdToStr(question._id)] ?
+                                                    (answers[convertIdToStr(question._id)].name ||
+                                                        answers[convertIdToStr(question._id)].filename ||
+                                                        answers[convertIdToStr(question._id)]) : '-' }}</span>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
 
                             <!-- Title & Description -->
@@ -668,14 +706,23 @@ export default {
                 });
             }
 
-            const max = question && question.config && Number(question.config.maxFiles) ? Number(question.config.maxFiles) : filtered.length;
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            const validFiles = filtered.filter(f => f.size <= maxSize);
+            if (validFiles.length < filtered.length) {
+                this.modalTitle = 'Error';
+                this.modalMessage = this.$t('form.fileTooLarge') || 'File size cannot exceed 5MB';
+                this.modalType = 'error';
+                this.showModal = true;
+            }
+
+            const max = question && question.config && Number(question.config.maxFiles) ? Number(question.config.maxFiles) : validFiles.length;
             const qIdStr = this.convertIdToStr(questionId);
             if (max <= 1) {
-                this.$set(this.answers, qIdStr, filtered[0] || null);
-                if (filtered[0]) this.scrollToNextQuestion(question);
+                this.$set(this.answers, qIdStr, validFiles[0] || null);
+                if (validFiles[0]) this.scrollToNextQuestion(question);
             } else {
-                this.$set(this.answers, qIdStr, filtered.slice(0, max));
-                if (filtered.length > 0) this.scrollToNextQuestion(question);
+                this.$set(this.answers, qIdStr, validFiles.slice(0, max));
+                if (validFiles.length > 0) this.scrollToNextQuestion(question);
             }
         },
         clearError(questionId) {

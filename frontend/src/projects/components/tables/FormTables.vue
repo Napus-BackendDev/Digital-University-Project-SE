@@ -138,7 +138,6 @@ export default {
 
         baseTableData() {
             if (!this.forms || this.forms.length === 0) return [];
-            console.log(JSON.parse(JSON.stringify(this.forms))); // log raw forms data for debugging
 
             const currentUser = this.user;
 
@@ -194,33 +193,52 @@ export default {
                     missingFields.push('timeRange');
                 }
 
-                // Determine total questions if available
                 let totalQuestions = null;
-                if (Array.isArray(f.questions)) totalQuestions = f.questions.length;
+                if (Array.isArray(f.questions)) {
+                    totalQuestions = f.questions.filter(q => {
+                        if (!q) return false;
+                        const t = q.type;
+                        if (!t) return true;
+                        const typeStr = (typeof t === 'object' ? (t.type || t.name || '') : t).toLowerCase();
+                        return !['title_description', 'image'].includes(typeStr);
+                    }).length;
+                }
                 else if (typeof f.questions === 'number') totalQuestions = f.questions;
                 else if (Array.isArray(f.questionIds)) totalQuestions = f.questionIds.length;
 
-                // Identify the user's specific response and its 'submit' status
-                // Identify the user's response from their profile list
                 const userObj = currentUser || {};
-                const userResponses = userObj.response || []; // Populated from backend earlier
-
+                const userResponses = userObj.response || [];
                 let status = 'Pending';
                 let progress = 0;
                 let userAnswerCount = 0;
 
-                // Match response by form ID
-                const userResponse = userResponses.find(r => {
+                const matchedResponses = userResponses.filter(r => {
                     if (!r || !r.form) return false;
                     const resFormId = (typeof r.form === 'object' ? r.form._id : r.form).toString();
                     return resFormId === f._id.toString();
                 });
 
+                let userResponse = null;
+                if (matchedResponses.length > 0) {
+                    matchedResponses.sort((a, b) => {
+                        const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                        const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                        return dateB - dateA;
+                    });
+                    userResponse = matchedResponses[0];
+                }
+
                 if (userResponse) {
                     // 1. Determine total questions from the form linked in the response
                     const nestedForm = userResponse.form || {};
                     if (Array.isArray(nestedForm.questions)) {
-                        totalQuestions = nestedForm.questions.length;
+                        totalQuestions = nestedForm.questions.filter(q => {
+                            if (!q) return false;
+                            const t = q.type;
+                            if (!t) return true;
+                            const typeStr = (typeof t === 'object' ? (t.type || t.name || '') : t).toLowerCase();
+                            return !['title_description', 'image'].includes(typeStr);
+                        }).length;
                     } else if (Array.isArray(nestedForm.questionIds)) {
                         totalQuestions = nestedForm.questionIds.length;
                     }
@@ -238,7 +256,7 @@ export default {
                         progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
                     }
 
-                    if (userResponse.submit === true) {
+                    if (userResponse.submit === true || String(userResponse.submit).toLowerCase() === 'true') {
                         status = 'Completed';
                         progress = 100;
                     } else {

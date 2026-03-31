@@ -214,7 +214,7 @@ exports.onUpdate = async function (request, response) {
                         const titleObj = formInfo.title && formInfo.title.find(t => t.value) || { value: 'Form' };
                         const subject = `Confirmation: ${titleObj.value} Submitted`;
                         let textMessage = formInfo.settings.emailMessage || formInfo.settings.confirmMessage || "Thank you for completing this survey. Your response has been recorded.";
-                        
+
                         // Process template variables e.g. {{ User.name }}, {{ User.email }}
                         if (textMessage.includes('{{')) {
                             textMessage = textMessage.replace(/\{\{\s*User\.(\w+)\s*\}\}/gi, (match, field) => {
@@ -224,7 +224,7 @@ exports.onUpdate = async function (request, response) {
                                 return responderInfo[field] !== undefined ? responderInfo[field] : match;
                             });
                         }
-                        
+
                         await mailer.sendMail(responderInfo.email, subject, textMessage);
                     }
                 }

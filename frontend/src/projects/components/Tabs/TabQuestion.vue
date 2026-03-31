@@ -273,7 +273,7 @@
                                                 <CIcon name="cil-list-low-priority" class="mr-2" />
                                                 <span>{{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
                                                     getQuestionTitle(q)
-                                                    }}</span>
+                                                }}</span>
                                             </CDropdownItem>
                                             <CDropdownItem
                                                 @click="$set(choice, 'nextQuestion', 'submit'); putQuestion(question)">
@@ -575,8 +575,7 @@ export default {
             ],
             fileSizeOptions: [
                 { value: 1, label: '1MB' },
-                { value: 5, label: '5MB' },
-                { value: 10, label: '10MB' }
+                { value: 5, label: '5MB' }
             ],
             showImageModal: false,
             modalImageIndex: null,
@@ -1113,6 +1112,13 @@ export default {
             const file = event.target && event.target.files && event.target.files[0];
             if (!file) return;
             if (!file.type.startsWith('image/')) return;
+
+            const maxSize = 5 * 1024 * 1024; // 5MB limit
+            if (file.size > maxSize) {
+                if (this.$toast) this.$toast.error('Image size cannot exceed 5MB');
+                else alert('Image size cannot exceed 5MB');
+                return;
+            }
             const reader = new FileReader();
             reader.onload = (ev) => {
                 this.modalFiles = ev.target.result;
