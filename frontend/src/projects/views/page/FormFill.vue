@@ -60,8 +60,9 @@
 
                 <!-- Question Cards -->
                 <transition-group name="fade-slide" tag="div">
-                    <CCard v-for="(question, index) in visibleQuestions" :key="question._id || index"
-                        v-if="isQuestionVisible(question)" :id="'question-card-' + question._id" class="mb-3"
+                    <CCard v-for="(question, index) in visibleQuestions" :key="convertIdToStr(question._id) || index"
+                        v-if="isQuestionVisible(question)" :id="'question-card-' + convertIdToStr(question._id)"
+                        class="mb-3"
                         :class="['question-card border', { 'card-error': errorIds.has(question._id), 'followup-card': isFollowUp(question) }]">
                         <CCardBody class="p-4">
                             <div class="d-flex justify-content-between align-items-start mb-2">
@@ -85,14 +86,18 @@
                             </p>
 
                             <!-- Short Answer -->
-                            <CInput v-if="isType(question, 'short_answer')" v-model="answers[question._id]"
-                                :placeholder="$t('form.yourAnswer')" class="mb-0" :disabled="isPreviewMode || isAlreadySubmitted"
-                                @input="(e) => { clearError(question._id); autoSave(); }" />
+                            <CInput v-if="isType(question, 'short_answer')"
+                                v-model="answers[convertIdToStr(question._id)]" :placeholder="$t('form.yourAnswer')"
+                                class="mb-0" :disabled="isPreviewMode || isAlreadySubmitted"
+                                @input="(e) => { clearError(question._id); autoSave(); }"
+                                @change="(e) => { scrollToNextQuestion(question); }" />
 
                             <!-- Paragraph -->
-                            <CTextarea v-else-if="isType(question, 'paragraph')" v-model="answers[question._id]"
-                                placeholder="Your answer" rows="4" class="mb-0" :disabled="isPreviewMode || isAlreadySubmitted"
-                                @input="(e) => { clearError(question._id); autoSave(); }" />
+                            <CTextarea v-else-if="isType(question, 'paragraph')"
+                                v-model="answers[convertIdToStr(question._id)]" placeholder="Your answer" rows="4"
+                                class="mb-0" :disabled="isPreviewMode || isAlreadySubmitted"
+                                @input="(e) => { clearError(question._id); autoSave(); }"
+                                @change="(e) => { scrollToNextQuestion(question); }" />
 
                             <!-- Multiple Choice / Checkboxes -->
                             <div v-else-if="isType(question, 'multiple_choice', 'checkbox')" class="options-container">
@@ -100,9 +105,11 @@
                                     :key="oIdx" class="option-row">
                                     <input
                                         :type="(question.config && question.config.allowMultipleSelect) ? 'checkbox' : 'radio'"
-                                        :name="'q_' + question._id" :value="getOptionKey(opt, oIdx)"
-                                        v-model="answers[question._id]" class="option-input" :disabled="isPreviewMode || isAlreadySubmitted"
-                                        @change="(e) => { clearError(question._id); autoSave(); }" />
+                                        :name="'q_' + convertIdToStr(question._id)" :value="getOptionKey(opt, oIdx)"
+                                        v-model="answers[convertIdToStr(question._id)]" class="option-input"
+                                        :disabled="isPreviewMode || isAlreadySubmitted"
+                                        @change="(e) => { clearError(question._id); autoSave(); scrollToNextQuestion(question); }"
+                                        @click="scrollToNextQuestion(question)" />
                                     <span>{{ getOptionLabel(opt) }}</span>
                                 </label>
                             </div>
@@ -111,12 +118,15 @@
                             <div v-else-if="isType(question, 'rating')">
                                 <div class="rating-container">
                                     <button v-for="n in (question.config && question.config.maxRating || 5)" :key="n"
-                                        class="star-btn" :class="{ 'star-active': answers[question._id] >= n }"
-                                        @click="onRate(question._id, n)" type="button"
+                                        class="star-btn"
+                                        :class="{ 'star-active': answers[convertIdToStr(question._id)] >= n }"
+                                        @click="{ scrollToNextQuestion(question); onRate(question, n); }" type="button"
                                         :disabled="isPreviewMode || isAlreadySubmitted">★</button>
                                 </div>
-                                <small v-if="answers[question._id]" class="d-block text-center text-muted mt-1">
-                                    {{ answers[question._id] }} / {{ question.config && question.config.maxRating || 5
+                                <small v-if="answers[convertIdToStr(question._id)]"
+                                    class="d-block text-center text-muted mt-1">
+                                    {{ answers[convertIdToStr(question._id)] }} / {{ question.config &&
+                                        question.config.maxRating || 5
                                     }}
                                 </small>
                             </div>
@@ -124,7 +134,8 @@
                             <!-- File Upload -->
                             <div v-else-if="isType(question, 'file_upload')">
                                 <input type="file" :multiple="(question.config && Number(question.config.maxFiles) > 1)"
-                                    :accept="getAcceptString(question)" class="text-muted" :disabled="isPreviewMode || isAlreadySubmitted"
+                                    :accept="getAcceptString(question)" class="text-muted"
+                                    :disabled="isPreviewMode || isAlreadySubmitted"
                                     @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); autoSave(); }" />
                             </div>
 
@@ -147,7 +158,8 @@
                 </transition-group>
 
                 <!-- Submit / Duplicate Button -->
-                <div v-if="!isPreviewMode && !isAlreadySubmitted" class="p-3 d-flex justify-content-end">
+                <div v-if="!isPreviewMode && !isAlreadySubmitted" id="submit-section"
+                    class="p-3 d-flex justify-content-end">
                     <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm" :disabled="submitting"
                         class="px-5">
                         <CSpinner v-if="submitting" size="sm" class="mr-1" />
@@ -259,14 +271,14 @@ export default {
                     if (this.isType(q, 'title_description', 'image')) return;
                     const isMulti = (this.isType(q, 'checkboxes', 'checkbox')) ||
                         (this.isType(q, 'multiple_choice') && q.config && q.config.allowMultipleSelect);
-                    init[q._id] = isMulti ? [] : null;
+                    init[this.convertIdToStr(q._id)] = isMulti ? [] : null;
                 });
                 this.answers = init;
                 try {
                     // 3. Fetch user responses for this form
                     await this.$store.dispatch('Responses/get', { form_id: this.form._id });
                     const allFormResponses = this.$store.getters['Responses/responses'] || [];
-                    
+
                     // Check if already submitted (for Limit to One Response)
                     if (settings.limitResponse) {
                         const submitted = allFormResponses.find(r => {
@@ -280,7 +292,7 @@ export default {
                         if (submitted) {
                             this.isAlreadySubmitted = true;
                             this.loading = false;
-                            
+
                             // Load submitted answers
                             if (submitted.answers) {
                                 const submittedInit = {};
@@ -459,8 +471,10 @@ export default {
             });
         },
 
-        onRate(questionId, n) {
-            this.$set(this.answers, questionId, n);
+        onRate(question, n) {
+            const qIdStr = this.convertIdToStr(question._id);
+            this.$set(this.answers, qIdStr, n);
+            this.autoSave();
         },
 
         async onAuthenGoogle() {
@@ -655,16 +669,20 @@ export default {
             }
 
             const max = question && question.config && Number(question.config.maxFiles) ? Number(question.config.maxFiles) : filtered.length;
+            const qIdStr = this.convertIdToStr(questionId);
             if (max <= 1) {
-                this.$set(this.answers, questionId, filtered[0] || null);
+                this.$set(this.answers, qIdStr, filtered[0] || null);
+                if (filtered[0]) this.scrollToNextQuestion(question);
             } else {
-                this.$set(this.answers, questionId, filtered.slice(0, max));
+                this.$set(this.answers, qIdStr, filtered.slice(0, max));
+                if (filtered.length > 0) this.scrollToNextQuestion(question);
             }
         },
         clearError(questionId) {
-            if (this.errorIds.has(questionId)) {
+            const qIdStr = this.convertIdToStr(questionId);
+            if (this.errorIds.has(qIdStr)) {
                 const next = new Set(this.errorIds);
-                next.delete(questionId);
+                next.delete(qIdStr);
                 this.errorIds = next;
             }
         },
@@ -704,32 +722,24 @@ export default {
             if (!this.form) return;
             this.submitting = true;
             try {
-                // 1. Deep copy the entire form object to preserve ALL properties
                 const baseData = JSON.parse(JSON.stringify(this.form));
 
-                // 2. Prepare the questions with unique temporary IDs
                 const clonedQuestions = (baseData.questions || []).map((q, index) => {
                     const newQ = { ...q };
 
-                    // We assign a temporary ID so TabQuestion.vue can distinguish and render them all.
-                    // TabQuestion logic filters out duplicates based on ID.
                     newQ._id = `tmp-${Date.now()}-${index}`;
 
                     delete newQ.id;
                     delete newQ.createdAt;
                     delete newQ.updatedAt;
 
-                    // Ensure type is just the ID for the creation payload if it was populated
                     if (newQ.type && typeof newQ.type === 'object') {
                         newQ.type = newQ.type._id || newQ.type.id;
                     }
 
-                    // Handle followUp if they are objects (convert to IDs for consistency if needed, 
-                    // though CreateForm will likely re-link them on first save)
                     return newQ;
                 });
 
-                // 3. Prepare the form payload
                 const duplicateData = {
                     ...baseData,
                     title: baseData.title.map(t => ({ ...t, value: (this.getLang(t) || t.value) + ' (Copy)' })),
@@ -739,7 +749,6 @@ export default {
                         : []
                 };
 
-                // Clean up metadata
                 delete duplicateData._id;
                 delete duplicateData.id;
                 delete duplicateData.responses;
@@ -747,7 +756,6 @@ export default {
                 delete duplicateData.createdAt;
                 delete duplicateData.updatedAt;
 
-                // 4. Navigate and set buffer
                 this.$router.push({
                     name: 'EditorCreateForm',
                     params: { _id: 'new' },
@@ -845,9 +853,52 @@ export default {
             this.$router.back();
         },
         hasAnswer(questionId) {
-            const ans = this.answers[questionId];
+            const ans = this.answers[this.convertIdToStr(questionId)];
             if (Array.isArray(ans)) return ans.length > 0;
             return ans !== null && ans !== undefined && String(ans).trim() !== '';
+        },
+        scrollToNextQuestion(question) {
+            if (!question) return;
+
+            setTimeout(() => {
+                const qIdStr = this.convertIdToStr(question._id);
+                const answer = this.answers[qIdStr];
+
+                let targetId = null;
+
+                if (answer && question.config && Array.isArray(question.config.choices)) {
+                    if (!Array.isArray(answer)) {
+                        const choice = question.config.choices.find((c, idx) => String(this.getOptionKey(c, idx)) === String(answer));
+                        if (choice && choice.nextQuestion) targetId = choice.nextQuestion;
+                    }
+                }
+
+                if (!targetId && question.nextQuestion) {
+                    targetId = question.nextQuestion;
+                }
+
+                if (!targetId || targetId === 'submit') {
+                    const currentIndex = this.visibleQuestions.findIndex(q => this.convertIdToStr(q._id) === qIdStr);
+                    if (currentIndex !== -1 && currentIndex < this.visibleQuestions.length - 1) {
+                        if (targetId !== 'submit') targetId = this.visibleQuestions[currentIndex + 1]._id;
+                    } else {
+                        targetId = 'submit';
+                    }
+                }
+
+                if (targetId) {
+                    const targetIdStr = this.convertIdToStr(targetId);
+                    if (targetIdStr === 'submit') {
+                        const submitSection = document.getElementById('submit-section');
+                        if (submitSection) submitSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                    } else {
+                        const el = document.getElementById('question-card-' + targetIdStr) ||
+                            document.getElementById('question-' + targetIdStr);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }, 300);
         }
     },
     computed: {
@@ -981,7 +1032,8 @@ export default {
 
 .fillform-body {
     margin: 28px auto;
-    padding: 0 16px 60px;
+    padding: 0 16px 50vh;
+    /* Allow enough space for any question to be centered */
 }
 
 .fillform-center {

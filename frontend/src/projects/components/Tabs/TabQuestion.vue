@@ -102,8 +102,8 @@
                     class="mb-3 position-relative rounded-20 shadow-sm border">
                     <CCardBody class="p-4">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div class="number-question" v-if="isCounted(question)">
-                                    {{ displayQuestionNumber(question, qIndex) }}</div>
+                            <div class="number-question" v-if="isCounted(question)">
+                                {{ displayQuestionNumber(question, qIndex) }}</div>
 
                             <div class="flex-grow-1">
                                 <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
@@ -252,8 +252,10 @@
                                                             choice.nextQuestion
                                                                 ? (choice.nextQuestion === 'submit' ? $t('builder.submitForm') :
                                                                     (function () {
-                                                                        const target = localQuestions.find(q => convertIdToStr(q._id) === convertIdToStr(choice.nextQuestion));
-                                                                        return target ? (isCounted(target) ? getDisplayNumber(target) + '. ' : '') + getQuestionTitle(target) : '';
+                                                                        const target = localQuestions.find(q => convertIdToStr(q._id)
+                                                                            === convertIdToStr(choice.nextQuestion));
+                                                                        return target ? (isCounted(target) ? getDisplayNumber(target) +
+                                                                            '. ' : '') + getQuestionTitle(target) : '';
                                                                     })())
                                                                 : $t('builder.noAction')
                                                         }}
@@ -269,7 +271,9 @@
                                             <CDropdownItem v-for="q in getAvailableNextQuestions(question)" :key="q._id"
                                                 @click="$set(choice, 'nextQuestion', q._id); putQuestion(question)">
                                                 <CIcon name="cil-list-low-priority" class="mr-2" />
-                                                <span>{{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{ getQuestionTitle(q) }}</span>
+                                                <span>{{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
+                                                    getQuestionTitle(q)
+                                                    }}</span>
                                             </CDropdownItem>
                                             <CDropdownItem
                                                 @click="$set(choice, 'nextQuestion', 'submit'); putQuestion(question)">
@@ -445,7 +449,9 @@
                             </div>
 
                             <!-- Right: Navigation Dropdown & Required Toggle -->
-                            <div class="d-flex align-items-center flex-wrap">
+                            <div v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'"
+                                class="d-flex align-items-center flex-wrap">
+
                                 <!-- Question Navigation Dropdown -->
                                 <div class="d-flex align-items-center mr-3 mb-2 mb-md-0">
                                     <span class="text-muted font-weight-bold mr-2">{{ $t('builder.goTo') }}</span>
@@ -460,8 +466,10 @@
                                                     {{
                                                         !question.nextQuestion ? $t('builder.submitForm') :
                                                             (function () {
-                                                                const targetQ = localQuestions.find(q => convertIdToStr(q._id) === convertIdToStr(question.nextQuestion));
-                                                                return targetQ ? (isCounted(targetQ) ? getDisplayNumber(targetQ) + '. ' : '') + getQuestionTitle(targetQ) : '';
+                                                                const targetQ = localQuestions.find(q => convertIdToStr(q._id) ===
+                                                                    convertIdToStr(question.nextQuestion));
+                                                                return targetQ ? (isCounted(targetQ) ? getDisplayNumber(targetQ) +
+                                                                    '. ' : '') + getQuestionTitle(targetQ) : '';
                                                             })()
                                                     }}
                                                 </span>
@@ -472,7 +480,8 @@
                                             @click="setCombinedNavigationValue(question, 'question:' + convertIdToStr(q._id))">
                                             <CIcon name="cil-list-low-priority" class="mr-2" />
                                             <span>
-                                                {{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{ getQuestionTitle(q) }}
+                                                {{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
+                                                    getQuestionTitle(q) }}
                                             </span>
                                         </CDropdownItem>
                                         <CDropdownItem @click="setCombinedNavigationValue(question, 'submit')">
@@ -483,8 +492,7 @@
                                 </div>
 
                                 <!-- Required Toggle -->
-                                <div v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'"
-                                    class="d-flex align-items-center mb-2 mb-md-0">
+                                <div class="d-flex align-items-center mb-2 mb-md-0">
                                     <small class="text-muted font-weight-bold text-uppercase mr-2">{{
                                         $t('builder.requiredLabel') }}</small>
                                     <CSwitch class="mx-1" color="dark" shape="pill" :checked="question.isRequired"
@@ -532,8 +540,8 @@
                     <CButton color="danger" variant="ghost" @click="showImageModal = false" :disabled="isImageUpdating">
                         {{ $t('builder.modal.cancel') }}
                     </CButton>
-                    <CButton color="primary" class="ml-2 px-4 shadow-sm font-weight-bold" @click="confirmImageQuestion()"
-                        :disabled="isImageUpdating || !modalFiles">
+                    <CButton color="primary" class="ml-2 px-4 shadow-sm font-weight-bold"
+                        @click="confirmImageQuestion()" :disabled="isImageUpdating || !modalFiles">
                         <CSpinner v-if="isImageUpdating" size="sm" class="mr-1" />
                         {{ $t('builder.modal.ok') }}
                     </CButton>
@@ -1300,7 +1308,7 @@ export default {
             if (!question || !this.localQuestions) return [];
             const myId = this.convertIdToStr(question._id);
             return this.localQuestions.filter(q =>
-                q && this.convertIdToStr(q._id) !== myId
+                q && this.convertIdToStr(q._id) !== myId && this.isCounted(q)
             );
         },
         getQuestionTitle(q) {
