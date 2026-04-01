@@ -265,7 +265,7 @@ export default {
             needsSave: false,
             saveTimeout: null,
             error: null,
-            isNewMode: false,
+            isNewMode: this.$route.query.new === 'true',
             errorIds: new Set(),
             responderId: null,
             isAlreadySubmitted: false, // New state for Limit to One Response
@@ -306,7 +306,29 @@ export default {
 
                 // 2. Check for "Limit to One Response" and "Collect Email" requirements
                 const settings = this.form.settings || {};
-                let currentResponder = this.user?._id || this.responderId;
+                const currentUser = this.user || {};
+                const isAdmin = currentUser.role === 'Admin' || currentUser.role === 'SuperAdmin';
+                let currentResponder = currentUser._id || this.responderId;
+
+                // 2.1 Personal Access Check (Specified Users Only)
+                if (settings.allowedUser && Array.isArray(settings.allowedUser) && settings.allowedUser.length > 0 && !this.isPreviewMode && !isAdmin) {
+                    if (!currentResponder) {
+                        this.error = this.$t('form.loginRequiredPersonal');
+                        this.loading = false;
+                        return;
+                    }
+                    
+                    const isAllowed = settings.allowedUser.some(u => {
+                        const allowedId = String(typeof u === 'object' ? (u._id || u.value) : u);
+                        return allowedId === String(currentResponder);
+                    });
+
+                    if (!isAllowed) {
+                        this.error = this.$t('form.accessDeniedPersonal');
+                        this.loading = false;
+                        return;
+                    }
+                }
 
                 // If collectEmail is true and user is not logged in, we stay in a "Login Required" state
                 if (settings.collectEmail && !currentResponder && !this.isPreviewMode) {
@@ -329,7 +351,7 @@ export default {
                 this.answers = init;
                 try {
                     // 3. Fetch user responses for this form
-                    await this.$store.dispatch('Responses/get', { form_id: this.form._id });
+                    await this.$store.dispatch('Responses/get', { form: this.form._id });
                     const allFormResponses = this.$store.getters['Responses/responses'] || [];
 
                     // Check if already submitted (for Limit to One Response)
@@ -375,55 +397,55 @@ export default {
 
                     // 5. Build/Find draft from the responses we already fetched
                     let responsesToProcess = allFormResponses;
-                    // If we need to fetch specifically for THIS user (though dispatching Responses/get with form_id usually gets all for that form)
                     if (!responsesToProcess || responsesToProcess.length === 0) {
                         const res = await this.$store.dispatch('Responses/get', {
                             form: this.form._id,
                             responder: currentResponder
                         });
                         responsesToProcess = this.$store.getters['Responses/responses'] || [];
-                        if (res && !Array.isArray(res)) {
-                            responsesToProcess = [res];
-                        }
                     }
 
-                    let draft = (responsesToProcess || []).find(r => {
-                        if (!r) return false;
-                        const fId = (typeof r.form === 'object' ? r.form._id : r.form);
-                        const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
-                        return String(fId) === String(this.form._id) &&
-                            String(rId) === String(currentResponder) &&
-                            !r.submit;
-                    });
-
-                    if (!draft) {
-                        draft = (responses || []).find(r => {
+                    // Find the most recent unsubmitted draft for this form and user
+                    const draft = (responsesToProcess || [])
+                        .filter(r => {
                             if (!r) return false;
                             const fId = (typeof r.form === 'object' ? r.form._id : r.form);
                             const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
                             return String(fId) === String(this.form._id) &&
-                                String(rId) === String(currentResponder);
-                        });
-                    }
+                                String(rId) === String(currentResponder) &&
+                                !r.submit;
+                        })
+                        .sort((a, b) => {
+                            const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                            const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                            return dateB - dateA;
+                        })[0];
 
                     if (draft && draft._id) {
                         this.draftResponseId = draft._id;
 
                         const questionIds = new Set((this.form.questions || []).map(q => String(q._id)));
                         const map = {};
-                        draft.answers.forEach(answer => {
+                        (draft.answers || []).forEach(answer => {
                             if (!answer || !answer.question) return;
                             const qid = typeof answer.question === 'object' && answer.question !== null
                                 ? String(answer.question._id || answer.question)
                                 : String(answer.question);
+                            
                             if (!questionIds.has(qid)) return;
+
+                            // Backend might store response as string or JSON
+                            let val = answer.response;
                             try {
-                                map[qid] = JSON.parse(answer.response);
+                                if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
+                                    val = JSON.parse(val);
+                                }
                             } catch (e) {
-                                map[qid] = answer.response;
+                                // use as is
                             }
+                            map[qid] = val;
                         });
-                        this.answers = Object.assign({}, this.answers, map);
+                        this.answers = { ...this.answers, ...map };
                     }
                 } catch (e) {
                     console.error('Failed to load draft response:', e);
@@ -475,14 +497,21 @@ export default {
                 // Double check for existing responses if we don't have an ID yet
                 // SKIP this check if we are explicitly in New Mode to allow a fresh creation
                 if (!this.draftResponseId && !this.isNewMode) {
-                    const existing = (this.$store.getters['Responses/responses'] || []).find(r => {
-                        if (!r) return false;
-                        const fId = (typeof r.form === 'object' ? r.form._id : r.form);
-                        const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
-                        return String(fId) === String(this.form._id) &&
-                            String(rId) === String(currentResponder) &&
-                            !r.submit; // Only match unsubmitted drafts
-                    });
+                    const existing = (this.$store.getters['Responses/responses'] || [])
+                        .filter(r => {
+                            if (!r) return false;
+                            const fId = (typeof r.form === 'object' ? r.form._id : r.form);
+                            const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
+                            return String(fId) === String(this.form._id) &&
+                                String(rId) === String(currentResponder) &&
+                                !r.submit;
+                        })
+                        .sort((a, b) => {
+                            const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                            const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                            return dateB - dateA;
+                        })[0];
+
                     if (existing && existing._id) {
                         this.draftResponseId = existing._id;
                     }
@@ -518,10 +547,13 @@ export default {
         },
 
         autoSave() {
-            if (this.submit) return;
-            this.saveDraftResponse().catch(err => {
-                console.error('Auto-save failed:', err);
-            });
+            if (this.submit || this.isPreviewMode) return;
+            
+            // Basic debounce using setTimeout
+            if (this.saveTimeout) clearTimeout(this.saveTimeout);
+            this.saveTimeout = setTimeout(() => {
+                this.saveDraftResponse();
+            }, 1000); // Wait 1 second after last input
         },
 
         onRate(question, n) {

@@ -5,8 +5,8 @@
   "scripts": {
     "test": "jest --runInBand",
     "start": "nodemon -r dotenv/config server.js",
-    "dev": "nodemon -r dotenv/config server.js dotenv_config_path=.env.dev",
-    "seed": "node -r dotenv/config seed.js dotenv_config_path=.env.dev"
+    "serve:dev": "nodemon -r dotenv/config server.js dotenv_config_path=.env.dev",
+    "serve:seed": "node -r dotenv/config seed.js dotenv_config_path=.env.dev"
   },
   "keywords": [],
   "author": "",

@@ -16,7 +16,7 @@ export default {
   form(method, data, configs) {
     switch (method) {
       case 'exp':
-        return instance.get('form/exp', data)
+        return instance.get('form/exp', { params: data })
       case 'get':
         return instance.post('form/get', data)
       case 'create':

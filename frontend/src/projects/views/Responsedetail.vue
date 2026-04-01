@@ -195,7 +195,6 @@ export default {
             try {
                 // Dispatch 'get' action from store to fetch or retrieve the response
                 const result = await this.$store.dispatch('Responses/get', { _id: this.id });
-                console.log(result)
                 
                 if (result) {
                     this.response = result;

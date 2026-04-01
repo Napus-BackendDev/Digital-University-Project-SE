@@ -71,7 +71,8 @@ const en = {
             thisWeek: "This Week",
             last7Days: "Last 7 Days",
             last30Days: "Last 30 Days"
-        }
+        },
+        submittedCount: "Submitted {count} times"
     },
 
     modal: {
@@ -105,6 +106,8 @@ const en = {
         loginRequired: "You must be logged in to submit this form.",
         alreadySubmitted: "You have already submitted this form.",
         accessDenied: "Access denied. This form is restricted to specific organizations.",
+        accessDeniedPersonal: "Access denied. This form is restricted to specific users.",
+        loginRequiredPersonal: "This form is restricted to specific users. Please sign in to verify your access.",
         signInWithGoogle: "Sign in with Google",
         collectEmail: "Collect email addresses",
         limitResponse: "Limit to one response",
@@ -207,11 +210,11 @@ const en = {
                 name: "Organization Name",
                 selectPlaceholder: "Select organization",
                 generalHint: "If you choose General, every department will be able to do the form.",
-                allowedEmails: "Allowed Emails",
-                noEmails: "No specific emails added.",
-                specifyUser: "Specify User Can Response",
-                emailPlaceholder: "Enter user's email address to allow access",
-                userHint: "If you enter User information directly, only that User will be able to do the form. Others will not see it. You can choose a User outside the Organization."
+                allowedUsers: "Authorized Users",
+                noUsers: "No authorized users selected.",
+                specifyUser: "Specify User Access",
+                userPlaceholder: "Select or search for users to allow access",
+                userHint: "If you specify individual users, only those users will be able to access the form. This is useful for sensitive or personal questionnaires."
             },
             response: {
                 title: "Response Settings",
@@ -251,12 +254,17 @@ const en = {
         title: "Admin Dashboard",
         description: "Overview of all forms and responses",
         dailyResponsesTrend: "Daily Responses Trend",
-        dailyResponsesDesc: "Visualizing questionnaire responses over the past 7 days",
+        dailyResponsesDesc: "Visualizing questionnaire responses for the selected period",
         responsesOverTime: "Responses Over Time",
-        responsesOverTimeDesc: "Daily responses monitored over the past week",
+        responsesOverTimeDesc: "Daily responses monitored for the selected period",
         sevenDaysView: "7 DAYS VIEW",
+        timeRange: {
+            "7d": "7 Days",
+            "30d": "30 Days",
+            "1y": "1 Year"
+        },
         mostRespondedForm: "Most Responded Form",
-        mostRespondedDesc: "Forms with the most responses",
+        mostRespondedDesc: "Forms with the most responses in the selected period",
         widgets: {
             totalForms: "Total Forms",
             totalResponses: "Total Responses",

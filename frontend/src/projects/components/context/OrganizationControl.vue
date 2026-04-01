@@ -72,13 +72,13 @@
             <div class="mb-4 mt-4">
                 <label class="mb-3 font-weight-bold">{{ $t('editor.settings.organization.allowedEmails') }}</label>
                 <div class="org-list">
-                    <span v-for="(email, index) in settings.allowedEmails" :key="index" class="badge-custom border">
-                        {{ email }}
-                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeEmail(index)" :title="$t('editor.settings.access.remove')">
+                    <span v-for="(userRef, index) in (settings.settings ? settings.settings.allowedUser : [])" :key="'user-' + index" class="badge-custom border">
+                        {{ getUserName(userRef) }}
+                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeUser(index)" :title="$t('editor.settings.access.remove')">
                             <CIcon name="cil-x" size="sm" class="delete-icon" />
                         </span>
                     </span>
-                    <div v-if="!settings.allowedEmails || settings.allowedEmails.length === 0" class="text-muted small my-auto">
+                    <div v-if="!settings.settings || !settings.settings.allowedUser || settings.settings.allowedUser.length === 0" class="text-muted small my-auto">
                         {{ $t('editor.settings.organization.noEmails') }}
                     </div>
                 </div>
@@ -91,15 +91,17 @@
                 <CRow>
                     <CCol md="10" class="mb-3">
                         <label class="mb-2 font-weight-bold small">{{ $t('editor.settings.organization.emailPlaceholder') }}</label>
-                        <input type="email" 
-                               :placeholder="$t('editor.settings.organization.emailPlaceholder')" 
-                               v-model="newEmail"
-                               class="form-control form-select-custom px-3" 
-                               @keyup.enter="addEmail" />
+                        <CSelect 
+                            :options="userOptions" 
+                            :value="newUserId"
+                            @update:value="(val) => { newUserId = val }"
+                            :placeholder="$t('editor.settings.organization.emailPlaceholder')"
+                            class="form-select-custom"
+                        />
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
-                            class="font-weight-bold mt-4" @click="addEmail">
+                            class="font-weight-bold mt-4" @click="addUser">
                             {{ $t('editor.settings.access.add') }}
                         </CButton>
                     </CCol>
@@ -130,11 +132,19 @@ export default {
     data() {
         return {
             selectedOrgId: null,
-            newEmail: ''
+            newUserId: null
         }
     },
     computed: {
         ...mapGetters('Organizations', ['organizations']),
+        ...mapGetters('User', ['users']),
+        userOptions() {
+            if (!this.users || !Array.isArray(this.users)) return [];
+            return this.users.map(u => ({
+                label: `${u.name || u.fullname || u.email || 'Unknown'} <${u.email}>`,
+                value: u._id
+            }));
+        },
         organizationOptions() {
             if (!this.organizations || this.organizations.length === 0) return [];
             return this.organizations.map(o => {
@@ -149,6 +159,13 @@ export default {
         }
     },
     methods: {
+        getUserName(userRef) {
+            if (!userRef) return 'Unknown';
+            if (typeof userRef === 'object' && userRef.email) return userRef.name || userRef.email;
+            if (!this.users) return userRef;
+            const u = this.users.find(x => String(x._id) === String(userRef));
+            return u ? (u.name || u.email) : userRef;
+        },
         getOrgName(orgId) {
             if (!orgId) return '...';
 
@@ -189,49 +206,69 @@ export default {
             if (this.settings.organization.includes(this.selectedOrgId)) {
                 return;
             }
-
             this.settings.organization.push(this.selectedOrgId);
-            this.selectedOrgId = null; // Clear after add
+            this.selectedOrgId = null;
             this.triggerAutoSave();
         },
         removeOrganization(index) {
             this.settings.organization.splice(index, 1);
             this.triggerAutoSave();
         },
-        addEmail() {
-            if (!this.newEmail || !this.newEmail.trim().includes('@')) return;
+        addUser() {
+            if (!this.newUserId) return;
+            const userId = String(typeof this.newUserId === 'object' ? (this.newUserId.value || this.newUserId._id) : this.newUserId);
 
-            if (!this.settings.allowedEmails) {
-                this.$set(this.settings, 'allowedEmails', []);
+            if (!this.settings.settings) {
+                this.$set(this.settings, 'settings', {});
+            }
+            if (!this.settings.settings.allowedUser) {
+                this.$set(this.settings.settings, 'allowedUser', []);
             }
 
-            const emailToAdd = this.newEmail.toLowerCase().trim();
-            if (this.settings.allowedEmails.includes(emailToAdd)) {
-                this.newEmail = '';
+            const exists = this.settings.settings.allowedUser.some(u => {
+                const id = String(typeof u === 'object' ? (u._id || u.value) : u);
+                return id === userId;
+            });
+            if (exists) {
+                this.newUserId = null;
                 return;
             }
 
-            this.settings.allowedEmails.push(emailToAdd);
-            this.newEmail = '';
+            const fullUser = Array.isArray(this.users) ? this.users.find(u => String(u._id) === userId) : null;
+            this.settings.settings.allowedUser.push(fullUser || userId);
+            this.newUserId = null;
             this.triggerAutoSave();
         },
-        removeEmail(index) {
-            this.settings.allowedEmails.splice(index, 1);
-            this.triggerAutoSave();
+        removeUser(index) {
+            if (this.settings.settings && Array.isArray(this.settings.settings.allowedUser)) {
+                this.settings.settings.allowedUser.splice(index, 1);
+                this.triggerAutoSave();
+            }
         },
         async triggerAutoSave() {
             this.$emit('auto-save');
+        },
+        getUserName(userRef) {
+            if (!userRef) return 'Unknown';
+            if (typeof userRef === 'object') return userRef.name || userRef.fullname || userRef.email || 'Unknown';
+            if (!this.users) return userRef;
+            const u = this.users.find(x => String(x._id) === String(userRef));
+            return u ? (u.name || u.fullname || u.email) : userRef;
         }
     },
     mounted() {
         this.$store.dispatch('Organizations/getAll');
-        // Ensure arrays exist
+        this.$store.dispatch('User/getAll');
         if (!this.settings.organization) {
             this.$set(this.settings, 'organization', []);
         }
-        if (!this.settings.allowedEmails) {
-            this.$set(this.settings, 'allowedEmails', []);
+        if (!this.settings.settings) {
+            this.$set(this.settings, 'settings', {});
         }
+        if (!this.settings.settings.allowedUser) {
+            this.$set(this.settings.settings, 'allowedUser', []);
+        }
+        this.$store.dispatch('User/getAll');
     }
 }
 </script>

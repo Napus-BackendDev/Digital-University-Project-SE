@@ -173,7 +173,7 @@
                         <div v-else-if="
                             getQuestionType(question.type).toLowerCase() === 'multiple_choice' ||
                             getQuestionType(question.type).toLowerCase() === 'checkbox'">
-                            <div v-for="(choice, choiceIndex) in question.config.choices"
+                            <div v-for="(choice, choiceIndex) in (question.config && question.config.choices || [])"
                                 :key="choice.key || choiceIndex" class="mb-2">
                                 <div class="d-flex align-items-center">
                                     <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
@@ -224,7 +224,7 @@
 
 
                                     <CButton color="danger" variant="ghost" size="sm" class="ml-1 mb-1"
-                                        v-if="question.config.choices.length > 1 && (!choice.lang || choice.lang.length <= 1)"
+                                        v-if="question.config && question.config.choices && question.config.choices.length > 1 && (!choice.lang || choice.lang.length <= 1)"
                                         @click="removeOption(question, choiceIndex)">
                                         <CIcon name="cil-minus" />
                                     </CButton>
@@ -297,14 +297,14 @@
                                 <template #toggler>
                                     <button class="btn d-flex align-items-center text-muted border bg-white"
                                         style="border-radius: 6px;">
-                                        {{ question.config.maxRating || 5 }}
+                                        {{ (question.config && question.config.maxRating) || 5 }}
                                     </button>
                                 </template>
                                 <CDropdownItem v-for="n in 10" :key="n" @click="setRating(question, n)">
                                     {{ n }}
                                 </CDropdownItem>
                             </CDropdown>
-                            <div v-for="n in (question.config.maxRating || 5)" :key="n"
+                            <div v-for="n in ((question.config && question.config.maxRating) || 5)" :key="n"
                                 class="d-flex flex-grow-1 flex-column align-items-center">
                                 <span>{{ n }}</span>
                                 <CIcon name="cil-star" :height="22" />
@@ -319,7 +319,7 @@
                                         <CInputCheckbox :id="`filetype-${qIndex}-${ft.key}`"
                                             :name="`filetype-${qIndex}-${ft.key}`" :label="ft.label" :value="ft.key"
                                             :custom="true"
-                                            :checked="Array.isArray(question.config.fileTypes) && question.config.fileTypes.includes(ft.key)"
+                                            :checked="question.config && Array.isArray(question.config.fileTypes) && question.config.fileTypes.includes(ft.key)"
                                             @change="toggleFileType(question, ft.key)" />
                                     </div>
                                 </div>
@@ -329,7 +329,7 @@
                                 <CDropdown color="secondary" variant="outline">
                                     <template #toggler>
                                         <button class="btn btn-sm border">
-                                            {{ question.config.maxFiles || 1 }}
+                                            {{ (question.config && question.config.maxFiles) || 1 }}
                                         </button>
                                     </template>
                                     <CDropdownItem v-for="n in [1, 5, 10]" :key="n" @click="setMaxFiles(question, n)">
@@ -342,7 +342,7 @@
                                 <CDropdown color="secondary" variant="outline">
                                     <template #toggler>
                                         <button class="btn btn-sm border">
-                                            {{ question.config.maxFileSize ? question.config.maxFileSize + 'MB'
+                                            {{ (question.config && question.config.maxFileSize) ? question.config.maxFileSize + 'MB'
                                                 : '1MB'
                                             }}
                                         </button>
@@ -360,7 +360,7 @@
                                 {{ $t('builder.description') }}
                             </small>
 
-                            <div v-for="(descItem, dIdx) in (question.config.description || [])" :key="'qd-' + dIdx"
+                            <div v-for="(descItem, dIdx) in (question.config && question.config.description || [])" :key="'qd-' + dIdx"
                                 class="d-flex align-items-start">
                                 <div class="lang-key-wrapper flex-shrink-0 mr-2">
                                     <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
@@ -392,7 +392,7 @@
                                 <CTextarea class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
                                     rows="2" />
                                 <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                    v-if="question.config.description && question.config.description.length > 1"
+                                    v-if="question.config && question.config.description && question.config.description.length > 1"
                                     @click="removeConfigDesc(question, dIdx)">
                                     <CIcon name="cil-minus" />
                                 </CButton>
@@ -599,6 +599,7 @@ export default {
                 if (newForm && Array.isArray(newForm.questions)) {
                     try {
                         const built = Array.isArray(newForm.questions) ? [...newForm.questions] : [];
+                        built.forEach(q => { if (q && !q.config) q.config = {}; });
                         built.sort((a, b) => (a.order || 999) - (b.order || 999));
 
                         const newIds = built.map(x => this.convertIdToStr(x && x._id));
@@ -820,7 +821,6 @@ export default {
         },
 
         async updateOrdersAndPersist(newQuestions) {
-            console.log(newQuestions)
             const list = Array.isArray(newQuestions) ? newQuestions : this.localQuestions || [];
             if (!Array.isArray(list)) return;
             const updates = [];

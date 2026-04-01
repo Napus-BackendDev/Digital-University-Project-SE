@@ -4,7 +4,36 @@ const responseService = require("../controllers/response");
 const ResMessage = require("../../Settings/service/message");
 const responseModel = require("../model/response.model");
 require("../../Questions/models/questions.model");
+require("../../../Project/Settings/models/question_type.model");
+require("../../../Project/User/models/user.model");
 require("express-validator/check");
+
+// Helper to sanitize and convert ObjectIds in query objects
+const cleanQueryObject = (query = {}) => {
+    const systemFields = ['apiId', 'token', 'user'];
+    const cleanQuery = {};
+    Object.keys(query).forEach(key => {
+        if (!systemFields.includes(key) && query[key] !== undefined) {
+            // Convert common ID fields to ObjectId if valid
+            if (['_id', 'form', 'responder', 'question', 'form_id', 'responder_id'].includes(key)) {
+                // Map incoming form_id to form if needed
+                const targetKey = key === 'form_id' ? 'form' : (key === 'responder_id' ? 'responder' : key);
+                try {
+                    if (mongo.ObjectId.isValid(query[key])) {
+                        cleanQuery[targetKey] = new mongo.ObjectId(query[key]);
+                    } else {
+                        cleanQuery[targetKey] = query[key];
+                    }
+                } catch (e) {
+                    cleanQuery[targetKey] = query[key];
+                }
+            } else {
+                cleanQuery[key] = query[key];
+            }
+        }
+    });
+    return cleanQuery;
+};
 
 const getApiId = function (request) {
     return Number(request.query.apiId || request.body.apiId) || 0;
@@ -86,7 +115,8 @@ exports.onQuerys = async function (request, response) {
         const doc = await responseService.onQuerys(querys);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponseListPayload(doc));
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+        console.error("Query responses error:", err);
+        return ResMessage.sendResponse(response, getApiId(request), 50000, "Failed to fetch responses", err.message);
     }
 }
 

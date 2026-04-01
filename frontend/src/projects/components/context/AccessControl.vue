@@ -7,14 +7,14 @@
             <div class="mb-4">
                 <label class="mb-3 font-weight-bold">{{ $t('editor.settings.access.selectedCollaborators') }}</label>
                 <div class="org-list">
-                    <span v-for="(collab, index) in settings.collaborators" :key="index" class="badge-custom border d-inline-flex align-items-center mb-2">
-                        <span class="mr-2">{{ collab.email || collab.name }}</span>
-                        <span class="role-badge" :class="collab.role ? collab.role.toLowerCase() : ''" style="text-transform: capitalize; margin: 0 5px;">{{ collab.role }}</span>
+                    <span v-for="(collab, index) in settings.controll" :key="'collab-' + index" class="badge-custom border d-inline-flex align-items-center mb-2">
+                        <span class="mr-2">{{ getUserName(collab.user) }}</span>
+                        <span class="role-badge" :class="getRoleClass(collab.type)" style="text-transform: capitalize; margin: 0 5px;">{{ getRoleName(collab.type) }}</span>
                         <span class="ml-2 delete-icon-wrapper" @click.stop="removeCollaborator(index)" :title="$t('editor.settings.access.remove')">
                             <CIcon name="cil-x" size="sm" class="delete-icon" />
                         </span>
                     </span>
-                    <div v-if="!settings.collaborators || settings.collaborators.length === 0" class="text-muted small my-auto">
+                    <div v-if="!settings.controll || !settings.controll.length" class="text-muted small my-auto">
                         {{ $t('editor.settings.access.noCollaborators') }}
                     </div>
                 </div>
@@ -38,8 +38,8 @@
                     <CCol md="4" class="mb-3">
                         <label class="mb-2 font-weight-bold small text-muted d-block">{{ $t('editor.settings.access.role') || 'Role' }}</label>
                         <CSelect 
-                            :options="roleOptions" 
-                            :value.sync="newCollaborator.role"
+                            :options="controllOptions" 
+                            :value.sync="newCollaborator.type"
                             class="form-select-custom"
                         />
                     </CCol>
@@ -88,20 +88,18 @@ export default {
         return {
             selectedUser: null,
             newCollaborator: {
-                role: 'editor'
-            },
-            roleOptions: [
-                { value: 'editor', label: this.$t('editor.settings.access.editor') },
-                { value: 'viewer', label: this.$t('editor.settings.access.viewer') }
-            ]
+                type: null
+            }
         }
     },
     watch: {
-        '$i18n.locale'() {
-            this.roleOptions = [
-                { value: 'editor', label: this.$t('editor.settings.access.editor') },
-                { value: 'viewer', label: this.$t('editor.settings.access.viewer') }
-            ];
+        controllOptions: {
+            handler(val) {
+                if (val && val.length > 0 && !this.newCollaborator.type) {
+                    this.newCollaborator.type = val[0].value;
+                }
+            },
+            immediate: true
         }
     },
     created() {
@@ -109,12 +107,8 @@ export default {
         this.$store.dispatch('Setting/controll/get');
         this.$store.dispatch('User/getAll');
 
-        if (!this.settings.collaborators) {
-            this.$set(this.settings, 'collaborators', []);
-        }
-
-        if (!this.settings.controll) {
-            this.$set(this.settings, 'controll', { user: null, type: null });
+        if (!Array.isArray(this.settings.controll)) {
+            this.$set(this.settings, 'controll', []);
         }
     },
     computed: {
@@ -157,12 +151,22 @@ export default {
         }
     },
     methods: {
-        onControllChange(val) {
-            if (!this.settings.controll) {
-                this.$set(this.settings, 'controll', { user: null, type: null });
-            }
-            this.$set(this.settings.controll, 'type', val || null);
-            this.triggerAutoSave();
+        getUserName(userRef) {
+            if (!userRef) return 'Unknown';
+            if (typeof userRef === 'object' && userRef.email) return userRef.name || userRef.email;
+            if (!this.users) return userRef;
+            const u = this.users.find(x => x._id === userRef);
+            return u ? (u.name || u.email) : userRef;
+        },
+        getRoleName(typeRef) {
+            if (!typeRef) return '';
+            const tid = typeof typeRef === 'object' ? typeRef._id : typeRef;
+            const t = this.controllItems ? this.controllItems.find(x => x._id === tid) : null;
+            return t ? this.getLang(t.title) : 'Viewer';
+        },
+        getRoleClass(typeRef) {
+            const name = String(this.getRoleName(typeRef)).toLowerCase();
+            return name.includes('edit') ? 'editor' : 'viewer';
         },
         onStatusChange(val) {
             const newId = typeof val === 'object' && val !== null ? val._id : val;
@@ -172,31 +176,34 @@ export default {
             }
         },
         addCollaborator() {
-            if (!this.selectedUser) return;
+            if (!this.selectedUser || !this.newCollaborator.type) return;
 
-            if (!this.settings.collaborators) {
-                this.$set(this.settings, 'collaborators', []);
+            if (!Array.isArray(this.settings.controll)) {
+                this.$set(this.settings, 'controll', []);
             }
 
-            const exists = this.settings.collaborators.find(c => c.email === this.selectedUser);
+            const userObj = this.users ? this.users.find(u => u.email === this.selectedUser) : null;
+            if (!userObj) return;
+
+            const exists = this.settings.controll.find(c => {
+                 let uId = (c.user && c.user._id) ? c.user._id : c.user;
+                 return String(uId) === String(userObj._id);
+            });
             if (exists) return;
 
-            // Find user details for name
-            const userObj = this.userOptions.find(o => o.value === this.selectedUser);
-
-            this.settings.collaborators.push({
-                email: this.selectedUser,
-                name: userObj ? userObj.name : this.selectedUser,
-                role: this.newCollaborator.role
+            this.settings.controll.push({
+                user: userObj._id,
+                type: this.newCollaborator.type
             });
 
             this.selectedUser = null;
-            this.selectedUserObj = null;
             this.triggerAutoSave();
         },
         removeCollaborator(index) {
-            this.settings.collaborators.splice(index, 1);
-            this.triggerAutoSave();
+            if (Array.isArray(this.settings.controll)) {
+                this.settings.controll.splice(index, 1);
+                this.triggerAutoSave();
+            }
         },
         async triggerAutoSave() {
             this.$emit('auto-save');

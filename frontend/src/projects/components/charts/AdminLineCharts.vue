@@ -4,7 +4,13 @@
             <div class="d-flex align-items-center mb-1">
                 <h4 class="m-0 font-weight-bold text-dark-blue">{{ $t('analytics.responsesOverTime') }}</h4>
                 <div class="ml-auto">
-                    <span class="badge badge-soft-maroon px-3 py-2">{{ $t('analytics.sevenDaysView') }}</span>
+                    <CButtonGroup class="premium-button-group">
+                        <CButton v-for="range in ['7d', '30d', '1y']" :key="range" size="sm" :variant="timeRange === range ? '' : 'ghost'"
+                            :color="timeRange === range ? 'maroon' : 'secondary'" @click="$emit('time-range-change', range)"
+                            class="px-3 py-2 range-btn" :class="{ 'active-range': timeRange === range }">
+                            {{ $t(`analytics.timeRange.${range}`) }}
+                        </CButton>
+                    </CButtonGroup>
                 </div>
             </div>
             <p class="text-muted-modern small mb-0">{{ $t('analytics.responsesOverTimeDesc') }}</p>
@@ -26,52 +32,71 @@ export default {
     name: 'AdminLineCharts',
     components: { CChartLine },
     mixins: [localeMixin],
+    props: {
+        timeRange: {
+            type: String,
+            default: '7d'
+        }
+    },
     computed: {
         ...mapGetters('Forms', ['forms']),
 
         chartData() {
-            // Generate last 7 days labels
             const labels = [];
             const dataMap = {};
+            moment.locale(this.$i18n.locale);
 
-            for (let i = 6; i >= 0; i--) {
-                moment.locale(this.$i18n.locale);
-                const dateKey = moment().subtract(i, 'days').format('YYYY-MM-DD');
-                const displayKey = moment().subtract(i, 'days').format('DD MMM');
-                labels.push(displayKey);
-                dataMap[dateKey] = 0;
+            if (this.timeRange === '1y') {
+                // Monthly aggregation for 1 year
+                for (let i = 11; i >= 0; i--) {
+                    const monthKey = moment().subtract(i, 'months').format('YYYY-MM');
+                    const displayKey = moment().subtract(i, 'months').format('MMM YY');
+                    labels.push(displayKey);
+                    dataMap[monthKey] = 0;
+                }
+            } else {
+                // Daily aggregation for 7d and 30d
+                const days = this.timeRange === '30d' ? 30 : 7;
+                for (let i = days - 1; i >= 0; i--) {
+                    const dateKey = moment().subtract(i, 'days').format('YYYY-MM-DD');
+                    const displayKey = moment().subtract(i, 'days').format('DD MMM');
+                    labels.push(displayKey);
+                    dataMap[dateKey] = 0;
+                }
             }
 
-            let totalResponses = 0;
             this.forms.forEach(form => {
-                const submittedResponses = (form.responses || []).filter(r => r && (r.submit === true || r.submit === 'true'));
-                if (submittedResponses.length) {
-                    totalResponses += submittedResponses.length;
-                    submittedResponses.forEach(res => {
-                        if (res && res.createdAt) {
-                            const dKey = moment(res.createdAt).format('YYYY-MM-DD');
-                            if (dataMap[dKey] !== undefined) {
-                                dataMap[dKey]++;
+                const submittedResponses = this.getFilteredResponses(form);
+                submittedResponses.forEach(res => {
+                    if (res && res.createdAt) {
+                        const d = moment(res.createdAt);
+                        let key;
+                        if (this.timeRange === '1y') {
+                            key = d.format('YYYY-MM');
+                        } else {
+                            key = d.format('YYYY-MM-DD');
+                        }
+
+                        if (dataMap[key] !== undefined) {
+                            const now = moment();
+                            let isMatch = false;
+                            if (this.timeRange === '7d') {
+                                isMatch = d.isSameOrAfter(now.clone().subtract(7, 'days'), 'day');
+                            } else if (this.timeRange === '30d') {
+                                isMatch = d.isSameOrAfter(now.clone().subtract(30, 'days'), 'day');
+                            } else {
+                                isMatch = true; // 1y is handled by month keys
+                            }
+
+                            if (isMatch) {
+                                dataMap[key]++;
                             }
                         }
-                    });
-                }
+                    }
+                });
             });
 
-            // simulated distribution if no data exists
             const dataCounts = Object.values(dataMap);
-            const sumOfCounts = dataCounts.reduce((a, b) => a + b, 0);
-
-            if (sumOfCounts === 0 && totalResponses > 0) {
-                let remaining = totalResponses;
-                for (let i = 0; i < 6; i++) {
-                    const chunk = Math.floor(Math.random() * (remaining / 2.5));
-                    dataCounts[i] = chunk;
-                    remaining -= chunk;
-                }
-                dataCounts[6] = remaining;
-            }
-
             return { labels, data: dataCounts };
         },
 
@@ -172,6 +197,31 @@ export default {
                 }
             }
         }
+    },
+    methods: {
+        getFilteredResponses(form) {
+            if (!form || !form.responses) return [];
+            return form.responses.filter(r => {
+                const isSubmitted = r && (
+                    r.submit === true || 
+                    r.submit === 1 || 
+                    String(r.submit).toLowerCase() === 'true'
+                );
+                if (!isSubmitted) return false;
+                if (!r.createdAt) return false;
+
+                const createdAt = moment(r.createdAt);
+                const now = moment();
+                if (this.timeRange === '7d') {
+                    return createdAt.isSameOrAfter(now.clone().subtract(7, 'days'), 'day');
+                } else if (this.timeRange === '30d') {
+                    return createdAt.isSameOrAfter(now.clone().subtract(30, 'days'), 'day');
+                } else if (this.timeRange === '1y') {
+                    return createdAt.isSameOrAfter(now.clone().subtract(1, 'years'), 'day');
+                }
+                return true;
+            });
+        }
     }
 }
 </script>
@@ -214,6 +264,32 @@ export default {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.premium-button-group {
+    background: #f8fafc;
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.range-btn {
+    border-radius: 8px !important;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none !important;
+}
+
+.active-range {
+    background-color: #9B1B30 !important;
+    color: white !important;
+    box-shadow: 0 4px 6px -1px rgba(155, 27, 48, 0.2);
+}
+
+.btn-ghost- marron:hover {
+    background-color: #fff1f2;
+    color: #9B1B30;
 }
 
 .chart-container {

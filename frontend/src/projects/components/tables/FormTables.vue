@@ -12,6 +12,12 @@
                 <td class="align-middle">
                     <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
                     <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                    <div class="mt-2" v-if="item.submissionCount > 0">
+                        <CBadge color="success" shape="pill" style="font-size: 0.7rem; font-weight: 500; padding: 0.3em 0.8em;">
+                            <CIcon name="cil-check-alt" size="sm" class="mr-1" />
+                            {{ $t('table.submittedCount', { count: item.submissionCount }) || `Submitted ${item.submissionCount} times` }}
+                        </CBadge>
+                    </div>
                 </td>
             </template>
 
@@ -80,7 +86,7 @@
                             </CButton>
                         </div>
                         <CButton v-else :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
-                            @click.stop="goToForm(item._id)"
+                            @click.stop="goToForm(item._id, item.status === 'Completed')"
                             v-c-tooltip="getActionTooltip(item.status, item.limitResponse)">
                             <CIcon :name="getActionIcon(item.status, item.limitResponse)" size="lg" />
                         </CButton>
@@ -140,6 +146,17 @@ export default {
             if (!this.forms || this.forms.length === 0) return [];
 
             const currentUser = this.user;
+            
+            // Determine if current user is Admin
+            let isAdmin = false;
+            if (currentUser && currentUser.role) {
+                const role = currentUser.role;
+                if (Array.isArray(role.title)) {
+                    isAdmin = role.title.some(t => t && t.value && t.value.toLowerCase().includes('admin'));
+                } else if (typeof role.title === 'string') {
+                    isAdmin = role.title.toLowerCase().includes('admin');
+                }
+            }
 
             const mapped = this.forms.map(f => {
                 if (!f) f = {};
@@ -256,13 +273,21 @@ export default {
                         progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
                     }
 
-                    if (userResponse.submit === true || String(userResponse.submit).toLowerCase() === 'true') {
+                    const isSubmitted = userResponse.submit === true || 
+                                       userResponse.submit === 1 || 
+                                       String(userResponse.submit).toLowerCase() === 'true';
+
+                    if (isSubmitted) {
                         status = 'Completed';
                         progress = 100;
                     } else {
                         status = 'In Progress';
                     }
                 }
+
+                const submissionCount = matchedResponses.filter(r => 
+                    r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true'
+                ).length;
 
                 const rawOrgs = f.organization || [];
                 let access = [];
@@ -272,15 +297,18 @@ export default {
                     if (typeof o === 'string') return o;
                     if (typeof o === 'object') {
                         if (Array.isArray(o.title)) {
-                            const en = o.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
-                            return en ? en.value : (o.title[0] ? o.title[0].value : null);
+                            const locale = this.$i18n.locale.toLowerCase();
+                            const localTitle = o.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                            return localTitle ? localTitle.value : (o.title[0] ? o.title[0].value : null);
                         }
                         return o.name || o.value || o.title || null;
                     }
                     return null;
                 }).filter(Boolean);
 
-                if (orgNames.includes('General')) {
+                const isPublicForm = orgNames.some(name => name === 'General' || name === 'ทั่วไป');
+
+                if (isPublicForm) {
                     access = ['Public'];
                 } else if (orgNames.length > 0) {
                     access = orgNames;
@@ -288,14 +316,25 @@ export default {
                     access = ['Private'];
                 }
 
+                if (f.settings && Array.isArray(f.settings.allowedUser) && f.settings.allowedUser.length > 0) {
+                    access.push(`Personal (${f.settings.allowedUser.length})`);
+                }
+
                 const createdAt = f.updatedAt || f.createdAt || '-';
 
                 // Access Control Logic
                 const userOrgId = currentUser?.organization?._id || currentUser?.organization;
                 const formOrgIds = (Array.isArray(f.organization) ? f.organization : [f.organization]).map(o => (o?._id || o)?.toString());
-                const isPublic = orgNames.includes('General');
+                const isPublic = isPublicForm;
                 const isMember = userOrgId && formOrgIds.includes(userOrgId.toString());
-                const canEnter = isPublic || isMember;
+                const isAllowedUser = f.settings && Array.isArray(f.settings.allowedUser) && 
+                                     f.settings.allowedUser.some(u => {
+                                         const id = String(typeof u === 'object' ? (u._id || u.value) : u);
+                                         return currentUser?._id && id === String(currentUser._id);
+                                     });
+                
+                // Admins can enter all forms they view in this table
+                const canEnter = isAdmin || isPublic || isMember || isAllowedUser;
 
                 return {
                     _id: f._id,
@@ -314,22 +353,29 @@ export default {
                     canEnter: canEnter,
                     limitResponse: f.settings?.limitResponse || false,
                     requireEmail: f.settings?.collectEmail || false,
+                    submissionCount: submissionCount,
                     _raw: f
                 };
             });
 
             const now = new Date();
             const withAccess = mapped.filter(f => {
-                // Must have access to see it
+                // 1. Admin check (Bypass everything)
+                if (isAdmin) return true;
+
+                // 2. Personal access check
                 if (!f.canEnter) return false;
 
+                // 3. Schedule Check
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
-                if (!sched.startAt && !sched.endAt) return false;
+                
+                // If no schedule, assume it's always open (Unless defined otherwise)
+                if (!sched.startAt && !sched.endAt) return true;
 
                 let isInTimeRange = true;
                 if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
                 if (sched.endAt && now > new Date(sched.endAt)) isInTimeRange = false;
-
+                
                 return isInTimeRange;
             });
 
