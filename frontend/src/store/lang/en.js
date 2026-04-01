@@ -71,7 +71,8 @@ const en = {
             thisWeek: "This Week",
             last7Days: "Last 7 Days",
             last30Days: "Last 30 Days"
-        }
+        },
+        submittedCount: "Submitted {count} times"
     },
 
     modal: {
@@ -251,12 +252,17 @@ const en = {
         title: "Admin Dashboard",
         description: "Overview of all forms and responses",
         dailyResponsesTrend: "Daily Responses Trend",
-        dailyResponsesDesc: "Visualizing questionnaire responses over the past 7 days",
+        dailyResponsesDesc: "Visualizing questionnaire responses for the selected period",
         responsesOverTime: "Responses Over Time",
-        responsesOverTimeDesc: "Daily responses monitored over the past week",
+        responsesOverTimeDesc: "Daily responses monitored for the selected period",
         sevenDaysView: "7 DAYS VIEW",
+        timeRange: {
+            "7d": "7 Days",
+            "30d": "30 Days",
+            "1y": "1 Year"
+        },
         mostRespondedForm: "Most Responded Form",
-        mostRespondedDesc: "Forms with the most responses",
+        mostRespondedDesc: "Forms with the most responses in the selected period",
         widgets: {
             totalForms: "Total Forms",
             totalResponses: "Total Responses",

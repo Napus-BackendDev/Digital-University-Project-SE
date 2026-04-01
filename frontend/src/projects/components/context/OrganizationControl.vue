@@ -72,8 +72,8 @@
             <div class="mb-4 mt-4">
                 <label class="mb-3 font-weight-bold">{{ $t('editor.settings.organization.allowedEmails') }}</label>
                 <div class="org-list">
-                    <span v-for="(email, index) in settings.allowedEmails" :key="index" class="badge-custom border">
-                        {{ email }}
+                    <span v-for="(userId, index) in settings.allowedEmails" :key="'user-' + index" class="badge-custom border">
+                        {{ getUserName(userId) }}
                         <span class="ml-2 delete-icon-wrapper" @click.stop="removeEmail(index)" :title="$t('editor.settings.access.remove')">
                             <CIcon name="cil-x" size="sm" class="delete-icon" />
                         </span>
@@ -91,11 +91,13 @@
                 <CRow>
                     <CCol md="10" class="mb-3">
                         <label class="mb-2 font-weight-bold small">{{ $t('editor.settings.organization.emailPlaceholder') }}</label>
-                        <input type="email" 
-                               :placeholder="$t('editor.settings.organization.emailPlaceholder')" 
-                               v-model="newEmail"
-                               class="form-control form-select-custom px-3" 
-                               @keyup.enter="addEmail" />
+                        <CSelect 
+                            :options="userOptions" 
+                            :value="newEmail"
+                            @update:value="(val) => { newEmail = val }"
+                            :placeholder="$t('editor.settings.organization.emailPlaceholder')"
+                            class="form-select-custom"
+                        />
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
@@ -135,6 +137,14 @@ export default {
     },
     computed: {
         ...mapGetters('Organizations', ['organizations']),
+        ...mapGetters('User', ['users']),
+        userOptions() {
+            if (!this.users || !Array.isArray(this.users)) return [];
+            return this.users.map(u => ({
+                label: `${u.name || u.fullname || u.email || 'Unknown'} <${u.email}>`,
+                value: u._id
+            }));
+        },
         organizationOptions() {
             if (!this.organizations || this.organizations.length === 0) return [];
             return this.organizations.map(o => {
@@ -149,6 +159,13 @@ export default {
         }
     },
     methods: {
+        getUserName(userRef) {
+            if (!userRef) return 'Unknown';
+            if (typeof userRef === 'object' && userRef.email) return userRef.name || userRef.email;
+            if (!this.users) return userRef;
+            const u = this.users.find(x => String(x._id) === String(userRef));
+            return u ? (u.name || u.email) : userRef;
+        },
         getOrgName(orgId) {
             if (!orgId) return '...';
 
@@ -199,20 +216,25 @@ export default {
             this.triggerAutoSave();
         },
         addEmail() {
-            if (!this.newEmail || !this.newEmail.trim().includes('@')) return;
+            if (!this.newEmail) return;
+            // Force it to a raw string ID, extracting it if it's an object from CSelect
+            const newIdStr = String(typeof this.newEmail === 'object' ? (this.newEmail.value || this.newEmail._id) : this.newEmail);
 
             if (!this.settings.allowedEmails) {
                 this.$set(this.settings, 'allowedEmails', []);
             }
 
-            const emailToAdd = this.newEmail.toLowerCase().trim();
-            if (this.settings.allowedEmails.includes(emailToAdd)) {
-                this.newEmail = '';
+            const exists = this.settings.allowedEmails.some(id => {
+                const existingIdStr = String(typeof id === 'object' ? (id.value || id._id || id) : id);
+                return existingIdStr === newIdStr;
+            });
+            if (exists) {
+                this.newEmail = null;
                 return;
             }
 
-            this.settings.allowedEmails.push(emailToAdd);
-            this.newEmail = '';
+            this.settings.allowedEmails.push(newIdStr);
+            this.newEmail = null;
             this.triggerAutoSave();
         },
         removeEmail(index) {
@@ -225,6 +247,7 @@ export default {
     },
     mounted() {
         this.$store.dispatch('Organizations/getAll');
+        this.$store.dispatch('User/getAll');
         // Ensure arrays exist
         if (!this.settings.organization) {
             this.$set(this.settings, 'organization', []);

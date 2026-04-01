@@ -54,10 +54,14 @@ exports.onQuery = async function (request, response) {
       },
       { path: 'organization' },
       { path: 'creator' },
-      { path: 'questions', select: 'type nextQuestion' },
       { path: 'status' },
-      { path: 'controll.type' },
-      { path: 'controll.user' },
+      { 
+        path: 'controll',
+        populate: [
+          { path: 'user' },
+          { path: 'type' }
+        ]
+      },
       { path: 'settings.whoCanRespond' }
     ]);
 

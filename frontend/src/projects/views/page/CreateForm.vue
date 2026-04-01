@@ -35,7 +35,6 @@ export default {
         async onInit() {
             // Check if we have duplicated data from the buffer
             if (this.duplicateBuffer) {
-                console.log("[CreateForm] Initializing with duplicate buffer");
                 this.formData = JSON.parse(JSON.stringify(this.duplicateBuffer));
                 this.isNewDuplication = true;
                 // Clear the buffer after taking the data
@@ -47,9 +46,12 @@ export default {
             if (!formId || formId === 'new') return;
 
             try {
+                await console.log( "form id กาก" ,formId)
                 this.formData = await this.$store.dispatch('Forms/getById', { _id: formId });
+                console.log("🔥 ตอบกลับจาก backend (formData):", this.formData);
             } catch (error) {
-                console.error("Error fetching form:", error);
+                console.error("🔥 Error fetching form:", error);
+                this.formData = {}; // Default to empty object on error
             }
         },
         async triggerAutoSave() {
@@ -60,9 +62,7 @@ export default {
             if (this.saveTimer) clearTimeout(this.saveTimer);
 
             try {
-                if (this.isNewDuplication) {
-                    console.log("[CreateForm] Performing first-time save for duplication");
-                    
+                if (this.isNewDuplication) {                    
                     // 1. Create the Form
                     const formPayload = {
                         title: this.formData.title,
@@ -96,8 +96,6 @@ export default {
                     this.isNewDuplication = false;
                     this.formData._id = newId;
                     this.$router.replace({ name: 'EditorCreateForm', params: { _id: newId } });
-                    
-                    console.log("[CreateForm] Duplication finalized with ID:", newId);
                 } else {
                     await this.$store.dispatch('Forms/update', this.formData);
                 }

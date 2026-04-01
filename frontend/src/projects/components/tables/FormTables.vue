@@ -12,6 +12,12 @@
                 <td class="align-middle">
                     <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
                     <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
+                    <div class="mt-2" v-if="item.submissionCount > 0">
+                        <CBadge color="success" shape="pill" style="font-size: 0.7rem; font-weight: 500; padding: 0.3em 0.8em;">
+                            <CIcon name="cil-check-alt" size="sm" class="mr-1" />
+                            {{ $t('table.submittedCount', { count: item.submissionCount }) || `Submitted ${item.submissionCount} times` }}
+                        </CBadge>
+                    </div>
                 </td>
             </template>
 
@@ -80,7 +86,7 @@
                             </CButton>
                         </div>
                         <CButton v-else :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
-                            @click.stop="goToForm(item._id)"
+                            @click.stop="goToForm(item._id, item.status === 'Completed')"
                             v-c-tooltip="getActionTooltip(item.status, item.limitResponse)">
                             <CIcon :name="getActionIcon(item.status, item.limitResponse)" size="lg" />
                         </CButton>
@@ -256,13 +262,21 @@ export default {
                         progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
                     }
 
-                    if (userResponse.submit === true || String(userResponse.submit).toLowerCase() === 'true') {
+                    const isSubmitted = userResponse.submit === true || 
+                                       userResponse.submit === 1 || 
+                                       String(userResponse.submit).toLowerCase() === 'true';
+
+                    if (isSubmitted) {
                         status = 'Completed';
                         progress = 100;
                     } else {
                         status = 'In Progress';
                     }
                 }
+
+                const submissionCount = matchedResponses.filter(r => 
+                    r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true'
+                ).length;
 
                 const rawOrgs = f.organization || [];
                 let access = [];
@@ -314,6 +328,7 @@ export default {
                     canEnter: canEnter,
                     limitResponse: f.settings?.limitResponse || false,
                     requireEmail: f.settings?.collectEmail || false,
+                    submissionCount: submissionCount,
                     _raw: f
                 };
             });

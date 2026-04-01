@@ -15,10 +15,10 @@ var objSchema = new Schema({
         type: [{ type: Schema.Types.ObjectId, ref: 'Organizations' }],
         default: ["69baf8349050b9215c700b96"]
     },
-    controll: {
+    controll: [{
         user: { type: Schema.Types.ObjectId, ref: 'Users' },
         type: { type: Schema.Types.ObjectId, ref: 'Setting_Controll' }
-    },
+    }],
     settings: {
         whoCanRespond: { type: Schema.Types.ObjectId, ref: 'Setting_Respond', default: null },
         collectEmail: { type: Boolean, default: false },
@@ -27,11 +27,13 @@ var objSchema = new Schema({
         emailMessage: { type: String, default: '' },
         requireResponse: { type: Boolean, default: false },
         confirmMessage: { type: String, default: 'Thank you for completing this survey. Your response has been recorded.' },
-        showAnotherResponseLink: { type: Boolean, default: true }
+        showAnotherResponseLink: { type: Boolean, default: true },
+        allowedEmails: { type: [String], default: [] }
     },
     responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null },
     creator: { type: Schema.Types.ObjectId, ref: 'Users' },
+    status: { type: Schema.Types.ObjectId, ref: 'Setting_Status' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Forms', objSchema, "Forms");

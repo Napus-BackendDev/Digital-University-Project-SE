@@ -1,20 +1,20 @@
 <template>
     <div class="flex-grow-1">
         <Header :title="$t('analytics.dailyResponsesTrend')" :description="$t('analytics.dailyResponsesDesc')" />
-        <WidgetsDropdown class="mb-4" />
+        <WidgetsDropdown class="mb-4" :timeRange="timeRange" />
         <CRow class="mb-4 no-gutters">
             <CCol lg="12" class="px-0">
-                <AdminLineCharts />
+                <AdminLineCharts :timeRange="timeRange" @time-range-change="handleTimeRangeChange" />
             </CCol>
         </CRow>
         <CRow>
             <CCol lg="12">
-                <AdminBarCharts />
+                <AdminBarCharts :timeRange="timeRange" />
             </CCol>
         </CRow>
         <CRow>
             <CCol lg="12" class="mt-4">
-                <AdminTables />
+                <AdminTables :timeRange="timeRange" />
             </CCol>
         </CRow>
     </div>
@@ -40,6 +40,7 @@ export default {
     },
     data() {
         return {
+            timeRange: '7d'
         }
     },
     created() {
@@ -48,7 +49,11 @@ export default {
     methods: {
         onInit() {
             this.$store.dispatch('Forms/get');
+            this.$store.dispatch('User/getAll');
         },
+        handleTimeRangeChange(newRange) {
+            this.timeRange = newRange;
+        }
     },
     computed: {
     },

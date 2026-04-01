@@ -26,6 +26,21 @@
                 </td>
             </template>
 
+            <!-- Collaborators (Editors / Viewers) -->
+            <template #collaborators="{ item }">
+                <td class="align-middle">
+                    <div v-if="!item.isEmpty">
+                        <div v-if="item.collaborators && item.collaborators.length > 0">
+                            <div v-for="(collab, i) in item.collaborators" :key="i" class="d-flex align-items-center mb-1">
+                                <span class="small font-weight-bold text-dark text-truncate mr-2" style="max-width: 100px;">{{ collab.name }}</span>
+                                <span class="badge" :class="collab.role.toLowerCase().includes('edit') ? 'badge-info' : 'badge-secondary'" style="font-size: 0.65rem;">{{ collab.role }}</span>
+                            </div>
+                        </div>
+                        <span v-else class="small text-muted">-</span>
+                    </div>
+                </td>
+            </template>
+
             <!-- Time Range -->
             <template #timeRange="{ item }">
                 <td class="align-middle">
@@ -89,18 +104,20 @@
                             @click.stop="goToPreviewForm(item)" v-c-tooltip="$t('button.preview')" aria-label="Preview">
                             <CIcon name="cil-magnifying-glass" />
                         </CButton>
-                        <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn"
-                            @click.stop="goToDuplicationForm(item)" v-c-tooltip="$t('table.duplicate')" aria-label="Duplicate">
-                            <CIcon name="cil-copy" />
-                        </CButton>
-                        <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn"
-                            @click.stop="goToEditForm(item)" v-c-tooltip="$t('button.edit')" aria-label="Edit">
-                            <CIcon name="cil-pencil" />
-                        </CButton>
-                        <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn"
-                            @click.stop="confirmDeleteItem(item)" v-c-tooltip="$t('table.delete')" aria-label="Delete">
-                            <CIcon name="cil-trash" />
-                        </CButton>
+                        <template v-if="item.canEdit">
+                            <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn"
+                                @click.stop="goToDuplicationForm(item)" v-c-tooltip="$t('table.duplicate')" aria-label="Duplicate">
+                                <CIcon name="cil-copy" />
+                            </CButton>
+                            <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn"
+                                @click.stop="goToEditForm(item)" v-c-tooltip="$t('button.edit')" aria-label="Edit">
+                                <CIcon name="cil-pencil" />
+                            </CButton>
+                            <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn"
+                                @click.stop="confirmDeleteItem(item)" v-c-tooltip="$t('table.delete')" aria-label="Delete">
+                                <CIcon name="cil-trash" />
+                            </CButton>
+                        </template>
                     </div>
                 </td>
             </template>
@@ -151,16 +168,18 @@ export default {
     computed: {
         fields() {
             return [
-                { key: 'title', label: this.$t('table.questionnaire'), _style: 'width:20%' },
+                { key: 'title', label: this.$t('table.questionnaire'), _style: 'width:18%' },
                 { key: 'access', label: this.$t('table.access'), _style: 'width:10%' },
                 { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:15%' },
                 { key: 'status', label: this.$t('table.status'), _style: 'width:10%' },
-                { key: 'responses', label: this.$t('table.responses'), _style: 'width:20%' },
+                { key: 'responses', label: this.$t('table.responses'), _style: 'width:15%' },
                 { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:10%' },
-                { key: 'actions', label: this.$t('table.actions'), _style: 'width:15%; text-align:right' }
+                { key: 'collaborators', label: 'Collaborators', _style: 'width:12%' },
+                { key: 'actions', label: this.$t('table.actions'), _style: 'width:10%; text-align:right' }
             ]
         },
         ...mapGetters('Forms', ['forms']),
+        ...mapGetters('User', ['user']),
         ...mapGetters('dialog', ['isCode']),
 
         totalPages() {
@@ -178,10 +197,40 @@ export default {
         tableData() {
             const raw = this.items || [];
             const locale = this.$i18n.locale.toLowerCase();
+            const currentUserId = this.user ? this.user._id : null;
+
+            // Determine if current user is Admin (still needed for 'canEdit')
+            let isAdmin = false;
+            if (this.user && this.user.role) {
+                const role = this.user.role;
+                if (Array.isArray(role.title)) {
+                    isAdmin = role.title.some(t => t && t.value && t.value.toLowerCase().includes('admin'));
+                } else if (typeof role.title === 'string') {
+                    isAdmin = role.title.toLowerCase().includes('admin');
+                }
+            }
 
             // Normalize items into display rows
             const mapped = raw.map(f => {
                 if (!f) return { isEmpty: true };
+
+                // Permission Logic (for button visibility)
+                let canEdit = isAdmin;
+                const creatorId = f.creator && typeof f.creator === 'object' ? f.creator._id : f.creator;
+                const isCreator = String(creatorId) === String(currentUserId);
+                if (isCreator) canEdit = true;
+
+                if (!canEdit && Array.isArray(f.controll)) {
+                    // Check if user is an Editor collaborator
+                    const collab = f.controll.find(c => {
+                        const collabUserId = c.user && typeof c.user === 'object' ? c.user._id : c.user;
+                        return String(collabUserId) === String(currentUserId);
+                    });
+                    if (collab && collab.type) {
+                        const roleTitle = this.getLang(collab.type.title) || '';
+                        if (roleTitle.toLowerCase().includes('edit')) canEdit = true;
+                    }
+                }
 
                 let title = this.getLang(f.title) || this.$t('common.untitled');
                 let description = this.getLang(f.description) || '-';
@@ -255,36 +304,51 @@ export default {
                     status = 'Draft';
                 }
 
-                // Access/Visibility Logic
-                let access = [];
-                if (f.controll && f.controll.type) {
-                    const controllType = f.controll.type;
-                    const cTitle = this.getLang(controllType.title);
-                    if (cTitle) access = [cTitle];
+                // Extract Collaborators
+                let collaborators = [];
+                if (Array.isArray(f.controll) && f.controll.length > 0) {
+                    f.controll.forEach(c => {
+                        let name = 'Unknown';
+                        let role = 'Viewer';
+                        if (c.user) {
+                           name = c.user.name || c.user.fullname || c.user.email || 'User';
+                        }
+                        if (c.type) {
+                           role = this.getLang(c.type.title) || 'Viewer';
+                        }
+                        collaborators.push({ name, role });
+                    });
                 }
 
-                if (access.length === 0) {
-                    const rawOrgs = f.organization || [];
-                    const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
-                        if (!o) return null;
-                        if (typeof o === 'string') return o;
-                        if (typeof o === 'object') {
-                            // Support the multi-language title structure
-                            if (Array.isArray(o.title)) {
-                                const localOrgTitle = o.title.find(t => t && t.key && t.key.toLowerCase() === locale);
-                                return localOrgTitle ? localOrgTitle.value : (o.title[0] ? o.title[0].value : null);
-                            }
-                            return o.name || o.title || o.value || null;
+                // Access/Visibility Logic (Based on Organization)
+                let access = [];
+                const rawOrgs = f.organization || [];
+                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
+                    if (!o) return null;
+                    if (typeof o === 'string') return o;
+                    if (typeof o === 'object') {
+                        if (Array.isArray(o.title)) {
+                            const localOrgTitle = o.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                            return localOrgTitle ? localOrgTitle.value : (o.title[0] ? o.title[0].value : null);
                         }
-                        return null;
-                    }).filter(Boolean);
+                        return o.name || o.title || o.value || null;
+                    }
+                    return null;
+                }).filter(Boolean);
 
-                    if (orgNames.includes('General') || orgNames.includes('ทั่วไป')) {
-                        access = ['Public'];
-                    } else if (orgNames.length > 0) {
-                        access = orgNames;
+                const hasPersonalAccess = f.settings && Array.isArray(f.settings.allowedEmails) && f.settings.allowedEmails.length > 0;
+                const personalLabel = hasPersonalAccess ? `Personal (${f.settings.allowedEmails.length})` : null;
+
+                if (orgNames.includes('General') || orgNames.includes('ทั่วไป')) {
+                    access = ['Public'];
+                    if (personalLabel) access.push(personalLabel);
+                } else if (orgNames.length > 0) {
+                    access = orgNames.map(name => `Organization: ${name}`);
+                    if (personalLabel) access.push(personalLabel);
+                } else {
+                    if (personalLabel) {
+                        access = [personalLabel];
                     } else {
-                        // No organizations assigned = Private
                         access = ['Private'];
                     }
                 }
@@ -305,6 +369,8 @@ export default {
                     access,
                     status,
                     responses,
+                    collaborators,
+                    canEdit,
                     isEmpty: false,
                     _raw: f
                 };
@@ -399,6 +465,7 @@ export default {
             const v = String(visibility).toLowerCase();
             if (v.includes('public') || v.includes('สาธารณะ') || v === 'general') return 'visi-public';
             if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
+            if (v.includes('personal')) return 'visi-personal';
             // Default class for organizations
             return 'visi-org';
         },
@@ -523,6 +590,11 @@ export default {
 .visi-org {
     background-color: #f0f7ff;
     color: #1e40af;
+}
+
+.visi-personal {
+    background-color: #f5f3ff;
+    color: #7c3aed;
 }
 
 .visi-default {

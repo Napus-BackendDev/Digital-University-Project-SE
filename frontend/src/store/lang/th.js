@@ -71,7 +71,8 @@ const th = {
             thisWeek: "อาทิตย์นี้",
             last7Days: "7 วันล่าสุด",
             last30Days: "30 วันก่อน"
-        }
+        },
+        submittedCount: "ทำไปแล้ว {count} ครั้ง"
     },
 
     modal: {
@@ -251,12 +252,17 @@ const th = {
         title: "แดชบอร์ดผู้ดูแลระบบ",
         description: "ภาพรวมของแบบฟอร์มและการตอบกลับทั้งหมด",
         dailyResponsesTrend: "แนวโน้มการตอบกลับรายวัน",
-        dailyResponsesDesc: "แสดงข้อมูลการตอบแบบสอบถามย้อนหลังในช่วง 7 วันที่ผ่านมา",
+        dailyResponsesDesc: "แสดงข้อมูลการตอบแบบสอบถามสำหรับช่วงที่เลือก",
         responsesOverTime: "เทรนด์การตอบกลับ",
-        responsesOverTimeDesc: "การตอบกลับรายวันในช่วงสัปดาห์ที่ผ่านมา",
+        responsesOverTimeDesc: "การตอบกลับรายวันในตัวกรองที่เลือก",
         sevenDaysView: "ดูย้อนหลัง 7 วัน",
+        timeRange: {
+            "7d": "7 วัน",
+            "30d": "30 วัน",
+            "1y": "1 ปี"
+        },
         mostRespondedForm: "แบบฟอร์มที่มีการตอบกลับสูงสุด",
-        mostRespondedDesc: "แสดงแบบฟอร์มที่มีจำนวนการตอบกลับมากที่สุด",
+        mostRespondedDesc: "แสดงแบบฟอร์มที่มีจำนวนการตอบกลับมากที่สุดในช่วงเวลาที่เลือก",
         widgets: {
             totalForms: "แบบฟอร์มทั้งหมด",
             totalResponses: "การตอบกลับทั้งหมด",
