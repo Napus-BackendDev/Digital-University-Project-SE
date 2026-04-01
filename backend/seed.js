@@ -1,659 +1,254 @@
 'use strict';
 
-require('dotenv').config({ path: '.env.dev' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env.dev') });
 const mongoose = require('mongoose');
+
+// Import Models
 const Form = require('./server/Project/Form/models/form.model');
 const Response = require('./server/Project/Response/model/response.model');
-// const Role = require('./server/Project/Role/models/role.model');
-// const User = require('./server/Project/User/models/user.model');
-const { Questions, TextQuestion, RatingQuestion, CheckboxQuestion, ChoicesQuestion } = require('./server/Project/Questions/models/questions.model');
+const User = require('./server/Project/User/models/user.model');
+const Role = require('./server/Project/User/models/roles.model');
+const Questions = require('./server/Project/Questions/models/questions.model');
+const QuestionType = require('./server/Project/Settings/models/question_type.model');
+const Organization = require('./server/Project/Organizations/models/organization.model');
+const SettingControll = require('./server/Project/Settings/models/controll.model');
 
-// MongoDB connection
 const mongoURI = process.env.MONGODB;
 
 async function seedDatabase() {
     try {
-        // Connect to MongoDB
+        // 1. Connect to MongoDB
         await mongoose.connect(mongoURI, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
         console.log('✅ Connected to MongoDB');
 
-        // Clear existing data (optional - comment out if you want to keep existing data)
-        await Form.deleteMany({});
-        await Response.deleteMany({});
-        await Questions.deleteMany({});
-        // await Role.deleteMany({});
-        // await User.deleteMany({});
+        // 2. Clear existing data
+        await Promise.all([
+            Organization.deleteMany({}),
+            Role.deleteMany({}),
+            User.deleteMany({}),
+            QuestionType.deleteMany({}),
+            Questions.deleteMany({}),
+            Form.deleteMany({}),
+            Response.deleteMany({}),
+            SettingControll.deleteMany({})
+        ]);
         console.log('🗑️  Cleared existing data');
 
-        // ============================================
-        // 0. CREATE ROLES (SKIPPED - No Role model)
-        // ============================================
+        // 3. Seed Organizations
+        const orgTemplates = [
+            { en: 'General', th: 'ทั่วไป' },
+            { en: 'Information Technology Center', th: 'ศูนย์เทคโนโลยีสารสนเทศ' },
+            { en: 'Faculty of Engineering', th: 'คณะวิศวกรรมศาสตร์' },
+            { en: 'Faculty of Science', th: 'คณะวิทยาศาสตร์' },
+            { en: 'Faculty of Medicine', th: 'คณะแพทยศาสตร์' },
+            { en: 'Graduate School', th: 'บัณฑิตวิทยาลัย' },
+            { en: 'Office of the Registrar', th: 'สำนักทะเบียนและประมวลผล' },
+            { en: 'Main Library', th: 'ห้องสมุดกลาง' },
+            { en: 'Student Affairs Division', th: 'กองกิจการนักศึกษา' }
+        ];
+
+        const orgsData = orgTemplates.map((org, index) => ({
+            // Keep the first one with a fixed ID if referenced elsewhere
+            _id: index === 0 ? new mongoose.Types.ObjectId("69baf8349050b9215c700b96") : new mongoose.Types.ObjectId(),
+            title: [
+                { key: 'en', value: org.en },
+                { key: 'th', value: org.th }
+            ]
+        }));
+
+        const createdOrgs = await Organization.insertMany(orgsData);
+        console.log(`✅ Seeded ${createdOrgs.length} diverse organizations`);
+
+        // 4. Seed Roles (using title array as per roles.model.js)
+        const rolesData = [
+            {
+                _id: new mongoose.Types.ObjectId("69aec1c73996270d703db3d7"), // Default role ID from user.model.js
+                title: [
+                    { key: 'en', value: 'Admin' },
+                    { key: 'th', value: 'ผู้ดูแลระบบ' }
+                ]
+            },
+            {
+                title: [
+                    { key: 'en', value: 'Staff' },
+                    { key: 'th', value: 'เจ้าหน้าที่' }
+                ]
+            },
+            {
+                title: [
+                    { key: 'en', value: 'User' },
+                    { key: 'th', value: 'ผู้ใช้งานทั่วไป' }
+                ]
+            }
+        ];
+        const createdRoles = await Role.insertMany(rolesData);
+        console.log(`✅ Seeded ${createdRoles.length} roles`);
+
+        // 5. Seed Question Types
+        const typeNames = ['short_answer', 'paragraph', 'multiple_choice', 'checkbox', 'rating', 'file_upload', 'image', 'title_description'];
+        const createdTypes = await QuestionType.insertMany(typeNames.map(t => ({ type: t })));
+        console.log(`✅ Seeded ${createdTypes.length} question types`);
+
+        // 6. Seed Control Types
+        const controllData = [
+            { title: [{ key: 'en', value: 'Editor' }, { key: 'th', value: 'แก้ไขฟอร์ม' }] },
+            { title: [{ key: 'en', value: 'Viewer' }, { key: 'th', value: 'ดูฟอร์ม' }] }
+        ];
+        const createdControlls = await SettingControll.insertMany(controllData);
+        console.log(`✅ Seeded ${createdControlls.length} control types`);
+
+        // 6. Seed Users
+        const users = [];
         
-        // const roles = await Role.create([
-        //     {
-        //         name: 'ADMIN',
-        //         description: 'Administrator with full system access',
-        //         permissions: [
-        //             // User Management
-        //             'VIEW_USERS',
-        //             'DELETE_USER',
-        //             // Form Management
-        //             'VIEW_FORMS',
-        //             'CREATE_FORM',
-        //             'UPDATE_FORM',
-        //             'DELETE_FORM',
-        //             'DUPLICATE_FORM',
-        //             // Question Management
-        //             'VIEW_QUESTIONS',
-        //             'CREATE_QUESTION',
-        //             'UPDATE_QUESTION',
-        //             'DELETE_QUESTION',
-        //             // Response Management
-        //             'VIEW_RESPONSES',
-        //             'VIEW_OWN_RESPONSES',
-        //             'SUBMIT_RESPONSES',
-        //             'EDIT_RESPONSES',
-        //             'DELETE_RESPONSES',
-        //             'EXPORT_RESPONSES'
-        //         ]
-        //     },
-        //     {
-        //         name: 'STAFF',
-        //         description: 'Staff member with form and response management',
-        //         permissions: [
-        //             // Form Management
-        //             'VIEW_FORMS',
-        //             'CREATE_FORM',
-        //             'UPDATE_FORM',
-        //             'DELETE_FORM',
-        //             'DUPLICATE_FORM',
-        //             // Question Management
-        //             'VIEW_QUESTIONS',
-        //             'CREATE_QUESTION',
-        //             'UPDATE_QUESTION',
-        //             'DELETE_QUESTION',
-        //             // Response Management
-        //             'VIEW_RESPONSES',
-        //             'VIEW_OWN_RESPONSES',
-        //             'SUBMIT_RESPONSES',
-        //             'EXPORT_RESPONSES'
-        //         ]
-        //     },
-        //     {
-        //         name: 'USER',
-        //         description: 'Regular user with basic access',
-        //         permissions: [
-        //             // Form Viewing
-        //             'VIEW_FORMS',
-        //             // Response Submission
-        //             'SUBMIT_RESPONSES', 
-        //             'VIEW_OWN_RESPONSES',
-        //             
-        //         ]
-        //     }
-        // ]);
+        const firstNames = ['Somchai', 'Somsri', 'Wichai', 'Malee', 'Anan', 'Pitsanu', 'Kanya', 'Thana', 'Santi', 'Pornchai', 'Siriporn', 'Nicha', 'Somsak', 'Patcharee', 'Narong', 'Prasert', 'Wanna', 'Prayoon', 'Sunee', 'Ubon'];
+        const lastNames = ['Srakaew', 'Sripai', 'Rakdee', 'Maneerat', 'Kongka', 'Kerdphol', 'Choojai', 'Noppakun', 'Saengsom', 'Sukjai', 'Prathum', 'Kamsin', 'Wongkaew', 'Sinthan', 'Boonmee', 'Chaisri', 'Saethang', 'Promdee', 'Yindee', 'Saengdao'];
 
-        // console.log(`✅ Created ${roles.length} roles`);
+        // Main Admin (Fixed ID)
+        const adminUser = await User.create({
+            _id: new mongoose.Types.ObjectId("69aec1c73996270d703db3aa"),
+            name: 'System Admin',
+            email: 'admin@digital.uni',
+            password: 'password123',
+            role: createdRoles[0]._id, // Admin
+            organization: createdOrgs[1]._id // Digital University
+        });
+        users.push(adminUser);
 
-        // ============================================
-        // 0.1 CREATE USERS
-        // ============================================
-        
-        // const users = await User.create([
-        //     {
-        //         email: 'admin@university.edu',
-        //         password: 'admin123', // In production, this should be hashed
-        //         name: 'Admin User',
-        //         roles: [roles[0]._id] // ADMIN role
-        //     },
-        //     {
-        //         email: 'staff@university.edu',
-        //         password: 'staff123', // In production, this should be hashed
-        //         name: 'Staff Member',
-        //         roles: [roles[1]._id] // STAFF role
-        //     },
-        //     {
-        //         email: 'john.doe@university.edu',
-        //         password: 'user123', // In production, this should be hashed
-        //         name: 'John Doe',
-        //         roles: [roles[2]._id] // USER role
-        //     },
-        //     {
-        //         email: 'jane.smith@university.edu',
-        //         password: 'user123', // In production, this should be hashed
-        //         name: 'Jane Smith',
-        //         roles: [roles[2]._id] // USER role
-        //     }
-        // ]);
+        // 30 more users distributed across organizations
+        for (let i = 1; i <= 30; i++) {
+            const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+            const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+            const fullName = `${firstName} ${lastName}`;
+            const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@demo.uni`;
+            
+            const roleIdx = (i % 2) + 1; // Cycle between Staff (1) and User (2)
+            
+            const u = await User.create({
+                name: fullName,
+                email: email,
+                password: 'password123',
+                role: createdRoles[roleIdx]._id,
+                organization: createdOrgs[Math.floor(Math.random() * createdOrgs.length)]._id
+            });
+            users.push(u);
+        }
 
-        // console.log(`✅ Created ${users.length} users`);
+        console.log(`✅ Seeded ${users.length} users with randomized names`);
 
-        // // ============================================
-        // // 1. CREATE QUESTIONS
-        // // ============================================
-        
-        // // Questions for Student Satisfaction Survey
-        // const satisfactionQuestions = [
-        //     await TextQuestion.create({
-        //         order: 1,
-        //         questionText: 'What do you think about our university?',
-        //         required: true,
-        //         subquestionText: 'Please provide detailed feedback'
-        //     }),
-        //     await RatingQuestion.create({
-        //         order: 2,
-        //         questionText: 'Rate your overall satisfaction',
-        //         required: true,
-        //         min: 1,
-        //         max: 5,
-        //         step: 1
-        //     }),
-        //     await CheckboxQuestion.create({
-        //         order: 3,
-        //         questionText: 'What aspects did you like the most? (Select all that apply)',
-        //         required: false,
-        //         checked: false
-        //     }),
-        //     await RatingQuestion.create({
-        //         order: 4,
-        //         questionText: 'Rate the course content',
-        //         required: true,
-        //         min: 1,
-        //         max: 5,
-        //         step: 1
-        //     }),
-        //     await RatingQuestion.create({
-        //         order: 5,
-        //         questionText: 'Rate the instructor',
-        //         required: true,
-        //         min: 1,
-        //         max: 5,
-        //         step: 1
-        //     }),
-        //     await TextQuestion.create({
-        //         order: 6,
-        //         questionText: 'Any suggestions for improvement?',
-        //         required: false,
-        //         subquestionText: 'Your feedback helps us improve'
-        //     })
-        // ];
+        // 7. Seed Forms
+        const forms = [];
+        const formTemplates = [
+            { en: 'Student Satisfaction Survey 2024', th: 'แบบประเมินความพึงพอใจนักศึกษา 2567' },
+            { en: 'Library Service Feedback', th: 'ความเห็นการใช้บริการห้องสมุด' },
+            { en: 'Digital Literacy Assessment', th: 'แบบทดสอบทักษะดิจิทัล' },
+            { en: 'Campus Facilities Evaluation', th: 'ประเมินสิ่งอำนวยความสะดวกในวิทยาเขต' },
+            { en: 'Canteen Food Quality Survey', th: 'สำรวจคุณภาพอาหารในโรงอาหาร' }
+        ];
 
-        // // Questions for Course Feedback Form
-        // const courseFeedbackQuestions = [
-        //     await TextQuestion.create({
-        //         order: 1,
-        //         questionText: 'Course Name',
-        //         required: true,
-        //         subquestionText: 'Enter the full course name'
-        //     }),
-        //     await RatingQuestion.create({
-        //         order: 2,
-        //         questionText: 'Overall course rating',
-        //         required: true,
-        //         min: 1,
-        //         max: 5,
-        //         step: 1
-        //     }),
-        //     await TextQuestion.create({
-        //         order: 3,
-        //         questionText: 'What did you learn from this course?',
-        //         required: false,
-        //         subquestionText: 'Describe key takeaways'
-        //     })
-        // ];
+        for (let i = 0; i < formTemplates.length; i++) {
+            const f = await Form.create({
+                title: [
+                    { key: 'en', value: formTemplates[i].en },
+                    { key: 'th', value: formTemplates[i].th }
+                ],
+                description: [
+                    { key: 'en', value: `Official feedback form for ${formTemplates[i].en}` },
+                    { key: 'th', value: `แบบฟอร์มรับฟังความคิดเห็นอย่างเป็นทางการสำหรับ ${formTemplates[i].th}` }
+                ],
+                creator: adminUser._id,
+                organization: createdOrgs[Math.floor(Math.random() * createdOrgs.length)]._id,
+                schedule: {
+                    startAt: new Date(Date.now() - 24 * 60 * 60 * 1000), 
+                    endAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                },
+                controll: {
+                    user: adminUser._id,
+                    type: createdControlls[0]._id // Editor
+                }
+            });
+            forms.push(f);
+        }
+        console.log(`✅ Seeded ${forms.length} diverse forms`);
 
-        // // Questions for Event Registration
-        // const eventQuestions = [
-        //     await TextQuestion.create({
-        //         order: 1,
-        //         questionText: 'Full Name',
-        //         required: true,
-        //         subquestionText: 'First and Last Name'
-        //     }),
-        //     await TextQuestion.create({
-        //         order: 2,
-        //         questionText: 'Email Address',
-        //         required: true,
-        //         subquestionText: 'University email preferred'
-        //     }),
-        //     await CheckboxQuestion.create({
-        //         order: 3,
-        //         questionText: 'Select sessions to attend',
-        //         required: false,
-        //         checked: false
-        //     })
-        // ];
+        // 8 & 9. Seed Questions and Responses for EACH form
+        const departments = ['IT Support', 'Human Resources', 'Accounting', 'Public Relations', 'Student Development', 'Academic Office'];
+        const choicesList = ['0', '1', '2'];
 
-        // // Questions for Library Services
-        // const libraryQuestions = [
-        //     await RatingQuestion.create({
-        //         order: 1,
-        //         questionText: 'Rate library facilities',
-        //         required: true,
-        //         min: 1,
-        //         max: 5,
-        //         step: 1
-        //     }),
-        //     await CheckboxQuestion.create({
-        //         order: 2,
-        //         questionText: 'Which services do you use?',
-        //         required: false,
-        //         checked: false
-        //     })
-        // ];
+        for (let formIdx = 0; formIdx < forms.length; formIdx++) {
+            const currentForm = forms[formIdx];
+            
+            const questionsData = [
+                {
+                    form: currentForm._id,
+                    order: 1,
+                    title: [{ key: 'en', value: 'Department' }, { key: 'th', value: 'หน่วยงานสังกัด' }],
+                    type: createdTypes.find(t => t.type === 'short_answer')._id,
+                    isRequired: true
+                },
+                {
+                    form: currentForm._id,
+                    order: 2,
+                    title: [{ key: 'en', value: 'Service Satisfaction' }, { key: 'th', value: 'ความพึงพอใจต่อบริการ' }],
+                    type: createdTypes.find(t => t.type === 'rating')._id,
+                    config: { maxRating: 5 },
+                    isRequired: true
+                },
+                {
+                    form: currentForm._id,
+                    order: 3,
+                    title: [{ key: 'en', value: 'Tools used most often?' }, { key: 'th', value: 'เครื่องมือที่ใช้บ่อยที่สุด' }],
+                    type: createdTypes.find(t => t.type === 'checkbox')._id,
+                    config: {
+                        choices: [
+                            { key: '0', lang: [{ key: 'en', value: 'ERP' }, { key: 'th', value: 'ระบบ ERP' }] },
+                            { key: '1', lang: [{ key: 'en', value: 'LMS' }, { key: 'th', value: 'ระบบ LMS' }] },
+                            { key: '2', lang: [{ key: 'en', value: 'E-Office' }, { key: 'th', value: 'ระบบงานสารบรรณ' }] }
+                        ],
+                        allowMultipleSelect: true
+                    }
+                }
+            ];
+            const createdQuestions = await Questions.insertMany(questionsData);
+            await Form.findByIdAndUpdate(currentForm._id, { $push: { questions: { $each: createdQuestions.map(q => q._id) } } });
 
-        // // Questions for IT Support
-        // const itSupportQuestions = [
-        //     await TextQuestion.create({
-        //         order: 1,
-        //         questionText: 'Describe your issue',
-        //         required: true,
-        //         subquestionText: 'Provide as much detail as possible'
-        //     }),
-        //     await CheckboxQuestion.create({
-        //         order: 2,
-        //         questionText: 'Problem category',
-        //         required: true,
-        //         checked: false
-        //     }),
-        //     await RatingQuestion.create({
-        //         order: 3,
-        //         questionText: 'Urgency level (1=Low, 5=Critical)',
-        //         required: true,
-        //         min: 1,
-        //         max: 5,
-        //         step: 1
-        //     })
-        // ];
+            const responsesPerForm = 15 + (formIdx % 5);
+            for (let r = 0; r < responsesPerForm; r++) {
+                const responder = users[(formIdx * 3 + r) % users.length];
+                
+                // Randomize creation date within last 7 days
+                const daysAgo = Math.floor(Math.random() * 7);
+                const randomDate = new Date();
+                randomDate.setDate(randomDate.getDate() - daysAgo);
+                randomDate.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
 
-        // // Questions with Sub-questions for Advanced Survey
-        // const subQuestion1 = await TextQuestion.create({
-        //     order: 1,
-        //     questionText: 'Please specify which programming languages',
-        //     required: false,
-        //     subquestionText: 'List programming languages you use'
-        // });
+                await Response.create({
+                    responder: responder._id,
+                    form: currentForm._id,
+                    answers: [
+                        { question: createdQuestions[0]._id, response: departments[(formIdx + r) % departments.length] },
+                        { question: createdQuestions[1]._id, response: ((formIdx + r) % 5) + 1 },
+                        { question: createdQuestions[2]._id, response: r % 2 === 0 ? [choicesList[r % 3]] : [choicesList[r % 3], choicesList[(r + 1) % 3]] }
+                    ],
+                    submit: true,
+                    createdAt: randomDate
+                });
+            }
+            console.log(`✅ Seeded ${createdQuestions.length} questions and ${responsesPerForm} responses for: ${currentForm.title.find(t => t.key === 'en').value}`);
+        }
 
-        // const subQuestion2 = await RatingQuestion.create({
-        //     order: 2,
-        //     questionText: 'Rate your satisfaction with technical support',
-        //     required: true,
-        //     min: 1,
-        //     max: 5,
-        //     step: 1
-        // });
+        console.log('\n🌟 Database seeding completed successfully!');
 
-        // const advancedSurveyQuestions = [
-        //     await TextQuestion.create({
-        //         order: 1,
-        //         questionText: 'What is your role?',
-        //         required: true,
-        //         subquestionText: 'e.g., Student, Faculty, Staff'
-        //     }),
-        //     await ChoicesQuestion.create({
-        //         order: 2,
-        //         questionText: 'Do you use programming in your work/studies?',
-        //         required: true,
-        //         option: false,
-        //         subQuestion: [subQuestion1._id]
-        //     }),
-        //     await ChoicesQuestion.create({
-        //         order: 3,
-        //         questionText: 'Have you contacted technical support?',
-        //         required: true,
-        //         option: false,
-        //         subQuestion: [subQuestion2._id]
-        //     }),
-        //     await CheckboxQuestion.create({
-        //         order: 4,
-        //         questionText: 'Which facilities do you use regularly?',
-        //         required: false,
-        //         checked: false
-        //     })
-        // ];
-
-        // console.log(`✅ Created ${satisfactionQuestions.length + courseFeedbackQuestions.length + eventQuestions.length + libraryQuestions.length + itSupportQuestions.length + advancedSurveyQuestions.length + 2} questions (including 2 sub-questions)`);
-
-        // // ============================================
-        // // 2. CREATE FORMS WITH QUESTION REFERENCES
-        // // ============================================
-        
-        // const forms = await Form.insertMany([
-        //     {
-        //         title: [
-        //             { key: 'en', value: 'Student Satisfaction Survey' },
-        //             { key: 'th', value: 'แบบสำรวจความพึงพอใจของนักศึกษา' }
-        //         ],
-        //         can_duplicate: false,
-        //         status: 'open',
-        //         schedule: {
-        //             mode: 'auto',
-        //             startAt: new Date('2025-01-01'),
-        //             endAt: new Date('2025-12-31')
-        //         }
-        //     },
-        //     {
-        //         title: [
-        //             { key: 'en', value: 'Course Feedback Form' },
-        //             { key: 'th', value: 'แบบฟอร์มข้อเสนอแนะรายวิชา' }
-        //         ],
-        //         can_duplicate: true,
-        //         status: 'open',
-        //         schedule: {
-        //             mode: 'manual',
-        //             startAt: null,
-        //             endAt: null
-        //         }
-        //     },
-        //     {
-        //         title: [
-        //             { key: 'en', value: 'Event Registration' },
-        //             { key: 'th', value: 'ลงทะเบียนเข้าร่วมกิจกรรม' }
-        //         ],
-        //         can_duplicate: false,
-        //         status: 'draft',
-        //         schedule: {
-        //             mode: 'manual',
-        //             startAt: null,
-        //             endAt: null
-        //         }
-        //     },
-        //     {
-        //         title: [
-        //             { key: 'en', value: 'Library Services Evaluation' },
-        //             { key: 'th', value: 'ประเมินบริการห้องสมุด' }
-        //         ],
-        //         can_duplicate: false,
-        //         status: 'close',
-        //         schedule: {
-        //             mode: 'auto',
-        //             startAt: new Date('2024-01-01'),
-        //             endAt: new Date('2024-12-31')
-        //         }
-        //     },
-        //     {
-        //         title: [
-        //             { key: 'en', value: 'IT Support Request' },
-        //             { key: 'th', value: 'แจ้งปัญหาด้านเทคโนโลยีสารสนเทศ' }
-        //         ],
-        //         can_duplicate: true,
-        //         status: 'open',
-        //         schedule: {
-        //             mode: 'manual',
-        //             startAt: null,
-        //             endAt: null
-        //         }
-        //     },
-        //     {
-        //         title: [
-        //             { key: 'en', value: 'Advanced University Survey' },
-        //             { key: 'th', value: 'แบบสำรวจขั้นสูงของมหาวิทยาลัย' }
-        //         ],
-        //         can_duplicate: false,
-        //         status: 'open',
-        //         schedule: {
-        //             mode: 'auto',
-        //             startAt: new Date('2025-01-01'),
-        //             endAt: new Date('2025-06-30')
-        //         }
-        //     }
-        // ]);
-
-        // console.log(`✅ Created ${forms.length} forms`);
-
-        // // ============================================
-        // // 3. CREATE RESPONSES WITH QUESTION REFERENCES
-        // // ============================================
-        
-        // const responses = await Response.insertMany([
-        //     {
-        //         responder_id: new mongoose.Types.ObjectId(),
-        //         form: forms[0]._id,
-        //         answers: [
-        //             { 
-        //                 question: satisfactionQuestions[0]._id,
-        //                 response: 'Very satisfied with the course content and teaching methods. The professors are knowledgeable and helpful.' 
-        //             },
-        //             { 
-        //                 question: satisfactionQuestions[1]._id,
-        //                 response: 5 
-        //             },
-        //             { 
-        //                 question: satisfactionQuestions[2]._id,
-        //                 response: ['Teaching quality', 'Course materials', 'Campus environment'] 
-        //             },
-        //             {
-        //                 question: satisfactionQuestions[3]._id,
-        //                 response: 5
-        //             },
-        //             {
-        //                 question: satisfactionQuestions[4]._id,
-        //                 response: 5
-        //             },
-        //             {
-        //                 question: satisfactionQuestions[5]._id,
-        //                 response: 'More practical exercises would be great'
-        //             }
-        //         ],
-        //         submittedAt: new Date('2025-02-15')
-        //     },
-        //     {
-        //         responder_id: new mongoose.Types.ObjectId(),
-        //         form: forms[3]._id,
-        //         answers: [
-        //             { 
-        //                 question: libraryQuestions[0]._id,
-        //                 response: 4 
-        //             },
-        //             { 
-        //                 question: libraryQuestions[1]._id,
-        //                 response: ['Study rooms', 'Computer labs'] 
-        //             }
-        //         ],
-        //         submittedAt: new Date('2025-03-20')
-        //     },
-        //     {
-        //         responder_id: new mongoose.Types.ObjectId(),
-        //         form: forms[4]._id,
-        //         answers: [
-        //             { 
-        //                 question: satisfactionQuestions[0]._id,
-        //                 response: 'The curriculum is comprehensive but challenging' 
-        //             },
-        //             { 
-        //                 question: satisfactionQuestions[1]._id,
-        //                 response: 3 
-        //             },
-        //             { 
-        //                 question: satisfactionQuestions[2]._id,
-        //                 response: ['Course materials', 'Lab facilities'] 
-        //             },
-        //             {
-        //                 question: satisfactionQuestions[3]._id,
-        //                 response: 3
-        //             },
-        //             {
-        //                 question: satisfactionQuestions[4]._id,
-        //                 response: 4
-        //             },
-        //             {
-        //                 question: satisfactionQuestions[5]._id,
-        //                 response: 'Need better equipment in labs'
-        //             }
-        //         ],
-        //         submittedAt: new Date('2025-03-20')
-        //     },
-        //     {
-        //         responder_id: new mongoose.Types.ObjectId(),
-        //         form: forms[1]._id,
-        //         answers: [
-        //             { 
-        //                 question: courseFeedbackQuestions[0]._id,
-        //                 response: 'Software Engineering SE301' 
-        //             },
-        //             { 
-        //                 question: courseFeedbackQuestions[1]._id,
-        //                 response: 5 
-        //             },
-        //             { 
-        //                 question: courseFeedbackQuestions[2]._id,
-        //                 response: 'Learned agile methodologies, design patterns, and best practices for software development' 
-        //             }
-        //         ],
-        //         submittedAt: new Date('2025-02-20')
-        //     },
-        //     {
-        //         responder_id: new mongoose.Types.ObjectId(),
-        //         form: forms[3]._id,
-        //         answers: [
-        //             { 
-        //                 question: courseFeedbackQuestions[0]._id,
-        //                 response: 'Database Systems DB201' 
-        //             },
-        //             { 
-        //                 question: courseFeedbackQuestions[1]._id,
-        //                 response: 4 
-        //             },
-        //             { 
-        //                 question: courseFeedbackQuestions[2]._id,
-        //                 response: 'Understanding of SQL, database design, normalization, and query optimization' 
-        //             }
-        //         ],
-        //         submittedAt: new Date('2025-03-05')
-        //     },
-        //     {
-        //         responder_id: new mongoose.Types.ObjectId(),
-        //         form: forms[4]._id,
-        //         answers: [
-        //             { 
-        //                 question: itSupportQuestions[0]._id,
-        //                 response: 'Cannot access university email account. Keep getting authentication errors.' 
-        //             },
-        //             { 
-        //                 question: itSupportQuestions[1]._id,
-        //                 response: ['Email'] 
-        //             },
-        //             { 
-        //                 question: itSupportQuestions[2]._id,
-        //                 response: 4 
-        //             }
-        //         ],
-        //         submittedAt: new Date('2025-04-01')
-        //     },
-        //     {
-        //         responder_id: new mongoose.Types.ObjectId(),
-        //         form: forms[4]._id,
-        //         answers: [
-        //             { 
-        //                 question: itSupportQuestions[0]._id,
-        //                 response: 'Wi-Fi connection is very slow in the library area' 
-        //             },
-        //             { 
-        //                 question: itSupportQuestions[1]._id,
-        //                 response: ['Network'] 
-        //             },
-        //             { 
-        //                 question: itSupportQuestions[2]._id,
-        //                 response: 2 
-        //             }
-        //         ],
-        //         submittedAt: new Date('2025-03-15')
-        //     },
-        //     {
-        //         responder_id: new mongoose.Types.ObjectId(),
-        //         form: forms[5]._id,
-        //         answers: [
-        //             { 
-        //                 question: advancedSurveyQuestions[0]._id,
-        //                 response: 'Graduate Student' 
-        //             },
-        //             { 
-        //                 question: advancedSurveyQuestions[1]._id,
-        //                 response: 'Yes'
-        //             },
-        //             { 
-        //                 question: subQuestion1._id,
-        //                 response: 'Python, JavaScript, Java, C++' 
-        //             },
-        //             { 
-        //                 question: advancedSurveyQuestions[2]._id,
-        //                 response: 'Yes'
-        //             },
-        //             { 
-        //                 question: subQuestion2._id,
-        //                 response: 4
-        //             },
-        //             { 
-        //                 question: advancedSurveyQuestions[3]._id,
-        //                 response: ['Library', 'Computer Lab', 'Study Rooms']
-        //             }
-        //         ],
-        //         submittedAt: new Date('2025-03-15')
-        //     },
-        //     {
-        //         responder_id: new mongoose.Types.ObjectId(),
-        //         form: forms[5]._id,
-        //         answers: [
-        //             { 
-        //                 question: advancedSurveyQuestions[0]._id,
-        //                 response: 'Faculty Member' 
-        //             },
-        //             { 
-        //                 question: advancedSurveyQuestions[1]._id,
-        //                 response: 'No'
-        //             },
-        //             { 
-        //                 question: advancedSurveyQuestions[2]._id,
-        //                 response: 'No'
-        //             },
-        //             { 
-        //                 question: advancedSurveyQuestions[3]._id,
-        //                 response: ['Library', 'Meeting Rooms']
-        //             }
-        //         ],
-        //         submittedAt: new Date('2025-03-16')
-        //     }
-        // ]);
-
-        // console.log(`✅ Created ${responses.length} responses`);
-
-        // // Display summary
-        // console.log('\n📊 Seed Summary:');
-        // console.log('================');
-        // const totalQuestions = satisfactionQuestions.length + courseFeedbackQuestions.length + 
-        //                       eventQuestions.length + libraryQuestions.length + itSupportQuestions.length;
-        // console.log(`Questions created: ${totalQuestions}`);
-        // console.log(`Forms created: ${forms.length}`);
-        // console.log(`Responses created: ${responses.length}`);
-        
-        // console.log('\n📝 Form IDs for testing:');
-        // forms.forEach((form, index) => {
-        //     const title = form.title.find(t => t.key === 'en')?.value || 'Untitled';
-        //     console.log(`${index + 1}. ${title}`);
-        //     console.log(`   Form ID: ${form._id}`);
-        //     console.log(`   Status: ${form.status}`);
-        // });
-
-        // console.log('\n🔍 Question IDs for testing:');
-        // console.log('Student Satisfaction Survey Questions:');
-        // satisfactionQuestions.forEach((q, i) => {
-        //     console.log(`   Q${i + 1}: ${q._id} (${q.type})`);
-        // });
-
-        console.log('\n✨ Database seeded successfully!');
-        
     } catch (error) {
-        console.error('❌ Error seeding database:', error);
+        console.error('❌ Error during database seeding:', error);
     } finally {
-        // Close connection
         await mongoose.connection.close();
-        console.log('\n🔌 Database connection closed');
+        console.log('🔌 Database connection closed\n');
         process.exit(0);
     }
 }
 
-// Run the seed function
 seedDatabase();

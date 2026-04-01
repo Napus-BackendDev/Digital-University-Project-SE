@@ -1,10 +1,9 @@
 <template>
-    <CCard class="mb-4 border-0 shadow-sm">
+    <CCard class="mb-4 border-0 shadow-sm rounded-20">
         <CCardBody class="p-4">
-            <h5 class="mb-4 font-weight-bold text-dark">Organization Control</h5>
+            <h5 class="mb-4 font-weight-bold text-dark">{{ $t('editor.settings.organization.title') }}</h5>
 
-            <!-- Organization Info Section -->
-            <div class="mb-4">
+            <!-- <div class="mb-4">
                 <h6 class="font-weight-bold mb-3">Organization CanEdit</h6>
                 <CRow>
                     <CCol md="5" class="mb-3">
@@ -26,29 +25,91 @@
                 </CRow>
             </div>
 
-            <hr class="my-4" />
+            <hr class="my-4" /> -->
 
-            <!-- Department Management Section -->
+            <!-- Selected Organizations List -->
             <div class="mb-4">
-                <h6 class="font-weight-bold mb-3">Organization CanRespone</h6>
+                <label class="mb-3 font-weight-bold ">{{ $t('editor.settings.organization.selectedOrgs') }}</label>
+                <div class="org-list">
+                    <span v-for="(orgId, index) in settings.organization" :key="index" class="badge-custom">
+                        {{ getOrgName(orgId) }}
+                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeOrganization(index)" :title="$t('editor.settings.access.remove')">
+                            <CIcon name="cil-x" size="sm" class="delete-icon" />
+                        </span>
+                    </span>
+                    <div v-if="!settings.organization || settings.organization.length === 0" class="text-muted small">
+                        {{ $t('editor.settings.organization.noOrgs') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organization Selection Section -->
+            <div class="mb-4">
+                <h6 class="font-weight-bold mb-3">{{ $t('editor.settings.organization.canResponse') }}</h6>
+
                 <CRow>
-                    <CCol md="5" class="mb-3">
-                        <label class="mb-2 font-weight-bold small">Organization Name</label>
-                        <CSelect :options="organizationOptions" :value="orgData.name" placeholder="Select organization"
-                            class="form-select-custom" @update:value="(val) => { orgData.name = val; triggerAutoSave(); }" />
-                    </CCol>
-                    <CCol md="5" class="mb-3">
-                        <label class="mb-2 font-weight-bold small">Departments</label>
-                        <CSelect :options="departmentOptions" :value="selectedDepartment"
-                            placeholder="Choose a department" class="form-select-custom" @update:value="selectDepartment" />
+                    <CCol md="10" class="mb-3">
+                        <label class="mb-2 font-weight-bold small">{{ $t('editor.settings.organization.name') }}</label>
+                        <CSelect :options="organizationOptions" :value="selectedOrgId" :placeholder="$t('editor.settings.organization.selectPlaceholder')"
+                            class="form-select-custom" @update:value="(val) => { selectedOrgId = val; }" />
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
-                            class="font-weight-bold mt-4" @click="addDepartment">
-                            Add
+                            class="font-weight-bold mt-4" @click="addOrganization">
+                            {{ $t('editor.settings.access.add') }}
                         </CButton>
                     </CCol>
                 </CRow>
+
+                <!-- Info Hint -->
+                <div class="info-hint mb-3">
+                    <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
+                    <h6 class="mb-0 " v-html="$t('editor.settings.organization.generalHint')"></h6>
+                </div>
+            </div>
+
+            <!-- Selected Emails List -->
+            <div class="mb-4 mt-4">
+                <label class="mb-3 font-weight-bold">{{ $t('editor.settings.organization.allowedEmails') }}</label>
+                <div class="org-list">
+                    <span v-for="(email, index) in settings.allowedEmails" :key="index" class="badge-custom border">
+                        {{ email }}
+                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeEmail(index)" :title="$t('editor.settings.access.remove')">
+                            <CIcon name="cil-x" size="sm" class="delete-icon" />
+                        </span>
+                    </span>
+                    <div v-if="!settings.allowedEmails || settings.allowedEmails.length === 0" class="text-muted small my-auto">
+                        {{ $t('editor.settings.organization.noEmails') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Email Selection Section -->
+            <div class="mb-4">
+                <h6 class="font-weight-bold mb-3">{{ $t('editor.settings.organization.specifyUser') }}</h6>
+
+                <CRow>
+                    <CCol md="10" class="mb-3">
+                        <label class="mb-2 font-weight-bold small">{{ $t('editor.settings.organization.emailPlaceholder') }}</label>
+                        <input type="email" 
+                               :placeholder="$t('editor.settings.organization.emailPlaceholder')" 
+                               v-model="newEmail"
+                               class="form-control form-select-custom px-3" 
+                               @keyup.enter="addEmail" />
+                    </CCol>
+                    <CCol md="2" class="mb-3">
+                        <CButton color="primary" block style="height: 45px; border-radius: 8px;"
+                            class="font-weight-bold mt-4" @click="addEmail">
+                            {{ $t('editor.settings.access.add') }}
+                        </CButton>
+                    </CCol>
+                </CRow>
+            </div>
+
+            <!-- Info Hint -->
+            <div class="info-hint mb-3">
+                <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
+                <h6 class="mb-0 " v-html="$t('editor.settings.organization.userHint')"></h6>
             </div>
 
         </CCardBody>
@@ -56,6 +117,8 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
     name: 'OrganizationControl',
     props: {
@@ -66,72 +129,94 @@ export default {
     },
     data() {
         return {
-            selectedDepartment: null,
-            organizationOptions: [
-                { label: 'Digital University', value: 'Digital University' },
-                { label: 'Academic Affairs', value: 'Academic Affairs' },
-                { label: 'Student Services', value: 'Student Services' },
-                { label: 'Administration', value: 'Administration' }
-            ],
-            departmentOptions: [
-                { label: 'Engineering', value: 'Engineering' },
-                { label: 'Product Management', value: 'Product Management' },
-                { label: 'Design', value: 'Design' },
-                { label: 'Quality Assurance', value: 'Quality Assurance' },
-                { label: 'Marketing', value: 'Marketing' },
-                { label: 'Human Resources', value: 'Human Resources' }
-            ],
-            orgData: {
-                name: 'Digital University',
-                code: 'DU-2024',
-                description: 'A comprehensive digital learning platform for managing forms and surveys',
-                status: 'active',
-                createdDate: '2024-01-15',
-                departments: [
-                    'Engineering',
-                    'Product Management',
-                    'Design',
-                    'Quality Assurance'
-                ],
-                allowMultipleForms: true,
-                requireApproval: false,
-                enableAnalytics: true
-            }
+            selectedOrgId: null,
+            newEmail: ''
+        }
+    },
+    computed: {
+        ...mapGetters('Organizations', ['organizations']),
+        organizationOptions() {
+            if (!this.organizations || this.organizations.length === 0) return [];
+            return this.organizations.map(o => {
+                // Extract English title
+                let label = 'Unknown Org';
+                if (Array.isArray(o.title)) {
+                    const en = o.title.find(t => t && t.key === 'en');
+                    label = en ? en.value : (o.title[0] ? o.title[0].value : 'Unnamed');
+                }
+                return { label: label, value: o._id };
+            });
         }
     },
     methods: {
-        selectDepartment(value) {
-            this.selectedDepartment = value;
+        getOrgName(orgId) {
+            if (!orgId) return '...';
+
+            // Check if orgId is already an object (populated by backend)
+            let org = null;
+            if (typeof orgId === 'object' && orgId !== null) {
+                org = orgId;
+            } else if (this.organizations) {
+                // If it's an ID string/ObjectId, find it in the cached list
+                org = this.organizations.find(o => (o._id === orgId || o.id === orgId));
+            }
+
+            // Fallback: If not found in memory but it's an object, return name or title
+            if (!org) {
+                if (typeof orgId === 'string') return orgId;
+                return 'Unknown Org';
+            }
+
+            // Extract Name based on language/title structure
+            if (Array.isArray(org.title)) {
+                // Try to find English title first, or any first title available
+                const en = org.title.find(t => t && t.key === 'en');
+                if (en && en.value) return en.value;
+                const th = org.title.find(t => t && t.key === 'th');
+                if (th && th.value) return th.value;
+                return org.title[0] ? org.title[0].value : 'Unnamed';
+            }
+            return org.name || org.title || (org._id ? String(org._id) : 'Unnamed');
         },
-        addSelectedDepartment() {
-            if (!this.selectedDepartment) {
-                alert('Please select a department');
+        addOrganization() {
+            if (!this.selectedOrgId) return;
+
+            // Initialize settings.organization if it doesn't exist
+            if (!this.settings.organization) {
+                this.$set(this.settings, 'organization', []);
+            }
+
+            if (this.settings.organization.includes(this.selectedOrgId)) {
                 return;
             }
 
-            if (this.orgData.departments.includes(this.selectedDepartment)) {
-                alert('This department is already assigned');
+            this.settings.organization.push(this.selectedOrgId);
+            this.selectedOrgId = null; // Clear after add
+            this.triggerAutoSave();
+        },
+        removeOrganization(index) {
+            this.settings.organization.splice(index, 1);
+            this.triggerAutoSave();
+        },
+        addEmail() {
+            if (!this.newEmail || !this.newEmail.trim().includes('@')) return;
+
+            if (!this.settings.allowedEmails) {
+                this.$set(this.settings, 'allowedEmails', []);
+            }
+
+            const emailToAdd = this.newEmail.toLowerCase().trim();
+            if (this.settings.allowedEmails.includes(emailToAdd)) {
+                this.newEmail = '';
                 return;
             }
 
-            this.orgData.departments.push(this.selectedDepartment);
-            this.selectedDepartment = null;
+            this.settings.allowedEmails.push(emailToAdd);
+            this.newEmail = '';
             this.triggerAutoSave();
         },
-        removeDepartment(index) {
-            this.orgData.departments.splice(index, 1);
-            this.triggerAutoSave();
-        },
-        updateMultipleForms(val) {
-            this.$set(this.orgData, 'allowMultipleForms', val);
-            this.triggerAutoSave();
-        },
-        updateRequireApproval(val) {
-            this.$set(this.orgData, 'requireApproval', val);
-            this.triggerAutoSave();
-        },
-        updateEnableAnalytics(val) {
-            this.$set(this.orgData, 'enableAnalytics', val);
+        removeEmail(index) {
+            this.settings.allowedEmails.splice(index, 1);
             this.triggerAutoSave();
         },
         async triggerAutoSave() {
@@ -139,12 +224,24 @@ export default {
         }
     },
     mounted() {
-        console.log('OrganizationControl component mounted', this.orgData);
+        this.$store.dispatch('Organizations/getAll');
+        // Ensure arrays exist
+        if (!this.settings.organization) {
+            this.$set(this.settings, 'organization', []);
+        }
+        if (!this.settings.allowedEmails) {
+            this.$set(this.settings, 'allowedEmails', []);
+        }
     }
 }
 </script>
 
 <style scoped>
+.rounded-20 {
+    border-radius: 20px !important;
+    overflow: hidden;
+}
+
 .form-select-custom {
     height: 45px;
     background-color: #f8f9fa;
@@ -169,29 +266,64 @@ export default {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.dept-list {
+.org-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    padding: 0.75rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 12px;
     border: 1px solid #e2e8f0;
     min-height: 50px;
+}
+
+.info-hint {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: #f0f7ff;
+    border-radius: 10px;
+    border-left: 4px solid #3b82f6;
+    color: #1e40af;
 }
 
 .badge-custom {
     display: inline-flex;
     align-items: center;
     padding: 0.5rem 0.75rem;
-    border-radius: 6px;
+    border-radius: 8px;
+    background-color: #f1f5f9;
+    color: #475569;
     font-weight: 500;
-    cursor: default;
+    font-size: 0.875rem;
     transition: all 0.2s ease;
+    border: 1px solid #e2e8f0;
 }
 
 .badge-custom:hover {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+.delete-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.delete-icon-wrapper:hover {
+    background-color: #fee2e2;
+    color: #ef4444;
+    transform: scale(1.1);
+}
+
+.delete-icon {
+    font-size: 10px;
 }
 
 .list-group-item {

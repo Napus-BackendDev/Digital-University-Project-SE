@@ -162,12 +162,10 @@
         "summary": "Update an existing form",
         "description": "Send the form _id plus any fields you want to change. Only supplied fields are updated.",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["_id"],
                 "properties": {
                   "apiId": { "type": "integer", "description": "Always send 24 for this endpoint", "example": 24 },
                   "_id": { "type": "string", "description": "MongoDB ObjectId of the form to update", "example": "64e1f9f32a6d1c0013a1b234" },
@@ -242,20 +240,14 @@
         "summary": "Delete a form by its ID",
         "description": "Permanently removes the form document.",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["_id"],
                 "properties": {
                   "apiId": { "type": "integer", "description": "Always send 25 for this endpoint", "example": 25 },
                   "_id": { "type": "string", "description": "MongoDB ObjectId of the form to delete", "example": "64e1f9f32a6d1c0013a1b234" }
                 }
-              },
-              "example": {
-                "apiId": 25,
-                "_id": "64e1f9f32a6d1c0013a1b234"
               }
             }
           }

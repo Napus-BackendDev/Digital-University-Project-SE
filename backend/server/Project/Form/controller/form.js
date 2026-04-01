@@ -1,10 +1,14 @@
 var mongo = require("mongodb");
+var Respond = require("../../Settings/models/respond.model");
+var Controll = require("../../Settings/models/controll.model");
 var objSchema = require("../models/form.model");
 const createBaseService = require("../../../../helpers/base.service")
 
-// Load referenced models to ensure they're registered
-// require("../../Settings/models/respond.model");
-
-const defaultPopulate = [ { path: 'status', select: 'title' } ]
+const defaultPopulate = [
+    { path: 'creator' },
+    { path: 'organization', select: 'title' },
+    { path: 'responses', select: 'submit' },
+    { path: 'questions', select: 'type nextQuestion' },
+];
 
 module.exports = createBaseService(objSchema, defaultPopulate);

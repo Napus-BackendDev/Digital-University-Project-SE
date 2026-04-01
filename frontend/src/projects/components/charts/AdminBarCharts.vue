@@ -3,9 +3,9 @@
         <div class="header mb-4">
             <div class="d-flex align-items-center mb-1">
                 <CIcon name="cil-chart" class="text-danger mr-2" size="lg" />
-                <h4 class="m-0 font-weight-bold">Top Performing Forms</h4>
+                <h4 class="m-0 font-weight-bold">Most Responded Form</h4>
             </div>
-            <div class="text-muted small ">Forms with the most responses</div>
+            <div class="text-muted small ">{{ $t('analytics.mostRespondedDesc') }}</div>
         </div>
 
         <div class="chart-container">
@@ -18,10 +18,12 @@
 <script>
 import { CChartHorizontalBar } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
+import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'AdminBarCharts',
     components: { CChartHorizontalBar },
+    mixins: [localeMixin],
     computed: {
         ...mapGetters('Forms', ['forms']),
 
@@ -29,8 +31,8 @@ export default {
             if (!this.forms) return []
             // Sort by response count descending
             const sorted = [...this.forms].sort((a, b) => {
-                const countA = a.responses ? a.responses.length : 0
-                const countB = b.responses ? b.responses.length : 0
+                const countA = a.responses ? a.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0
+                const countB = b.responses ? b.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0
                 return countB - countA
             })
             // Take top 5
@@ -63,7 +65,7 @@ export default {
         defaultDatasets() {
             return [
                 {
-                    label: 'Responses',
+                    label: this.$t('table.responses'),
                     backgroundColor: '#9B1B30',
                     data: this.chartData.data,
                     barPercentage: 0.6,
@@ -118,9 +120,11 @@ export default {
 <style scoped>
 .chart-wrapper-container {
     background: white;
-    border-radius: 8px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
     padding: 20px;
     height: 100%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header h4 {

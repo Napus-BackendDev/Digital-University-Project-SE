@@ -7,7 +7,7 @@
   },
   "tags": [{ "name": "Question" }],
   "paths": {
-    "/question/id": {
+    "/api/v1/question/exp": {
       "get": {
         "tags": ["Question"],
         "summary": "Get a single question by ID",
@@ -57,8 +57,7 @@
                 "properties": {
                   "apiId": { "type": "integer", "description": "Always send 12 for this endpoint", "example": 12 }
                 }
-              },
-              "example": { "apiId": 12 }
+              }
             }
           }
         },
@@ -267,20 +266,14 @@
         "summary": "Delete a question by its ID",
         "description": "Permanently removes the question. A pre-deleteMany hook automatically removes its ID from the parent form's questions array.",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["_id"],
                 "properties": {
                   "apiId": { "type": "integer", "description": "Always send 15 for this endpoint", "example": 15 },
                   "_id": { "type": "string", "description": "MongoDB ObjectId of the question to delete", "example": "64e1f9f32a6d1c0013a1b111" }
                 }
-              },
-              "example": {
-                "apiId": 15,
-                "_id": "64e1f9f32a6d1c0013a1b111"
               }
             }
           }

@@ -243,7 +243,7 @@
         }
       }
     },
-    "/response/download/{form_id}": {
+    "/api/v1/response/download/{form_id}": {
       "get": {
         "tags": ["Response"],
         "summary": "Download all responses of a form as a JSON file",

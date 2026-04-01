@@ -3,6 +3,7 @@ import status from "@/store/modules/Setting/status/index";
 import verification from "@/store/modules/Setting/verification/index";
 import authen from "@/store/modules/Setting/authen/index";
 import question_type from "@/store/modules/Setting/question_type/index";
+import controll from "@/store/modules/Setting/controll/index";
 
 
 const module = {
@@ -12,7 +13,8 @@ const module = {
         status,
         verification,
         authen,
-        question_type
+        question_type,
+        controll
     },
     state: {
         lang: localStorage.getItem("lang") || "en",

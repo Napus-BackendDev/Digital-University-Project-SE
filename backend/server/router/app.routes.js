@@ -5,6 +5,7 @@ const responseRoutes = require("../Project/Response/response.routes");
 const settingsRoutes = require("../Project/Settings/setting.routes");
 // const authRoutes = require("../Project/Auth/auth.routes");
 const userRoutes = require("../Project/User/user.routes");
+const organizationRoutes = require("../Project/Organizations/organization.routes");
 
 module.exports = function (app) {
   path = "/api/v1";
@@ -17,6 +18,7 @@ module.exports = function (app) {
   app.use(path + '/response', responseRoutes);
   app.use(path + '/user', userRoutes)
   app.use(path + '/settings', settingsRoutes);
+  app.use(path + '/organization', organizationRoutes);
   // app.get("/uploads/:filename", authMiddleware, (req, res) => {
   //   const filePath = path.join(__dirname, "../uploads", req.params.filename);
   //   res.sendFile(filePath);

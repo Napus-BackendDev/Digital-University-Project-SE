@@ -1,160 +1,173 @@
 <template>
-    <div class="mt-4">
+        <div class="responses-container">
         <!-- Toolbar -->
-        <div class="d-flex justify-content-between align-items-center mb-4 px-2">
-            <!-- Loading state -->
-            <div v-if="loading" class="text-center py-4">
-                <CSpinner color="secondary" />
-                <p class="text-muted mt-2">Loading responses...</p>
-            </div>
-            <!-- Error state -->
-            <div v-else-if="error" class="text-center py-4 text-danger">{{ error }}</div>
-
-            <div class="text-muted" style="font-size: 1.1rem; font-weight: 500; color: #475569 !important;">
-                {{ allSubmittedResponses.length }} responses
+        <div class="d-flex justify-content-between align-items-center mb-4 px-3">
+            <div>
+                <h2 class="section-title mb-1">{{ $t('responses.title') }}</h2>
+                <div class="response-count-badge">
+                    <div class="pulse-dot"></div>
+                    {{ allSubmittedResponses.length }} {{ $t('responses.total') }}
+                </div>
             </div>
 
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center view-toggle-group">
+                <div class="toggle-pill-wrapper">
+                    <button :class="['toggle-pill', currentView === 'summary' ? 'active' : '']"
+                        @click="currentView = 'summary'">
+                        <CIcon name="cil-chart-pie" size="sm" class="mr-2" />
+                        {{ $t('responses.summary') }}
+                    </button>
+                    <button :class="['toggle-pill', currentView === 'individual' ? 'active' : '']"
+                        @click="currentView = 'individual'">
+                        <CIcon name="cil-list" size="sm" class="mr-2" />
+                        {{ $t('responses.individual') }}
+                    </button>
+                </div>
 
-                <CButton :color="currentView === 'summary' ? 'dark' : 'light'" shape="pill"
-                    :class="['d-flex align-items-center mx-1', currentView === 'summary' ? 'custom-btn-dark' : 'custom-btn-light text-muted']"
-                    @click="currentView = 'summary'">
-                    <CIcon name="cil-chart-pie" size="sm" class="mr-2" />
-                    Summary
-                </CButton>
+                <div class="divider-vertical mx-3"></div>
 
-                <CButton :color="currentView === 'individual' ? 'dark' : 'light'" shape="pill"
-                    :class="['d-flex align-items-center mx-1', currentView === 'individual' ? 'custom-btn-dark' : 'custom-btn-light text-muted']"
-                    @click="currentView = 'individual'">
-                    <CIcon name="cil-list" size="sm" class="mr-2" />
-                    Individual
-                </CButton>
-
-                <CDropdown class="mx-1 custom-dropdown">
+                <CDropdown class="custom-export-dropdown">
                     <template #toggler>
-                        <CButton color="light" shape="pill"
-                            class="d-flex align-items-center custom-btn-light text-muted">
-                            Export
-                            <CIcon name="cil-chevron-top" size="sm" class="ml-2" />
+                        <CButton class="btn-export-main">
+                            <CIcon name="cil-data-transfer-down" size="sm" class="mr-2" />
+                            {{ $t('responses.export') }}
+                            <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                         </CButton>
                     </template>
-                    <CDropdownItem @click="exportXlsx">
-                        <CIcon name="cil-data-transfer-down" size="sm" class="mr-2" />
-                        Export Excel
+                    <CDropdownItem @click="exportXlsx" class="dropdown-item-modern">
+                        <CIcon name="cil-spreadsheet" size="sm" class="mr-2 text-success" />
+                        {{ $t('responses.excel') }}
                     </CDropdownItem>
-                    <CDropdownItem @click="copyApiLink">
-                        <CIcon name="cil-copy" size="sm" class="mr-2" />
-                        Copy API Link
+                    <CDropdownItem @click="downloadJson" class="dropdown-item-modern">
+                        <CIcon name="cil-code" size="sm" class="mr-2 text-primary" />
+                        {{ $t('responses.json') }}
                     </CDropdownItem>
                 </CDropdown>
-
-                <!-- Copied toast -->
-                <transition name="fade">
-                    <span v-if="copied" class="ml-2 text-success d-inline-flex align-items-center"
-                        style="font-size:0.82rem; font-weight:600;">
-                        ✓ Copied!
-                    </span>
-                </transition>
-
             </div>
         </div>
 
         <!-- SUMMARY VIEW -->
-        <div v-if="currentView === 'summary'">
-
+        <div v-if="currentView === 'summary'" class="summary-wrapper">
             <!-- Empty state -->
-            <div v-if="allSubmittedResponses.length === 0" class="text-center py-5 text-muted">
-                <p>No responses yet for this form.</p>
+            <div v-if="allSubmittedResponses.length === 0" class="empty-state-card py-5 shadow-sm rounded-20 bg-white">
+                <div class="empty-icon-wrapper mb-3">
+                    <CIcon name="cil-coffee" size="xl" class="text-muted opacity-50" />
+                </div>
+                <h4 class="text-dark font-weight-bold">{{ $t('responses.noData') }}</h4>
+                <p class="text-muted">{{ $t('responses.noDataDesc') }}</p>
             </div>
 
             <!-- Dynamic question cards -->
-            <div v-for="(q, qIdx) in summaryByQuestion" :key="q._id" class="p-5 bg-white border rounded shadow-sm mb-4">
-                <!-- Question header -->
-                <h4 class="mb-1 font-weight-bold" style="color: #334155;">
-                    {{ qIdx + 1 }}. {{ getTitle(q.title) }}
-                </h4>
-                <div class="text-muted mb-4" style="font-size: 0.95rem;">
-                    {{ q.responses.length }} response{{ q.responses.length !== 1 ? 's' : '' }}
-                </div>
-
-                <!-- ── SHORT / PARAGRAPH ── -->
-                <template v-if="isTextType(q.type)">
-                    <CDataTable :items="q.responses.map((r, i) => ({ '#': i + 1, Response: r || '—' }))"
-                        :fields="[{ key: '#', _style: 'width:60px' }, 'Response']" border striped hover class="mb-0" />
-                </template>
-
-                <!-- ── MULTIPLE CHOICE / CHECKBOXES ── -->
-                <template v-else-if="isChoiceType(q.type)">
-                    <div v-for="(opt, oIdx) in q.optionCounts" :key="oIdx" class="mb-3 pr-2">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="text-dark">{{ opt.label }}</span>
-                            <span class="font-weight-bold text-dark">{{ opt.count }}</span>
+            <div v-for="(q, qIdx) in summaryByQuestion" :key="q._id" class="question-response-card mb-5">
+                <div class="card-inner p-4 p-md-5">
+                    <!-- Header Section -->
+                    <div class="d-flex justify-content-between align-items-start mb-4 pb-4 border-bottom-soft">
+                        <div class="d-flex align-items-center">
+                            <div class="q-index-circle mr-3">
+                                <span>{{ qIdx + 1 }}</span>
+                            </div>
+                            <div>
+                                <h3 class="q-title-display mb-1">{{ getTitle(q.title) }}</h3>
+                                <div class="q-type-badge" :class="'type-' + q.type">
+                                    <CIcon :name="getTypeIcon(q.type)" size="sm" class="mr-1" />
+                                    {{ formatTypeLabel(q.type) }}
+                                </div>
+                            </div>
                         </div>
-                        <div class="progress w-100"
-                            style="height: 8px; background-color: #f1f5f9; border-radius: 4px; overflow: hidden;">
-                            <div class="progress-bar"
-                                :style="{ width: opt.pct + '%', backgroundColor: choiceColor(oIdx) }" role="progressbar"
-                                :aria-valuenow="opt.pct" aria-valuemin="0" aria-valuemax="100" />
+                        <div class="q-stat-pill">
+                            <span class="count">{{ q.responses.length }}</span>
+                            <span class="label">Responses</span>
                         </div>
                     </div>
-                </template>
 
-                <!-- ── RATING ── -->
-                <template v-else-if="isRatingType(q.type)">
-                    <div class="mt-3 mb-3 px-3">
-                        <div class="d-flex" style="height: 200px;">
-                            <!-- Y-Axis -->
-                            <div class="y-axis-labels">
-                                <span v-for="(val, yIdx) in q.ratingYAxis" :key="yIdx">{{ val }}</span>
+                    <!-- ── CONTENT RENDERING ── -->
+                    <div class="content-area">
+                        <!-- ── SHORT / PARAGRAPH ── -->
+                        <template v-if="isTextType(q.type)">
+                            <div class="text-responses-list">
+                                <div v-for="(r, i) in paginateResponses(q._id, q.responses)" :key="i"
+                                    class="text-response-item">
+                                    <div class="item-index">{{ ((currentPageMap[q._id] || 1) - 1) * 5 + (i + 1) }}</div>
+                                    <div class="item-text">{{ r || '—' }}</div>
+                                </div>
                             </div>
-                            <!-- Bars -->
-                            <div class="chart-area w-100 position-relative">
-                                <div class="grid-line" style="top: 0%"></div>
-                                <div class="grid-line" style="top: 25%"></div>
-                                <div class="grid-line" style="top: 50%"></div>
-                                <div class="grid-line" style="top: 75%"></div>
-                                <div class="bars-container">
-                                    <div v-for="(bar, bIdx) in q.ratingBars" :key="bIdx" class="rating-bar-wrapper">
-                                        <div class="rating-bar" :style="{ height: bar.percentage + '%' }"></div>
+
+                            <!-- Pagination for Text Responses -->
+                            <div v-if="q.responses.length > 5">
+                                <Pagination :activePage="currentPageMap[q._id] || 1"
+                                    :pages="Math.ceil(q.responses.length / 5)"
+                                    @update:activePage="(v) => handlePageChange(q._id, v)" />
+                            </div>
+                        </template>
+
+                        <!-- ── MULTIPLE CHOICE / CHECKBOXES ── -->
+                        <template v-else-if="isChoiceType(q.type)">
+                            <div class="choices-viz-grid mt-2">
+                                <div v-for="(opt, oIdx) in q.optionCounts" :key="oIdx" class="choice-viz-item mb-4">
+                                    <div class="d-flex justify-content-between align-items-end mb-2">
+                                        <div class="choice-label-group">
+                                            <div class="label-text">{{ opt.label }}</div>
+                                            <div class="label-pct">{{ opt.pct }}%</div>
+                                        </div>
+                                        <div class="choice-count">{{ opt.count }}</div>
+                                    </div>
+                                    <div class="custom-progress-container">
+                                        <div class="custom-progress-fill" 
+                                            :style="{ width: opt.pct + '%', backgroundColor: opt.color }">
+                                            <div class="gloss-overlay"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- X-Axis -->
-                        <div class="d-flex x-axis-labels">
-                            <div style="width: 45px; padding-right: 12px;"></div>
-                            <div class="d-flex justify-content-around w-100 px-5">
-                                <div v-for="(bar, bIdx) in q.ratingBars" :key="bIdx" class="text-center">{{ bar.label }}
+                        </template>
+
+                        <!-- ── RATING ── -->
+                        <template v-else-if="isRatingType(q.type)">
+                            <div class="chart-box-modern">
+                                <CChartBar :datasets="q.chartData.datasets" :labels="q.chartData.labels" :options="chartOptions"
+                                    style="height: 280px" />
+                            </div>
+                        </template>
+
+                        <!-- ── FALLBACK ── -->
+                        <template v-else>
+                            <div class="text-responses-list">
+                                <div v-for="(r, i) in q.responses.slice(0, 3)" :key="i" class="text-response-item">
+                                    <div class="item-index">{{ i + 1 }}</div>
+                                    <div class="item-text">{{ r || '—' }}</div>
                                 </div>
                             </div>
-                        </div>
+                        </template>
                     </div>
-                </template>
-
-                <!-- ── FALLBACK ── -->
-                <template v-else>
-                    <CDataTable :items="q.responses.map((r, i) => ({ '#': i + 1, Response: r || '—' }))"
-                        :fields="[{ key: '#', _style: 'width:60px' }, 'Response']" border striped hover class="mb-0" />
-                </template>
+                </div>
             </div>
         </div>
 
         <!-- INDIVIDUAL VIEW -->
-        <div v-else-if="currentView === 'individual'" class="p-5 bg-white border rounded shadow-sm">
-            <ResponeTables :responseList="allSubmittedResponses" />
+        <div v-else-if="currentView === 'individual'" class="individual-responses-wrapper">
+            <div class="question-response-card p-4 p-md-5">
+                <div class="d-flex align-items-center mb-4 pb-4 border-bottom-soft px-2">
+                    <div class="q-index-circle mr-3">
+                        <CIcon name="cil-list" size="sm" />
+                    </div>
+                    <h3 class="mb-0 font-weight-bold section-title-inner" style="color: #0f172a;">{{ $t('responses.individual') }}</h3>
+                </div>
+                <ResponseTables :responseList="allSubmittedResponses" />
+            </div>
         </div>
-
     </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import moment from 'moment'
 import * as XLSX from 'xlsx'
-import ResponeTables from '@/projects/components/tables/ResponeTables.vue'
+import { CChartBar } from '@coreui/vue-chartjs'
+import ResponseTables from '@/projects/components/tables/ResponseTables.vue'
+import Pagination from '@/projects/components/Util/Pagination.vue'
+
 export default {
     name: 'TabResponses',
-    components: { ResponeTables },
+    components: { ResponseTables, CChartBar, Pagination },
     props: {
         responses: {
             type: Object,
@@ -164,6 +177,7 @@ export default {
     data() {
         return {
             currentView: 'summary',
+            currentPageMap: {}, // Track current page per question { qId: 1 }
             activePage: 1,
             activePageParagraph: 1,
             activePageIndividual: 1,
@@ -173,40 +187,121 @@ export default {
         }
     },
     watch: {
-        responses: {
-            handler(newVal) {
-                if (newVal && newVal._id) {
-                    this.fetchResponses();
-                }
-            },
-            immediate: true
-        }
     },
     methods: {
+        handlePageChange(qId, page) {
+            this.$set(this.currentPageMap, qId, page);
+        },
+        paginateResponses(qId, responses) {
+            const page = this.currentPageMap[qId] || 1;
+            const size = 5;
+            const start = (page - 1) * size;
+            return responses.slice(start, start + size);
+        },
+        getTypeIcon(type) {
+            const t = (type || '').toLowerCase();
+            if (t.includes('choice')) return 'cil-circle';
+            if (t.includes('check')) return 'cil-square';
+            if (t.includes('rating')) return 'cil-star';
+            if (t.includes('short')) return 'cil-minus';
+            if (t.includes('para')) return 'cil-align-left';
+            return 'cil-question';
+        },
+        formatTypeLabel(rawType) {
+            if (!rawType) return '';
+            return rawType
+                .split(/[_\s]+/)
+                .map(seg => seg ? seg.charAt(0).toUpperCase() + seg.slice(1) : '')
+                .join(' ');
+        },
         exportXlsx() {
             if (!this.allSubmittedResponses.length) {
-                alert('No responses to export.');
+                alert(this.$t('responses.noExportData'));
                 return;
             }
 
+            // 1. Identify "Department" question index to avoid duplicates
             const firstAnswers = this.allSubmittedResponses[0].answers || [];
-            const headers = ['Responder', 'Submitted'];
+            let deptQuestionIdx = -1;
+            
             firstAnswers.forEach((a, i) => {
+                const title = a.question && Array.isArray(a.question.title) && a.question.title.length
+                    ? this.getTitle(a.question.title).toLowerCase()
+                    : '';
+                if (title === 'department' || title.includes('แผนก') || title.includes('ฝ่าย') || title.includes('สังกัด')) {
+                    deptQuestionIdx = i;
+                }
+            });
+
+            // 2. Prepare Headers (Responder, Department, Submitted, then Others)
+            const headers = ['Responder', 'Department', 'Submitted'];
+            const questionHeaders = [];
+            firstAnswers.forEach((a, i) => {
+                if (i === deptQuestionIdx) return; // Skip because it's promoted to the 2nd column
                 const title = a.question && Array.isArray(a.question.title) && a.question.title.length
                     ? this.getTitle(a.question.title)
                     : `Question ${i + 1}`;
-                headers.push(title);
+                questionHeaders.push(title);
             });
+            headers.push(...questionHeaders);
 
+            // 3. Prepare Rows
             const rows = this.allSubmittedResponses.map(r => {
+                let responderName = '-';
+                let departmentValue = '-';
+                
+                // Extract responder name
+                if (r.responder && typeof r.responder === 'object') {
+                    responderName = r.responder.name || r.responder.fullname || r.responder.username || r.responder.email || 'Anonymous';
+                } else if (r.responderName) {
+                    responderName = r.responderName;
+                } else if (typeof r.responder === 'string') {
+                    responderName = r.responder;
+                }
+
+                // Extract Department value (Priority: Question answer > Responder metadata)
+                const ansList = r.answers || [];
+                if (deptQuestionIdx !== -1 && ansList[deptQuestionIdx]) {
+                    const deptAns = ansList[deptQuestionIdx].response;
+                    departmentValue = Array.isArray(deptAns) ? deptAns.join(', ') : (deptAns || '-');
+                } else {
+                    if (r.responder && r.responder.org) {
+                        departmentValue = r.responder.org.name || r.responder.org.organizationName || '-';
+                    } else {
+                        departmentValue = r.org || '-';
+                    }
+                }
+
                 const row = [
-                    (r.responder || '-').toString(),
+                    responderName,
+                    departmentValue,
                     this.formatDate(r.createdAt)
                 ];
-                (r.answers || []).forEach(a => {
-                    const val = Array.isArray(a.response)
-                        ? a.response.join(', ')
-                        : (a.response === null || a.response === undefined ? '' : String(a.response));
+
+                // Add other question answers
+                ansList.forEach((a, i) => {
+                    if (i === deptQuestionIdx) return; // Skip promoted column
+                    
+                    let val = a.response;
+                    const qType = a.question && a.question.type 
+                        ? (a.question.type.type || a.question.type).toString().toLowerCase() 
+                        : '';
+                    
+                    if (this.isChoiceType(qType) && a.question) {
+                        const options = (a.question.config && a.question.config.choices) 
+                            ? a.question.config.choices 
+                            : (a.question.options || []);
+                        const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
+                        const labels = choices.map(c => {
+                            let opt = options.find(o => o && (o.key === c || (o._id && o._id.toString() === c) || (o.value === c)));
+                            if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
+                            if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
+                            return c;
+                        });
+                        val = labels.join(', ');
+                    } else {
+                        val = Array.isArray(val) ? val.join(', ') : (val === null || val === undefined ? '' : String(val));
+                    }
                     row.push(val);
                 });
                 return row;
@@ -220,52 +315,31 @@ export default {
             const wscols = headers.map(h => ({ wch: Math.max(h.length, 15) }));
             worksheet['!cols'] = wscols;
 
-            const filename = `responses_${this.responses && this.responses._id || 'export'}.xlsx`;
+            // Generate filename: [Form Title]_[Timestamp].xlsx
+            const formTitle = this.getTitle(this.responses.title) || 'responses';
+            const timestamp = moment().format('YYYY-MM-DD');
+            const filename = `${formTitle}(${timestamp}).xlsx`;
+            
             XLSX.writeFile(workbook, filename);
         },
 
-        // ── Copy API Link ─────────────────────────────────────────────────
-        copyApiLink() {
-            const formId = this.responses && this.responses._id;
-            if (!formId) { alert('Form ID not available yet.'); return; }
-            const BASE = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
-            const url = `${BASE}/response/download/${formId}`;
-
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(() => this.showCopied());
-            } else {
-                const el = document.createElement('textarea');
-                el.value = url;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-                this.showCopied();
-            }
-        },
-        showCopied() {
-            this.copied = true;
-            setTimeout(() => { this.copied = false; }, 2000);
-        },
-
-        async fetchResponses() {
-            const formId = this.responses && this.responses._id;
-            if (!formId) {
-                console.warn('[TabResponses] fetchResponses: formId not ready yet, skip');
+        // ── Download JSON ─────────────────────────────────────────────────
+        downloadJson() {
+            if (!this.allSubmittedResponses.length) {
+                alert(this.$t('responses.noExportData'));
                 return;
             }
-            if (this.loading) return;
-
-            this.loading = true;
-            this.error = null;
-            try {
-                await this.$store.dispatch('Responses/get', { form_id: formId });
-            } catch (err) {
-                console.error('[TabResponses] Failed to fetch responses:', err);
-                this.error = 'Failed to load responses.';
-            } finally {
-                this.loading = false;
-            }
+            const formTitle = this.getTitle(this.responses.title) || 'responses';
+            const timestamp = moment().format('YYYY-MM-DD');
+            const filename = `${formTitle}(${timestamp}).json`;
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.allSubmittedResponses, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", filename);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
         },
 
         formatDate(dateStr) {
@@ -285,7 +359,7 @@ export default {
             return ['multiple_choice', 'multiplechoice', 'checkboxes', 'checkbox'].includes((type || '').toLowerCase());
         },
         isRatingType(type) {
-            return ['rating', 'rate'].includes((type || '').toLowerCase());
+            return ['rating', 'rating'].includes((type || '').toLowerCase());
         },
         choiceColor(idx) {
             const PALETTE = ['#a32a29', '#d9a036', '#723469', '#618a44', '#3d5a92', '#e55353', '#f9c74f', '#90be6d'];
@@ -293,20 +367,11 @@ export default {
         },
     },
     computed: {
-        ...mapGetters({
-            storeResponses: 'Responses/responses'
-        }),
         allSubmittedResponses() {
-            // this.responses prop is the form object which has responses array
-            // Combine with responses fetched from store and stored in Responses module.
-            const listFromProp = (this.responses && this.responses.responses) || [];
-            const listFromStore = this.storeResponses || [];
-            const combined = [...listFromProp, ...listFromStore];
-            
-            // Remove duplicates by _id and filter by submit status
+            const list = (this.responses && this.responses.responses) || [];
             const unique = [];
             const seen = new Set();
-            combined.forEach(r => {
+            list.forEach(r => {
                 if (r && r._id && !seen.has(r._id)) {
                     if (r.submit === true || r.submit === 'true') {
                         unique.push(r);
@@ -316,6 +381,48 @@ export default {
             });
             return unique;
         },
+        
+        chartOptions() {
+            return {
+                maintainAspectRatio: false,
+                legend: { display: false },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            stepSize: 1, // Ensure integer labels
+                            precision: 0,
+                            fontColor: '#64748b'
+                        },
+                        gridLines: {
+                            color: '#e2e8f0',
+                            borderDash: [2, 4],
+                            drawBorder: false
+                        }
+                    }],
+                    xAxes: [{
+                        gridLines: {
+                            display: false
+                        },
+                        ticks: {
+                            fontColor: '#64748b',
+                            fontSize: 12
+                        }
+                    }]
+                },
+                tooltips: {
+                    backgroundColor: '#1e293b',
+                    titleFontSize: 14,
+                    bodyFontSize: 14,
+                    displayColors: false,
+                    callbacks: {
+                        label: (tooltipItem) => {
+                            return `Responses: ${tooltipItem.yLabel}`;
+                        }
+                    }
+                }
+            }
+        },
 
         summaryByQuestion() {
             const PALETTE = ['#a32a29', '#d9a036', '#723469', '#618a44', '#3d5a92', '#e55353', '#f9c74f', '#90be6d'];
@@ -324,25 +431,59 @@ export default {
 
             this.allSubmittedResponses.forEach(resp => {
                 (resp.answers || []).forEach(ans => {
-                    const q = ans.question;
-                    if (!q || !q._id) return;
-                    if (!map[q._id]) {
-                        map[q._id] = {
-                            _id: q._id,
-                            title: q.title,
-                            type: (q.type && q.type.type ? q.type.type : 'short').toLowerCase(),
-                            responses: [],
-                            _rawChoices: {}
-                        };
-                        order.push(q._id);
-                    }
-                    const val = ans.response;
-                    map[q._id].responses.push(val);
+                    // ans.question may be a populated object or just an id
+                    let qRaw = ans.question;
+                    let qId = null;
+                    let qObj = null;
 
-                    if (this.isChoiceType(map[q._id].type)) {
-                        const choices = Array.isArray(val) ? val : [val];
+                    if (!qRaw) return;
+
+                    if (typeof qRaw === 'string' || typeof qRaw === 'number') {
+                        qId = qRaw.toString();
+                    } else if (qRaw._id) {
+                        qId = qRaw._id.toString();
+                        qObj = qRaw;
+                    } else if (qRaw.id) {
+                        qId = qRaw.id.toString();
+                    }
+
+                    // Try to resolve question metadata from the form prop if available
+                    if (!qObj && this.responses && Array.isArray(this.responses.questions)) {
+                        qObj = this.responses.questions.find(qq => qq && (qq._id && qq._id.toString && qq._id.toString() === qId) || (qq.id && qq.id.toString && qq.id.toString() === qId));
+                    }
+
+                    // If still no qId but qObj found, set qId
+                    if (!qId && qObj && qObj._id) qId = qObj._id.toString();
+
+                    if (!qId) return;
+
+                    if (!map[qId]) {
+                        const title = (qObj && qObj.title) ? qObj.title : (qRaw && qRaw.title) ? qRaw.title : [{ key: 'en', value: 'Unknown question' }];
+                        const typeVal = (qObj && qObj.type) ? (qObj.type.type || qObj.type) : (qRaw && qRaw.type ? (qRaw.type.type || qRaw.type) : 'short');
+                        
+                        // Handle both standard options array and config.choices from your JSON
+                        let options = [];
+                        if (qObj && qObj.config && Array.isArray(qObj.config.choices)) options = qObj.config.choices;
+                        else if (qObj && Array.isArray(qObj.options)) options = qObj.options;
+
+                        map[qId] = {
+                            _id: qId,
+                            title,
+                            type: (typeVal || 'short').toString().toLowerCase(),
+                            responses: [],
+                            _rawChoices: {},
+                            options: options
+                        };
+                        order.push(qId);
+                    }
+
+                    const val = ans.response;
+                    map[qId].responses.push(val);
+
+                    if (this.isChoiceType(map[qId].type)) {
+                        const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
                         choices.forEach(c => {
-                            if (c) map[q._id]._rawChoices[c] = (map[q._id]._rawChoices[c] || 0) + 1;
+                            if (c !== null && c !== undefined) map[qId]._rawChoices[c] = (map[qId]._rawChoices[c] || 0) + 1;
                         });
                     }
                 });
@@ -353,26 +494,54 @@ export default {
                 const total = q.responses.length;
 
                 if (this.isChoiceType(q.type)) {
-                    q.optionCounts = Object.entries(q._rawChoices).map(([label, count], i) => ({
-                        label,
-                        count,
-                        pct: total > 0 ? Math.round((count / total) * 100) : 0,
-                        color: PALETTE[i % PALETTE.length]
-                    }));
+                    q.optionCounts = Object.entries(q._rawChoices).map(([respKey, count], i) => {
+                        let label = respKey;
+                        // Map key to option label if possible
+                        if (q.options && q.options.length > 0) {
+                            // Try finding by key string (from your JSON: { "key": "0", "lang": [...] })
+                            let opt = q.options.find(o => o && (o.key === respKey || (o._id && o._id.toString() === respKey) || (o.value === respKey)));
+                            
+                            // If not found by key, try by numeric index
+                            if (!opt && !isNaN(respKey) && q.options[Number(respKey)]) {
+                                opt = q.options[Number(respKey)];
+                            }
+
+                            if (opt) {
+                                // Extract title using multilingual lang array or label field
+                                label = (opt.lang && Array.isArray(opt.lang)) 
+                                    ? this.getTitle(opt.lang) 
+                                    : (opt.label ? this.getTitle(opt.label) : (opt.value || respKey));
+                            }
+                        }
+
+                        return {
+                            label,
+                            count,
+                            pct: total > 0 ? Math.round((count / total) * 100) : 0,
+                            color: PALETTE[i % PALETTE.length]
+                        };
+                    });
                 }
 
                 if (this.isRatingType(q.type)) {
-                    const counts = {};
-                    q.responses.forEach(r => { const n = Number(r); if (!isNaN(n)) counts[n] = (counts[n] || 0) + 1; });
-                    const maxCount = Math.max(1, ...Object.values(counts));
-                    const stars = Object.keys(counts).sort((a, b) => a - b);
-                    q.ratingBars = stars.map(s => ({
-                        label: `${s} ★`,
-                        value: counts[s],
-                        percentage: Math.round((counts[s] / maxCount) * 100)
-                    }));
-                    const topCount = Math.max(...Object.values(counts), 1);
-                    q.ratingYAxis = [topCount, Math.round(topCount * 0.75), Math.round(topCount * 0.50), Math.round(topCount * 0.25), 0];
+                    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+                    q.responses.forEach(r => { 
+                        const n = Math.round(Number(r)); 
+                        if (n >= 1 && n <= 5) counts[n] = (counts[n] || 0) + 1; 
+                    });
+
+                    q.chartData = {
+                        labels: ['1 ★', '2 ★', '3 ★', '4 ★', '5 ★'],
+                        datasets: [
+                            {
+                                label: 'Responses',
+                                backgroundColor: '#a32a29',
+                                data: [counts[1], counts[2], counts[3], counts[4], counts[5]],
+                                barPercentage: 0.6,
+                                categoryPercentage: 0.8
+                            }
+                        ]
+                    };
                 }
 
                 delete q._rawChoices;
@@ -473,31 +642,7 @@ export default {
     font-weight: 500;
 }
 
-/* Pagination styles */
-::v-deep .custom-pagination .page-item .page-link {
-    border: none !important;
-    background-color: transparent !important;
-    color: #475569 !important;
-    font-weight: 500;
-    padding: 8px 14px;
-    border-radius: 50%;
-    margin: 0 4px;
-}
-
-::v-deep .custom-pagination .page-item.active .page-link {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
-    font-weight: 600;
-}
-
-::v-deep .custom-pagination .page-item:not(.active) .page-link:hover {
-    background-color: #f8fafc !important;
-    color: #1e293b !important;
-}
-
-::v-deep .custom-pagination .page-item.disabled .page-link {
-    color: #94a3b8 !important;
-}
+/* Pagination styles are now handled by Util/Pagination.vue component */
 
 /* Donut Chart & Legend */
 .donut-chart {
@@ -536,91 +681,362 @@ export default {
     margin-right: 10px;
 }
 
-/* Rating Chart Styles */
-.y-axis-labels {
+/* Premium Dashboard CSS */
+.responses-container {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -0.02em;
+}
+
+.response-count-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    background: #f1f5f9;
+    color: #64748b;
+    border-radius: 50rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    margin-right: 10px;
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* View Toggle Pills */
+.toggle-pill-wrapper {
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 14px;
+    display: flex;
+    border: 1px solid #e2e8f0;
+}
+
+.toggle-pill {
+    padding: 8px 18px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+}
+
+.toggle-pill:hover:not(.active) {
+    background: rgba(0,0,0,0.03);
+    color: #1e293b;
+}
+
+.toggle-pill.active {
+    background: white;
+    color: #1e293b;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.divider-vertical {
+    width: 1px;
+    height: 24px;
+    background: #cbd5e1;
+}
+
+/* Export Button Modern */
+.btn-export-main {
+    background: white !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+    padding: 10px 20px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-export-main:hover {
+    background: #f8fafc !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
+}
+
+.dropdown-item-modern {
+    padding: 12px 20px !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+}
+
+/* Empty State Card */
+.empty-state-card {
+    border: 1px dashed #cbd5e1;
+    background: #f8fafc;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-end;
-    width: 45px;
-    padding-right: 12px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 200px;
+}
+
+/* Question Response Card Elite */
+.question-response-card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+    border: 1px solid rgba(241, 245, 249, 1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.question-response-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05), 0 10px 10px -5px rgba(0,0,0,0.02);
+}
+
+.card-inner {
+    border-top: 1px solid #f8fafc;
+}
+
+.border-bottom-soft {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.q-index-circle {
+    min-width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e293b;
+    font-weight: 800;
+    font-size: 1.1rem;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.8);
+}
+
+.q-title-display {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+}
+
+.q-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #f8fafc;
     color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.q-stat-pill {
+    background: #f1f5f9;
+    padding: 8px 16px;
+    border-radius: 12px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.q-stat-pill .count {
+    color: #1e293b;
+    font-weight: 800;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.q-stat-pill .label {
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Text List Clean Modern */
+.text-responses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.text-response-item {
+    display: flex;
+    padding: 14px 18px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+}
+
+.text-response-item:hover {
+    background: white;
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+    transform: translateX(4px);
+}
+
+.item-index {
+    color: #94a3b8;
+    font-weight: 700;
     font-size: 0.85rem;
+    min-width: 24px;
+}
+
+.item-text {
+    color: #1e293b;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* Custom Progress Visualization Elite */
+.choice-viz-item {
+    padding-left: 2px;
+}
+
+.choice-label-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.label-text {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1rem;
+}
+
+.label-pct {
+    background: #f1f5f9;
+    color: #1e293b;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.choice-count {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.custom-progress-container {
+    height: 10px;
+    background: #f1f5f9;
+    border-radius: 50rem;
+    overflow: hidden;
     position: relative;
-    top: -9px;
-    /* Align text with top of lines */
+    border: 1px solid #e2e8f0;
 }
 
-.chart-area {
-    border-left: 1px solid #94a3b8;
-    border-bottom: 1px solid #94a3b8;
+.custom-progress-fill {
+    height: 100%;
+    border-radius: 50rem;
     position: relative;
-    padding: 0 5%;
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.grid-line {
-    position: absolute;
-    width: 100%;
-    border-top: 1px dashed #e2e8f0;
-    left: 0;
-    z-index: 1;
-}
-
-.bars-container {
+.gloss-overlay {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-end;
-    padding: 0 5%;
-    z-index: 2;
+    right: 0;
+    height: 40%;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50rem;
 }
 
-.rating-bar-wrapper {
-    width: 40%;
-    height: 100%;
+.chart-box-modern {
+    padding-top: 20px;
+}
+
+/* Individual Table Card Elite */
+.table-card-premium {
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    border: 1px solid #f1f5f9;
+}
+
+/* Custom Pagination Modern Styles */
+.custom-pagination-modern {
+    gap: 5px;
+}
+
+::v-deep .custom-pagination-modern .page-item .page-link {
+    border: none !important;
+    background-color: #f1f5f9 !important;
+    border-radius: 10px !important;
+    color: #64748b !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    padding: 8px 14px !important;
+    transition: all 0.2s ease;
+    min-width: 40px;
     display: flex;
-    align-items: flex-end;
     justify-content: center;
 }
 
-.rating-bar {
-    width: 100%;
-    background-color: #a32a29;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+::v-deep .custom-pagination-modern .page-item.active .page-link {
+    background: #1e293b !important;
+    color: white !important;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
-.x-axis-labels {
-    color: #64748b;
-    font-size: 0.85rem;
-    margin-top: 5px;
+::v-deep .custom-pagination-modern .page-item:not(.active):hover .page-link {
+    background-color: #e2e8f0 !important;
+    color: #1e293b !important;
+    transform: translateY(-2px);
 }
 
-/* Individual View Styles */
-.pink-circle {
-    background-color: #ffe4e6;
-    color: #be123c !important;
+::v-deep .custom-pagination-modern .page-item.disabled .page-link {
+    opacity: 0.5;
+    background-color: #f8fafc !important;
 }
 
-::v-deep .custom-search .form-control {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.75rem;
-    height: 48px;
-    border-left: none;
-    box-shadow: none;
-}
-
-::v-deep .custom-search .input-group-text {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-right: none;
-    border-top-left-radius: 0.75rem;
-    border-bottom-left-radius: 0.75rem;
-    color: #94a3b8;
+@media (max-width: 768px) {
+    .view-toggle-group {
+        flex-direction: column;
+        width: 100%;
+        gap: 15px;
+    }
+    .toggle-pill-wrapper {
+        width: 100%;
+    }
+    .toggle-pill {
+        flex: 1;
+        justify-content: center;
+    }
+    .divider-vertical {
+        display: none;
+    }
 }
 </style>

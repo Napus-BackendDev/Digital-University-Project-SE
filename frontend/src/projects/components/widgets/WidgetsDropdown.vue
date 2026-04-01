@@ -10,7 +10,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalForms }}</h2>
-                    <div class="stat-label">Total Forms</div>
+                    <div class="stat-label">{{ $t('analytics.widgets.totalForms') }}</div>
                 </div>
             </div>
         </CCol>
@@ -25,12 +25,12 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalResponses }}</h2>
-                    <div class="stat-label">Total Responses</div>
+                    <div class="stat-label">{{ $t('analytics.widgets.totalResponses') }}</div>
                 </div>
             </div>
         </CCol>
 
-        <!-- Card 3: Active Forms -->
+        <!-- Card 3: Total Users -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
@@ -39,8 +39,8 @@
                     </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.activeForms }}</h2>
-                    <div class="stat-label">Active Forms</div>
+                    <h2 class="stat-value">{{ stats.totalUsers }}</h2>
+                    <div class="stat-label">{{ $t('analytics.widgets.totalUsers') }}</div>
                 </div>
             </div>
         </CCol>
@@ -55,7 +55,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.avgResponses }}</h2>
-                    <div class="stat-label">Avg Responses/Form</div>
+                    <div class="stat-label">{{ $t('analytics.widgets.avgResponses') }}</div>
                 </div>
             </div>
         </CCol>
@@ -69,23 +69,24 @@ export default {
     name: 'WidgetsDropdown',
     computed: {
         ...mapGetters('Forms', ['forms']),
+        ...mapGetters('User', ['users']),
 
         stats() {
             if (!this.forms) return {
                 totalForms: 0,
                 totalResponses: 0,
-                activeForms: 0,
+                totalUsers: 0,
                 avgResponses: 0
             };
 
             const totalForms = this.forms.length;
             let totalResponses = 0;
-            let activeForms = 0;
+            let totalUsers = (this.users && Array.isArray(this.users)) ? this.users.length : 0;
 
             this.forms.forEach(form => {
                 // Count responses
                 if (form.responses) {
-                    totalResponses += form.responses.length;
+                    totalResponses += form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length;
                 }
 
                 // Count active forms
@@ -106,7 +107,9 @@ export default {
                     isActive = true;
                 }
 
-                if (isActive) activeForms++;
+                if (isActive) {
+                    // keep existing active count logic if needed
+                }
             });
 
             const avgResponses = totalForms > 0 ? (totalResponses / totalForms).toFixed(1) : 0;
@@ -114,7 +117,7 @@ export default {
             return {
                 totalForms,
                 totalResponses,
-                activeForms,
+                totalUsers,
                 avgResponses
             };
         }

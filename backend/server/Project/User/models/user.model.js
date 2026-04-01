@@ -8,7 +8,8 @@ var objSchema = new Schema({
     email: { type: String, default: null },
     password: { type: String, default: null },
     role: { type: Schema.Types.ObjectId, ref: 'Roles', default: "69aec1c73996270d703db3d7" },
-    // organization: { type: Schema.Types.ObjectId, ref: 'Organizations', require: true },
+    organization: { type: Schema.Types.ObjectId, ref: 'Organizations', default: null },
+    response: [{ type: Schema.Types.ObjectId, ref: 'Responses' }]
 
 }, { timestamps: true });
 

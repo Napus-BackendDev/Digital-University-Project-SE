@@ -1,28 +1,31 @@
 <template>
     <div class="flex-grow-1">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <ButtonBack />
-            <ButtonPreview />
-        </div>
-        <Tab :form="formData" @auto-save="triggerAutoSave" />
+        <Header :title="headerTitle" :description="headerDescription" :isSaving="isSaving" :isSaved="isSaved" />
+        <Container>
+            <Tab :form="formData" :activeTab.sync="activeTab" @auto-save="triggerAutoSave" />
+        </Container>
     </div>
 </template>
 
 <script>
-import ButtonBack from '../../components/Button/ButtonBack.vue'
-import ButtonPreview from '../../components/Button/ButtonPreview.vue'
+import { mapGetters } from 'vuex';
 import Tab from '../../components/Tabs/Tab.vue';
+import Header from '../../components/Util/Header.vue';
 
 export default {
     name: "CreateForm",
     components: {
-        ButtonBack,
-        ButtonPreview,
-        Tab
+        Tab,
+        Header
     },
     data() {
         return {
-            formData: {}
+            formData: {},
+            activeTab: 'question',
+            isNewDuplication: false,
+            isSaving: false,
+            isSaved: false,
+            saveTimer: null
         };
     },
     created() {
@@ -30,7 +33,19 @@ export default {
     },
     methods: {
         async onInit() {
+            // Check if we have duplicated data from the buffer
+            if (this.duplicateBuffer) {
+                console.log("[CreateForm] Initializing with duplicate buffer");
+                this.formData = JSON.parse(JSON.stringify(this.duplicateBuffer));
+                this.isNewDuplication = true;
+                // Clear the buffer after taking the data
+                this.$store.commit('Forms/setDuplicateBuffer', null);
+                return;
+            }
+
             const formId = this.$route.params._id;
+            if (!formId || formId === 'new') return;
+
             try {
                 this.formData = await this.$store.dispatch('Forms/getById', { _id: formId });
             } catch (error) {
@@ -38,14 +53,97 @@ export default {
             }
         },
         async triggerAutoSave() {
+            if (!this.formData || Object.keys(this.formData).length === 0) return;
+            this.isSaving = true;
+            this.isSaved = false;
+            
+            if (this.saveTimer) clearTimeout(this.saveTimer);
+
             try {
-                await this.$store.dispatch('Forms/update', this.formData);
+                if (this.isNewDuplication) {
+                    console.log("[CreateForm] Performing first-time save for duplication");
+                    
+                    // 1. Create the Form
+                    const formPayload = {
+                        title: this.formData.title,
+                        description: this.formData.description,
+                        settings: this.formData.settings,
+                        organization: this.formData.organization || [],
+                        status: this.formData.status || '69b0e3adf864c1088c19da36',
+                        creator: this.user?._id
+                    };
+                    const formRes = await this.$store.dispatch('Forms/create', formPayload);
+                    const newForm = formRes?.data?.data || formRes?.data || formRes;
+                    const newId = newForm?._id || newForm?.id;
+
+                    if (!newId) throw new Error("Failed to create new form");
+
+                    // 2. Create the Questions
+                    const questions = this.formData.questions || [];
+                    for (const q of questions) {
+                        const qPayload = {
+                            ...q,
+                            form: newId
+                        };
+                        // Remove temporary ID so DB can create a new one
+                        if (qPayload._id && String(qPayload._id).startsWith('tmp-')) {
+                            delete qPayload._id;
+                        }
+                        await this.$store.dispatch('Questions/create', qPayload);
+                    }
+
+                    // 3. Finalize and Redirect
+                    this.isNewDuplication = false;
+                    this.formData._id = newId;
+                    this.$router.replace({ name: 'EditorCreateForm', params: { _id: newId } });
+                    
+                    console.log("[CreateForm] Duplication finalized with ID:", newId);
+                } else {
+                    await this.$store.dispatch('Forms/update', this.formData);
+                }
             } catch (error) {
-                console.error("Error auto-saving form:", error);
+                console.error("Error saving form:", error);
+            } finally {
+                // Delay showing "Saved" slightly for better visual transition
+                setTimeout(() => {
+                    this.isSaving = false;
+                    this.isSaved = true;
+                    
+                    // Clear "Saved" message after 3 seconds
+                    this.saveTimer = setTimeout(() => {
+                        this.isSaved = false;
+                    }, 3000);
+                }, 500);
             }
         }
     },
     computed: {
+        ...mapGetters('User', ['user']),
+        ...mapGetters('Forms', ['duplicateBuffer']),
+        headerTitle() {
+            if (this.activeTab === 'question') return this.$t('editor.header.questionTitle');
+            if (this.activeTab === 'response') return this.$t('editor.header.responseTitle');
+            if (this.activeTab === 'setting') return this.$t('editor.header.settingTitle');
+            
+            // Default: show form title for 'question' tab
+            if (!this.formData || !this.formData.title) return this.$t('common.loading');
+            if (Array.isArray(this.formData.title)) {
+                return this.formData.title[0]?.value || this.$t('common.untitled');
+            }
+            return this.formData.title || this.$t('common.untitled');
+        },
+        headerDescription() {
+            if (this.activeTab === 'question') return this.$t('editor.header.questionDesc');
+            if (this.activeTab === 'response') return this.$t('editor.header.responseDesc');
+            if (this.activeTab === 'setting') return this.$t('editor.header.settingDesc');
+
+            // Default: show form description for 'question' tab
+            if (!this.formData || !this.formData.description) return "";
+            if (Array.isArray(this.formData.description)) {
+                return this.formData.description[0]?.value || "";
+            }
+            return this.formData.description || "";
+        }
     }
 }
 </script>

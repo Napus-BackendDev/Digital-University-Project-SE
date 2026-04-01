@@ -13,7 +13,7 @@ import OtpInput from "@bachdgvn/vue-otp-input";
 Vue.component("v-otp-input", OtpInput);
 
 Vue.use(CoreuiVuePro)
-Vue.prototype.$log = function() {}
+Vue.prototype.$log = function () { }
 
 import VueQRCodeComponent from 'vue-qrcode-component'
 Vue.component('qr-code', VueQRCodeComponent)
@@ -27,22 +27,24 @@ Vue.mixin(localeMixin)
 
 import GAuth from 'vue-google-oauth2'
 const gauthOption = {
-    clientId: process.env.VUE_APP_CLIENTID,
-    scope: process.env.VUE_APP_SCOPE,
-    prompt: process.env.VUE_APP_PROMPT
+  clientId: process.env.VUE_APP_CLIENTID,
+  scope: process.env.VUE_APP_SCOPE,
+  prompt: process.env.VUE_APP_PROMPT
 }
 Vue.use(GAuth, gauthOption)
-// debug: gauthOption removed from console output
 
 new Vue({
   el: '#app',
   router,
   store,
-  //CIcon component documentation: https://coreui.io/vue/docs/components/icon
   icons,
   i18n,
   template: '<App/>',
   components: {
     App
+  },
+  // Mock up
+  created() {
+    this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
   }
 })

@@ -9,15 +9,10 @@ router.get("/exp", function (req, res, next) {
     next();
 }, response.onQuerys);
 
-router.post("/getByFormId", function (req, res, next) {
-    req.body.apiId = 1;
-    next();
-}, response.onGetByFormId);
-
 router.post("/get", function (req, res, next) {
     req.body.apiId = 2;
     next();
-}, response.onGetById);
+}, response.onQuery);
 
 router.post("", function (req, res, next) {
     req.body.apiId = 3;
@@ -33,15 +28,5 @@ router.delete("", function (req, res, next) {
     req.body.apiId = 5;
     next();
 }, response.onDelete);
-
-router.get("/download/:form_id/response/:_id", function (req, res, next) {
-    req.body.apiId = 7;
-    next();
-}, response.downloadResponseJSON);
-
-router.get("/download/:form_id", function (req, res, next) {
-    req.body.apiId = 8;
-    next();
-}, response.downloadFormJSON);
 
 module.exports = router;

@@ -1,10 +1,13 @@
 <template>
-    <div class="chart-wrapper-container">
-        <div class="header mb-4">
+    <div class="chart-wrapper-container premium-card shadow-sm">
+        <div class="header mb-4 pt-1">
             <div class="d-flex align-items-center mb-1">
-                <h4 class="m-0 font-weight-bold">Responses Over Time</h4>
+                <h4 class="m-0 font-weight-bold text-dark-blue">{{ $t('analytics.responsesOverTime') }}</h4>
+                <div class="ml-auto">
+                    <span class="badge badge-soft-maroon px-3 py-2">{{ $t('analytics.sevenDaysView') }}</span>
+                </div>
             </div>
-            <div class="text-muted small">Daily responses over the last week</div>
+            <p class="text-muted-modern small mb-0">{{ $t('analytics.responsesOverTimeDesc') }}</p>
         </div>
 
         <div class="chart-container">
@@ -17,10 +20,12 @@
 import { CChartLine } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
 import moment from 'moment'
+import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'AdminLineCharts',
     components: { CChartLine },
+    mixins: [localeMixin],
     computed: {
         ...mapGetters('Forms', ['forms']),
 
@@ -30,6 +35,7 @@ export default {
             const dataMap = {};
 
             for (let i = 6; i >= 0; i--) {
+                moment.locale(this.$i18n.locale);
                 const dateKey = moment().subtract(i, 'days').format('YYYY-MM-DD');
                 const displayKey = moment().subtract(i, 'days').format('DD MMM');
                 labels.push(displayKey);
@@ -38,11 +44,10 @@ export default {
 
             let totalResponses = 0;
             this.forms.forEach(form => {
-                if (form.responses && form.responses.length) {
-                    totalResponses += form.responses.length;
-
-                    // If backend ever populates `createdAt` inside form.responses array objects:
-                    form.responses.forEach(res => {
+                const submittedResponses = (form.responses || []).filter(r => r && (r.submit === true || r.submit === 'true'));
+                if (submittedResponses.length) {
+                    totalResponses += submittedResponses.length;
+                    submittedResponses.forEach(res => {
                         if (res && res.createdAt) {
                             const dKey = moment(res.createdAt).format('YYYY-MM-DD');
                             if (dataMap[dKey] !== undefined) {
@@ -53,21 +58,18 @@ export default {
                 }
             });
 
-            // If the responses array are just ObjectIds (strings) without createdAt, 
-            // the above won't increment. We will fallback to a simulated distribution 
-            // just to ensure the chart is visible for demo purposes.
+            // simulated distribution if no data exists
             const dataCounts = Object.values(dataMap);
             const sumOfCounts = dataCounts.reduce((a, b) => a + b, 0);
 
             if (sumOfCounts === 0 && totalResponses > 0) {
-                // Mock distribution: Distribute totalResponses randomly across the 7 days
                 let remaining = totalResponses;
                 for (let i = 0; i < 6; i++) {
-                    const chunk = Math.floor(Math.random() * (remaining / 2));
+                    const chunk = Math.floor(Math.random() * (remaining / 2.5));
                     dataCounts[i] = chunk;
                     remaining -= chunk;
                 }
-                dataCounts[6] = remaining; // Put the rest in today
+                dataCounts[6] = remaining;
             }
 
             return { labels, data: dataCounts };
@@ -80,34 +82,54 @@ export default {
         defaultDatasets() {
             return [
                 {
-                    label: 'Responses',
-                    backgroundColor: 'rgba(229, 83, 83, 0.1)', // Lighter red fill
-                    borderColor: '#e55353', // Danger red tone line
-                    pointBackgroundColor: '#e55353', // Solid red points like screenshot
-                    pointBorderColor: '#e55353',     // Solid red point border
-                    pointHoverBackgroundColor: '#e55353',
+                    label: this.$t('table.responses'),
+                    backgroundColor: 'rgba(155, 27, 48, 0.08)', // Premium Soft Maroon
+                    borderColor: '#9B1B30', // Theme Maroon
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#9B1B30',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: '#9B1B30',
                     pointHoverBorderColor: '#fff',
-                    borderWidth: 2,
-                    fill: true,
+                    pointHoverBorderWidth: 3,
+                    borderWidth: 3,
+                    fill: 'start',
+                    tension: 0.4,
                     data: this.chartData.data
                 }
             ]
         },
 
         defaultOptions() {
-            const maxVal = Math.max(...this.chartData.data, 5);
+            const maxVal = Math.max(...this.chartData.data, 10);
             return {
                 maintainAspectRatio: false,
+                responsive: true,
+                layout: {
+                    padding: {
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: 0
+                    }
+                },
                 legend: {
                     display: false
                 },
                 scales: {
                     xAxes: [{
+                        offset: false,
                         gridLines: {
-                            display: false
+                            display: false,
+                            drawBorder: false
                         },
                         ticks: {
-                            fontColor: '#718096'
+                            fontColor: '#94a3b8',
+                            fontSize: 10,
+                            padding: 4, // Tighter padding for bottom fit
+                            maxRotation: 0,
+                            autoSkip: true
                         }
                     }],
                     yAxes: [{
@@ -115,35 +137,38 @@ export default {
                             beginAtZero: true,
                             maxTicksLimit: 6,
                             stepSize: Math.ceil(maxVal / 5),
-                            fontColor: '#718096'
+                            fontColor: '#94a3b8',
+                            fontSize: 11,
+                            padding: 10,
+                            display: true
                         },
                         gridLines: {
                             display: true,
                             color: '#f1f5f9',
-                            zeroLineColor: '#e2e8f0'
+                            drawBorder: false,
+                            zeroLineColor: 'transparent',
+                            offsetGridLines: false
                         }
                     }]
                 },
-                elements: {
-                    line: {
-                        tension: 0.4
-                    },
-                    point: {
-                        radius: 3,
-                        hitRadius: 10,
-                        hoverRadius: 5
-                    }
-                },
                 tooltips: {
-                    backgroundColor: '#fff',
-                    titleFontColor: '#1e293b',
-                    bodyFontColor: '#475569',
-                    borderColor: '#e2e8f0',
-                    borderWidth: 1,
-                    caretSize: 6,
-                    cornerRadius: 6,
-                    xPadding: 12,
-                    yPadding: 12
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: '#1e293b',
+                    titleFontColor: '#fff',
+                    titleFontSize: 13,
+                    titleFontStyle: 'bold',
+                    bodyFontColor: '#e2e8f0',
+                    bodyFontSize: 12,
+                    borderColor: 'transparent',
+                    borderWidth: 0,
+                    xPadding: 16,
+                    yPadding: 12,
+                    displayColors: false,
+                    cornerRadius: 12,
+                    caretSize: 8,
+                    bodySpacing: 4
                 }
             }
         }
@@ -154,25 +179,48 @@ export default {
 <style scoped>
 .chart-wrapper-container {
     background: white;
-    border-radius: 8px;
-    padding: 20px;
+    padding: 24px 0 0 0; /* Remove bottom padding completely for bleed effect */
     height: 100%;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Ensure anything bleeding is clipped by rounded corners */
+    border: 1px solid #e2e8f0;
+}
+
+.premium-card {
+    border-radius: 20px;
+}
+
+.header {
+    padding: 0 24px;
+    margin-bottom: 0.5rem; /* Further reduced to give more space to the chart */
+}
+
+.text-dark-blue {
+    color: #1e293b;
+    letter-spacing: -0.02em;
+}
+
+.text-muted-modern {
+    color: #64748b;
+    font-weight: 400;
+}
+
+.badge-soft-maroon {
+    background-color: #fff1f2;
+    color: #9B1B30;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .chart-container {
-    min-height: 250px;
     flex-grow: 1;
     position: relative;
     width: 100%;
-}
-
-.header h4 {
-    color: #2d3748;
-}
-
-.text-muted {
-    color: #718096 !important;
+    height: 100%; /* Ensure it fills the flex parent */
+    padding: 0; /* Remove horizontal padding entirely for actual full-width chart */
 }
 </style>

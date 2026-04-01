@@ -23,29 +23,35 @@ exports.onQuerys = async function (request, response) {
     }
 }
 
-exports.onGetByFormId = async function (request, response) {
+exports.onQuery = async function (request, response) {
     try {
-        let query = {};
-        query.form = request.body.form_id;
-        const doc = await responseService.onQuerys(query);
-        console.log(doc);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses by form ID", err.message);
-    }
-};
+        let query = request.body || {};
 
-exports.onGetById = async function (request, response) {
-    try {
-        let query = {};
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await responseService.onQuery(query);
-        if (!doc) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found");
-        }
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        const systemFields = ['apiId', 'token', 'user'];
+        const cleanQuery = {};
+        Object.keys(query).forEach(key => {
+            if (!systemFields.includes(key) && query[key] !== undefined) {
+                if (key === '_id' || key === 'form' || key === 'responder' || key === 'question') {
+                    try {
+                        if (mongo.ObjectId.isValid(query[key])) {
+                            cleanQuery[key] = new mongo.ObjectId(query[key]);
+                        } else {
+                            cleanQuery[key] = query[key];
+                        }
+                    } catch (e) {
+                        cleanQuery[key] = query[key];
+                    }
+                } else {
+                    cleanQuery[key] = query[key];
+                }
+            }
+        });
+
+        const doc = await responseService.onQuery(cleanQuery);
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc || null);
     } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch response by ID", err.message);
+        console.error("Query response error:", err);
+        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch response", err.message);
     }
 };
 
@@ -118,7 +124,7 @@ exports.onUpdate = async function (request, response) {
     try {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
-        
+
         // Fetch existing response to merge answers instead of replacing
         const existingResponse = await responseService.onQuery(query);
         if (!existingResponse) {
@@ -192,6 +198,41 @@ exports.onUpdate = async function (request, response) {
         if (!doc) {
             return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found after update");
         }
+
+        // Email Notification Logic
+        if (request.body.submit === true && !existingResponse.submit) {
+            try {
+                // Fetch to get form settings and user email
+                const formCtrl = require('../../Form/controller/form');
+                const userCtrl = require('../../User/controller/user');
+                const mailer = require('../../../../helpers/mailer');
+
+                const formInfo = await formCtrl.onQuery({ _id: doc.form });
+                if (formInfo && formInfo.settings && formInfo.settings.emailNotifications) {
+                    const responderInfo = await userCtrl.onQuery({ _id: doc.responder });
+                    if (responderInfo && responderInfo.email) {
+                        const titleObj = formInfo.title && formInfo.title.find(t => t.value) || { value: 'Form' };
+                        const subject = `Confirmation: ${titleObj.value} Submitted`;
+                        let textMessage = formInfo.settings.emailMessage || formInfo.settings.confirmMessage || "Thank you for completing this survey. Your response has been recorded.";
+
+                        // Process template variables e.g. {{ User.name }}, {{ User.email }}
+                        if (textMessage.includes('{{')) {
+                            textMessage = textMessage.replace(/\{\{\s*User\.(\w+)\s*\}\}/gi, (match, field) => {
+                                const key = field.toLowerCase();
+                                if (key === 'name') return responderInfo.name || match;
+                                if (key === 'email') return responderInfo.email || match;
+                                return responderInfo[field] !== undefined ? responderInfo[field] : match;
+                            });
+                        }
+
+                        await mailer.sendMail(responderInfo.email, subject, textMessage);
+                    }
+                }
+            } catch (mailErr) {
+                console.error("Error dispatching email:", mailErr);
+            }
+        }
+
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
     } catch (err) {
         console.error("Update response error:", err);
@@ -208,122 +249,5 @@ exports.onDelete = async function (request, response) {
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
     } catch (err) {
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
-    }
-};
-
-exports.generateExportLinkByFormAndUser = async function (request, response) {
-    try {
-        const { formId, userId } = request.body;
-        if (!formId || !mongo.ObjectId.isValid(formId)) {
-            return ResMessage.sendResponse(response, request.body.apiId, 40000, "Invalid form ID");
-        }
-        //Need to uncomment for production
-        if (userId && !mongo.ObjectId.isValid(userId)) {
-            return ResMessage.sendResponse(response, request.body.apiId, 40000, "Invalid user ID");
-        }
-        let exportLink = `${request.protocol}://${request.get('host')}/api/v1/response/export/${formId}/user/${userId}`;
-        return ResMessage.sendResponse(response, request.body.apiId, 20000, {
-            downloadLink: exportLink,
-            formId: formId,
-            userId: userId
-        });
-    } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
-    }
-};
-
-exports.downloadResponseJSON = async function (request, response) {
-    try {
-        const { form_id, _id } = request.params;
-
-        if (!form_id || !mongo.ObjectId.isValid(form_id)) {
-            return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid form ID");
-        }
-        if (_id && !mongo.ObjectId.isValid(_id)) {
-            return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid response ID");
-        }
-
-        const query = { form: form_id };
-        if (_id) {
-            query._id = _id;
-        }
-
-        const responses = await responseModel.find(query)
-            .populate('form', 'title')
-            .populate('answers.question', 'title type config order');
-
-        if (!responses || responses.length === 0) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "No responses found for the specified criteria");
-        }
-
-        const formattedData = {
-            formId: form_id,
-            formTitle: responses[0]?.form?.title || [],
-            totalResponses: responses.length,
-            exportedAt: new Date(),
-            responses: responses.map(resp => ({
-                responseId: resp._id,
-                responderId: resp.responder,
-                submittedAt: resp.getTimestamp(),
-                answers: resp.answers.map(answer => ({
-                    question: {
-                        id: answer.question?._id,
-                        title: answer.question?.title,
-                        type: answer.question?.type,
-                        order: answer.question?.order
-                    },
-                    response: answer.response
-                }))
-            }))
-        };
-
-        response.setHeader('Content-Type', 'application/json');
-        response.setHeader('Content-Disposition', `attachment; filename="responses_${form_id}_${_id || 'all'}_${Date.now()}.json"`);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), formattedData);
-    } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 50000, "Failed to download responses", err.message);
-    }
-}
-exports.downloadFormJSON = async function (request, response) {
-    try {
-        const { form_id } = request.params;
-
-        if (!form_id || !mongo.ObjectId.isValid(form_id)) {
-            return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid form ID");
-        }
-
-        const responses = await responseModel.find({ form: form_id })
-            .populate('form', 'title')
-            .populate('answers.question', 'title type config order');
-
-        if (!responses || responses.length === 0) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "No responses found for the specified form ID");
-        }
-
-        const formattedData = {
-            formId: form_id,
-            formTitle: responses[0]?.form?.title || [],
-            totalResponses: responses.length,
-            exportedAt: new Date(),
-            responses: responses.map(resp => ({
-                responseId: resp._id,
-                responderId: resp.responder || null,
-                submittedAt: resp.createdAt,
-                answers: resp.answers.map(answer => ({
-                    question: {
-                        id: answer.question?._id,
-                        title: answer.question?.title,
-                        type: answer.question?.type,
-                        order: answer.question?.order
-                    },
-                    response: answer.response
-                }))
-            }))
-        };
-        response.setHeader('Content-Type', 'application/json');
-        response.setHeader('Content-Disposition', `attachment; filename="responses_${form_id}_${Date.now()}.json"`);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), formattedData);
-    } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 50000, "Failed to download responses", err.message);
     }
 };

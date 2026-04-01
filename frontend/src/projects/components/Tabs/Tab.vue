@@ -1,60 +1,94 @@
 <template>
     <CRow>
-        <CCol col="12" class="mb-4">
-            <CTabs variant="pills" :active-tab="0" class="custom-tabs-wrapper">
-                <CTab>
-                    <template slot="title">
-                        <span class="d-flex align-items-center">
-                            <CIcon name="cil-description" class="mr-2" />
-                            Questions
-                        </span>
-                    </template>
-                    <TabQuestion :form="form" @auto-save="triggerAutoSave" />
-                </CTab>
-                <CTab>
-                    <template slot="title">
-                        <span class="d-flex align-items-center">
-                            <CIcon name="cil-chart-pie" class="mr-2" />
-                            Responses
-                        </span>
-                    </template>
-                    <TabResponses :responses="form" @auto-save="triggerAutoSave" />
-                </CTab>
-                <CTab>
-                    <template slot="title">
-                        <span class="d-flex align-items-center">
-                            <CIcon name="cil-settings" class="mr-2" />
-                            Settings
-                        </span>
-                    </template>
-                    <TabSetting :settings="form" @auto-save="triggerAutoSave" />
-                </CTab>
-            </CTabs>
+        <CCol md="9" class="mb-4">
+            <TabQuestion v-if="activeTab === 'question'" ref="tabQuestion" :form="form"
+                @auto-save="triggerAutoSave" />
+            <TabResponses v-else-if="activeTab === 'response'" ref="tabResponses" :responses="form"
+                @auto-save="triggerAutoSave" />
+            <TabSetting v-else-if="activeTab === 'setting'" ref="tabSetting" :settings="form"
+                @auto-save="triggerAutoSave" />
         </CCol>
+
+        <Toolbar 
+            :activeTab="activeTab" 
+            :form="form"
+            @update:activeTab="(val) => $emit('update:activeTab', val)"
+            :questionTypes="questionTypes"
+            @add-question="addAndOpen"
+            @open-image="openImageInQuestionTab"
+        />
     </CRow>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import TabQuestion from './TabQuestion.vue';
 import TabResponses from './TabResponses.vue';
 import TabSetting from './TabSetting.vue';
+import Toolbar from './Toolbar.vue';
 
 export default {
     name: 'Tab',
     components: {
         TabQuestion,
         TabResponses,
-        TabSetting
+        TabSetting,
+        Toolbar
     },
     props: {
         form: {
             type: Object,
             default: () => ({})
+        },
+        activeTab: {
+            type: String,
+            default: 'question'
+        }
+    },
+    data() {
+        return {
+        };
+    },
+    created() {
+        this.$store.dispatch('Setting/question_type/get');
+    },
+    computed: {
+        ...mapGetters('Setting/question_type', { question_type: 'item' }),
+        questionTypes() {
+            if (!this.question_type || !Array.isArray(this.question_type)) return [];
+            return JSON.parse(JSON.stringify(this.question_type)).map(type => ({
+                _id: type._id,
+                type: type.type,
+            }));
         }
     },
     methods: {
         triggerAutoSave() {
             this.$emit('auto-save');
+        },
+        async addAndOpen(typeId) {
+            this.$emit('update:activeTab', 'question');
+            await this.$nextTick();
+            if (this.$refs.tabQuestion && typeof this.$refs.tabQuestion.addQuestion === 'function') {
+                try {
+                    const created = await this.$refs.tabQuestion.addQuestion(typeId);
+                    if (created && created._id && typeof this.$refs.tabQuestion.scrollToQuestion === 'function') {
+                        this.$refs.tabQuestion.scrollToQuestion(created._id);
+                    }
+                } catch (err) {
+                    console.error('addAndOpen failed', err);
+                }
+            }
+        },
+        openImageInQuestionTab() {
+            this.$emit('update:activeTab', 'question');
+            this.$nextTick(() => {
+                if (this.$refs.tabQuestion) {
+                    this.$refs.tabQuestion.modalImageIndex = null;
+                    this.$refs.tabQuestion.modalFiles = '';
+                    this.$refs.tabQuestion.showImageModal = true;
+                }
+            });
         }
     }
 }

@@ -1,8 +1,8 @@
 <template>
-    <CButton color="light" class="d-flex align-items-center px-4 py-2 font-weight-bold btn-preview"
+    <CButton size="sm" color="light" class="btn-preview"
         style="border-radius: 0.5rem;" @click="goToPreview">
-        <CIcon name="cil-media-play" class="mr-2 text-dark" />
-        <span class="text-dark">Preview</span>
+        <CIcon name="cil-magnifying-glass" class="mr-2 text-primary" />
+        <span class="text-primary preview-text">{{ $t('button.preview') }}</span>
     </CButton>
 </template>
 
@@ -21,13 +21,22 @@ export default {
 
 <style scoped>
 .btn-preview {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    background-color: #ffffff;
+    border: 1px solid #e6eef6;
+    transition: all 0.12s ease;
 }
 
 .btn-preview:hover {
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
     border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.preview-text {
+    font-size: 0.95rem;
+    font-weight: 600;
 }
 </style>

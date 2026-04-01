@@ -1,14 +1,27 @@
 <template>
-  <router-view></router-view>
+    <router-view></router-view>
 </template>
 
 <script>
 export default {
-  name: 'App'
+    name: "App",
+    async created() {
+        await this.initGlobalData();
+    },
+    methods: {
+        async initGlobalData() {
+            try {
+                await this.$store.dispatch("Organizations/getAll");
+
+                console.log("Global Application Data Loaded Successfully");
+            } catch (err) {
+                console.error("Critical error during application initialization:", err);
+            }
+        }
+    }
 }
 </script>
 
 <style lang="scss">
-  // Import Main styles for this application
-  @import 'assets/scss/style';
+@import 'assets/scss/style';
 </style>
