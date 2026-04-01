@@ -291,7 +291,29 @@ export default {
 
                 // 2. Check for "Limit to One Response" and "Collect Email" requirements
                 const settings = this.form.settings || {};
-                let currentResponder = this.user?._id || this.responderId;
+                const currentUser = this.user || {};
+                const isAdmin = currentUser.role === 'Admin' || currentUser.role === 'SuperAdmin';
+                let currentResponder = currentUser._id || this.responderId;
+
+                // 2.1 Personal Access Check (Specified Users Only)
+                if (settings.allowedUser && Array.isArray(settings.allowedUser) && settings.allowedUser.length > 0 && !this.isPreviewMode && !isAdmin) {
+                    if (!currentResponder) {
+                        this.error = this.$t('form.loginRequiredPersonal');
+                        this.loading = false;
+                        return;
+                    }
+                    
+                    const isAllowed = settings.allowedUser.some(u => {
+                        const allowedId = String(typeof u === 'object' ? (u._id || u.value) : u);
+                        return allowedId === String(currentResponder);
+                    });
+
+                    if (!isAllowed) {
+                        this.error = this.$t('form.accessDeniedPersonal');
+                        this.loading = false;
+                        return;
+                    }
+                }
 
                 // If collectEmail is true and user is not logged in, we stay in a "Login Required" state
                 if (settings.collectEmail && !currentResponder && !this.isPreviewMode) {

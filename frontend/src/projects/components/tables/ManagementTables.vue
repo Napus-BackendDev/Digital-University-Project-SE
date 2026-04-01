@@ -64,7 +64,8 @@
                 <td class="align-middle">
                     <div v-if="!item.isEmpty" class="access-stack">
                         <span v-for="(acc, i) in (Array.isArray(item.access) ? item.access : [item.access])" :key="i"
-                            class="visibility-badge" :class="getVisibilityClass(acc)">
+                            class="visibility-badge" :class="getVisibilityClass(acc)"
+                            v-c-tooltip="acc.toLowerCase().includes('personal') ? item.allowedUserList : null">
                             {{ $te('accessLabel.' + acc.toLowerCase()) ? $t('accessLabel.' + acc.toLowerCase()) : acc }}
                         </span>
                     </div>
@@ -165,6 +166,9 @@ export default {
             deleteItem: null,
         }
     },
+    async created() {
+        this.$store.dispatch('User/getAll');
+    },
     computed: {
         fields() {
             return [
@@ -179,7 +183,7 @@ export default {
             ]
         },
         ...mapGetters('Forms', ['forms']),
-        ...mapGetters('User', ['user']),
+        ...mapGetters('User', ['user', 'users']),
         ...mapGetters('dialog', ['isCode']),
 
         totalPages() {
@@ -336,22 +340,27 @@ export default {
                     return null;
                 }).filter(Boolean);
 
-                const hasPersonalAccess = f.settings && Array.isArray(f.settings.allowedEmails) && f.settings.allowedEmails.length > 0;
-                const personalLabel = hasPersonalAccess ? `Personal (${f.settings.allowedEmails.length})` : null;
+                const hasPersonalAccess = f.settings && Array.isArray(f.settings.allowedUser) && f.settings.allowedUser.length > 0;
+                const personalLabel = hasPersonalAccess ? `Personal (${f.settings.allowedUser.length})` : null;
+
+                // Tooltip logic
+                let allowedUserList = '';
+                if (hasPersonalAccess) {
+                    allowedUserList = f.settings.allowedUser.map(u => {
+                        if (typeof u === 'object') return u.name || u.fullname || u.email || 'User';
+                        return this.getUserName(u);
+                    }).join(', ');
+                }
 
                 if (orgNames.includes('General') || orgNames.includes('ทั่วไป')) {
                     access = ['Public'];
-                    if (personalLabel) access.push(personalLabel);
                 } else if (orgNames.length > 0) {
-                    access = orgNames.map(name => `Organization: ${name}`);
-                    if (personalLabel) access.push(personalLabel);
+                    access = orgNames;
                 } else {
-                    if (personalLabel) {
-                        access = [personalLabel];
-                    } else {
-                        access = ['Private'];
-                    }
+                    access = ['Private'];
                 }
+
+                if (personalLabel) access.push(personalLabel);
 
                 // Responses array
                 const responses = Array.isArray(f.responses) ? f.responses : [];
@@ -370,6 +379,7 @@ export default {
                     status,
                     responses,
                     collaborators,
+                    allowedUserList,
                     canEdit,
                     isEmpty: false,
                     _raw: f
@@ -460,14 +470,20 @@ export default {
             if (s === 'closed') return 'status-closed';
             return 'status-pending';
         },
-        getVisibilityClass(visibility) {
-            if (!visibility) return 'visi-default';
-            const v = String(visibility).toLowerCase();
-            if (v.includes('public') || v.includes('สาธารณะ') || v === 'general') return 'visi-public';
-            if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
+        getVisibilityClass(acc) {
+            if (!acc) return 'visi-private';
+            const v = acc.toLowerCase();
+            if (v.includes('public')) return 'visi-public';
+            if (v.includes('private')) return 'visi-private';
             if (v.includes('personal')) return 'visi-personal';
-            // Default class for organizations
             return 'visi-org';
+        },
+        getUserName(userRef) {
+            if (!userRef) return 'Unknown';
+            if (typeof userRef === 'object' && userRef.email) return userRef.name || userRef.email;
+            if (!this.users) return userRef;
+            const u = this.users.find(x => String(x._id) === String(userRef));
+            return u ? (u.name || u.email) : userRef;
         },
         goToEditForm(item) {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });

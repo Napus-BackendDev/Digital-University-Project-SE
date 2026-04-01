@@ -16,6 +16,7 @@ const defaultPopulate = [
             { path: 'type', select: 'title' }
         ]
     },
+    { path: 'settings.allowedUser', select: 'name email' }
 ];
 
 module.exports = createBaseService(objSchema, defaultPopulate);

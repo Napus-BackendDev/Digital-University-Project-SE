@@ -106,6 +106,8 @@ const en = {
         loginRequired: "You must be logged in to submit this form.",
         alreadySubmitted: "You have already submitted this form.",
         accessDenied: "Access denied. This form is restricted to specific organizations.",
+        accessDeniedPersonal: "Access denied. This form is restricted to specific users.",
+        loginRequiredPersonal: "This form is restricted to specific users. Please sign in to verify your access.",
         signInWithGoogle: "Sign in with Google",
         collectEmail: "Collect email addresses",
         limitResponse: "Limit to one response",
@@ -208,11 +210,11 @@ const en = {
                 name: "Organization Name",
                 selectPlaceholder: "Select organization",
                 generalHint: "If you choose General, every department will be able to do the form.",
-                allowedEmails: "Allowed Emails",
-                noEmails: "No specific emails added.",
-                specifyUser: "Specify User Can Response",
-                emailPlaceholder: "Enter user's email address to allow access",
-                userHint: "If you enter User information directly, only that User will be able to do the form. Others will not see it. You can choose a User outside the Organization."
+                allowedUsers: "Authorized Users",
+                noUsers: "No authorized users selected.",
+                specifyUser: "Specify User Access",
+                userPlaceholder: "Select or search for users to allow access",
+                userHint: "If you specify individual users, only those users will be able to access the form. This is useful for sensitive or personal questionnaires."
             },
             response: {
                 title: "Response Settings",
