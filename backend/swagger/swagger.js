@@ -11,6 +11,13 @@ module.exports = function (app) {
 
     const mergeDocs = (base, extra) => {
         base.paths = { ...(base.paths || {}), ...(extra.paths || {}) };
+        
+        // Merge schemas
+        if (extra.components && extra.components.schemas) {
+            base.components = base.components || { schemas: {} };
+            base.components.schemas = { ...base.components.schemas, ...extra.components.schemas };
+        }
+
         const baseTags = base.tags || [];
         const extraTags = extra.tags || [];
         const mergedTags = [...baseTags, ...extraTags].reduce((acc, tag) => {

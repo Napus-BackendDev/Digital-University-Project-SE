@@ -1,4 +1,5 @@
 const request = require('supertest');
+const path = require('path');
 
 jest.mock('../helpers/initialize', () => ({
   init: (cb) => cb(true)
@@ -11,7 +12,7 @@ jest.mock('../middleware/middlewares', () => (app) => {
 });
 
 jest.mock('../server/Project/Settings/service/message', () => ({
-  sendResponse: (res, apiId, code, data) => res.status(200).json({
+  sendResponse: (res, apiId, code, data) => res.status(code === 40000 || code === 40400 ? 400 : 200).json({
     apiId,
     code,
     data
@@ -31,6 +32,16 @@ jest.mock('../server/Project/Questions/controller/questions', () => ({
   onDelete: jest.fn().mockResolvedValue({ deletedCount: 1 })
 }));
 
+jest.mock('../middleware/upload', () => ({
+    single: () => (req, res, next) => {
+        if (req.file) {
+            req.file.path = 'public/uploads/test-image.png';
+        }
+        next();
+    },
+    any: () => (req, res, next) => next()
+}));
+
 describe('Question API', () => {
   let app;
   const questionId = '64e1f9f32a6d1c0013a1b111';
@@ -40,25 +51,25 @@ describe('Question API', () => {
     app = createApp();
   });
 
-  it('GET /api/v1/question/id returns code 20011', async () => {
+  it('GET /api/v1/question/exp returns code 20012', async () => {
     const res = await request(app)
-      .get('/api/v1/question/id')
-      .query({ _id: questionId });
-
-    expect(res.status).toBe(200);
-    expect(res.body.apiId).toBe(11);
-    expect(res.body.code).toBe(20011);
-    expect(res.body.data._id).toBe('q1');
-  });
-
-  it('GET /api/v1/question returns code 20012', async () => {
-    const res = await request(app)
-      .get('/api/v1/question');
+      .get('/api/v1/question/exp');
 
     expect(res.status).toBe(200);
     expect(res.body.apiId).toBe(12);
     expect(res.body.code).toBe(20012);
     expect(Array.isArray(res.body.data)).toBe(true);
+  });
+
+  it('POST /api/v1/question/get returns code 20011', async () => {
+    const res = await request(app)
+      .post('/api/v1/question/get')
+      .send({ _id: questionId });
+
+    expect(res.status).toBe(200);
+    expect(res.body.apiId).toBe(11);
+    expect(res.body.code).toBe(20011);
+    expect(res.body.data._id).toBe('q1');
   });
 
   it('POST /api/v1/question returns code 20013', async () => {

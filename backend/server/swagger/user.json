@@ -1,85 +1,106 @@
 {
   "tags": [
-    {
-      "name": "Users",
-      "description": "API for Managing System Users"
-    },
-    {
-      "name": "Roles",
-      "description": "API for Managing User Roles"
-    }
+    { "name": "Users", "description": "API for Managing System Users" },
+    { "name": "Roles", "description": "API for Managing User Roles" }
   ],
   "paths": {
-    "/api/v1/user/exp": {
+    "/user/exp": {
       "get": {
         "tags": ["Users"],
-        "summary": "Get all users",
-        "responses": { "200": { "description": "Success" } }
+        "summary": "Get all users (apiId: 101)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "type": "object" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "/api/v1/user/get": {
+    "/user/get": {
       "post": {
         "tags": ["Users"],
-        "summary": "Get user by ID",
+        "summary": "Get user by ID (apiId: 102)",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": { "_id": { "type": "string" } }
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 102 },
+                  "_id": { "type": "string" }
+                }
               }
             }
           }
         },
-        "responses": { "200": { "description": "Success" } }
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "object" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "/api/v1/user": {
+    "/user": {
       "post": {
         "tags": ["Users"],
-        "summary": "Create user",
-        "responses": { "201": { "description": "Created" } }
+        "summary": "Create user (apiId: 103)",
+        "responses": {
+          "200": { "description": "Success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponse" } } } }
+        }
       },
       "put": {
         "tags": ["Users"],
-        "summary": "Update user",
-        "responses": { "200": { "description": "Updated" } }
+        "summary": "Update user (apiId: 104)",
+        "responses": {
+          "200": { "description": "Success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponse" } } } }
+        }
       },
       "delete": {
         "tags": ["Users"],
-        "summary": "Delete user",
-        "responses": { "200": { "description": "Deleted" } }
+        "summary": "Delete user (apiId: 105)",
+        "responses": {
+          "200": { "description": "Success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponse" } } } }
+        }
       }
     },
-    "/api/v1/user/role/exp": {
+    "/user/role/exp": {
       "get": {
         "tags": ["Roles"],
-        "summary": "Get all roles",
-        "responses": { "200": { "description": "Success" } }
-      }
-    },
-    "/api/v1/user/role/get": {
-      "post": {
-        "tags": ["Roles"],
-        "summary": "Get role by ID",
-        "responses": { "200": { "description": "Success" } }
-      }
-    },
-    "/api/v1/user/role": {
-      "post": {
-        "tags": ["Roles"],
-        "summary": "Create role",
-        "responses": { "201": { "description": "Created" } }
-      },
-      "put": {
-        "tags": ["Roles"],
-        "summary": "Update role",
-        "responses": { "200": { "description": "Updated" } }
-      },
-      "delete": {
-        "tags": ["Roles"],
-        "summary": "Delete role",
-        "responses": { "200": { "description": "Deleted" } }
+        "summary": "Get all roles (apiId: 111)",
+        "responses": {
+          "200": { "description": "Success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponse" } } } }
+        }
       }
     }
   }

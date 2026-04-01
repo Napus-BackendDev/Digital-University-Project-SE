@@ -98,7 +98,7 @@ exports.onQuery = async function (request, response) {
 
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
   }
 };
 
@@ -162,7 +162,7 @@ exports.onQuerys = async function (request, response) {
 
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), docs);
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
   }
 };
 
@@ -171,29 +171,27 @@ exports.onCreate = async function (request, response) {
     const doc = await Form.onCreate(request.body);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
   }
 };
 
 exports.onUpdate = async function (request, response) {
   try {
-    let query = {};
-    query._id = new mongo.ObjectId(request.body._id);
+    const query = { _id: new mongo.ObjectId(request.body._id) };
 
     const doc = await Form.onUpdate(query, request.body);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
   }
 };
 
 exports.onDelete = async function (request, response) {
   try {
-    let query = {};
-    query._id = new mongo.ObjectId(request.body._id);
+    const query = { _id: new mongo.ObjectId(request.body._id) };
     const doc = await Form.onDelete(query);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
   }
 };

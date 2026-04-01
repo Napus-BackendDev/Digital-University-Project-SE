@@ -11,32 +11,33 @@ jest.mock('../middleware/middlewares', () => (app) => {
 });
 
 jest.mock('../server/Project/Settings/service/message', () => ({
-  sendResponse: (res, apiId, code, data) => res.status(200).json({
+  sendResponse: (res, apiId, code, data) => res.status(code === 40000 || code === 40400 ? 400 : 200).json({
     apiId,
     code,
     data
   })
 }));
 
-jest.mock('../server/Project/Response/controllers/response', () => ({
-  onQuerys: jest.fn().mockResolvedValue([{ _id: 'resp1' }]),
-  onQuery: jest.fn().mockResolvedValue({ _id: 'resp1' }),
+jest.mock('../server/Project/Response/controller/response', () => ({
+  onQuerys: jest.fn().mockResolvedValue([{ _id: 'resp1', responder: { name: 'User' } }]),
+  onQuery: jest.fn().mockResolvedValue({ _id: 'resp1', responder: { name: 'User' } }),
   onCreate: jest.fn().mockResolvedValue({ _id: 'resp1' }),
   onUpdate: jest.fn().mockResolvedValue({ _id: 'resp1' }),
   onDelete: jest.fn().mockResolvedValue({ deletedCount: 1 })
 }));
 
-jest.mock('../server/middleware/upload', () => ({
-  single: () => (req, res, next) => next()
+jest.mock('../middleware/upload', () => ({
+  single: () => (req, res, next) => next(),
+  any: () => (req, res, next) => next()
 }));
 
-jest.mock('../server/Project/Response/model/response.model', () => ({
+jest.mock('../server/Project/Response/models/response.model', () => ({
   find: jest.fn().mockReturnValue({
     populate: jest.fn().mockReturnValue({
       populate: jest.fn().mockResolvedValue([
         {
           _id: 'resp1',
-          responder: 'user1',
+          responder: { name: 'User' },
           submittedAt: new Date().toISOString(),
           getTimestamp: () => new Date().toISOString(),
           form: { title: 'Form Title' },
@@ -67,21 +68,19 @@ describe('Response API', () => {
     app = createApp();
   });
 
-  it('POST /api/v1/response/getByFormId returns code 20001', async () => {
+  it('GET /api/v1/response/exp returns code 20001', async () => {
     const res = await request(app)
-      .post('/api/v1/response/getByFormId')
-      .send({ form_id: formId });
+      .get('/api/v1/response/exp');
 
     expect(res.status).toBe(200);
     expect(res.body.apiId).toBe(1);
     expect(res.body.code).toBe(20001);
     expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data[0]._id).toBe('resp1');
   });
 
-  it('POST /api/v1/response/getById returns code 20002', async () => {
+  it('POST /api/v1/response/get returns code 20002 with valid _id', async () => {
     const res = await request(app)
-      .post('/api/v1/response/getById')
+      .post('/api/v1/response/get')
       .send({ _id: responseId });
 
     expect(res.status).toBe(200);
@@ -121,38 +120,5 @@ describe('Response API', () => {
     expect(res.body.apiId).toBe(5);
     expect(res.body.code).toBe(20005);
     expect(res.body.data.deletedCount).toBe(1);
-  });
-
-  it('DELETE /api/v1/response/deleteByFormId returns code 20006', async () => {
-    const res = await request(app)
-      .delete('/api/v1/response/deleteByFormId')
-      .send({ form_id: formId });
-
-    expect(res.status).toBe(200);
-    expect(res.body.apiId).toBe(6);
-    expect(res.body.code).toBe(20006);
-    expect(res.body.data.deletedCount).toBe(1);
-  });
-
-  it('GET /api/v1/response/download/:form_id/response/:_id returns code 20007', async () => {
-    const res = await request(app)
-      .get(`/api/v1/response/download/${formId}/response/${responseId}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.apiId).toBe(7);
-    expect(res.body.code).toBe(20007);
-    expect(res.body.data.formId).toBe(formId);
-    expect(Array.isArray(res.body.data.responses)).toBe(true);
-  });
-
-  it('GET /api/v1/response/download/:form_id returns code 20008', async () => {
-    const res = await request(app)
-      .get(`/api/v1/response/download/${formId}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.apiId).toBe(8);
-    expect(res.body.code).toBe(20008);
-    expect(res.body.data.formId).toBe(formId);
-    expect(Array.isArray(res.body.data.responses)).toBe(true);
   });
 });

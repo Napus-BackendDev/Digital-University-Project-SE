@@ -11,7 +11,7 @@ jest.mock('../middleware/middlewares', () => (app) => {
 });
 
 jest.mock('../server/Project/Settings/service/message', () => ({
-  sendResponse: (res, apiId, code, data) => res.status(200).json({
+  sendResponse: (res, apiId, code, data) => res.status(code === 40000 || code === 40400 ? 400 : 200).json({
     apiId,
     code,
     data
@@ -50,15 +50,24 @@ describe('Form API', () => {
     expect(Array.isArray(res.body.data)).toBe(true);
   });
 
-  it('POST /api/v1/form/get returns code 20022', async () => {
+  it('POST /api/v1/form/get returns code 20022 with valid _id in body', async () => {
     const res = await request(app)
       .post('/api/v1/form/get')
-      .query({ _id: formId });
+      .send({ _id: formId });
 
     expect(res.status).toBe(200);
     expect(res.body.apiId).toBe(22);
     expect(res.body.code).toBe(20022);
     expect(res.body.data._id).toBe('form1');
+  });
+
+  it('POST /api/v1/form/get returns 400 when _id is missing', async () => {
+    const res = await request(app)
+      .post('/api/v1/form/get')
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe(40000);
   });
 
   it('POST /api/v1/form returns code 20023', async () => {

@@ -76,7 +76,7 @@ async function deleteOldLogs() {
 }
 
 // สร้าง middleware เพื่อดักจับข้อมูล response
-function loggerMiddleware (req, res, next){
+function loggerMiddleware(req, res, next) {
     const originalJson = res.json;
     const originalStatusJson = res.status().json;
 
@@ -109,5 +109,4 @@ function loggerMiddleware (req, res, next){
     next();
 }
 
-module.exports = loggerMiddleware ;
-
+module.exports = loggerMiddleware;
