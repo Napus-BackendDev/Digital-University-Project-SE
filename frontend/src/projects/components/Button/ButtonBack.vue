@@ -1,25 +1,18 @@
 <template>
-    <div class="back" style="cursor: pointer" @click="$router.push(path)">
-        <CIcon name="cil-chevron-left" />
-        <span class="px-1">{{ label }}</span>
-    </div>
+
+    <CRow>
+        <CCol col="12" class="d-flex justify-content-between align-items-center">
+            <div class="back" style="cursor: pointer" @click="$router.back()">
+                <CIcon name="cil-chevron-left" />
+                <span class="px-1">Back</span>
+            </div>
+        </CCol>
+    </CRow>
 </template>
 
 <script>
 export default {
     name: "ButtonBack",
-    props: {
-        path: {
-            type: String,
-            default: '/'
-        },
-        label: {
-            type: String,
-            default: 'Back'
-        }
-    },
-    components: {
-    },
     data() {
         return {
         }

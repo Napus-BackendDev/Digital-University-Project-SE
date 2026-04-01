@@ -37,23 +37,16 @@ var objSchema = new Schema({
         // File Upload
         maxFiles: { type: Number, default: null },
         maxFileSize: { type: Number, default: null },
-        fileTypes: [{ type: String }],
+        fileTypes: [{ type: String, default: null }],
 
-        // Title / Description
-        title: [{
-            _id: false,
-            key: { type: String, default: null },
-            value: { type: String, default: null },
-            order: { type: Number, default: 1 }
-        }],
+        // Title & Description
         description: [{
             _id: false,
             key: { type: String, default: null },
-            value: { type: String, default: null },
-            order: { type: Number, default: 1 }
+            value: { type: String, default: null }
         }],
         // Image
-        imageUrl: { type: String, default: null },
+        image: { type: String, default: null },
     },
     isRequired: { type: Boolean, default: false }
 }, { timestamps: true });

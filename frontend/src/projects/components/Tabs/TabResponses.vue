@@ -2,8 +2,16 @@
     <div class="mt-4">
         <!-- Toolbar -->
         <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+            <!-- Loading state -->
+            <div v-if="loading" class="text-center py-4">
+                <CSpinner color="secondary" />
+                <p class="text-muted mt-2">Loading responses...</p>
+            </div>
+            <!-- Error state -->
+            <div v-else-if="error" class="text-center py-4 text-danger">{{ error }}</div>
+
             <div class="text-muted" style="font-size: 1.1rem; font-weight: 500; color: #475569 !important;">
-                {{ responsesCount }} responses
+                {{ allSubmittedResponses.length }} responses
             </div>
 
             <div class="d-flex align-items-center gap-2">
@@ -30,268 +38,346 @@
                             <CIcon name="cil-chevron-top" size="sm" class="ml-2" />
                         </CButton>
                     </template>
-                    <CDropdownItem>Download CSV</CDropdownItem>
-                    <CDropdownItem>Download Excel</CDropdownItem>
+                    <CDropdownItem @click="exportXlsx">
+                        <CIcon name="cil-data-transfer-down" size="sm" class="mr-2" />
+                        Export Excel
+                    </CDropdownItem>
+                    <CDropdownItem @click="copyApiLink">
+                        <CIcon name="cil-copy" size="sm" class="mr-2" />
+                        Copy API Link
+                    </CDropdownItem>
                 </CDropdown>
+
+                <!-- Copied toast -->
+                <transition name="fade">
+                    <span v-if="copied" class="ml-2 text-success d-inline-flex align-items-center"
+                        style="font-size:0.82rem; font-weight:600;">
+                        ✓ Copied!
+                    </span>
+                </transition>
 
             </div>
         </div>
 
         <!-- SUMMARY VIEW -->
         <div v-if="currentView === 'summary'">
-            <!-- Content Area - Short Answer -->
-            <div class="p-5 bg-white border rounded shadow-sm mb-4">
-                <div>
-                    <h4 class="mb-1 font-weight-bold" style="color: #334155;">1. What is your full name?</h4>
-                    <div class="text-muted mb-4" style="font-size: 0.95rem;">6 responses</div>
 
-                    <div class="table-responsive rounded border mb-4">
-                        <table class="table mb-0 custom-response-table">
-                            <thead>
-                                <tr>
-                                    <th scope="col" style="width: 80px;" class="pl-4">#</th>
-                                    <th scope="col">Response</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="item in shortAnswerData" :key="item.id">
-                                    <td class="pl-4 align-middle">
-                                        <div class="index-circle">{{ item.id }}</div>
-                                    </td>
-                                    <td class="align-middle text-dark">{{ item.text }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-center mt-5 mb-2">
-                        <CPagination :activePage.sync="activePage" :pages="3" :doubleArrows="false" :align="'center'"
-                            class="custom-pagination border-0 mb-0" />
-                    </div>
-                </div>
+            <!-- Empty state -->
+            <div v-if="allSubmittedResponses.length === 0" class="text-center py-5 text-muted">
+                <p>No responses yet for this form.</p>
             </div>
 
-            <!-- Content Area - Paragraph -->
-            <div class="p-5 bg-white border rounded shadow-sm mb-4">
-                <div>
-                    <h4 class="mb-1 font-weight-bold" style="color: #334155;">2. Tell us about your experience with our
-                        platform
-                    </h4>
-                    <div class="text-muted mb-4" style="font-size: 0.95rem;">6 responses</div>
-
-                    <div class="table-responsive rounded border mb-4">
-                        <table class="table mb-0 custom-response-table">
-                            <thead>
-                                <tr>
-                                    <th scope="col" style="width: 80px;" class="pl-4">#</th>
-                                    <th scope="col">Response</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="item in paragraphData" :key="item.id">
-                                    <td class="pl-4 align-middle">
-                                        <div class="index-circle">{{ item.id }}</div>
-                                    </td>
-                                    <td class="align-middle text-dark">{{ item.text }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-center mt-5 mb-2">
-                        <CPagination :activePage.sync="activePageParagraph" :pages="3" :doubleArrows="false"
-                            :align="'center'" class="custom-pagination border-0 mb-0" />
-                    </div>
+            <!-- Dynamic question cards -->
+            <div v-for="(q, qIdx) in summaryByQuestion" :key="q._id" class="p-5 bg-white border rounded shadow-sm mb-4">
+                <!-- Question header -->
+                <h4 class="mb-1 font-weight-bold" style="color: #334155;">
+                    {{ qIdx + 1 }}. {{ getTitle(q.title) }}
+                </h4>
+                <div class="text-muted mb-4" style="font-size: 0.95rem;">
+                    {{ q.responses.length }} response{{ q.responses.length !== 1 ? 's' : '' }}
                 </div>
-            </div>
 
-            <!-- Content Area - Multiple Choice -->
-            <div class="p-5 bg-white border rounded shadow-sm mb-4">
-                <div>
-                    <h4 class="mb-1 font-weight-bold" style="color: #334155;">3. Which department do you work in?</h4>
-                    <div class="text-muted mb-4" style="font-size: 0.95rem;">6 responses</div>
+                <!-- ── SHORT / PARAGRAPH ── -->
+                <template v-if="isTextType(q.type)">
+                    <CDataTable :items="q.responses.map((r, i) => ({ '#': i + 1, Response: r || '—' }))"
+                        :fields="[{ key: '#', _style: 'width:60px' }, 'Response']" border striped hover class="mb-0" />
+                </template>
 
-                    <CRow class="align-items-center mb-4 mt-5">
-                        <CCol md="4" class="text-center d-flex justify-content-center">
-                            <div class="donut-chart">
-                                <div class="donut-inner"></div>
-                            </div>
-                        </CCol>
-                        <CCol md="8">
-                            <div v-for="item in multipleChoiceData" :key="item.id" class="mb-4 pr-5">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <div class="d-flex align-items-center">
-                                        <div class="legend-dot" :style="{ backgroundColor: item.color }"></div>
-                                        <span class="text-dark">{{ item.label }}</span>
-                                    </div>
-                                    <span class="font-weight-bold text-dark">{{ item.count }}</span>
-                                </div>
-                                <div class="d-flex" style="padding-left: 24px;">
-                                    <div class="progress w-100"
-                                        style="height: 8px; background-color: #f1f5f9; border-radius: 4px; overflow: hidden;">
-                                        <div class="progress-bar" role="progressbar"
-                                            :style="{ width: '16.666%', backgroundColor: item.color }"
-                                            aria-valuenow="16" aria-valuemin="0" aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </CCol>
-                    </CRow>
-                </div>
-            </div>
+                <!-- ── MULTIPLE CHOICE / CHECKBOXES ── -->
+                <template v-else-if="isChoiceType(q.type)">
+                    <div v-for="(opt, oIdx) in q.optionCounts" :key="oIdx" class="mb-3 pr-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-dark">{{ opt.label }}</span>
+                            <span class="font-weight-bold text-dark">{{ opt.count }}</span>
+                        </div>
+                        <div class="progress w-100"
+                            style="height: 8px; background-color: #f1f5f9; border-radius: 4px; overflow: hidden;">
+                            <div class="progress-bar"
+                                :style="{ width: opt.pct + '%', backgroundColor: choiceColor(oIdx) }" role="progressbar"
+                                :aria-valuenow="opt.pct" aria-valuemin="0" aria-valuemax="100" />
+                        </div>
+                    </div>
+                </template>
 
-            <!-- Content Area - Rating -->
-            <div class="p-5 bg-white border rounded shadow-sm">
-                <div>
-                    <h4 class="mb-1 font-weight-bold" style="color: #334155;">6. Rate the user interface</h4>
-                    <div class="text-muted mb-4" style="font-size: 0.95rem;">6 responses</div>
-
-                    <div class="mt-5 mb-3 px-3">
-                        <div class="d-flex" style="height: 250px;">
-                            <!-- Y-Axis Labels -->
+                <!-- ── RATING ── -->
+                <template v-else-if="isRatingType(q.type)">
+                    <div class="mt-3 mb-3 px-3">
+                        <div class="d-flex" style="height: 200px;">
+                            <!-- Y-Axis -->
                             <div class="y-axis-labels">
-                                <span v-for="(val, index) in ratingData.yAxis" :key="index">{{ val }}</span>
+                                <span v-for="(val, yIdx) in q.ratingYAxis" :key="yIdx">{{ val }}</span>
                             </div>
-
-                            <!-- Chart Area -->
+                            <!-- Bars -->
                             <div class="chart-area w-100 position-relative">
-                                <!-- Background Grid Lines -->
                                 <div class="grid-line" style="top: 0%"></div>
                                 <div class="grid-line" style="top: 25%"></div>
                                 <div class="grid-line" style="top: 50%"></div>
                                 <div class="grid-line" style="top: 75%"></div>
-
-                                <!-- Bars -->
                                 <div class="bars-container">
-                                    <div v-for="(bar, index) in ratingData.bars" :key="index"
-                                        class="rating-bar-wrapper">
+                                    <div v-for="(bar, bIdx) in q.ratingBars" :key="bIdx" class="rating-bar-wrapper">
                                         <div class="rating-bar" :style="{ height: bar.percentage + '%' }"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- X-Axis Labels -->
+                        <!-- X-Axis -->
                         <div class="d-flex x-axis-labels">
-                            <div style="width: 45px; padding-right: 12px;"></div> <!-- Offset to match Y-axis -->
+                            <div style="width: 45px; padding-right: 12px;"></div>
                             <div class="d-flex justify-content-around w-100 px-5">
-                                <div v-for="(bar, index) in ratingData.bars" :key="index" class="text-center">
-                                    {{ bar.label }}
+                                <div v-for="(bar, bIdx) in q.ratingBars" :key="bIdx" class="text-center">{{ bar.label }}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </template>
+
+                <!-- ── FALLBACK ── -->
+                <template v-else>
+                    <CDataTable :items="q.responses.map((r, i) => ({ '#': i + 1, Response: r || '—' }))"
+                        :fields="[{ key: '#', _style: 'width:60px' }, 'Response']" border striped hover class="mb-0" />
+                </template>
             </div>
         </div>
 
         <!-- INDIVIDUAL VIEW -->
         <div v-else-if="currentView === 'individual'" class="p-5 bg-white border rounded shadow-sm">
-            <!-- Search Bar -->
-            <div class="mb-4 custom-search">
-                <CInput class="mb-0" placeholder="Search responses by email or date...">
-                    <template #prepend-content>
-                        <CIcon name="cil-magnifying-glass" />
-                    </template>
-                </CInput>
-            </div>
-
-            <div class="table-responsive rounded border mb-4">
-                <table class="table mb-0 custom-response-table">
-                    <thead>
-                        <tr>
-                            <th scope="col" style="width: 80px;" class="pl-4">#</th>
-                            <th scope="col">Email</th>
-                            <th scope="col">Submitted</th>
-                            <th scope="col" class="text-center">Answers</th>
-                            <th scope="col" class="text-right pr-5">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="item in individualData" :key="item.id">
-                            <td class="pl-4 align-middle">
-                                <div class="index-circle pink-circle">{{ item.id }}</div>
-                            </td>
-                            <td class="align-middle text-dark font-weight-bold">{{ item.email }}</td>
-                            <td class="align-middle" style="color: #64748b;">{{ item.submitted }}</td>
-                            <td class="align-middle text-center">
-                                <span class="badge badge-light px-3 py-2 rounded-pill font-weight-normal text-dark"
-                                    style="background-color: #f1f5f9; font-size: 0.85rem;">{{ item.answers }}
-                                    answers</span>
-                            </td>
-                            <td class="align-middle text-right pr-5">
-                                <CButton color="link"
-                                    class="text-dark d-flex align-items-center justify-content-end w-100 px-0 text-decoration-none font-weight-bold">
-                                    <CIcon name="cil-eye" size="sm" class="mr-2" />
-                                    View
-                                </CButton>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="d-flex justify-content-center mt-5 mb-2">
-                <CPagination :activePage.sync="activePageIndividual" :pages="3" :doubleArrows="false" :align="'center'"
-                    class="custom-pagination border-0 mb-0" />
-            </div>
+            <ResponeTables :responseList="allSubmittedResponses" />
         </div>
 
     </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+import moment from 'moment'
+import * as XLSX from 'xlsx'
+import ResponeTables from '@/projects/components/tables/ResponeTables.vue'
 export default {
     name: 'TabResponses',
+    components: { ResponeTables },
+    props: {
+        responses: {
+            type: Object,
+            default: () => ({})
+        }
+    },
     data() {
         return {
-            responsesCount: 6, // Mocked to match design
-            currentView: 'individual',
+            currentView: 'summary',
             activePage: 1,
             activePageParagraph: 1,
             activePageIndividual: 1,
-            individualData: [
-                { id: 1, email: 'alex.chen@university.edu', submitted: '02/12/2024, 09:30:00', answers: 11 },
-                { id: 2, email: 'maria.rodriguez@university.edu', submitted: '03/12/2024, 14:20:00', answers: 11 },
-                { id: 3, email: 'james.taylor@university.edu', submitted: '04/12/2024, 11:15:00', answers: 11 },
-                { id: 4, email: 'priya.patel@university.edu', submitted: '05/12/2024, 16:45:00', answers: 11 },
-                { id: 5, email: 'robert.kim@university.edu', submitted: '06/12/2024, 10:00:00', answers: 11 },
-                { id: 6, email: 'sophie.anderson@university.edu', submitted: '07/12/2024, 13:30:00', answers: 11 }
-            ],
-            shortAnswerData: [
-                { id: 1, text: 'Alex Chen' },
-                { id: 2, text: 'Maria Rodriguez' },
-                { id: 3, text: 'James Taylor' },
-                { id: 4, text: 'Priya Patel' },
-                { id: 5, text: 'Robert Kim' },
-                { id: 6, text: 'Sophie Anderson' }
-            ],
-            paragraphData: [
-                { id: 1, text: 'The platform has been incredibly helpful for creating surveys quickly. The interface is intuitive and the analytics features are powerful. I particularly appreciate the real-time response tracking and the ability to customize form themes.' },
-                { id: 2, text: 'Great tool for our marketing campaigns! We use it to collect customer feedback and run surveys for product launches. The email notification feature keeps our team updated in real-time.' },
-                { id: 3, text: 'As a sales manager, I rely on this platform to gather client feedback after demos and meetings. The mobile-friendly forms make it easy for clients to respond on the go. Would love to see more integration options with CRM systems.' },
-                { id: 4, text: 'Perfect for our HR onboarding surveys and employee satisfaction forms. The branching logic feature helps us create personalized survey experiences. The data export functionality saves us hours of manual work.' },
-                { id: 5, text: 'We use this for budget approval workflows and financial surveys. The security features give us confidence when handling sensitive data. The reporting dashboard provides excellent insights for stakeholder presentations.' },
-                { id: 6, text: 'I manage various projects and this tool helps me collect requirements, track progress, and gather stakeholder feedback efficiently. The template library is a huge time-saver. Looking forward to more advanced automation features!' }
-            ],
-            multipleChoiceData: [
-                { id: 1, label: 'Engineering', count: 1, color: '#a32a29' },
-                { id: 2, label: 'Marketing', count: 1, color: '#d9a036' },
-                { id: 3, label: 'Sales', count: 1, color: '#723469' },
-                { id: 4, label: 'Human Resources', count: 1, color: '#618a44' },
-                { id: 5, label: 'Finance', count: 1, color: '#3d5a92' },
-                { id: 6, label: 'Other', count: 1, color: '#a32a29' }
-            ],
-            ratingData: {
-                yAxis: [3, 2.25, 1.5, 0.75, 0],
-                bars: [
-                    { label: '4 ★', value: 3, percentage: 100 },
-                    { label: '5 ★', value: 3, percentage: 100 }
-                ]
+            loading: false,
+            error: null,
+            copied: false,
+        }
+    },
+    watch: {
+        responses: {
+            handler(newVal) {
+                if (newVal && newVal._id) {
+                    this.fetchResponses();
+                }
+            },
+            immediate: true
+        }
+    },
+    methods: {
+        exportXlsx() {
+            if (!this.allSubmittedResponses.length) {
+                alert('No responses to export.');
+                return;
             }
+
+            const firstAnswers = this.allSubmittedResponses[0].answers || [];
+            const headers = ['Responder', 'Submitted'];
+            firstAnswers.forEach((a, i) => {
+                const title = a.question && Array.isArray(a.question.title) && a.question.title.length
+                    ? this.getTitle(a.question.title)
+                    : `Question ${i + 1}`;
+                headers.push(title);
+            });
+
+            const rows = this.allSubmittedResponses.map(r => {
+                const row = [
+                    (r.responder || '-').toString(),
+                    this.formatDate(r.createdAt)
+                ];
+                (r.answers || []).forEach(a => {
+                    const val = Array.isArray(a.response)
+                        ? a.response.join(', ')
+                        : (a.response === null || a.response === undefined ? '' : String(a.response));
+                    row.push(val);
+                });
+                return row;
+            });
+
+            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Responses");
+
+            // Set column widths (optional but nice)
+            const wscols = headers.map(h => ({ wch: Math.max(h.length, 15) }));
+            worksheet['!cols'] = wscols;
+
+            const filename = `responses_${this.responses && this.responses._id || 'export'}.xlsx`;
+            XLSX.writeFile(workbook, filename);
+        },
+
+        // ── Copy API Link ─────────────────────────────────────────────────
+        copyApiLink() {
+            const formId = this.responses && this.responses._id;
+            if (!formId) { alert('Form ID not available yet.'); return; }
+            const BASE = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
+            const url = `${BASE}/response/download/${formId}`;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => this.showCopied());
+            } else {
+                const el = document.createElement('textarea');
+                el.value = url;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                this.showCopied();
+            }
+        },
+        showCopied() {
+            this.copied = true;
+            setTimeout(() => { this.copied = false; }, 2000);
+        },
+
+        async fetchResponses() {
+            const formId = this.responses && this.responses._id;
+            if (!formId) {
+                console.warn('[TabResponses] fetchResponses: formId not ready yet, skip');
+                return;
+            }
+            if (this.loading) return;
+
+            this.loading = true;
+            this.error = null;
+            try {
+                await this.$store.dispatch('Responses/get', { form_id: formId });
+            } catch (err) {
+                console.error('[TabResponses] Failed to fetch responses:', err);
+                this.error = 'Failed to load responses.';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        formatDate(dateStr) {
+            return dateStr ? moment(dateStr).format('DD/MM/YYYY, HH:mm:ss') : '-';
+        },
+
+        getTitle(arr) {
+            if (!arr || !arr.length) return '';
+            const lang = (navigator.language || 'en').substring(0, 2).toUpperCase();
+            return (arr.find(t => t.key && t.key.toUpperCase() === lang) || arr[0]).value || '';
+        },
+
+        isTextType(type) {
+            return ['short', 'short_answer', 'paragraph', 'text'].includes((type || '').toLowerCase());
+        },
+        isChoiceType(type) {
+            return ['multiple_choice', 'multiplechoice', 'checkboxes', 'checkbox'].includes((type || '').toLowerCase());
+        },
+        isRatingType(type) {
+            return ['rating', 'rate'].includes((type || '').toLowerCase());
+        },
+        choiceColor(idx) {
+            const PALETTE = ['#a32a29', '#d9a036', '#723469', '#618a44', '#3d5a92', '#e55353', '#f9c74f', '#90be6d'];
+            return PALETTE[idx % PALETTE.length];
+        },
+    },
+    computed: {
+        ...mapGetters({
+            storeResponses: 'Responses/responses'
+        }),
+        allSubmittedResponses() {
+            // this.responses prop is the form object which has responses array
+            // Combine with responses fetched from store and stored in Responses module.
+            const listFromProp = (this.responses && this.responses.responses) || [];
+            const listFromStore = this.storeResponses || [];
+            const combined = [...listFromProp, ...listFromStore];
+            
+            // Remove duplicates by _id and filter by submit status
+            const unique = [];
+            const seen = new Set();
+            combined.forEach(r => {
+                if (r && r._id && !seen.has(r._id)) {
+                    if (r.submit === true || r.submit === 'true') {
+                        unique.push(r);
+                        seen.add(r._id);
+                    }
+                }
+            });
+            return unique;
+        },
+
+        summaryByQuestion() {
+            const PALETTE = ['#a32a29', '#d9a036', '#723469', '#618a44', '#3d5a92', '#e55353', '#f9c74f', '#90be6d'];
+            const map = {};
+            const order = [];
+
+            this.allSubmittedResponses.forEach(resp => {
+                (resp.answers || []).forEach(ans => {
+                    const q = ans.question;
+                    if (!q || !q._id) return;
+                    if (!map[q._id]) {
+                        map[q._id] = {
+                            _id: q._id,
+                            title: q.title,
+                            type: (q.type && q.type.type ? q.type.type : 'short').toLowerCase(),
+                            responses: [],
+                            _rawChoices: {}
+                        };
+                        order.push(q._id);
+                    }
+                    const val = ans.response;
+                    map[q._id].responses.push(val);
+
+                    if (this.isChoiceType(map[q._id].type)) {
+                        const choices = Array.isArray(val) ? val : [val];
+                        choices.forEach(c => {
+                            if (c) map[q._id]._rawChoices[c] = (map[q._id]._rawChoices[c] || 0) + 1;
+                        });
+                    }
+                });
+            });
+
+            return order.map(id => {
+                const q = map[id];
+                const total = q.responses.length;
+
+                if (this.isChoiceType(q.type)) {
+                    q.optionCounts = Object.entries(q._rawChoices).map(([label, count], i) => ({
+                        label,
+                        count,
+                        pct: total > 0 ? Math.round((count / total) * 100) : 0,
+                        color: PALETTE[i % PALETTE.length]
+                    }));
+                }
+
+                if (this.isRatingType(q.type)) {
+                    const counts = {};
+                    q.responses.forEach(r => { const n = Number(r); if (!isNaN(n)) counts[n] = (counts[n] || 0) + 1; });
+                    const maxCount = Math.max(1, ...Object.values(counts));
+                    const stars = Object.keys(counts).sort((a, b) => a - b);
+                    q.ratingBars = stars.map(s => ({
+                        label: `${s} ★`,
+                        value: counts[s],
+                        percentage: Math.round((counts[s] / maxCount) * 100)
+                    }));
+                    const topCount = Math.max(...Object.values(counts), 1);
+                    q.ratingYAxis = [topCount, Math.round(topCount * 0.75), Math.round(topCount * 0.50), Math.round(topCount * 0.25), 0];
+                }
+
+                delete q._rawChoices;
+                return q;
+            });
         }
     }
 }

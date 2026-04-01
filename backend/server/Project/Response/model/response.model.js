@@ -10,9 +10,10 @@ var objSchema = new Schema(
     answers: [
       {
         question: { type: Schema.Types.ObjectId, ref: "Questions" },
-        response: { type: Schema.Types.String, required: true },
+        response: { type: Schema.Types.Mixed },
       },
-    ]
+    ],
+    submit: { type: Schema.Types.Boolean, default: false },
   },
   { timestamps: true }
 );

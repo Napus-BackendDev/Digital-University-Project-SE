@@ -7,64 +7,77 @@ const TheContainer = () => import('@/containers/TheContainer')
 // Login
 const Login = () => import('@/projects/views/Login.vue')
 
-// User
-const UserDashboard = () => import('@/projects/views/user/Dashboard.vue')
-const UserFormFill = () => import('@/projects/views/user/FormFill.vue')
+// Page (actual files)
+const Forms = () => import('@/projects/views/Forms.vue')
+const FormFill = () => import('@/projects/views/page/FormFill.vue')
 
 // Editor
-const EditorDashboard = () => import('@/projects/views/editor/Dashboard.vue')
-const EditorCreateForm = () => import('@/projects/views/editor/CreateForm.vue')
+const ManageForms = () => import('@/projects/views/ManageForms.vue')
+const CreateForm = () => import('@/projects/views/page/CreateForm.vue')
+
+// Page details
+const Response = () => import('@/projects/views/Responsedetail.vue')
 
 // Admin
-const AdminDashboard = () => import('@/projects/views/admin/Dashboard.vue') 
-
+const Analytics = () => import('@/projects/views/Statistic.vue')
+const Permissions = () => import('@/projects/views/Permissions.vue')
 
 Vue.use(Router)
 
 export default new Router({
     mode: 'history',
-    scrollBehavior: () => ({y: 0}),
+    scrollBehavior: () => ({ y: 0 }),
     routes: [
 
         {
             path: '/',
-            redirect: '/editor/dashboard',
+            redirect: 'forms',
             name: 'Home',
             component: TheContainer,
             children: [
-
                 {
-                    path: 'user/dashboard',
-                    name: 'UserDashboard',
-                    component: UserDashboard
+                    path: 'forms',
+                    name: 'Forms',
+                    component: Forms
                 },
-
                 {
-                    path: 'user/form-fill/:id',
-                    name: 'UserFormFill',
-                    component: UserFormFill,
+                    path: 'forms/:id',
+                    name: 'FormFill',
+                    component: FormFill,
+                    props: route => ({ formId: route.params.id })
+                },
+                {
+                    path: 'manage',
+                    name: 'ManageForms',
+                    component: ManageForms
+                },
+                {
+                    path: 'manage/:_id',
+                    name: 'EditorCreateForm',
+                    component: CreateForm
+                },
+                {
+                    path: 'preview/:id',
+                    name: 'Preview',
+                    component: FormFill,
+                    props: route => ({ formId: route.params.id })
+                },
+                {
+                    path: 'response/:id',
+                    name: 'Response',
+                    component: Response,
                     props: true
                 },
-
                 {
-                    path: 'editor/dashboard',
-                    name: 'EditorDashboard',
-                    component: EditorDashboard
+                    path: 'analytics',
+                    name: 'Analytics',
+                    component: Analytics
                 },
-
                 {
-                    path: 'admin/dashboard',
-                    name: 'AdminDashboard',
-                    component: AdminDashboard
-                },
-
-                {
-                    path: 'editor/dashboard/:_id',
-                    name: 'EditorCreateForm',
-                    component: EditorCreateForm
+                    path: 'permissions',
+                    name: 'Permissions',
+                    component: Permissions
                 }
-
-
             ]
         },
 

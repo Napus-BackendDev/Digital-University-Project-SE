@@ -145,7 +145,6 @@ export default {
   },
   methods: {
     addToast () {
-      console.log(this.toastConfig)
       this.toasts.push(this.toastConfig)
     }
   }

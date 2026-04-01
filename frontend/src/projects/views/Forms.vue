@@ -6,11 +6,11 @@
 </template>
 
 <script>
-import UserTables from '../../components/tables/UserTables.vue'
-import Header from '../../components/Util/Header.vue'
+import UserTables from '../components/tables/UserTables.vue'
+import Header from '../components/Util/Header.vue'
 
 export default {
-    name: "UserDashboard",
+    name: "Forms",
     components: {
         UserTables,
         Header
@@ -24,7 +24,7 @@ export default {
     },
     methods: {
         onInit() {
-            this.$store.dispatch('Forms/getForms');
+            this.$store.dispatch('Forms/get');
         },
     },
     computed: {

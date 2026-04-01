@@ -129,11 +129,9 @@ export default {
 
   watch: {
     objsLang(value){
-      console.log(value)
       this.onInit();
     },
     objsCampus(value) {
-      console.log(value)
       var lang = this.$store.getters['setting/lang']
       var items = [];
       value.filter(item => {

@@ -1,13 +1,13 @@
 <template>
     <div class="flex-grow-1">
-        <Header title="Forms" description="Create and manage your forms" />
+        <Header :title="$t('nav.manage')" :description="$t('description')" />
         <EditorTables />
     </div>
 </template>
 
 <script>
-import EditorTables from '../../components/tables/EditorTables.vue'
-import Header from '../../components/Util/Header.vue'
+import EditorTables from '../components/tables/EditorTables.vue'
+import Header from '../components/Util/Header.vue'
 
 export default {
     name: "EditorDashboard",
@@ -24,7 +24,7 @@ export default {
     },
     methods: {
         onInit() {
-            this.$store.dispatch('Forms/getForms');
+            this.$store.dispatch('Forms/get');
         },
     },
     computed: {

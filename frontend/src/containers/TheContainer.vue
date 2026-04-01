@@ -1,7 +1,7 @@
 <template>
   <div class="c-app">
     <CWrapper>
-      <TheHeader />
+      <TheHeader v-if="!isPublicForm" />
       <main class="c-main">
         <CContainer class="d-flex justify-content-center w-75" fluid>
           <transition name="fade">
@@ -9,7 +9,7 @@
           </transition>
         </CContainer>
       </main>
-      <TheFooter />
+      <TheFooter v-if="!isPublicForm" />
 
     </CWrapper>
     <CenterLoading />
@@ -57,7 +57,6 @@ export default {
     //       socket.emit('campus',{"sos":1122});
     //
     //       socket.on("campus", (reason) => {
-    //         console.log(reason)
     //       })
     //
     //
@@ -67,7 +66,6 @@ export default {
     //
     // // กรณีการเชื่อมต่อถูกตัดขาด
     //     socket.on("disconnect", (reason) => {
-    //       console.log("[socket disconnected]: ", reason);
     //     });
     // // กรณีการเชื่อมต่อเกิดความผิดพลาด
     //     socket.on("connect_error", (error) => {
@@ -78,12 +76,9 @@ export default {
     // localStorage.setItem('test','123444')
 
     // socket.on("connect", () => {
-    //   console.log(12)
     // });
     //
     // socket.on("disconnect", () => {
-    //   console.log(13)
-    //
     // });
   },
 
@@ -122,7 +117,15 @@ export default {
   },
   computed: {
     ...mapGetters({
-    })
+    }),
+    isPublicForm() {
+      const isFormFillRoute = this.$route.name === 'FormFill';
+      const isInternalSource = this.$route.query.source === 'internal';
+      const isInternalMode = ['preview', 'duplicate'].includes(this.$route.query.mode);
+      const isPreviewRoute = this.$route.name === 'Preview';
+
+      return isFormFillRoute && !isInternalSource && !isInternalMode && !isPreviewRoute;
+    }
   },
 
   watch: {

@@ -5,14 +5,6 @@ const createBaseService = require("../../../../helpers/base.service")
 // Load referenced models to ensure they're registered
 // require("../../Settings/models/respond.model");
 
-const defaultPopulate = [
-    {
-        path: 'questions', populate: {
-            path: 'type', select: 'type'
-        },
-    },
-    { path: 'responses' },
-    { path: 'status' },
-]
+const defaultPopulate = [ { path: 'status', select: 'title' } ]
 
 module.exports = createBaseService(objSchema, defaultPopulate);

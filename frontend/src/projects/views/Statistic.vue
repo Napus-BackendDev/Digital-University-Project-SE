@@ -1,10 +1,10 @@
 <template>
-    <div>
+    <div class="flex-grow-1">
         <Header title="Admin Dashboard" description="Overview of all forms and responses" />
         <WidgetsDropdown class="mb-4" />
         <CRow class="mb-4">
             <CCol lg="8">
-                <AdminTables />
+                <AdminLineCharts />
             </CCol>
             <CCol lg="4">
                 <AdminDoughnutCharts />
@@ -15,19 +15,26 @@
                 <AdminBarCharts />
             </CCol>
         </CRow>
+        <CRow>
+            <CCol lg="12" class="mt-4">
+                <AdminTables />
+            </CCol>
+        </CRow>
     </div>
 </template>
 
 <script>
-import WidgetsDropdown from '../../components/widgets/WidgetsDropdown.vue'
-import AdminTables from '../../components/tables/AdminTables.vue';
-import AdminDoughnutCharts from '../../components/charts/AdminDoughnutCharts.vue'
-import AdminBarCharts from '../../components/charts/AdminBarCharts.vue'
-import Header from '../../components/Util/Header.vue'
+import WidgetsDropdown from '../components/widgets/WidgetsDropdown.vue'
+import AdminTables from '../components/tables/AdminTables.vue';
+import AdminDoughnutCharts from '../components/charts/AdminDoughnutCharts.vue'
+import AdminBarCharts from '../components/charts/AdminBarCharts.vue'
+import Header from '../components/Util/Header.vue'
+import AdminLineCharts from '../components/charts/AdminLineCharts.vue';
 
 export default {
-    name: "Admin Dashboard",
+    name: "Dashboard",
     components: {
+        AdminLineCharts,
         WidgetsDropdown,
         AdminTables,
         AdminDoughnutCharts,
@@ -43,7 +50,7 @@ export default {
     },
     methods: {
         onInit() {
-            this.$store.dispatch('Forms/getForms');
+            this.$store.dispatch('Forms/get');
         },
     },
     computed: {
@@ -51,7 +58,6 @@ export default {
     watch: {
         forms: {
             handler(val) {
-                console.log('Forms:', val)
             },
             deep: true,
             immediate: true

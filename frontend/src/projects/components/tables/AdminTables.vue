@@ -2,50 +2,60 @@
     <div class="response-trends-container">
         <div class="header mb-4">
             <div class="d-flex align-items-center mb-1">
-                <h4 class="m-0 font-weight-bold">Response Trends</h4>
+                <h4 class="m-0 font-weight-bold">{{ $t('nav.analytics') }}</h4>
             </div>
             <div class="text-muted small ">Daily responses over the last week</div>
         </div>
 
+        <!-- Table -->
         <div class="table-responsive">
-            <table class="table table-hover custom-table">
-                <thead>
-                    <tr>
-                        <th scope="col" width="40%">Form Title</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Access</th>
-                        <th scope="col" class="text-center">Responses</th>
-                        <th scope="col" class="text-right">Created</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(item, index) in paginatedData" :key="index">
-                        <td>
-                            <div class="font-weight-bold text-dark">{{ item.title }}</div>
-                            <div class="small text-muted" v-if="item.description">{{ item.description }}</div>
-                        </td>
-                        <td class="align-middle">
-                            <div class="d-flex align-items-center"
-                                :class="{ 'text-dark': item.status === 'Open' || item.status === 'Draft', 'text-muted': item.status === 'Closed' }">
-                                <CIcon :name="getStatusIcon(item.status)" size="sm" class="mr-1" />
-                                {{ item.status }}
-                            </div>
-                        </td>
-                        <td class="align-middle">
-                            <span class="badge badge-pill badge-light border px-3 py-1">{{ item.access }}</span>
-                        </td>
-                        <td class="align-middle text-center">
-                            <div class="response-circle">
-                                {{ item.responses }}
-                            </div>
-                        </td>
-                        <td class="align-middle text-right text-muted">
-                            {{ item.created }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <CDataTable :items="paginatedData" :fields="fields" :items-per-page="pageSize" :activePage="1"
+                :pagination="false" hover class="mb-0 custom-table">
+                <!-- Form Title Slot -->
+                <template #form="{ item }">
+                    <td class="py-3 pl-3">
+                        <div class="font-weight-bold text-dark">{{ item.title }}</div>
+                        <div class="small text-muted" v-if="item.description">{{ item.description }}</div>
+                    </td>
+                </template>
+
+                <!-- Status Slot -->
+                <template #status="{ item }">
+                    <td class="align-middle py-3">
+                        <div class="d-flex align-items-center"
+                            :class="{ 'text-dark': item.status === 'Open' || item.status === 'Draft', 'text-muted': item.status === 'Closed' }">
+                            <CIcon :name="getStatusIcon(item.status)" size="sm" class="mr-1" />
+                            {{ $t(`status.${item.status.toLowerCase()}`) }}
+                        </div>
+                    </td>
+                </template>
+
+                <!-- Access Slot -->
+                <template #access="{ item }">
+                    <td class="align-middle py-3">
+                        <span class="badge badge-pill badge-light border px-3 py-1">{{ item.access }}</span>
+                    </td>
+                </template>
+
+                <!-- Responses Slot -->
+                <template #responses="{ item }">
+                    <td class="align-middle py-3 text-center">
+                        <div class="response-circle">
+                            {{ item.responses }}
+                        </div>
+                    </td>
+                </template>
+
+                <!-- Created Slot -->
+                <template #created="{ item }">
+                    <td class="align-middle py-3 text-right text-muted pr-4">
+                        {{ item.created }}
+                    </td>
+                </template>
+            </CDataTable>
         </div>
+        
+        <!-- Pagination -->
         <div class="d-flex justify-content-center mt-3">
             <CPagination :active-page.sync="currentPage" :pages="totalPages" responsive />
         </div>
@@ -65,28 +75,50 @@ export default {
         }
     },
     computed: {
+        fields() {
+            return [
+                { key: 'form', label: this.$t('table.title'), _style: 'width:40%' },
+                { key: 'status', label: this.$t('table.status') },
+                { key: 'access', label: this.$t('table.access') },
+                { key: 'responses', label: this.$t('table.responses'), _classes: 'text-center' },
+                { key: 'created', label: this.$t('table.created'), _classes: 'text-right pr-4' }
+            ]
+        },
         ...mapGetters('Forms', ['forms']),
 
         tableData() {
-            // Force reactivity on locale change
-            const locale = this.$i18n.locale;
-
             if (!this.forms || this.forms.length === 0) return []
 
-            // Sort forms by createdAt (newest first)
+            // Sort forms by updatedAt (newest first)
             const sortedForms = [...this.forms].sort((a, b) => {
-                return new Date(b.createdAt) - new Date(a.createdAt)
+                return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
             })
 
             return sortedForms.map(form => {
+                let statusTitle = 'Draft';
+                const now = new Date();
+                const schedule = form.schedule || (form.settings && form.settings.schedule);
+
+                if (schedule && schedule.startAt) {
+                    const start = new Date(schedule.startAt);
+                    const end = new Date(schedule.endAt);
+
+                    if (!start && !end) {
+                        statusTitle = 'Draft';
+                    } else if (start <= now && now <= end) {
+                        statusTitle = 'Open';
+                    } else {
+                        statusTitle = 'Closed';
+                    }
+                }
 
                 return {
                     title: this.getLang(form.title) || 'Untitled Form',
                     description: this.getLang(form.description) || '',
-                    status: this.getLang(form.status.title),
+                    status: statusTitle,
                     access: form.isPublic ? 'Public' : 'Private',
-                    responses: form.responses ? form.responses.length : 0,
-                    created: form.createdAt ? moment(form.createdAt).format('D MMM YYYY') : '-'
+                    responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
+                    created: form.updatedAt ? moment(form.updatedAt).format('D MMM YYYY') : '-'
                 }
             })
         },
@@ -100,25 +132,6 @@ export default {
         }
     },
     methods: {
-        getLang(data) {
-            if (!data || !Array.isArray(data)) return data;
-
-            // Find content matching current locale
-            const currentLang = this.$i18n.locale;
-            let content = data.find(item => item.key === currentLang);
-
-            // Fallback to 'en' if current locale not found
-            if (!content) {
-                content = data.find(item => item.key === 'en');
-            }
-
-            // Fallback to first available if 'en' not found
-            if (!content && data.length > 0) {
-                content = data[0];
-            }
-
-            return content ? content.value : '';
-        },
         getStatusIcon(status) {
             switch (status) {
                 case 'Open': return 'cil-check-circle';

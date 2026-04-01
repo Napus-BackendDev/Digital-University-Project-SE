@@ -1,6 +1,6 @@
 <template>
-    <CButton color="light" class="d-flex align-items-center px-4 py-2 font-weight-bold btn-preview" style="border-radius: 0.5rem;"
-        @click="$emit('click')">
+    <CButton color="light" class="d-flex align-items-center px-4 py-2 font-weight-bold btn-preview"
+        style="border-radius: 0.5rem;" @click="goToPreview">
         <CIcon name="cil-media-play" class="mr-2 text-dark" />
         <span class="text-dark">Preview</span>
     </CButton>
@@ -8,7 +8,14 @@
 
 <script>
 export default {
-    name: 'ButtonPreview'
+    name: 'ButtonPreview',
+    methods: {
+        goToPreview() {
+            const formId = this.$route.params._id;
+            if (!formId) return;
+            this.$router.push({ name: 'Preview', params: { id: formId } });
+        }
+    }
 }
 </script>
 

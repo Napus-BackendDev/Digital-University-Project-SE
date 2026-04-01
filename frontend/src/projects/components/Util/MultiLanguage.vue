@@ -87,7 +87,7 @@ export default {
       }
 
 
-      // console.log(objsFilter)
+      
 
 
     }

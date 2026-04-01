@@ -1,8 +1,9 @@
 <template>
     <div>
+        <!-- Filter Toolbar -->
         <div class="d-flex justify-content-between align-items-center py-3 mb-3">
             <div class="flex-grow-1 mr-3">
-                <CInput v-model="searchQuery" placeholder="Search..." class="mb-0">
+                <CInput v-model="searchQuery" :placeholder="$t('table.search')" class="mb-0">
                     <template #prepend-content>
                         <CIcon name="cil-magnifying-glass" />
                     </template>
@@ -15,14 +16,14 @@
                         <button class="btn d-flex align-items-center text-muted border bg-white"
                             style="border-radius: 6px;">
                             <CIcon name="cil-filter" size="sm" class="mr-2" />
-                            <span>{{ selectedStatus }}</span>
+                            <span>{{ selectedStatus === 'All Status' ? $t('table.allStatus') : $t(`status.${selectedStatus.toLowerCase()}`) }}</span>
                             <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                         </button>
                     </template>
-                    <CDropdownItem @click="filterStatus('All Status')">All Status</CDropdownItem>
-                    <CDropdownItem @click="filterStatus('Open')">Open</CDropdownItem>
-                    <CDropdownItem @click="filterStatus('Closed')">Closed</CDropdownItem>
-                    <CDropdownItem @click="filterStatus('Draft')">Draft</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('All Status')">{{ $t('table.allStatus') }}</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Open')">{{ $t('status.open') }}</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Closed')">{{ $t('status.closed') }}</CDropdownItem>
+                    <CDropdownItem @click="filterStatus('Draft')">{{ $t('status.draft') }}</CDropdownItem>
                 </CDropdown>
 
                 <CButton color="danger" class="d-flex align-items-center text-white px-3"
@@ -30,11 +31,12 @@
                     hover @click="createNewForm" :disabled="isCreating">
                     <CIcon v-if="!isCreating" name="cil-plus" size="sm" class="mr-2" />
                     <CSpinner v-else size="sm" class="mr-2" />
-                    Create Form
+                    {{ $t('button.create') }}
                 </CButton>
             </div>
         </div>
 
+        <!-- Table -->
         <div class="user-tables-container">
             <CDataTable class="custom-table mb-0" :items="tableData" :fields="columns" :items-per-page="itemsPerPage"
                 :pagination="false" hover :activePage.sync="activePage">
@@ -59,7 +61,7 @@
                     <td class="align-middle">
                         <span v-if="!item.isEmpty" class="status-badge" :class="getStatusClass(item.status)">
                             <span class="status-dot"></span>
-                            {{ item.status }}
+                            {{ $t(`status.${item.status.toLowerCase()}`) }}
                         </span>
                     </td>
                 </template>
@@ -73,19 +75,18 @@
                             </div>
                             <div class="text-left">
                                 <div class="font-weight-bold text-dark responses-value">{{ item.responses }}</div>
-                                <div class="small text-muted">responses</div>
+                                <div class="small text-muted">{{ $t('table.responses') }}</div>
                             </div>
                         </div>
                     </td>
                 </template>
 
-                <!-- Last Modified -->
-                <template #created="{ item }">
-                    <td class="align-middle text-muted">
-                        <template v-if="!item.isEmpty">
-                            <CIcon name="cil-calendar" size="sm" class="mr-2" />
-                            {{ item.created }}
-                        </template>
+                <!-- Vision/Visibility Status Badge -->
+                <template #visibility="{ item }">
+                    <td class="align-middle">
+                        <span v-if="!item.isEmpty" class="visibility-badge" :class="getVisibilityClass(item.visibility)">
+                            {{ item.visibility }}
+                        </span>
                     </td>
                 </template>
 
@@ -99,13 +100,16 @@
                                 </button>
                             </template>
                             <CDropdownItem @click="goToViewForm(item)">
-                                <CIcon name="cil-magnifying-glass" class="mr-2 text-info" /> View
+                                <CIcon name="cil-magnifying-glass" class="mr-2 text-info" /> {{ $t('table.view') }}
+                            </CDropdownItem>
+                            <CDropdownItem @click="goToDuplicationForm(item)">
+                                <CIcon name="cil-copy" class="mr-2 text-info" /> {{ $t('table.duplicate') }}
                             </CDropdownItem>
                             <CDropdownItem @click="goToEditForm(item)">
-                                <CIcon name="cil-pencil" class="mr-2 text-warning" /> Edit
+                                <CIcon name="cil-pencil" class="mr-2 text-warning" /> {{ $t('table.edit') }}
                             </CDropdownItem>
-                            <CDropdownItem @click="deleteForm(item)" class="text-danger">
-                                <CIcon name="cil-trash" class="mr-2" /> Delete
+                            <CDropdownItem @click="deleteModal = true && (deleteItem = item)" class="text-danger">
+                                <CIcon name="cil-trash" class="mr-2" /> {{ $t('table.delete') }}
                             </CDropdownItem>
                         </CDropdown>
                     </td>
@@ -114,20 +118,48 @@
             </CDataTable>
         </div>
 
-        <!-- External Pagination -->
-        <div class="d-flex justify-content-center mt-4 mb-5">
-            <CPagination :activePage.sync="activePage" :pages="totalPages" :doubleArrows="false" :align="'center'"
-                class="custom-pagination border-0" />
-        </div>
+        <!-- Pagination -->
+        <Pagination :activePage.sync="activePage" :pages="totalPages" />
+
+        <!-- Confirm Delete modal -->
+        <CModal :show.sync="deleteModal" :centered="true">
+            <template #header-wrapper>
+                <div class="align-items-start p-3">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="icon-wrapper border-danger m-1">
+                            <CIcon name="cil-x" />
+                        </div>
+                        <span class="font-weight-bold">{{ $t('modal.deleteTitle') }}</span>
+                    </div>
+                </div>
+            </template>
+            <template #body-wrapper>
+                <div class="d-flex justify-content-center p-4">
+                    <span>{{ $t('modal.deleteMessage') }}</span>
+                </div>
+            </template>
+            <template #footer-wrapper>
+                <div class="d-flex justify-content-center p-3">
+                    <CButton color="secondary" @click="deleteModal = false">
+                        {{ $t('modal.cancel') }}
+                    </CButton>
+                    <CButton color="danger" class="ml-2" @click="confirmDelete()">
+                        {{ $t('modal.confirm') }}
+                    </CButton>
+                </div>
+            </template>
+        </CModal>
     </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import moment from 'moment'
+import Pagination from '@/projects/components/Util/Pagination.vue'
 
 export default {
     name: 'EditorTables',
+    components: { Pagination },
     data() {
         return {
             searchQuery: '',
@@ -135,18 +167,21 @@ export default {
             isCreating: false,
             activePage: 1,
             itemsPerPage: 5,
-            columns: [
-                { key: 'title', label: 'Form Name', _style: 'width:40%' },
-                { key: 'status', label: 'Status', _style: 'width:15%' },
-                { key: 'responses', label: 'Responses', _style: 'width:15%' },
-                { key: 'created', label: 'Last Modified', _style: 'width:20%' },
-                { key: 'actions', label: 'Actions', _style: 'width:10%; text-align:right' }
-            ]
+            deleteModal: false,
+            deleteItem: null,
         }
     },
     computed: {
+        columns() {
+            return [
+                { key: 'title', label: this.$t('table.title'), _style: 'width:40%' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:15%' },
+                { key: 'responses', label: this.$t('table.responses'), _style: 'width:15%' },
+                { key: 'visibility', label: this.$t('table.visibility'), _style: 'width:20%' },
+                { key: 'actions', label: this.$t('table.actions'), _style: 'width:10%; text-align:right' }
+            ]
+        },
         ...mapGetters('Forms', ['forms']),
-        ...mapGetters('setting', ['lang']),
 
         totalPages() {
             return Math.ceil(this.tableData.length / this.itemsPerPage) || 1;
@@ -161,25 +196,32 @@ export default {
         },
 
         tableData() {
-            // Force reactivity on locale change
-            const locale = this.lang;
-
             let finalData = [];
 
             if (Array.isArray(this.forms) && this.forms.length > 0) {
-                // Sort forms by createdAt (newest first)
+                // Sort forms by updatedAt (newest first)
                 const sortedForms = [...this.forms].sort((a, b) => {
-                    return new Date(b.createdAt) - new Date(a.createdAt)
+                    return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)
                 })
 
                 // 2. Map to display objects
                 const mappedData = sortedForms.map(form => {
-                    // Safe check for status
+                    // Determine status based on schedule
                     let statusTitle = 'Draft';
-                    if (form.status && form.status.title) {
-                        statusTitle = this.getLang(form.status.title);
-                    } else if (typeof form.status === 'string') {
-                        statusTitle = form.status;
+                    const now = new Date();
+                    const schedule = form.schedule;
+
+                    if (schedule && schedule.startAt) {
+                        const start = new Date(schedule.startAt);
+                        const end = new Date(schedule.endAt);
+
+                        if (!start && !end) {
+                            statusTitle = 'Draft';
+                        } else if (start <= now && now <= end) {
+                            statusTitle = 'Open';
+                        } else {
+                            statusTitle = 'Closed';
+                        }
                     }
 
                     return {
@@ -188,8 +230,9 @@ export default {
                         description: this.getLang(form.description) || '',
                         status: statusTitle,
                         access: form.isPublic ? 'Public' : 'Private',
-                        responses: form.responses ? form.responses.length : 0,
-                        created: form.createdAt ? moment(form.createdAt).format('MMM D, YYYY') : '-'
+                        visibility: form.status ? this.getLang(form.status.title) : '-',
+                        responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
+                        created: form.updatedAt ? moment(form.updatedAt).format('MMM D, YYYY') : '-'
                     }
                 });
 
@@ -223,6 +266,7 @@ export default {
                         title: '',
                         description: '',
                         status: '',
+                        visibility: '',
                         responses: '',
                         created: ''
                     });
@@ -237,32 +281,18 @@ export default {
             this.selectedStatus = status;
             this.currentPage = 1; // Reset pagination when filter changes
         },
-        getLang(data) {
-            if (!data) return '';
-            if (typeof data === 'string') return data;
-            if (!Array.isArray(data)) return '';
-
-            // Find content matching current locale
-            const currentLang = this.lang;
-            let content = data.find(item => item.key === currentLang);
-
-            // Fallback to 'en' if current locale not found
-            if (!content) {
-                content = data.find(item => item.key === 'en');
-            }
-
-            // Fallback to first available if 'en' not found
-            if (!content && data.length > 0) {
-                content = data[0];
-            }
-
-            return content ? content.value : '';
-        },
         getStatusClass(status) {
             const s = status ? status.toLowerCase() : '';
-            if (s === 'open' || s === 'published') return 'status-open';
+            if (s === 'open') return 'status-open';
             if (s === 'closed') return 'status-closed';
-            return 'status-draft'; // Default/Draft
+            return 'status-draft';
+        },
+        getVisibilityClass(visibility) {
+            if (!visibility) return 'visi-default';
+            const v = visibility.toLowerCase();
+            if (v.includes('public') || v.includes('สาธารณะ')) return 'visi-public';
+            if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
+            return 'visi-default';
         },
         async createNewForm() {
             this.isCreating = true;
@@ -291,7 +321,7 @@ export default {
                     }
                 };
 
-                const response = await this.$store.dispatch('Forms/createForm', newFormData);
+                const response = await this.$store.dispatch('Forms/create', newFormData);
 
                 this.$router.push({ name: 'EditorCreateForm', params: { _id: response.data.data._id } });
             } catch (error) {
@@ -303,19 +333,27 @@ export default {
         goToEditForm(item) {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
         },
+        goToDuplicationForm(item) {
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'duplicate', source: 'internal' } });
+        },
         goToViewForm(item) {
-            this.$router.push({ name: 'UserFormFill', params: { id: item._id } });
+            this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'preview', source: 'internal' } });
+        },
+        async confirmDelete() {
+            if (this.deleteItem) {
+                await this.deleteForm(this.deleteItem);
+            }
+            this.deleteModal = false;
+            this.deleteItem = null;
         },
         async deleteForm(item) {
-            if (confirm("Are you sure you want to delete this form?")) {
-                try {
-                    await this.$store.dispatch('Forms/deleteForm', { _id: item._id });
-                    await this.$store.dispatch('Forms/getForms');
-                } catch (error) {
-                    console.error("Failed to delete form:", error);
-                }
+            try {
+                await this.$store.dispatch('Forms/delete', { _id: item._id });
+                await this.$store.dispatch('Forms/get');
+            } catch (error) {
+                console.error("Failed to delete form:", error);
             }
-        }
+        },
     }
 }
 </script>
@@ -380,6 +418,34 @@ export default {
 
 .status-closed .status-dot {
     background-color: #dc2626;
+}
+
+/* Visibility Badges */
+.visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25em 0.75em;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.visi-public {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.visi-private {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+    border: 1px solid #e9d5ff;
+}
+
+.visi-default {
+    background-color: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
 }
 
 /* Icon Wrapper */
@@ -479,33 +545,5 @@ export default {
 ::v-deep .custom-table tbody tr:last-child td {
     border-bottom: none !important;
     /* Remove bottom border from the last row */
-}
-
-/* Custom Pagination to match the image */
-::v-deep .custom-pagination .page-item .page-link {
-    border: none !important;
-    background-color: transparent !important;
-    color: #475569 !important;
-    font-weight: 500;
-    padding: 8px 14px;
-    border-radius: 50%;
-    margin: 0 4px;
-}
-
-::v-deep .custom-pagination .page-item.active .page-link {
-    background-color: #f1f5f9 !important;
-    /* Extremely light grey circle */
-    color: #0f172a !important;
-    /* Darker text */
-    font-weight: 600;
-}
-
-::v-deep .custom-pagination .page-item:not(.active) .page-link:hover {
-    background-color: #f8fafc !important;
-    color: #1e293b !important;
-}
-
-::v-deep .custom-pagination .page-item.disabled .page-link {
-    color: #94a3b8 !important;
 }
 </style>
