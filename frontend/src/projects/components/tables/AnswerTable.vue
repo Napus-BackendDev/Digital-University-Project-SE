@@ -1,6 +1,6 @@
 <template>
     <div class="answer-table-premium">
-        <CDataTable :items="answers" :fields="answerFields" hover class="mb-0 custom-premium-table">
+        <CDataTable :items="pagedAnswers" :fields="answerFields" hover class="mb-0 custom-premium-table">
             
             <!-- ID / Index Column -->
             <template #id="{ item, index }">
@@ -59,9 +59,16 @@
                             </div>
                         </template>
 
+                        <!-- Image Preview -->
+                        <template v-else-if="isImagePath(item.response)">
+                            <a :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer" class="file-response-link">
+                                <img :src="resolveFileUrl(item.response)" class="answer-image-preview" loading="lazy" />
+                            </a>
+                        </template>
+
                         <!-- File / Link -->
                         <template v-else-if="isFilePath(item.response)">
-                            <a :href="item.response" target="_blank" class="file-response-link">
+                            <a :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer" class="file-response-link">
                                 <CIcon name="cil-file" class="mr-2" />
                                 <span>{{ getFileName(item.response) }}</span>
                             </a>
@@ -78,14 +85,20 @@
             </template>
 
         </CDataTable>
+
+        <div v-if="totalPages > 1" class="d-flex justify-content-end p-3 border-top">
+            <Pagination :activePage.sync="activePage" :pages="totalPages" />
+        </div>
     </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
+import Pagination from '@/projects/components/Util/Pagination.vue';
 
 export default {
     name: 'AnswerTable',
+    components: { Pagination },
     props: {
         answers: {
             type: Array,
@@ -99,11 +112,25 @@ export default {
                 { key: 'id', label: '#', _style: 'width: 80px;' },
                 { key: 'question', label: 'QUESTION DETAILS' },
                 { key: 'response', label: 'SUBMITTED ANSWER' }
-            ]
+            ],
+            activePage: 1,
+            perPage: 20
         }
     },
     computed: {
-        ...mapGetters('Setting', ['lang'])
+        ...mapGetters('Setting', ['lang']),
+        totalPages() {
+            return Math.max(1, Math.ceil((this.answers || []).length / this.perPage));
+        },
+        pagedAnswers() {
+            const start = (this.activePage - 1) * this.perPage;
+            return (this.answers || []).slice(start, start + this.perPage);
+        }
+    },
+    watch: {
+        answers() {
+            this.activePage = 1;
+        }
     },
     methods: {
         getTitle(titleArr) {
@@ -133,6 +160,26 @@ export default {
         isFilePath(val) {
             if (typeof val !== 'string') return false;
             return val.includes('\\') || val.includes('/') || val.startsWith('http');
+        },
+        isImagePath(val) {
+            if (typeof val !== 'string') return false;
+            const lower = val.toLowerCase();
+            if (lower.startsWith('data:image/')) return true;
+            return /\.(png|jpe?g|gif|webp|svg)$/i.test(lower);
+        },
+        resolveFileUrl(value) {
+            if (!value || typeof value !== 'string') return '#';
+            if (value.startsWith('data:') || value.startsWith('http://') || value.startsWith('https://')) {
+                return value;
+            }
+
+            const apiBase = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1/';
+            const backendOrigin = apiBase.replace(/\/api\/v1\/?$/, '');
+            if (value.startsWith('/')) {
+                return `${backendOrigin}${value}`;
+            }
+
+            return `${backendOrigin}/${value}`;
         },
         getFileName(path) {
             if (!path) return 'File';
@@ -371,6 +418,14 @@ export default {
 .file-response-link:hover {
     background: #dcfce7;
     transform: translateY(-1px);
+}
+
+.answer-image-preview {
+    max-width: 220px;
+    max-height: 120px;
+    border-radius: 8px;
+    border: 1px solid #dbeafe;
+    object-fit: cover;
 }
 
 .gap-2 {

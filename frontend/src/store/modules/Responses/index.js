@@ -31,6 +31,9 @@ const module = {
                 .catch(err => {
                     const statusCode = err?.response?.status || err?.response?.data?.httpcode;
                     if (statusCode === 404) {
+                        if (data && data._id) {
+                            return null;
+                        }
                         commit('responses', []);
                         return [];
                     }

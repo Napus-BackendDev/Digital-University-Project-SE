@@ -129,6 +129,21 @@
                             </div>
                         </template>
 
+                        <!-- ── FILE UPLOAD ── -->
+                        <template v-else-if="isFileType(q.type)">
+                            <div class="file-responses-grid">
+                                <div v-for="(r, i) in q.responses.slice(0, 6)" :key="i" class="file-response-item">
+                                    <div class="item-index">{{ i + 1 }}</div>
+                                    <div class="item-content">
+                                        <a :href="resolveImageUrl(r)" target="_blank" rel="noopener noreferrer" class="file-link">
+                                            <img v-if="isImageResponse(r)" :src="resolveImageUrl(r)" class="file-image-preview" />
+                                            <span v-else class="item-text">{{ fileNameFromPath(r) }}</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
                         <!-- ── FALLBACK ── -->
                         <template v-else>
                             <div class="text-responses-list">
@@ -361,6 +376,35 @@ export default {
         isRatingType(type) {
             return ['rating', 'rating'].includes((type || '').toLowerCase());
         },
+        isFileType(type) {
+            const t = (type || '').toLowerCase();
+            return t.includes('file');
+        },
+        isImageResponse(value) {
+            if (!value || typeof value !== 'string') return false;
+            const lower = value.toLowerCase();
+            return lower.startsWith('data:image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(lower);
+        },
+        resolveImageUrl(value) {
+            if (!value || typeof value !== 'string') return '#';
+            if (value.startsWith('data:') || value.startsWith('http://') || value.startsWith('https://')) {
+                return value;
+            }
+
+            const apiBase = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1/';
+            const backendOrigin = apiBase.replace(/\/api\/v1\/?$/, '');
+            if (value.startsWith('/')) {
+                return `${backendOrigin}${value}`;
+            }
+
+            return `${backendOrigin}/${value}`;
+        },
+        fileNameFromPath(value) {
+            if (!value || typeof value !== 'string') return 'Attachment';
+            const clean = value.split('?')[0];
+            const parts = clean.split('/');
+            return parts[parts.length - 1] || 'Attachment';
+        },
         choiceColor(idx) {
             const PALETTE = ['#a32a29', '#d9a036', '#723469', '#618a44', '#3d5a92', '#e55353', '#f9c74f', '#90be6d'];
             return PALETTE[idx % PALETTE.length];
@@ -588,6 +632,40 @@ export default {
 
 .custom-btn-dark:hover {
     background-color: #0f172a !important;
+}
+
+.file-responses-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.file-response-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.file-response-item .item-content {
+    flex: 1;
+}
+
+.file-link {
+    display: inline-flex;
+    align-items: center;
+    color: inherit;
+    text-decoration: none;
+}
+
+.file-image-preview {
+    max-width: 220px;
+    max-height: 120px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    object-fit: cover;
 }
 
 ::v-deep .custom-dropdown .dropdown-toggle {

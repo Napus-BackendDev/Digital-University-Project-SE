@@ -192,12 +192,15 @@ export default {
         async fetchResponseDetail() {
             this.loading = true;
             this.error = null;
+            this.response = null;
             try {
                 // Dispatch 'get' action from store to fetch or retrieve the response
                 const result = await this.$store.dispatch('Responses/get', { _id: this.id });
-                
-                if (result) {
-                    this.response = result;
+
+                const doc = Array.isArray(result) ? result[0] : result;
+
+                if (doc && typeof doc === 'object' && doc._id) {
+                    this.response = doc;
                 } else {
                     this.error = "Response not found.";
                 }
