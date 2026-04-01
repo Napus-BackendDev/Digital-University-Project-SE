@@ -82,7 +82,7 @@ exports.onCreate = async function (request, response) {
                 if (questionForFile) {
                     for (let ans of answers) {
                         if (ans && String(ans.question) === String(questionForFile)) {
-                            ans.response = file.path;
+                            ans.response = `/uploads/${file.filename}`;
                             attached = true;
                             break;
                         }
@@ -92,7 +92,7 @@ exports.onCreate = async function (request, response) {
                 if (!attached) {
                     for (let ans of answers) {
                         if (!ans || ans.response === null || ans.response === undefined || ans.response === '') {
-                            ans.response = file.path;
+                            ans.response = `/uploads/${file.filename}`;
                             attached = true;
                             break;
                         }

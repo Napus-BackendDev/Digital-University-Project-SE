@@ -6,7 +6,7 @@ var Schema = mongoose.Schema;
 var objSchema = new Schema(
   {
     responder: { type: Schema.Types.ObjectId, ref: "Users", required: true },
-    form: { type: Schema.Types.ObjectId, ref: "Forms", required: true },
+    form: { type: Schema.Types.ObjectId, ref: "Forms", required: true, index: true },
     answers: [
       {
         question: { type: Schema.Types.ObjectId, ref: "Questions" },

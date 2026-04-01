@@ -1,5 +1,7 @@
-var express = require('./config/express');
-var app = express();
+var expressApp = require('./config/express');
+var express = require('express');
+var app = expressApp();
+app.use(express.static('public'));
 var http = require('http');
 var https = require('https');
 var fs = require('fs');

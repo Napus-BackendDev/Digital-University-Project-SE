@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const response = require('./service/response');
-const upload = require('../../../server/middleware/upload');
+const upload = require('../../../middleware/upload');
 
 router.get("/exp", function (req, res, next) {
     req.query.apiId = 12;

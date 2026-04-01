@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
-    form: { type: mongoose.Schema.Types.ObjectId, ref: 'Forms', required: true },
+    form: { type: mongoose.Schema.Types.ObjectId, ref: 'Forms', required: true, index: true },
     order: { type: Number, default: 1 },
     title: [{
         _id: false,

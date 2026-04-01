@@ -22,7 +22,7 @@ var objSchema = new Schema({
         showAnotherResponseLink: { type: Boolean, default: true }
     },
     responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
-    originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null },
+    originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null, index: true },
 
 }, { timestamps: true });
 
