@@ -371,9 +371,16 @@ export default {
             const list = (this.responses && this.responses.responses) || [];
             const unique = [];
             const seen = new Set();
+
+            const isMeaningful = (r) => {
+                if (!r) return false;
+                if (r.submit === true || r.submit === 'true') return true;
+                return Array.isArray(r.answers) && r.answers.some(a => a && a.response !== null && a.response !== undefined && a.response !== '');
+            };
+
             list.forEach(r => {
                 if (r && r._id && !seen.has(r._id)) {
-                    if (r.submit === true || r.submit === 'true') {
+                    if (isMeaningful(r)) {
                         unique.push(r);
                         seen.add(r._id);
                     }

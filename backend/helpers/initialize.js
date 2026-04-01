@@ -7,7 +7,16 @@ var mongodb = null;
 
 exports.init = function (callback) {
     mongoose.Promise = global.Promise;
-    mongodb = mongoose.connect(cfg.mongoURI);
+    var connectOptions = {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    };
+
+    if (cfg.mongoDbName) {
+        connectOptions.dbName = cfg.mongoDbName;
+    }
+
+    mongodb = mongoose.connect(cfg.mongoURI, connectOptions);
     var db = mongoose.connection;
     db.on('error', function (err) {
         console.log('----- Connect To MongoDB Error Status[' + JSON.stringify(err) + '] -----');

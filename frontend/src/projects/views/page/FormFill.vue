@@ -186,7 +186,7 @@
 
                             <!-- Image -->
                             <img v-else-if="isType(question, 'image') && question.config && question.config.image"
-                                :src="question.config.image" class="question-full-image" alt="" />
+                                :src="resolveImageUrl(question.config.image)" class="question-full-image" alt="" />
 
                             <!-- Fallback -->
                             <CInput v-else v-model="answers[question._id]" :placeholder="$t('form.yourAnswer')"
@@ -278,6 +278,21 @@ export default {
         this.onInit();
     },
     methods: {
+        resolveImageUrl(value) {
+            if (!value || typeof value !== 'string') return '';
+            if (value.startsWith('data:') || value.startsWith('http://') || value.startsWith('https://')) {
+                return value;
+            }
+
+            const apiBase = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1/';
+            const backendOrigin = apiBase.replace(/\/api\/v1\/?$/, '');
+            if (value.startsWith('/')) {
+                return `${backendOrigin}${value}`;
+            }
+
+            return `${backendOrigin}/${value}`;
+        },
+
         async onInit() {
             this.loading = true;
             this.error = null;

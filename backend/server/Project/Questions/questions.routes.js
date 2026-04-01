@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const upload = require('../../../middleware/upload');
 
 const question = require('./service/question');
 
@@ -19,13 +20,13 @@ router.post("/get", function (req, res, next) {
 router.post("", function (req, res, next) {
     req.query.apiId = 13;
     next();
-}, question.onCreate);
+}, upload.single('image'), question.onCreate);
 
 // Update
 router.put("", function (req, res, next) {
     req.query.apiId = 14;
     next();
-}, question.onUpdate);
+}, upload.single('image'), question.onUpdate);
 
 // Delete
 router.delete("", function (req, res, next) {

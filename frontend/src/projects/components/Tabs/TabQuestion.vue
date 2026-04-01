@@ -411,7 +411,7 @@
                                     <CIcon name="cil-image-1" :height="40" class="mb-2" />
                                     <span>{{ $t('builder.clickToChooseImage') }}</span>
                                 </div>
-                                <img v-else :src="question.config.image" class="image-preview" />
+                                <img v-else :src="resolveImageUrl(question.config.image)" class="image-preview" />
                             </div>
                         </div>
 
@@ -580,6 +580,7 @@ export default {
             showImageModal: false,
             modalImageIndex: null,
             modalFiles: '',
+            modalImageFile: null,
             layout: [],
             storedLayout: null,
             gridKey: 0,
@@ -715,6 +716,21 @@ export default {
         }
     },
     methods: {
+        resolveImageUrl(value) {
+            if (!value || typeof value !== 'string') return '';
+            if (value.startsWith('data:') || value.startsWith('http://') || value.startsWith('https://')) {
+                return value;
+            }
+
+            const apiBase = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1/';
+            const backendOrigin = apiBase.replace(/\/api\/v1\/?$/, '');
+            if (value.startsWith('/')) {
+                return `${backendOrigin}${value}`;
+            }
+
+            return `${backendOrigin}/${value}`;
+        },
+
         saveGrid() {
             try {
                 this.storedLayout = this.layout;
@@ -860,7 +876,7 @@ export default {
             this.updateFormMeta();
         },
 
-        async putQuestion(question) {
+        async putQuestion(question, imageFile = null) {
             this.buildGridLayoutFromQuestions();
             if (!question || !question._id) return;
             try {
@@ -868,7 +884,22 @@ export default {
                 if (payload.type && typeof payload.type === 'object') {
                     payload.type = payload.type._id;
                 }
-                await this.$store.dispatch('Questions/update', payload);
+
+                let response;
+                if (imageFile) {
+                    const formData = new FormData();
+                    formData.append('payload', JSON.stringify(payload));
+                    formData.append('image', imageFile);
+                    response = await this.$store.dispatch('Questions/update', formData);
+                } else {
+                    response = await this.$store.dispatch('Questions/update', payload);
+                }
+
+                const updated = response && response.data && response.data.data;
+                if (updated && updated.config && updated.config.image) {
+                    if (!question.config) this.$set(question, 'config', {});
+                    this.$set(question.config, 'image', updated.config.image);
+                }
             } catch (err) {
                 console.error('Failed to update question', err);
             }
@@ -926,7 +957,7 @@ export default {
                 maxText: isParagraph ? 300 : null,
                 maxFiles: isFileUpload ? 1 : null,
                 maxFileSize: isFileUpload ? 1 : null,
-                image: isImage ? this.modalFiles : null,
+                image: null,
                 description: isTitleDescription ? [{ key: 'en', value: 'Description' }] : [],
             };
 
@@ -1119,6 +1150,8 @@ export default {
                 else alert('Image size cannot exceed 5MB');
                 return;
             }
+            this.modalImageFile = file;
+
             const reader = new FileReader();
             reader.onload = (ev) => {
                 this.modalFiles = ev.target.result;
@@ -1127,7 +1160,9 @@ export default {
         },
         openImageModal(qIndex) {
             this.modalImageIndex = qIndex;
-            this.modalFiles = (this.localQuestions[qIndex] && this.localQuestions[qIndex].config && this.localQuestions[qIndex].config.image) || '';
+            this.modalImageFile = null;
+            const imagePath = (this.localQuestions[qIndex] && this.localQuestions[qIndex].config && this.localQuestions[qIndex].config.image) || '';
+            this.modalFiles = this.resolveImageUrl(imagePath);
             this.showImageModal = true;
         },
         async confirmImageQuestion() {
@@ -1138,13 +1173,18 @@ export default {
                     const q = this.localQuestions[this.modalImageIndex];
                     if (q) {
                         if (!q.config) this.$set(q, 'config', {});
-                        this.$set(q.config, 'image', this.modalFiles);
-                        await this.putQuestion(q);
+                        if (this.modalImageFile) {
+                            await this.putQuestion(q, this.modalImageFile);
+                        }
                     }
                 } else {
-                    await this.addQuestion('image');
+                    const created = await this.addQuestion('image');
+                    if (created && this.modalImageFile) {
+                        await this.putQuestion(created, this.modalImageFile);
+                    }
                 }
                 this.showImageModal = false;
+                this.modalImageFile = null;
             } catch (err) {
                 console.error('confirmImageQuestion failed:', err);
             } finally {

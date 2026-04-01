@@ -48,6 +48,7 @@ const module = {
                 const formData = new FormData();
                 formData.append('responder', data.responder);
                 formData.append('form', data.form);
+                formData.append('submit', String(!!data.submit));
 
                 const files = [];
                 const fileQuestions = [];
@@ -85,6 +86,7 @@ const module = {
                 payload = {
                     responder: data.responder,
                     form: data.form,
+                    submit: !!data.submit,
                     answers: (data.answers || []).map(ans => ({
                         question: ans.question,
                         response: Array.isArray(ans.response)
@@ -113,6 +115,9 @@ const module = {
                 formData.append('responder', data.responder);
                 formData.append('form', data.form);
                 if (data._id) formData.append('_id', data._id);
+                if (typeof data.submit !== 'undefined') {
+                    formData.append('submit', String(!!data.submit));
+                }
 
                 // collect all files and their question ids
                 const files = [];

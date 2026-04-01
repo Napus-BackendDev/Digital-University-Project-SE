@@ -3,7 +3,7 @@ const Form = require("../controller/form");
 const ResMessage = require("../../Settings/service/message");
 
 const getApiId = function (request) {
-  return Number(request.body.apiId) || 0;
+  return Number(request.query.apiId || request.body.apiId) || 0;
 };
 
 const getSuccessCode = function (request) {
@@ -44,8 +44,28 @@ exports.onQuery = async function (request, response) {
       },
       { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
       {
-        $project: {
-          responses: 0, // Exclude heavy responses array
+        $lookup: {
+          from: "Responses",
+          let: { form_id: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$form", "$$form_id"] } } },
+            { $sort: { createdAt: -1 } },
+            {
+              $lookup: {
+                from: "Users",
+                localField: "responder",
+                foreignField: "_id",
+                as: "responder",
+              },
+            },
+            { $unwind: { path: "$responder", preserveNullAndEmptyArrays: true } },
+            {
+              $project: {
+                "responder.password": 0,
+              },
+            },
+          ],
+          as: "responses",
         },
       },
     ];

@@ -1,4 +1,5 @@
 const mongo = require("mongodb");
+const path = require("path");
 const responseService = require("../controllers/response");
 const ResMessage = require("../../Settings/service/message");
 const responseModel = require("../model/response.model");
@@ -6,18 +7,84 @@ require("../../Questions/models/questions.model");
 require("express-validator/check");
 
 const getApiId = function (request) {
-    return Number(request.body.apiId) || 0;
+    return Number(request.query.apiId || request.body.apiId) || 0;
 };
 
 const getSuccessCode = function (request) {
     return 20000 + getApiId(request);
 };
 
+const toPlainObject = function (doc) {
+    if (!doc) return doc;
+    return typeof doc.toObject === 'function' ? doc.toObject() : JSON.parse(JSON.stringify(doc));
+};
+
+const sanitizeUser = function (user) {
+    if (!user) return user;
+    const cleanUser = { ...user };
+    delete cleanUser.password;
+    return cleanUser;
+};
+
+const sanitizeResponsePayload = function (doc) {
+    if (!doc) return doc;
+
+    const cleanDoc = toPlainObject(doc);
+
+    if (cleanDoc.responder) {
+        cleanDoc.responder = sanitizeUser(cleanDoc.responder);
+    }
+
+    if (cleanDoc.form) {
+        cleanDoc.form = toPlainObject(cleanDoc.form);
+
+        if (cleanDoc.form.creator && typeof cleanDoc.form.creator === 'object') {
+            cleanDoc.form.creator = sanitizeUser(cleanDoc.form.creator);
+        }
+
+        if (Array.isArray(cleanDoc.form.responses)) {
+            cleanDoc.form.responses = cleanDoc.form.responses.map((item) => {
+                const cleanItem = toPlainObject(item);
+                if (cleanItem && cleanItem.responder) {
+                    cleanItem.responder = sanitizeUser(cleanItem.responder);
+                }
+                return cleanItem;
+            });
+        }
+    }
+
+    return cleanDoc;
+};
+
+const sanitizeResponseListPayload = function (docs) {
+    if (!Array.isArray(docs)) return docs;
+    return docs.map(doc => sanitizeResponsePayload(doc));
+};
+
+const getUploadUrl = function (file) {
+    if (!file) return null;
+
+    const filePath = file.path || '';
+    const normalized = String(filePath).split(path.sep).join('/');
+    const marker = '/public/';
+    const markerIndex = normalized.lastIndexOf(marker);
+
+    if (markerIndex !== -1) {
+        return normalized.slice(markerIndex + '/public'.length);
+    }
+
+    if (file.filename) {
+        return `/uploads/${file.filename}`;
+    }
+
+    return null;
+};
+
 exports.onQuerys = async function (request, response) {
     try {
         var querys = {};
         const doc = await responseService.onQuerys(querys);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponseListPayload(doc));
     } catch (err) {
         return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
     }
@@ -27,7 +94,17 @@ exports.onQuery = async function (request, response) {
     try {
         let query = request.body || {};
 
-        const systemFields = ['apiId', 'token', 'user'];
+        if (query.form_id && !query.form) {
+            query.form = query.form_id;
+        }
+        if (query.responder_id && !query.responder) {
+            query.responder = query.responder_id;
+        }
+        if (query.question_id && !query.question) {
+            query.question = query.question_id;
+        }
+
+        const systemFields = ['apiId', 'token', 'user', 'form_id', 'responder_id', 'question_id'];
         const cleanQuery = {};
         Object.keys(query).forEach(key => {
             if (!systemFields.includes(key) && query[key] !== undefined) {
@@ -47,11 +124,22 @@ exports.onQuery = async function (request, response) {
             }
         });
 
-        const doc = await responseService.onQuery(cleanQuery);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc || null);
+        // If _id is requested, return single document. Otherwise return list by filter.
+        if (cleanQuery._id) {
+            const doc = await responseService.onQuery(cleanQuery);
+
+            if (!doc) {
+                return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found");
+            }
+
+            return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
+        }
+
+        const docs = await responseService.onQuerys(cleanQuery);
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponseListPayload(docs || []));
     } catch (err) {
         console.error("Query response error:", err);
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch response", err.message);
+        return ResMessage.sendResponse(response, getApiId(request), 50000, "Failed to fetch response", err.message);
     }
 };
 
@@ -82,13 +170,14 @@ exports.onCreate = async function (request, response) {
 
             for (let i = 0; i < request.files.length; i++) {
                 const file = request.files[i];
+                const uploadUrl = getUploadUrl(file);
                 const questionForFile = fileQuestions[i] || null;
                 let attached = false;
 
                 if (questionForFile) {
                     for (let ans of answers) {
                         if (ans && String(ans.question) === String(questionForFile)) {
-                            ans.response = `/uploads/${file.filename}`;
+                            ans.response = uploadUrl;
                             attached = true;
                             break;
                         }
@@ -98,7 +187,7 @@ exports.onCreate = async function (request, response) {
                 if (!attached) {
                     for (let ans of answers) {
                         if (!ans || ans.response === null || ans.response === undefined || ans.response === '') {
-                            ans.response = `/uploads/${file.filename}`;
+                            ans.response = uploadUrl;
                             attached = true;
                             break;
                         }
@@ -106,14 +195,14 @@ exports.onCreate = async function (request, response) {
                 }
 
                 if (!attached) {
-                    answers.push({ question: questionForFile || null, response: file.path });
+                    answers.push({ question: questionForFile || null, response: uploadUrl });
                 }
             }
         }
 
         request.body.answers = answers;
         const doc = await responseService.onCreate(request.body);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
     } catch (err) {
         console.error("Create response error:", err);
         return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to create response", err.message);
@@ -145,13 +234,14 @@ exports.onUpdate = async function (request, response) {
 
             for (let i = 0; i < request.files.length; i++) {
                 const file = request.files[i];
+                const uploadUrl = getUploadUrl(file);
                 const questionForFile = fileQuestions[i] || null;
                 let attached = false;
 
                 if (questionForFile) {
                     for (let ans of answers) {
                         if (ans && String(ans.question) === String(questionForFile)) {
-                            ans.response = file.path;
+                            ans.response = uploadUrl;
                             attached = true;
                             break;
                         }
@@ -161,7 +251,7 @@ exports.onUpdate = async function (request, response) {
                 if (!attached) {
                     for (let ans of answers) {
                         if (!ans || ans.response === null || ans.response === undefined || ans.response === '') {
-                            ans.response = file.path;
+                            ans.response = uploadUrl;
                             attached = true;
                             break;
                         }
@@ -169,7 +259,7 @@ exports.onUpdate = async function (request, response) {
                 }
 
                 if (!attached) {
-                    answers.push({ question: questionForFile || null, response: file.path });
+                    answers.push({ question: questionForFile || null, response: uploadUrl });
                 }
             }
         }
@@ -233,7 +323,7 @@ exports.onUpdate = async function (request, response) {
             }
         }
 
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
     } catch (err) {
         console.error("Update response error:", err);
 
@@ -246,8 +336,8 @@ exports.onDelete = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await responseService.onDelete(query);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
+        return ResMessage.sendResponse(response, getApiId(request), 50000, "Failed to delete response", err.message);
     }
 };

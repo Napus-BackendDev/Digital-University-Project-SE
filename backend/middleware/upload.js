@@ -2,9 +2,55 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+const parseMaybeJson = (value) => {
+    if (typeof value !== 'string') {
+        return value;
+    }
+
+    try {
+        return JSON.parse(value);
+    } catch (err) {
+        return value;
+    }
+};
+
+const sanitizeSegment = (value, fallback) => {
+    const raw = value === undefined || value === null || value === '' ? fallback : String(value);
+    return raw.replace(/[^a-zA-Z0-9_-]/g, '_');
+};
+
+const getMergedBody = (req) => {
+    const body = req.body || {};
+    const payload = parseMaybeJson(body.payload);
+
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        return { ...body, ...payload };
+    }
+
+    return body;
+};
+
+const resolveUploadRelativeDir = (req) => {
+    const mergedBody = getMergedBody(req);
+    const formId = sanitizeSegment(mergedBody.form || mergedBody.form_id, 'unknown-form');
+    const responderId = sanitizeSegment(mergedBody.responder || mergedBody.responder_id, 'anonymous');
+    const baseUrl = req.baseUrl || '';
+
+    if (baseUrl.includes('/response')) {
+        return path.join('uploads', 'forms', formId, 'responders', responderId);
+    }
+
+    if (baseUrl.includes('/question')) {
+        return path.join('uploads', 'forms', formId, 'questions');
+    }
+
+    return path.join('uploads', 'misc');
+};
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../public/uploads');
+        const relativeDir = resolveUploadRelativeDir(req);
+        const uploadPath = path.join(__dirname, '../public', relativeDir);
 
         fs.mkdir(uploadPath, { recursive: true }, (err) => {
             if (err) return cb(err, uploadPath);
@@ -14,7 +60,7 @@ const storage = multer.diskStorage({
 
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
-        const filename = `${Date.now()}${ext}`;
+        const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
         cb(null, filename);
     },
 });
