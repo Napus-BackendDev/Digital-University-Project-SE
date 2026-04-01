@@ -17,7 +17,7 @@ var objSchema = new Schema({
     },
     controll: {
         user: { type: Schema.Types.ObjectId, ref: 'Users' },
-        type: { type: Schema.Types.ObjectId, ref: 'Setting_Controll', default: null }
+        type: { type: Schema.Types.ObjectId, ref: 'Setting_Controll' }
     },
     settings: {
         whoCanRespond: { type: Schema.Types.ObjectId, ref: 'Setting_Respond', default: null },
