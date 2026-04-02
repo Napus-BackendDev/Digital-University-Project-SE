@@ -50,8 +50,15 @@
                 <CRow>
                     <CCol md="10" class="mb-3">
                         <label class="mb-2 font-weight-bold small">{{ $t('editor.settings.organization.name') }}</label>
-                        <CSelect :options="organizationOptions" :value="selectedOrgId" :placeholder="$t('editor.settings.organization.selectPlaceholder')"
-                            class="form-select-custom" @update:value="(val) => { selectedOrgId = val; }" />
+                        <v-select 
+                            :options="organizationOptions" 
+                            v-model="selectedOrgId" 
+                            multiple
+                            :close-on-select="false"
+                            :reduce="org => org.value"
+                            :placeholder="$t('editor.settings.organization.selectPlaceholder')"
+                            class="form-select-custom" 
+                        />
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <CButton color="primary" block style="height: 45px; border-radius: 8px;"
@@ -91,10 +98,12 @@
                 <CRow>
                     <CCol md="10" class="mb-3">
                         <label class="mb-2 font-weight-bold small">{{ $t('editor.settings.organization.emailPlaceholder') }}</label>
-                        <CSelect 
+                        <v-select 
                             :options="userOptions" 
-                            :value="newUserId"
-                            @update:value="(val) => { newUserId = val }"
+                            v-model="newUserId"
+                            multiple
+                            :close-on-select="false"
+                            :reduce="user => user.value"
                             :placeholder="$t('editor.settings.organization.emailPlaceholder')"
                             class="form-select-custom"
                         />
@@ -120,9 +129,16 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import localeMixin from '@/mixins/localeMixin'
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
 
 export default {
     name: 'OrganizationControl',
+    mixins: [localeMixin],
+    components: {
+        vSelect
+    },
     props: {
         settings: {
             type: Object,
@@ -131,8 +147,8 @@ export default {
     },
     data() {
         return {
-            selectedOrgId: null,
-            newUserId: null
+            selectedOrgId: [],
+            newUserId: []
         }
     },
     computed: {
@@ -148,13 +164,10 @@ export default {
         organizationOptions() {
             if (!this.organizations || this.organizations.length === 0) return [];
             return this.organizations.map(o => {
-                // Extract English title
-                let label = 'Unknown Org';
-                if (Array.isArray(o.title)) {
-                    const en = o.title.find(t => t && t.key === 'en');
-                    label = en ? en.value : (o.title[0] ? o.title[0].value : 'Unnamed');
-                }
-                return { label: label, value: o._id };
+                return { 
+                    label: this.getLang(o.title), 
+                    value: o._id 
+                };
             });
         }
     },
@@ -196,18 +209,20 @@ export default {
             return org.name || org.title || (org._id ? String(org._id) : 'Unnamed');
         },
         addOrganization() {
-            if (!this.selectedOrgId) return;
+            if (!this.selectedOrgId || this.selectedOrgId.length === 0) return;
 
             // Initialize settings.organization if it doesn't exist
             if (!this.settings.organization) {
                 this.$set(this.settings, 'organization', []);
             }
 
-            if (this.settings.organization.includes(this.selectedOrgId)) {
-                return;
-            }
-            this.settings.organization.push(this.selectedOrgId);
-            this.selectedOrgId = null;
+            this.selectedOrgId.forEach(orgId => {
+                if (!this.settings.organization.includes(orgId)) {
+                    this.settings.organization.push(orgId);
+                }
+            });
+
+            this.selectedOrgId = [];
             this.triggerAutoSave();
         },
         removeOrganization(index) {
@@ -215,8 +230,7 @@ export default {
             this.triggerAutoSave();
         },
         addUser() {
-            if (!this.newUserId) return;
-            const userId = String(typeof this.newUserId === 'object' ? (this.newUserId.value || this.newUserId._id) : this.newUserId);
+            if (!this.newUserId || this.newUserId.length === 0) return;
 
             if (!this.settings.settings) {
                 this.$set(this.settings, 'settings', {});
@@ -225,18 +239,21 @@ export default {
                 this.$set(this.settings.settings, 'allowedUser', []);
             }
 
-            const exists = this.settings.settings.allowedUser.some(u => {
-                const id = String(typeof u === 'object' ? (u._id || u.value) : u);
-                return id === userId;
-            });
-            if (exists) {
-                this.newUserId = null;
-                return;
-            }
+            this.newUserId.forEach(val => {
+                const userId = String(typeof val === 'object' ? (val.value || val._id) : val);
 
-            const fullUser = Array.isArray(this.users) ? this.users.find(u => String(u._id) === userId) : null;
-            this.settings.settings.allowedUser.push(fullUser || userId);
-            this.newUserId = null;
+                const exists = this.settings.settings.allowedUser.some(u => {
+                    const id = String(typeof u === 'object' ? (u._id || u.value) : u);
+                    return id === userId;
+                });
+
+                if (!exists) {
+                    const fullUser = Array.isArray(this.users) ? this.users.find(u => String(u._id) === userId) : null;
+                    this.settings.settings.allowedUser.push(fullUser || userId);
+                }
+            });
+
+            this.newUserId = [];
             this.triggerAutoSave();
         },
         removeUser(index) {
@@ -280,11 +297,66 @@ export default {
 }
 
 .form-select-custom {
-    height: 45px;
+    min-height: 45px;
     background-color: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
     transition: all 0.3s ease;
+}
+
+/* v-select custom styling to match system */
+.form-select-custom.v-select >>> .vs__dropdown-toggle {
+    min-height: 45px !important;
+    background-color: #f8f9fa !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 2px 0.5rem;
+}
+
+.form-select-custom.v-select >>> .vs__selected-options {
+    padding: 0;
+    max-height: 120px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 0;
+}
+
+/* Hide scrollbar but keep functionality */
+.form-select-custom.v-select >>> .vs__selected-options::-webkit-scrollbar {
+    display: none;
+}
+
+.form-select-custom.v-select >>> .vs__selected {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    padding: 2px 8px !important;
+    margin: 0 !important;
+    font-size: 0.85rem !important;
+    color: #475569 !important;
+    max-width: 250px !important;
+    display: inline-flex;
+    align-items: center;
+}
+
+.form-select-custom.v-select >>> .vs__deselect {
+    margin-left: 4px !important;
+    transform: scale(0.85);
+    fill: #94a3b8 !important;
+}
+
+.form-select-custom.v-select >>> .vs__search {
+    margin: 0;
+    padding: 0 0.25rem;
+    min-height: 38px;
+    flex-grow: 1;
+}
+
+.form-select-custom.v-select.vs--open >>> .vs__dropdown-toggle {
+    border-color: #6366f1 !important;
+    background-color: #fff !important;
 }
 
 .form-select-custom:focus {

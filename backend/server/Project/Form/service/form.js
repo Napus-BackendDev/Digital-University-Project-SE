@@ -45,6 +45,20 @@ exports.onQuery = async function (request, response) {
       { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
+          from: "Users",
+          localField: "creator",
+          foreignField: "_id",
+          as: "creator",
+        },
+      },
+      { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          "creator.password": 0,
+        },
+      },
+      {
+        $lookup: {
           from: "Responses",
           let: { form_id: "$_id" },
           pipeline: [
@@ -71,7 +85,7 @@ exports.onQuery = async function (request, response) {
     ];
 
     const results = await Form.onAggregate(pipeline);
-    
+
     if (results.length === 0) {
       return ResMessage.sendResponse(response, getApiId(request), 40400, "Form not found");
     }
@@ -116,6 +130,23 @@ exports.onQuerys = async function (request, response) {
         },
       },
       { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "Users",
+          localField: "creator",
+          foreignField: "_id",
+          as: "creator",
+        },
+      },
+      {
+        $lookup: {
+          from: "Organizations",
+          localField: "organization",
+          foreignField: "_id",
+          as: "organization",
+        }
+      },
+      { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
           // Instead of fetching all responses, just count submitted ones

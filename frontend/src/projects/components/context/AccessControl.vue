@@ -28,19 +28,24 @@
                 <CRow>
                     <CCol md="6" class="mb-3">
                         <label class="mb-2 font-weight-bold small text-muted d-block">{{ $t('editor.settings.access.emailPlaceholder') }}</label>
-                        <CSelect 
+                        <v-select 
                             :options="userOptions" 
-                            :value.sync="selectedUser"
+                            v-model="selectedUser"
+                            multiple
+                            :close-on-select="false"
+                            :reduce="user => user.value"
                             :placeholder="$t('editor.settings.access.emailPlaceholder')"
                             class="form-select-custom"
                         />
                     </CCol>
                     <CCol md="4" class="mb-3">
                         <label class="mb-2 font-weight-bold small text-muted d-block">{{ $t('editor.settings.access.role') || 'Role' }}</label>
-                        <CSelect 
+                        <v-select 
                             :options="controllOptions" 
-                            :value.sync="newCollaborator.type"
+                            v-model="newCollaborator.type"
+                            :reduce="role => role.value"
                             class="form-select-custom"
+                            :clearable="false"
                         />
                     </CCol>
                     <CCol md="2" class="mb-3">
@@ -74,10 +79,15 @@
 <script>
 import { mapGetters } from 'vuex';
 import localeMixin from '@/mixins/localeMixin'
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
 
 export default {
     name: 'AccessControl',
     mixins: [localeMixin],
+    components: {
+        vSelect
+    },
     props: {
         settings: {
             type: Object,
@@ -86,7 +96,7 @@ export default {
     },
     data() {
         return {
-            selectedUser: null,
+            selectedUser: [],
             newCollaborator: {
                 type: null
             }
@@ -176,27 +186,30 @@ export default {
             }
         },
         addCollaborator() {
-            if (!this.selectedUser || !this.newCollaborator.type) return;
+            if (!this.selectedUser || this.selectedUser.length === 0 || !this.newCollaborator.type) return;
 
             if (!Array.isArray(this.settings.controll)) {
                 this.$set(this.settings, 'controll', []);
             }
 
-            const userObj = this.users ? this.users.find(u => u.email === this.selectedUser) : null;
-            if (!userObj) return;
+            this.selectedUser.forEach(email => {
+                const userObj = this.users ? this.users.find(u => u.email === email) : null;
+                if (!userObj) return;
 
-            const exists = this.settings.controll.find(c => {
-                 let uId = (c.user && c.user._id) ? c.user._id : c.user;
-                 return String(uId) === String(userObj._id);
+                const exists = this.settings.controll.find(c => {
+                    let uId = (c.user && c.user._id) ? c.user._id : c.user;
+                    return String(uId) === String(userObj._id);
+                });
+
+                if (!exists) {
+                    this.settings.controll.push({
+                        user: userObj._id,
+                        type: this.newCollaborator.type
+                    });
+                }
             });
-            if (exists) return;
 
-            this.settings.controll.push({
-                user: userObj._id,
-                type: this.newCollaborator.type
-            });
-
-            this.selectedUser = null;
+            this.selectedUser = [];
             this.triggerAutoSave();
         },
         removeCollaborator(index) {
@@ -219,7 +232,7 @@ export default {
 }
 
 .form-select-custom {
-    height: 45px !important;
+    min-height: 45px !important;
     background-color: #f8f9fa !important;
     border-radius: 8px !important;
     border: 1px solid #e2e8f0 !important;
@@ -230,6 +243,61 @@ export default {
 .form-select-custom:focus-within {
     border-color: #6366f1 !important;
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* v-select custom styling to match system */
+.form-select-custom.v-select >>> .vs__dropdown-toggle {
+    min-height: 45px !important;
+    background-color: #f8f9fa !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 2px 0.5rem;
+}
+
+.form-select-custom.v-select >>> .vs__selected-options {
+    padding: 0;
+    max-height: 120px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 0;
+}
+
+/* Hide scrollbar but keep functionality */
+.form-select-custom.v-select >>> .vs__selected-options::-webkit-scrollbar {
+    display: none;
+}
+
+.form-select-custom.v-select >>> .vs__selected {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    padding: 2px 8px !important;
+    margin: 0 !important;
+    font-size: 0.85rem !important;
+    color: #475569 !important;
+    max-width: 250px !important;
+    display: inline-flex;
+    align-items: center;
+}
+
+.form-select-custom.v-select >>> .vs__deselect {
+    margin-left: 4px !important;
+    transform: scale(0.85);
+    fill: #94a3b8 !important;
+}
+
+.form-select-custom.v-select >>> .vs__search {
+    margin: 0;
+    padding: 0 0.25rem;
+    min-height: 38px;
+    flex-grow: 1;
+}
+
+.form-select-custom.v-select.vs--open >>> .vs__dropdown-toggle {
+    border-color: #6366f1 !important;
+    background-color: #fff !important;
 }
 
 .org-list {

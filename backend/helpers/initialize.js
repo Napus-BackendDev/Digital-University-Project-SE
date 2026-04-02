@@ -7,10 +7,7 @@ var mongodb = null;
 
 exports.init = function (callback) {
     mongoose.Promise = global.Promise;
-    var connectOptions = {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    };
+    var connectOptions = {};
 
     if (cfg.mongoDbName) {
         connectOptions.dbName = cfg.mongoDbName;
@@ -30,6 +27,6 @@ exports.init = function (callback) {
         return callback(true);
     });
 
-    db.on('connected',console.info.bind(console,"MongoDB connection is connected:"))
+    db.on('connected', console.info.bind(console, "MongoDB connection is connected:"))
 };
 //db.createUser({user:"securitys",pwd:"Zk8K3BE3k8ASEr4A",roles:[{role:"readWrite",db:"securitys"}]})

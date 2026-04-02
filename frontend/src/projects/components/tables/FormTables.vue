@@ -13,9 +13,11 @@
                     <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
                     <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
                     <div class="mt-2" v-if="item.submissionCount > 0">
-                        <CBadge color="success" shape="pill" style="font-size: 0.7rem; font-weight: 500; padding: 0.3em 0.8em;">
+                        <CBadge color="success" shape="pill"
+                            style="font-size: 0.7rem; font-weight: 500; padding: 0.3em 0.8em;">
                             <CIcon name="cil-check-alt" size="sm" class="mr-1" />
-                            {{ $t('table.submittedCount', { count: item.submissionCount }) || `Submitted ${item.submissionCount} times` }}
+                            {{ $t('table.submittedCount', { count: item.submissionCount }) || `Submitted
+                            ${item.submissionCount} times` }}
                         </CBadge>
                     </div>
                 </td>
@@ -145,8 +147,10 @@ export default {
         baseTableData() {
             if (!this.forms || this.forms.length === 0) return [];
 
+            console.log(this.forms)
+
             const currentUser = this.user;
-            
+
             // Determine if current user is Admin
             let isAdmin = false;
             if (currentUser && currentUser.role) {
@@ -273,9 +277,9 @@ export default {
                         progress = Math.min(100, Math.round((userAnswerCount / totalQuestions) * 100));
                     }
 
-                    const isSubmitted = userResponse.submit === true || 
-                                       userResponse.submit === 1 || 
-                                       String(userResponse.submit).toLowerCase() === 'true';
+                    const isSubmitted = userResponse.submit === true ||
+                        userResponse.submit === 1 ||
+                        String(userResponse.submit).toLowerCase() === 'true';
 
                     if (isSubmitted) {
                         status = 'Completed';
@@ -285,7 +289,7 @@ export default {
                     }
                 }
 
-                const submissionCount = matchedResponses.filter(r => 
+                const submissionCount = matchedResponses.filter(r =>
                     r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true'
                 ).length;
 
@@ -327,12 +331,12 @@ export default {
                 const formOrgIds = (Array.isArray(f.organization) ? f.organization : [f.organization]).map(o => (o?._id || o)?.toString());
                 const isPublic = isPublicForm;
                 const isMember = userOrgId && formOrgIds.includes(userOrgId.toString());
-                const isAllowedUser = f.settings && Array.isArray(f.settings.allowedUser) && 
-                                     f.settings.allowedUser.some(u => {
-                                         const id = String(typeof u === 'object' ? (u._id || u.value) : u);
-                                         return currentUser?._id && id === String(currentUser._id);
-                                     });
-                
+                const isAllowedUser = f.settings && Array.isArray(f.settings.allowedUser) &&
+                    f.settings.allowedUser.some(u => {
+                        const id = String(typeof u === 'object' ? (u._id || u.value) : u);
+                        return currentUser?._id && id === String(currentUser._id);
+                    });
+
                 // Admins can enter all forms they view in this table
                 const canEnter = isAdmin || isPublic || isMember || isAllowedUser;
 
@@ -368,14 +372,14 @@ export default {
 
                 // 3. Schedule Check
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
-                
+
                 // If no schedule, assume it's always open (Unless defined otherwise)
                 if (!sched.startAt && !sched.endAt) return true;
 
                 let isInTimeRange = true;
                 if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
                 if (sched.endAt && now > new Date(sched.endAt)) isInTimeRange = false;
-                
+
                 return isInTimeRange;
             });
 
