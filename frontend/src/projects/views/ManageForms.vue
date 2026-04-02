@@ -59,9 +59,17 @@ export default {
 
                     // Collaborator check
                     if (Array.isArray(f.controll)) {
-                        return f.controll.some(c => {
+                        if (f.controll.some(c => {
                             const collabUserId = c.user && typeof c.user === 'object' ? c.user._id : c.user;
                             return String(collabUserId) === String(currentUserId);
+                        })) return true;
+                    }
+
+                    // Authorized User check (settings.allowedUser)
+                    if (f.settings && Array.isArray(f.settings.allowedUser)) {
+                        return f.settings.allowedUser.some(u => {
+                            const allowedId = u && typeof u === 'object' ? u._id : u;
+                            return String(allowedId) === String(currentUserId);
                         });
                     }
 

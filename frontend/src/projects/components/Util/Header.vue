@@ -93,7 +93,6 @@ export default {
                     settings: {
                         startDateTime: '',
                         endDateTime: '',
-                        whoCanRespond: null,
                         collectEmail: false,
                         limitResponse: false,
                         emailNotifications: false,

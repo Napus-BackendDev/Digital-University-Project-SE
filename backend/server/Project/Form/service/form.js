@@ -53,8 +53,17 @@ exports.onQuery = async function (request, response) {
       },
       { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
       {
+        $lookup: {
+          from: "Users",
+          localField: "settings.allowedUser",
+          foreignField: "_id",
+          as: "settings.allowedUser",
+        },
+      },
+      {
         $project: {
           "creator.password": 0,
+          "settings.allowedUser.password": 0,
         },
       },
       {
@@ -146,6 +155,14 @@ exports.onQuerys = async function (request, response) {
           as: "organization",
         }
       },
+      {
+        $lookup: {
+          from: "Users",
+          localField: "settings.allowedUser",
+          foreignField: "_id",
+          as: "settings.allowedUser",
+        },
+      },
       { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
@@ -175,6 +192,8 @@ exports.onQuerys = async function (request, response) {
         $project: {
           responses: 0, // Exclude the array of IDs
           submittedResponses: 0,
+          "settings.allowedUser.password": 0,
+          "creator.password": 0,
         }
       }
     ];

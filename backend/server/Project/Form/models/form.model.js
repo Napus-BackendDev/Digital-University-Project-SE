@@ -20,7 +20,6 @@ var objSchema = new Schema({
         type: { type: Schema.Types.ObjectId, ref: 'Setting_Controll' }
     }],
     settings: {
-        whoCanRespond: { type: Schema.Types.ObjectId, ref: 'Setting_Respond', default: null },
         collectEmail: { type: Boolean, default: false },
         limitResponse: { type: Boolean, default: false },
         emailNotifications: { type: Boolean, default: false },
