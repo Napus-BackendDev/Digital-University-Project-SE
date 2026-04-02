@@ -29,7 +29,7 @@ var port = cfg.host.port;
 // var options = {
 //     key : fs.readFileSync('/etc/letsencrypt/live/finnext.io/privkey.pem'),
 //     cert : fs.readFileSync('/etc/letsencrypt/live/finnext.io/fullchain.pem'),
-    // passphrase : cfg.passphrase
+// passphrase : cfg.passphrase
 // };
 
 /**

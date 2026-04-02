@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 
 // Import Models
 const Form = require('./server/Project/Form/models/form.model');
-const Response = require('./server/Project/Response/model/response.model');
+const Response = require('./server/Project/Response/models/response.model');
 const User = require('./server/Project/User/models/user.model');
 const Role = require('./server/Project/User/models/roles.model');
 const Questions = require('./server/Project/Questions/models/questions.model');

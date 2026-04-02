@@ -15,7 +15,11 @@ const parseMaybeJson = (value) => {
 };
 
 const sanitizeSegment = (value, fallback) => {
+    if (value && typeof value === 'object') {
+        value = value._id || value.id || value;
+    }
     const raw = value === undefined || value === null || value === '' ? fallback : String(value);
+    // Remove characters that might break filesystem paths
     return raw.replace(/[^a-zA-Z0-9_-]/g, '_');
 };
 
@@ -37,7 +41,7 @@ const resolveUploadRelativeDir = (req) => {
     const baseUrl = req.baseUrl || '';
 
     if (baseUrl.includes('/response')) {
-        return path.join('uploads', 'forms', formId, 'responders', responderId);
+        return path.join('uploads', 'forms', formId, 'responses', responderId);
     }
 
     if (baseUrl.includes('/question')) {

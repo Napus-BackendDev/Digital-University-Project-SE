@@ -3,7 +3,7 @@ var objSchema = require("../models/form.model");
 const createBaseService = require("../../../../helpers/base.service")
 
 const defaultPopulate = [
-    { path: 'creator' },
+    { path: 'creator', select: '-password' },
     { path: 'organization', select: 'title' },
     { path: 'responses', select: 'submit createdAt' },
     { path: 'questions', select: 'type nextQuestion' },

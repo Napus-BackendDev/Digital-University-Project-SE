@@ -3,6 +3,12 @@ const router = express.Router();
 const upload = require('../../../middleware/upload');
 
 const question = require('./service/question');
+const {
+    validateQuestionCreate,
+    validateQuestionGetById,
+    validateQuestionUpdate,
+    validateQuestionDelete
+} = require('../../../middleware/validate');
 
 // Get All
 router.get("/exp", function (req, res, next) {
@@ -14,24 +20,24 @@ router.get("/exp", function (req, res, next) {
 router.post("/get", function (req, res, next) {
     req.query.apiId = 11;
     next();
-}, question.onQuery);
+}, validateQuestionGetById, question.onQuery);
 
 // Create
 router.post("", function (req, res, next) {
     req.query.apiId = 13;
     next();
-}, upload.single('image'), question.onCreate);
+}, upload.single('image'), validateQuestionCreate, question.onCreate);
 
 // Update
 router.put("", function (req, res, next) {
     req.query.apiId = 14;
     next();
-}, upload.single('image'), question.onUpdate);
+}, upload.single('image'), validateQuestionUpdate, question.onUpdate);
 
 // Delete
 router.delete("", function (req, res, next) {
     req.query.apiId = 15;
     next();
-}, question.onDelete);
+}, validateQuestionDelete, question.onDelete);
 
 module.exports = router;

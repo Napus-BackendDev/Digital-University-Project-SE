@@ -6,13 +6,16 @@ const settingsRoutes = require("../Project/Settings/setting.routes");
 // const authRoutes = require("../Project/Auth/auth.routes");
 const userRoutes = require("../Project/User/user.routes");
 const organizationRoutes = require("../Project/Organizations/organization.routes");
-
+const healthRoutes = require("./health.routes");
 module.exports = function (app) {
-  path = "/api/v1";
+  const path = "/api/v1";
 
   // Auth routes (no prefix needed — mounted at /auth)
   // app.use('/auth', authRoutes);
 
+  
+  
+  app.use(path + '/health', healthRoutes);
   app.use(path + '/form', formRoutes);
   app.use(path + '/question', questionRoutes);
   app.use(path + '/response', responseRoutes);

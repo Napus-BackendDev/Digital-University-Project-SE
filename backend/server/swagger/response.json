@@ -2,265 +2,128 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Response API",
-    "version": "1.0.0",
-    "description": "Response endpoints"
+    "version": "1.0.0"
   },
   "tags": [{ "name": "Response" }],
   "paths": {
-    "/response/getByFormId": {
-      "post": {
+    "/response/exp": {
+      "get": {
         "tags": ["Response"],
-        "summary": "Get all responses by form ID",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["form_id"],
-                "properties": {
-                  "apiId": { "type": "integer", "description": "Always send 1 for this endpoint", "example": 1 },
-                  "form_id": { "type": "string", "description": "MongoDB ObjectId of the form", "example": "64e1f9f32a6d1c0013a1b234" }
+        "summary": "Get all responses (apiId: 1)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Response" } }
+                      }
+                    }
+                  ]
                 }
-              },
-              "example": {
-                "apiId": 1,
-                "form_id": "64e1f9f32a6d1c0013a1b234"
               }
             }
           }
-        },
-        "responses": {
-          "200": { "description": "Array of response documents for the form" },
-          "500": { "description": "Server error" }
         }
       }
     },
-    "/response/getById": {
+    "/response/get": {
       "post": {
         "tags": ["Response"],
-        "summary": "Get a single response by its ID",
+        "summary": "Query responses (apiId: 2)",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["_id"],
                 "properties": {
-                  "apiId": { "type": "integer", "description": "Always send 2 for this endpoint", "example": 2 },
-                  "_id": { "type": "string", "description": "MongoDB ObjectId of the response", "example": "64e1f9f32a6d1c0013a1b777" }
+                  "apiId": { "type": "integer", "example": 2 },
+                  "_id": { "type": "string" },
+                  "form_id": { "type": "string" }
                 }
-              },
-              "example": {
-                "apiId": 2,
-                "_id": "64e1f9f32a6d1c0013a1b777"
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Response document" },
-          "404": { "description": "Response not found" },
-          "500": { "description": "Server error" }
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "oneOf": [{ "$ref": "#/components/schemas/Response" }, { "type": "array", "items": { "$ref": "#/components/schemas/Response" } }] }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
         }
       }
     },
     "/response": {
       "post": {
         "tags": ["Response"],
-        "summary": "Create a new response (submit form answers)",
+        "summary": "Submit response (apiId: 3)",
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["responder", "form", "answers"],
                 "properties": {
-                  "apiId": { "type": "integer", "description": "Always send 3 for this endpoint", "example": 3 },
-                  "responder": { "type": "string", "description": "MongoDB ObjectId of the user submitting", "example": "64e1f9f32a6d1c0013a1b999" },
-                  "form": { "type": "string", "description": "MongoDB ObjectId of the form being answered", "example": "64e1f9f32a6d1c0013a1b234" },
-                  "answers": {
-                    "type": "array",
-                    "description": "Array of question-answer pairs",
-                    "items": {
-                      "type": "object",
-                      "required": ["question", "response"],
-                      "properties": {
-                        "question": { "type": "string", "description": "MongoDB ObjectId of the question", "example": "64e1f9f32a6d1c0013a1b111" },
-                        "response": { "type": "string", "description": "The answer value (text, number, option key, etc.)", "example": "John Doe" }
-                      }
-                    }
-                  }
+                  "apiId": { "type": "integer", "example": 3 },
+                  "form": { "type": "string" },
+                  "responder": { "type": "string" },
+                  "answers": { "type": "string" },
+                  "files": { "type": "array", "items": { "type": "string", "format": "binary" } }
                 }
-              },
-              "example": {
-                "apiId": 3,
-                "responder": "64e1f9f32a6d1c0013a1b999",
-                "form": "64e1f9f32a6d1c0013a1b234",
-                "answers": [
-                  { "question": "64e1f9f32a6d1c0013a1b111", "response": "John Doe" },
-                  { "question": "64e1f9f32a6d1c0013a1b112", "response": "25" },
-                  { "question": "64e1f9f32a6d1c0013a1b113", "response": "Very Satisfied" }
-                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Response created successfully" },
-          "400": { "description": "Validation error — responder, form and answers are required" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponse" } } } }
         }
       },
       "put": {
         "tags": ["Response"],
-        "summary": "Update an existing response",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["_id"],
-                "properties": {
-                  "apiId": { "type": "integer", "description": "Always send 4 for this endpoint", "example": 4 },
-                  "_id": { "type": "string", "description": "MongoDB ObjectId of the response to update", "example": "64e1f9f32a6d1c0013a1b777" },
-                  "answers": {
-                    "type": "array",
-                    "description": "Replacement answers array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "question": { "type": "string", "description": "MongoDB ObjectId of the question", "example": "64e1f9f32a6d1c0013a1b111" },
-                        "response": { "type": "string", "description": "Updated answer value", "example": "Jane Doe" }
-                      }
-                    }
-                  }
-                }
-              },
-              "example": {
-                "apiId": 4,
-                "_id": "64e1f9f32a6d1c0013a1b777",
-                "answers": [
-                  { "question": "64e1f9f32a6d1c0013a1b111", "response": "Jane Doe" },
-                  { "question": "64e1f9f32a6d1c0013a1b112", "response": "30" }
-                ]
-              }
-            }
-          }
-        },
+        "summary": "Update response (apiId: 4)",
         "responses": {
-          "200": { "description": "Response updated successfully" },
-          "404": { "description": "Response not found" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponse" } } } }
         }
       },
       "delete": {
         "tags": ["Response"],
-        "summary": "Delete a response by its ID",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["_id"],
-                "properties": {
-                  "apiId": { "type": "integer", "description": "Always send 5 for this endpoint", "example": 5 },
-                  "_id": { "type": "string", "description": "MongoDB ObjectId of the response to delete", "example": "64e1f9f32a6d1c0013a1b777" }
-                }
-              },
-              "example": {
-                "apiId": 5,
-                "_id": "64e1f9f32a6d1c0013a1b777"
-              }
-            }
-          }
-        },
+        "summary": "Delete response (apiId: 5)",
         "responses": {
-          "200": { "description": "Response deleted" },
-          "500": { "description": "Server error" }
+          "200": { "description": "Success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponse" } } } }
         }
       }
-    },
-    "/response/deleteByFormId": {
-      "delete": {
-        "tags": ["Response"],
-        "summary": "Delete all responses belonging to a form",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["form_id"],
-                "properties": {
-                  "apiId": { "type": "integer", "description": "Always send 6 for this endpoint", "example": 6 },
-                  "form_id": { "type": "string", "description": "MongoDB ObjectId of the form", "example": "64e1f9f32a6d1c0013a1b234" }
-                }
-              },
-              "example": {
-                "apiId": 6,
-                "form_id": "64e1f9f32a6d1c0013a1b234"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "All responses for the form deleted" },
-          "500": { "description": "Server error" }
-        }
-      }
-    },
-    "/response/download/{form_id}/response/{_id}": {
-      "get": {
-        "tags": ["Response"],
-        "summary": "Download a specific response as a JSON file",
-        "parameters": [
-          {
-            "name": "form_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "MongoDB ObjectId of the form",
-            "example": "64e1f9f32a6d1c0013a1b234"
-          },
-          {
-            "name": "_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "MongoDB ObjectId of the specific response",
-            "example": "64e1f9f32a6d1c0013a1b777"
-          }
-        ],
-        "responses": {
-          "200": { "description": "Downloads a JSON file with the response and its populated answers" },
-          "404": { "description": "No responses found" },
-          "500": { "description": "Server error" }
-        }
-      }
-    },
-    "/api/v1/response/download/{form_id}": {
-      "get": {
-        "tags": ["Response"],
-        "summary": "Download all responses of a form as a JSON file",
-        "parameters": [
-          {
-            "name": "form_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "MongoDB ObjectId of the form",
-            "example": "64e1f9f32a6d1c0013a1b234"
-          }
-        ],
-        "responses": {
-          "200": { "description": "Downloads a JSON file with all responses and populated answers" },
-          "404": { "description": "No responses found" },
-          "500": { "description": "Server error" }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Response": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "form": { "type": "object" },
+          "responder": { "type": "object" },
+          "answers": { "type": "array", "items": { "type": "object" } },
+          "createdAt": { "type": "string", "format": "date-time" }
         }
       }
     }
