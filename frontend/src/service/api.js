@@ -17,6 +17,8 @@ export default {
     switch (method) {
       case 'exp':
         return instance.get('form/exp', { params: data })
+      case 'getByUser':
+        return instance.get(`form/user/${data.userId}`, { params: data })
       case 'get':
         return instance.post('form/get', data)
       case 'create':

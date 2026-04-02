@@ -63,9 +63,19 @@ export default {
             const res = await api.user('exp');
             const data = res && res.data && res.data.data;
             if (Array.isArray(data)) {
-                this.usersList = data;
-                if (!this.$store.state.User.user && data.length > 0) {
-                    this.$store.commit('User/user', data[0]);
+                // Ensure unique users by ID to prevent duplicate list items
+                const uniqueUsers = [];
+                const seenIds = new Set();
+                data.forEach(u => {
+                    if (u && u._id && !seenIds.has(u._id)) {
+                        seenIds.add(u._id);
+                        uniqueUsers.push(u);
+                    }
+                });
+                
+                this.usersList = uniqueUsers;
+                if (!this.$store.state.User.user && uniqueUsers.length > 0) {
+                    this.$store.commit('User/user', uniqueUsers[0]);
                 }
             }
         } catch (e) {
@@ -91,8 +101,10 @@ export default {
         },
         async switchUser(u) {
             try {
+                // Clear existing forms to prevent stale data visibility
+                this.$store.dispatch('Forms/clear');
+                
                 // Fetch the full user details with population from the backend
-                // This is needed because 'api.user(exp)' only returns a light version
                 await this.$store.dispatch('User/get', { _id: u._id });
             } catch (e) {
                 console.error('Failed to switch user', e);

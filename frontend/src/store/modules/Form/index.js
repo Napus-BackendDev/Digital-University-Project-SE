@@ -15,13 +15,28 @@ const ServerModule = {
         forms(state, forms) {
             state.forms = forms;
         },
+        clearForms(state) {
+            state.forms = [];
+        },
         setDuplicateBuffer(state, data) {
             state.duplicateBuffer = data;
         }
     },
     actions: {
+        clear({ commit }) {
+            commit('clearForms');
+        },
         get({ commit }, data) {
             return Service.form('exp', data, {})
+                .then(response => {
+                    commit('forms', response.data.data);
+                    return response;
+                })
+                .catch(error => { throw error; });
+        },
+        getByUser({ commit }, data) {
+            if (!data || !data.userId) return Promise.reject("userId is required");
+            return Service.form('getByUser', data, {})
                 .then(response => {
                     commit('forms', response.data.data);
                     return response;
