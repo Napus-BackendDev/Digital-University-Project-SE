@@ -325,6 +325,13 @@ export default {
                 try {
                     await this.$store.dispatch('Responses/delete', { _id: this.id });
                     alert("Response deleted successfully.");
+                    
+                    // Redirect back to the form's responses list or a fallback
+                    if (this.backRoute) {
+                        this.$router.push(this.backRoute);
+                    } else {
+                        this.$router.push('/forms');
+                    }
                 } catch (err) {
                     console.error("Error deleting response:", err);
                     alert("An error occurred while deleting the response.");

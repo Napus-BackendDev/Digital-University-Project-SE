@@ -2,7 +2,7 @@ const mongo = require("mongodb");
 const path = require("path");
 const responseService = require("../controller/response");
 const ResMessage = require("../../Settings/service/message");
-const responseModel = require("../models/response.model");
+const { isSubmitted, maybeSendSubmissionConfirmation } = require("../../Email/service/submission");
 require("../../Questions/models/questions.model");
 require("../../../Project/Settings/models/question_type.model");
 require("../../../Project/User/models/user.model");
@@ -12,7 +12,6 @@ require("../../../Project/User/models/user.model");
 // ====================================
 const buildCleanQuery = (body = {}) => {
     const systemFields = ['apiId', 'token', 'user', 'form_id', 'responder_id', 'question_id'];
-    const aliasMap = { form_id: 'form', responder_id: 'responder', question_id: 'question' };
     const idFields = ['_id', 'form', 'responder', 'question'];
     const cleanQuery = {};
 
@@ -215,6 +214,13 @@ exports.onCreate = async function (request, response) {
 
         request.body.answers = answers;
         const doc = await responseService.onCreate(request.body);
+        await maybeSendSubmissionConfirmation({
+            shouldSend: isSubmitted(request.body.submit),
+            doc,
+            body: request.body,
+            logLabel: 'on create'
+        });
+
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
     } catch (err) {
         console.error("Create response error:", err);
@@ -264,37 +270,13 @@ exports.onUpdate = async function (request, response) {
             return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found after update");
         }
 
-        // Email Notification on first submit
-        if (request.body.submit === true && !existingResponse.submit) {
-            try {
-                const formCtrl = require('../../Form/controller/form');
-                const userCtrl = require('../../User/controller/user');
-                const mailer = require('../../../../helpers/mailer');
-
-                const formInfo = await formCtrl.onQuery({ _id: doc.form });
-                if (formInfo && formInfo.settings && formInfo.settings.emailNotifications) {
-                    const responderInfo = await userCtrl.onQuery({ _id: doc.responder });
-                    if (responderInfo && responderInfo.email) {
-                        const titleObj = (formInfo.title && formInfo.title.find(t => t.value)) || { value: 'Form' };
-                        const subject = `Confirmation: ${titleObj.value} Submitted`;
-                        let textMessage = formInfo.settings.emailMessage || formInfo.settings.confirmMessage || 'Thank you for completing this survey. Your response has been recorded.';
-
-                        if (textMessage.includes('{{')) {
-                            textMessage = textMessage.replace(/\{\{\s*User\.(\w+)\s*\}\}/gi, (match, field) => {
-                                const key = field.toLowerCase();
-                                if (key === 'name') return responderInfo.name || match;
-                                if (key === 'email') return responderInfo.email || match;
-                                return responderInfo[field] !== undefined ? responderInfo[field] : match;
-                            });
-                        }
-
-                        await mailer.sendMail(responderInfo.email, subject, textMessage);
-                    }
-                }
-            } catch (mailErr) {
-                console.error('Error dispatching email:', mailErr);
-            }
-        }
+        await maybeSendSubmissionConfirmation({
+            shouldSend: isSubmitted(request.body.submit) && !existingResponse.submit,
+            doc,
+            body: request.body,
+            fallback: existingResponse,
+            logLabel: 'on update'
+        });
 
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
     } catch (err) {
@@ -305,10 +287,41 @@ exports.onUpdate = async function (request, response) {
 
 exports.onDelete = async function (request, response) {
     try {
-        const query = { _id: new mongo.ObjectId(request.body._id) };
-        const doc = await responseService.onDelete(query);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
+        // Check body, query, and params for the ID to be more resilient
+        const idStr = (request.body && (request.body._id || request.body.id)) || 
+                      (request.query && (request.query._id || request.query.id)) || 
+                      (request.params && (request.params._id || request.params.id));
+
+        if (!idStr) {
+            console.warn("[onDelete] Missing ID");
+            return ResMessage.sendResponse(response, getApiId(request), 40000, "Response ID is required");
+        }
+
+        const mongoose = require("mongoose");
+        if (!mongoose.Types.ObjectId.isValid(idStr)) {
+            console.warn("[onDelete] Invalid ID format:", idStr);
+            return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid Response ID format");
+        }
+        
+        console.log("[onDelete] Attempting to delete response with ID:", idStr);
+        const query = { _id: new mongoose.Types.ObjectId(idStr) };
+        
+        // Execute delete directly on the model to avoid potential issues with controller wrappers
+        const ResponseModel = mongoose.model("Responses");
+        const doc = await ResponseModel.deleteMany(query);
+        
+        console.log("[onDelete] Delete result:", doc);
+        
+        const result = { _id: idStr, deleted: true, details: doc };
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), result);
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
+        console.error("CRITICAL DELETE ERROR:", err);
+        // Fallback to a plain response if ResMessage or other logic is failing
+        return response.status(500).json({
+            code: 50000,
+            httpcode: 500,
+            message: "Internal Server Error during deletion",
+            error: err.message
+        });
     }
 };

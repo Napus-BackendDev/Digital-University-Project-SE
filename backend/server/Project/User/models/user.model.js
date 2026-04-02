@@ -9,7 +9,7 @@ var objSchema = new Schema({
     password: { type: String, default: null },
     role: { type: Schema.Types.ObjectId, ref: 'Roles', default: "69aec1c73996270d703db3d7" },
     organization: { type: Schema.Types.ObjectId, ref: 'Organizations', default: null },
-    response: [{ type: Schema.Types.ObjectId, ref: 'Responses' }]
+    response: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] }
 
 }, { timestamps: true });
 

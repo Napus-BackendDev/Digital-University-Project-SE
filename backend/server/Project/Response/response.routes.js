@@ -7,7 +7,8 @@ const {
     validateResponseCreate,
     validateResponseGetById,
     validateResponseUpdate,
-    validateResponseDelete
+    validateResponseDelete,
+    validateResponseDeleteById
 } = require('../../../middleware/validate');
 
 // Get All
@@ -34,10 +35,16 @@ router.put("", function (req, res, next) {
     next();
 }, upload.any(), validateResponseUpdate, response.onUpdate);
 
-// Delete
+// Delete (query/body version)
 router.delete("", function (req, res, next) {
     req.query.apiId = 5;
     next();
 }, validateResponseDelete, response.onDelete);
+
+// Delete (path parameter version)
+router.delete("/:id", function (req, res, next) {
+    req.query.apiId = 5;
+    next();
+}, validateResponseDeleteById, response.onDelete);
 
 module.exports = router;

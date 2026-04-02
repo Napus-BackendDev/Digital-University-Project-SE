@@ -8,8 +8,8 @@ var mongodb = null;
 exports.init = function (callback) {
     mongoose.Promise = global.Promise;
     var connectOptions = {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
+        // useNewUrlParser: true,
+        // useUnifiedTopology: true
     };
 
     if (cfg.mongoDbName) {

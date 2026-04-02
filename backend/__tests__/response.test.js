@@ -20,10 +20,48 @@ jest.mock('../server/Project/Settings/service/message', () => ({
 
 jest.mock('../server/Project/Response/controller/response', () => ({
   onQuerys: jest.fn().mockResolvedValue([{ _id: 'resp1', responder: { name: 'User' } }]),
-  onQuery: jest.fn().mockResolvedValue({ _id: 'resp1', responder: { name: 'User' } }),
-  onCreate: jest.fn().mockResolvedValue({ _id: 'resp1' }),
-  onUpdate: jest.fn().mockResolvedValue({ _id: 'resp1' }),
+  onQuery: jest.fn().mockResolvedValue({
+    _id: 'resp1',
+    responder: 'user1',
+    form: 'form1',
+    submit: false
+  }),
+  onCreate: jest.fn().mockImplementation(async (payload) => ({
+    _id: 'resp1',
+    responder: payload.responder,
+    form: payload.form,
+    submit: payload.submit
+  })),
+  onUpdate: jest.fn().mockImplementation(async (query, payload) => ({
+    _id: 'resp1',
+    responder: 'user1',
+    form: 'form1',
+    submit: payload.submit
+  })),
   onDelete: jest.fn().mockResolvedValue({ deletedCount: 1 })
+}));
+
+jest.mock('../server/Project/Form/controller/form', () => ({
+  onQuery: jest.fn().mockResolvedValue({
+    _id: 'form1',
+    title: [{ key: 'en', value: 'Course Evaluation' }],
+    settings: {
+      emailNotifications: true,
+      confirmMessage: 'Hello {{User.name}}, your response for {{Form.title}} was recorded.'
+    }
+  })
+}));
+
+jest.mock('../server/Project/User/controller/user', () => ({
+  onQuery: jest.fn().mockResolvedValue({
+    _id: 'user1',
+    name: 'Jane Doe',
+    email: 'jane@example.com'
+  })
+}));
+
+jest.mock('../helpers/mailer', () => ({
+  sendMail: jest.fn().mockResolvedValue(true)
 }));
 
 jest.mock('../middleware/upload', () => ({
@@ -62,10 +100,15 @@ describe('Response API', () => {
   let app;
   const formId = '64e1f9f32a6d1c0013a1b234';
   const responseId = '64e1f9f32a6d1c0013a1b777';
+  const mailer = require('../helpers/mailer');
 
   beforeAll(() => {
     const createApp = require('../config/express');
     app = createApp();
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
   it('GET /api/v1/response/exp returns code 20001', async () => {
@@ -98,6 +141,24 @@ describe('Response API', () => {
     expect(res.body.apiId).toBe(3);
     expect(res.body.code).toBe(20003);
     expect(res.body.data._id).toBe('resp1');
+  });
+
+  it('POST /api/v1/response sends confirmation email on submitted response', async () => {
+    const res = await request(app)
+      .post('/api/v1/response')
+      .send({
+        form: 'form1',
+        responder: 'user1',
+        submit: true,
+        answers: [{ question: 'q1', response: 'A1' }]
+      });
+
+    expect(res.status).toBe(200);
+    expect(mailer.sendMail).toHaveBeenCalledWith(
+      'jane@example.com',
+      'Confirmation: Course Evaluation Submitted',
+      expect.stringContaining('Hello Jane Doe, your response for Course Evaluation was recorded.')
+    );
   });
 
   it('PUT /api/v1/response returns code 20004', async () => {

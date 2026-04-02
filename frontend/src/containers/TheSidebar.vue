@@ -25,16 +25,19 @@
                     <div class="text-white-50 small text-truncate" style="max-width: 140px; opacity: 0.8;">{{ userEmail
                         }}</div>
                 </div>
-                <CDropdown placement="top-end" :caret="false">
+                <CDropdown placement="top-end" :caret="false" class="user-selector-dropdown">
                     <template #toggler>
                         <CButton color="ghost" variant="ghost" class="text-white mb-0 ml-2 p-1">
                             <CIcon name="cil-account-logout" />
                         </CButton>
                     </template>
                     <CDropdownHeader>{{ $t('nav.selectUser') }}</CDropdownHeader>
-                    <CDropdownItem v-for="u in usersList" :key="u._id" @click="switchUser(u)">
-                        {{ u.name }}
-                    </CDropdownItem>
+                    <div class="dropdown-menu-scrollable">
+                        <CDropdownItem v-for="u in usersList" :key="u._id" @click="switchUser(u)"
+                            :active="user._id === u._id">
+                            {{ u.name }}
+                        </CDropdownItem>
+                    </div>
                     <CDropdownDivider v-if="usersList.length > 0" />
                     <CDropdownItem @click="logout" class="text-danger">
                         <CIcon name="cil-account-logout" class="mr-2" /> {{ $t('nav.logout') }}
@@ -86,8 +89,16 @@ export default {
         permissions() {
             this.$router.push('/permissions')
         },
-        switchUser(u) {
-            this.$store.commit('User/user', u);
+        async switchUser(u) {
+            try {
+                // Fetch the full user details with population from the backend
+                // This is needed because 'api.user(exp)' only returns a light version
+                await this.$store.dispatch('User/get', { _id: u._id });
+            } catch (e) {
+                console.error('Failed to switch user', e);
+                // Fallback to the light user object if the full fetch fails
+                this.$store.commit('User/user', u);
+            }
         },
         logout() {
             this.$router.push('/pages/login')
@@ -160,5 +171,25 @@ export default {
 <style scoped>
 .c-sidebar {
     background: linear-gradient(30deg, #FEC260 0%, #8c1515 60%)
+}
+
+.dropdown-menu-scrollable {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Optional: customize scrollbar */
+.dropdown-menu-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdown-menu-scrollable::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.dropdown-menu-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
 }
 </style>

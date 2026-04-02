@@ -64,7 +64,7 @@ export default {
       case 'update-multipart':
         return instance.put('response', data)
       case 'delete':
-        return instance.delete('response', { data })
+        return instance.delete('response', { data, ...configs })
 
       case 'download-user-json':
         return instance.get(`response/download/${data.formId}/response/${data.responseId}`)
