@@ -210,10 +210,10 @@ const en = {
                 name: "Organization Name",
                 selectPlaceholder: "Select organization",
                 generalHint: "If you choose General, every department will be able to do the form.",
-                allowedUsers: "Authorized Users",
-                noUsers: "No authorized users selected.",
+                allowedEmails: "Authorized Users", // Updated key
+                noEmails: "No authorized users selected.", // Updated key
                 specifyUser: "Specify User Access",
-                userPlaceholder: "Select or search for users to allow access",
+                emailPlaceholder: "Select or search for users to allow access", // Updated key
                 userHint: "If you specify individual users, only those users will be able to access the form. This is useful for sensitive or personal questionnaires."
             },
             response: {

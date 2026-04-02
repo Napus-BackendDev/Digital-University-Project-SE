@@ -19,10 +19,7 @@ const mongoURI = process.env.MONGODB;
 async function seedDatabase() {
     try {
         // 1. Connect to MongoDB
-        await mongoose.connect(mongoURI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        await mongoose.connect(mongoURI);
         console.log('✅ Connected to MongoDB');
 
         // 2. Clear existing data
@@ -103,7 +100,7 @@ async function seedDatabase() {
 
         // 6. Seed Users
         const users = [];
-        
+
         const firstNames = ['Somchai', 'Somsri', 'Wichai', 'Malee', 'Anan', 'Pitsanu', 'Kanya', 'Thana', 'Santi', 'Pornchai', 'Siriporn', 'Nicha', 'Somsak', 'Patcharee', 'Narong', 'Prasert', 'Wanna', 'Prayoon', 'Sunee', 'Ubon'];
         const lastNames = ['Srakaew', 'Sripai', 'Rakdee', 'Maneerat', 'Kongka', 'Kerdphol', 'Choojai', 'Noppakun', 'Saengsom', 'Sukjai', 'Prathum', 'Kamsin', 'Wongkaew', 'Sinthan', 'Boonmee', 'Chaisri', 'Saethang', 'Promdee', 'Yindee', 'Saengdao'];
 
@@ -124,9 +121,9 @@ async function seedDatabase() {
             const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
             const fullName = `${firstName} ${lastName}`;
             const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@demo.uni`;
-            
+
             const roleIdx = (i % 2) + 1; // Cycle between Staff (1) and User (2)
-            
+
             const u = await User.create({
                 name: fullName,
                 email: email,
@@ -162,7 +159,7 @@ async function seedDatabase() {
                 creator: adminUser._id,
                 organization: createdOrgs[Math.floor(Math.random() * createdOrgs.length)]._id,
                 schedule: {
-                    startAt: new Date(Date.now() - 24 * 60 * 60 * 1000), 
+                    startAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
                     endAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                 },
                 controll: {
@@ -180,7 +177,7 @@ async function seedDatabase() {
 
         for (let formIdx = 0; formIdx < forms.length; formIdx++) {
             const currentForm = forms[formIdx];
-            
+
             const questionsData = [
                 {
                     form: currentForm._id,
@@ -218,7 +215,7 @@ async function seedDatabase() {
             const responsesPerForm = 15 + (formIdx % 5);
             for (let r = 0; r < responsesPerForm; r++) {
                 const responder = users[(formIdx * 3 + r) % users.length];
-                
+
                 // Randomize creation date within last 7 days
                 const daysAgo = Math.floor(Math.random() * 7);
                 const randomDate = new Date();
