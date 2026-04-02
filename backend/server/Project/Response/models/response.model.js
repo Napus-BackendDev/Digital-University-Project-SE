@@ -3,6 +3,10 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
+// Ensure other models are registered so we can update them in hooks
+require("../../Form/models/form.model");
+require("../../User/models/user.model");
+
 var objSchema = new Schema(
   {
     responder: { type: Schema.Types.ObjectId, ref: "Users", required: true },
@@ -37,28 +41,43 @@ objSchema.post("save", async function (doc, next) {
 });
 
 // Auto-remove Response from Form and User arrays when a Response is deleted
-objSchema.pre("deleteMany", async function (next) {
+objSchema.pre("deleteMany", async function () {
   try {
     const query = this.getQuery();
-    if (query._id) {
-      const Form = mongoose.model("Forms");
-      const User = mongoose.model("Users");
+    const id = query._id;
 
-      // Pull from Form
-      await Form.updateMany(
-        { responses: query._id },
-        { $pull: { responses: query._id } }
-      );
+    if (id) {
+      // Ensure we have an array of IDs to handle both single and many deletes
+      const ids = Array.isArray(id) ? id : (id.$in ? id.$in : [id]);
+      
+      // Use mongoose.models for better access
+      const Form = mongoose.models.Forms;
+      const User = mongoose.models.Users;
 
-      // Pull from User
-      await User.updateMany(
-        { response: query._id },
-        { $pull: { response: query._id } }
-      );
+      console.log(`[Response Hook] Cleaning up references for IDs:`, ids);
+
+      for (const deleteId of ids) {
+        // Pull from Form if Form model exists
+        if (Form) {
+          await Form.updateMany(
+            { responses: deleteId },
+            { $pull: { responses: deleteId } }
+          );
+        }
+
+        // Pull from User if User model exists
+        if (User) {
+          await User.updateMany(
+            { response: deleteId },
+            { $pull: { response: deleteId } }
+          );
+        }
+      }
     }
-    next();
   } catch (err) {
-    next(err);
+    console.error("Error in pre-deleteMany hook for Responses:", err);
+    // In an async hook, returning or throwing an error is enough.
+    // If we want the main operation to continue, we just log and return.
   }
 });
 

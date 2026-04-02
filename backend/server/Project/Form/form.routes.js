@@ -15,6 +15,12 @@ router.get("/exp", function (req, res, next) {
     next();
 }, form.onQuerys);
 
+// Get Forms by User ID
+router.get("/user/:userId", function (req, res, next) {
+    req.query.apiId = 26;
+    next();
+}, form.onQueryByUser);
+
 // Get One by ID
 router.post("/get", function (req, res, next) {
     req.query.apiId = 22;

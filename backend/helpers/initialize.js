@@ -7,7 +7,10 @@ var mongodb = null;
 
 exports.init = function (callback) {
     mongoose.Promise = global.Promise;
-    var connectOptions = {};
+    var connectOptions = {
+        // useNewUrlParser: true,
+        // useUnifiedTopology: true
+    };
 
     if (cfg.mongoDbName) {
         connectOptions.dbName = cfg.mongoDbName;

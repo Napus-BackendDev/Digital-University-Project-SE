@@ -125,10 +125,67 @@ exports.onQuery = async function (request, response) {
   }
 };
 
-exports.onQuerys = async function (request, response) {
+exports.onQueryByUser = async function (request, response) {
   try {
+    const userId = request.params.userId;
+    let organizationId = request.query.organizationId;
+    const isAdmin = request.query.isAdmin === 'true';
+
+    // Normalize organizationId: treat "null", "undefined", or empty string as actual null
+    if (organizationId === 'null' || organizationId === 'undefined' || !organizationId) {
+      organizationId = null;
+    }
+
+    console.log(`[onQueryByUser] Context - User: ${userId}, Org: ${organizationId}, IsAdmin: ${isAdmin}`);
+
+    if (!userId || !mongo.ObjectId.isValid(userId)) {
+      console.error(`[onQueryByUser] Invalid userId provided: ${userId}`);
+      return ResMessage.sendResponse(response, getApiId(request), 40000, "A valid userId is required");
+    }
+
+    let matchCondition = {};
+
+    if (isAdmin) {
+      // System Admins see everything. 
+      // This is essential for management and debugging.
+      matchCondition = {}; 
+      console.log(`[onQueryByUser] System Admin view. Accessing all forms.`);
+    } else {
+      // Normal User / Switched User Visibility Rules:
+      const userOID = new mongo.ObjectId(userId);
+      const orgOID = organizationId && mongo.ObjectId.isValid(organizationId) ? new mongo.ObjectId(organizationId) : null;
+
+      matchCondition = {
+        $or: [
+          // 1. Ownership & Direct Collaboration (Highest priority, can be cross-organization)
+          { creator: userOID },
+          { "controll.user": userOID },
+          { "settings.allowedUser": userOID },
+
+          // 2. Organization-based Access (Only if user has an organization)
+          ...(orgOID ? [{
+            $and: [
+              { organization: orgOID },
+              {
+                $or: [
+                  { access: 'organization' },
+                  { access: 'public' },
+                  { access: { $exists: false } } // Handle legacy data
+                ]
+              }
+            ]
+          }] : []),
+
+          // 3. Global Public Access (Regardless of organization)
+          { access: 'public' }
+        ]
+      };
+      
+      console.log(`[onQueryByUser] User match filter applied. Org: ${organizationId || 'None'}`);
+    }
+
     const pipeline = [
-      { $match: {} }, // Match all forms, add filtering if needed
+      { $match: matchCondition },
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
@@ -190,7 +247,84 @@ exports.onQuerys = async function (request, response) {
       },
       {
         $project: {
-          responses: 0, // Exclude the array of IDs
+          responses: 0,
+          submittedResponses: 0,
+        }
+      }
+    ];
+
+    console.log(`[onQueryByUser] Executing aggregation with match:`, JSON.stringify(matchCondition));
+    const docs = await Form.onAggregate(pipeline);
+    console.log(`[onQueryByUser] Found ${docs.length} forms for user: ${userId}`);
+
+    docs.forEach(doc => {
+      doc.responses = new Array(doc.responsesCount).fill({ submit: true });
+    });
+
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), docs);
+  } catch (err) {
+    console.error(`[onQueryByUser] Error:`, err.stack);
+    return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
+  }
+};
+
+exports.onQuerys = async function (request, response) {
+  try {
+    // 1. Extract context from request (query or body)
+    const userId = request.query.userId || request.body.userId;
+    const organizationId = request.query.organizationId || request.body.organizationId;
+    const isAdmin = request.query.isAdmin === 'true' || request.body.isAdmin === true;
+
+    // 2. Build match condition
+    let matchCondition = {};
+
+    if (!isAdmin && organizationId) {
+      // If not admin, filter by visibility rules:
+      // - Forms that are public (access: 'public')
+      // - Forms that belong to the user's organization (organization: organizationId)
+      // - Forms where the user is specifically allowed (settings.allowedUser: userId)
+      // - Forms where the user is a collaborator (controll.user: userId)
+      matchCondition = {
+        $or: [
+          { access: 'public' },
+          { organization: new mongo.ObjectId(organizationId) },
+          { "settings.allowedUser": new mongo.ObjectId(userId) },
+          { "controll.user": new mongo.ObjectId(userId) }
+        ]
+      };
+    }
+
+    const pipeline = [
+      { $match: matchCondition },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "Setting_Status",
+          localField: "status",
+          foreignField: "_id",
+          as: "status",
+        },
+      },
+      { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "Responses",
+          let: { form_id: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$form", "$$form_id"] }, submit: true } },
+            { $count: "count" }
+          ],
+          as: "submittedResponses"
+        }
+      },
+      {
+        $addFields: {
+          responsesCount: { $ifNull: [{ $arrayElemAt: ["$submittedResponses.count", 0] }, 0] }
+        }
+      },
+      {
+        $project: {
+          responses: 0,
           submittedResponses: 0,
           "settings.allowedUser.password": 0,
           "creator.password": 0,
@@ -200,12 +334,6 @@ exports.onQuerys = async function (request, response) {
 
     const docs = await Form.onAggregate(pipeline);
 
-    // To maintain compatibility with frontend, we can add a fake responses array
-    // with the right length if the frontend relies on .length, 
-    // or better, just change how frontend calculates it.
-    // Given the previous frontend code:
-    // responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
-    // We can just set responses to an array of empty objects of responsesCount length.
     docs.forEach(doc => {
       doc.responses = new Array(doc.responsesCount).fill({ submit: true });
     });

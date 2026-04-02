@@ -93,6 +93,11 @@ const validateResponseDelete = [
     handleValidation
 ];
 
+const validateResponseDeleteById = [
+    check('id').exists().withMessage('Response ID (id) in path is required'),
+    handleValidation
+];
+
 module.exports = {
     handleValidation,
     // Form
@@ -110,4 +115,5 @@ module.exports = {
     validateResponseGetById,
     validateResponseUpdate,
     validateResponseDelete,
+    validateResponseDeleteById
 };

@@ -74,9 +74,19 @@ export default {
             const res = await api.user('exp');
             const data = res && res.data && res.data.data;
             if (Array.isArray(data)) {
-                this.usersList = data;
-                if (!this.$store.state.User.user && data.length > 0) {
-                    this.$store.commit('User/user', data[0]);
+                // Ensure unique users by ID to prevent duplicate list items
+                const uniqueUsers = [];
+                const seenIds = new Set();
+                data.forEach(u => {
+                    if (u && u._id && !seenIds.has(u._id)) {
+                        seenIds.add(u._id);
+                        uniqueUsers.push(u);
+                    }
+                });
+                
+                this.usersList = uniqueUsers;
+                if (!this.$store.state.User.user && uniqueUsers.length > 0) {
+                    this.$store.commit('User/user', uniqueUsers[0]);
                 }
             }
         } catch (e) {
@@ -100,8 +110,18 @@ export default {
         permissions() {
             this.$router.push('/permissions')
         },
-        switchUser(u) {
-            this.$store.commit('User/user', u);
+        async switchUser(u) {
+            try {
+                // Clear existing forms to prevent stale data visibility
+                this.$store.dispatch('Forms/clear');
+                
+                // Fetch the full user details with population from the backend
+                await this.$store.dispatch('User/get', { _id: u._id });
+            } catch (e) {
+                console.error('Failed to switch user', e);
+                // Fallback to the light user object if the full fetch fails
+                this.$store.commit('User/user', u);
+            }
         },
         onUserSelect(val) {
             if (val && val.value) {

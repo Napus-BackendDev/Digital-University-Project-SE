@@ -161,10 +161,20 @@ const module = {
                 })
                 .catch(err => { throw err; });
         },
-        delete({ commit }, data) {
-            return Service.response('delete', data, {})
+        delete({ commit, state }, data) {
+            // Send ID in both query and data for maximum compatibility across server configurations
+            const config = {
+                params: { _id: data._id || data.id },
+                data: data
+            };
+            return Service.response('delete', config.data, config)
                 .then(response => {
-                    commit('responses', response.data.data);
+                    // Filter out the deleted response from the local state
+                    const deletedId = data._id || data.id || (response.data && response.data.data && response.data.data._id);
+                    if (deletedId && Array.isArray(state.responses)) {
+                        const newList = state.responses.filter(r => (r._id || r.id) !== String(deletedId));
+                        commit('responses', newList);
+                    }
                     return response;
                 })
                 .catch(err => { throw err; });

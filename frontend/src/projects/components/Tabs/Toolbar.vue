@@ -12,17 +12,17 @@
                 <div class="tab-buttons mb-4">
                     <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">{{ $t('toolbar.mainNav') }}</label>
                     <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
-                        :variant="activeTab === 'question' ? 'solid' : 'ghost'"
+                        :variant="activeTab === 'question' ? null : 'ghost'"
                         @click="$emit('update:activeTab', 'question')">
                         <CIcon name="cil-description" class="mr-2" /> {{ $t('toolbar.questions') }}
                     </CButton>
                     <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
-                        :variant="activeTab === 'response' ? 'solid' : 'ghost'"
+                        :variant="activeTab === 'response' ? null : 'ghost'"
                         @click="$emit('update:activeTab', 'response')">
                         <CIcon name="cil-chart-pie" class="mr-2" /> {{ $t('toolbar.responses') }}
                     </CButton>
                     <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
-                        :variant="activeTab === 'setting' ? 'solid' : 'ghost'"
+                        :variant="activeTab === 'setting' ? null : 'ghost'"
                         @click="$emit('update:activeTab', 'setting')">
                         <CIcon name="cil-settings" class="mr-2" /> {{ $t('toolbar.settings') }}
                     </CButton>
