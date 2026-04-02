@@ -30,10 +30,14 @@
             <template #collaborators="{ item }">
                 <td class="align-middle">
                     <div v-if="!item.isEmpty">
-                        <div v-if="item.collaborators && item.collaborators.length > 0">
-                            <div v-for="(collab, i) in item.collaborators" :key="i" class="d-flex align-items-center mb-1">
-                                <span class="small font-weight-bold text-dark text-truncate mr-2" style="max-width: 100px;">{{ collab.name }}</span>
-                                <span class="badge" :class="collab.role.toLowerCase().includes('edit') ? 'badge-info' : 'badge-secondary'" style="font-size: 0.65rem;">{{ collab.role }}</span>
+                        <div v-if="item.collaborators && item.collaborators.length > 0" class="collab-stack">
+                            <div v-for="(collab, i) in item.collaborators" :key="i"
+                                class="d-flex align-items-center mb-1">
+                                <span class="small font-weight-bold text-dark text-truncate mr-2"
+                                    style="max-width: 100px;">{{ collab.name }}</span>
+                                <span class="badge"
+                                    :class="collab.role.toLowerCase().includes('edit') ? 'badge-info' : 'badge-secondary'"
+                                    style="font-size: 0.65rem;">{{ collab.role }}</span>
                             </div>
                         </div>
                         <span v-else class="small text-muted">-</span>
@@ -64,9 +68,9 @@
                 <td class="align-middle">
                     <div v-if="!item.isEmpty" class="access-stack">
                         <span v-for="(acc, i) in (Array.isArray(item.access) ? item.access : [item.access])" :key="i"
-                            class="visibility-badge" :class="getVisibilityClass(acc)"
-                            v-c-tooltip="acc.toLowerCase().includes('personal') ? item.allowedUserList : null">
-                            {{ $te('accessLabel.' + acc.toLowerCase()) ? $t('accessLabel.' + acc.toLowerCase()) : acc }}
+                            class="visibility-badge" :class="getVisibilityClass(acc)">
+                            {{ acc.startsWith('Personal: ') ? acc.replace('Personal: ', '') : ($te('accessLabel.' +
+                                acc.toLowerCase()) ? $t('accessLabel.' + acc.toLowerCase()) : acc) }}
                         </span>
                     </div>
                 </td>
@@ -81,7 +85,7 @@
                                 <CIcon name="cil-check-alt" size="sm" class="text-success" />
                             </div>
                             <span class="response-count font-weight-bold mr-1">{{ getCompletedCount(item.responses)
-                            }}</span>
+                                }}</span>
                             <small class="text-muted">{{ $t('table.completedResponse') }}</small>
                         </div>
                         <div class="d-flex align-items-center">
@@ -90,7 +94,7 @@
                                 <CIcon name="cil-history" size="sm" class="text-info" />
                             </div>
                             <span class="response-count font-weight-bold mr-1">{{ getOngoingCount(item.responses)
-                            }}</span>
+                                }}</span>
                             <small class="text-muted">{{ $t('table.ongoingResponse') }}</small>
                         </div>
                     </div>
@@ -107,7 +111,8 @@
                         </CButton>
                         <template v-if="item.canEdit">
                             <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn"
-                                @click.stop="goToDuplicationForm(item)" v-c-tooltip="$t('table.duplicate')" aria-label="Duplicate">
+                                @click.stop="goToDuplicationForm(item)" v-c-tooltip="$t('table.duplicate')"
+                                aria-label="Duplicate">
                                 <CIcon name="cil-copy" />
                             </CButton>
                             <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn"
@@ -115,7 +120,8 @@
                                 <CIcon name="cil-pencil" />
                             </CButton>
                             <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn"
-                                @click.stop="confirmDeleteItem(item)" v-c-tooltip="$t('table.delete')" aria-label="Delete">
+                                @click.stop="confirmDeleteItem(item)" v-c-tooltip="$t('table.delete')"
+                                aria-label="Delete">
                                 <CIcon name="cil-trash" />
                             </CButton>
                         </template>
@@ -310,15 +316,13 @@ export default {
 
                 // Extract Collaborators
                 let collaborators = [];
+                console.log(f)
                 if (Array.isArray(f.controll) && f.controll.length > 0) {
                     f.controll.forEach(c => {
-                        let name = 'Unknown';
+                        let name = this.getUserName(c.user);
                         let role = 'Viewer';
-                        if (c.user) {
-                           name = c.user.name || c.user.fullname || c.user.email || 'User';
-                        }
                         if (c.type) {
-                           role = this.getLang(c.type.title) || 'Viewer';
+                            role = this.getLang(c.type.title) || 'Viewer';
                         }
                         collaborators.push({ name, role });
                     });
@@ -341,7 +345,6 @@ export default {
                 }).filter(Boolean);
 
                 const hasPersonalAccess = f.settings && Array.isArray(f.settings.allowedUser) && f.settings.allowedUser.length > 0;
-                const personalLabel = hasPersonalAccess ? `Personal (${f.settings.allowedUser.length})` : null;
 
                 // Tooltip logic
                 let allowedUserList = '';
@@ -360,7 +363,11 @@ export default {
                     access = ['Private'];
                 }
 
-                if (personalLabel) access.push(personalLabel);
+                if (hasPersonalAccess) {
+                    f.settings.allowedUser.forEach(u => {
+                        access.push('Personal: ' + this.getUserName(u));
+                    });
+                }
 
                 // Responses array
                 const responses = Array.isArray(f.responses) ? f.responses : [];
@@ -392,14 +399,14 @@ export default {
                 // Parse filter dates strictly as local start (00:00) and end (23:59)
                 const filterStart = this.startDate ? new Date(`${this.startDate}T00:00:00`) : new Date(-8640000000000000);
                 const filterEnd = this.endDate ? new Date(`${this.endDate}T23:59:59`) : new Date(8640000000000000);
-                
+
                 // Safety check: ensure we didn't get "Invalid Date"
                 if (!isNaN(filterStart.getTime()) && !isNaN(filterEnd.getTime())) {
                     filtered = filtered.filter(f => {
                         const rawSched = f._raw && f._raw.schedule ? f._raw.schedule : {};
                         const s = rawSched.startAt ? new Date(rawSched.startAt) : null;
                         const e = rawSched.endAt ? new Date(rawSched.endAt) : null;
-                        
+
                         // Hide forms without any schedule if a filter is active
                         if (!s && !e) return false;
 
@@ -582,6 +589,41 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+    max-height: 85px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.access-stack::-webkit-scrollbar {
+    width: 3px;
+}
+
+.access-stack::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.access-stack::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+.collab-stack {
+    max-height: 85px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.collab-stack::-webkit-scrollbar {
+    width: 3px;
+}
+
+.collab-stack::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.collab-stack::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
 }
 
 .visibility-badge {

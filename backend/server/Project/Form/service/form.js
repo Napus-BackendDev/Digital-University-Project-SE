@@ -1,6 +1,7 @@
 const mongo = require("mongodb");
 const Form = require("../controller/form");
 const ResMessage = require("../../Settings/service/message");
+const FormModel = require("../models/form.model");
 
 const getApiId = function (request) {
   return Number(request.query.apiId || request.body.apiId) || 0;
@@ -64,7 +65,7 @@ exports.onQuery = async function (request, response) {
         $project: {
           "creator.password": 0,
           "settings.allowedUser.password": 0,
-        },
+        }
       },
       {
         $lookup: {
@@ -100,6 +101,7 @@ exports.onQuery = async function (request, response) {
     }
 
     let doc = results[0];
+    await FormModel.populate(doc, { path: 'controll.user controll.type' });
 
     // Sort childrenForms manually or in projection
     if (doc.childrenForms) {
@@ -148,7 +150,7 @@ exports.onQueryByUser = async function (request, response) {
     if (isAdmin) {
       // System Admins see everything. 
       // This is essential for management and debugging.
-      matchCondition = {}; 
+      matchCondition = {};
       console.log(`[onQueryByUser] System Admin view. Accessing all forms.`);
     } else {
       // Normal User / Switched User Visibility Rules:
@@ -180,7 +182,7 @@ exports.onQueryByUser = async function (request, response) {
           { access: 'public' }
         ]
       };
-      
+
       console.log(`[onQueryByUser] User match filter applied. Org: ${organizationId || 'None'}`);
     }
 
@@ -222,14 +224,6 @@ exports.onQueryByUser = async function (request, response) {
       },
       { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
       {
-        $addFields: {
-          // Instead of fetching all responses, just count submitted ones
-          // This assumes the responses array in Form model contains all response IDs
-          // We can't easily filter the array of IDs in $addFields without a $lookup
-          // But we can use $lookup with a pipeline to get the count directly
-        }
-      },
-      {
         $lookup: {
           from: "Responses",
           let: { form_id: "$_id" },
@@ -249,12 +243,15 @@ exports.onQueryByUser = async function (request, response) {
         $project: {
           responses: 0,
           submittedResponses: 0,
+          "creator.password": 0,
+          "settings.allowedUser.password": 0,
         }
       }
     ];
 
     console.log(`[onQueryByUser] Executing aggregation with match:`, JSON.stringify(matchCondition));
     const docs = await Form.onAggregate(pipeline);
+    await FormModel.populate(docs, { path: 'controll.user controll.type' });
     console.log(`[onQueryByUser] Found ${docs.length} forms for user: ${userId}`);
 
     docs.forEach(doc => {
@@ -333,6 +330,7 @@ exports.onQuerys = async function (request, response) {
     ];
 
     const docs = await Form.onAggregate(pipeline);
+    await FormModel.populate(docs, { path: 'controll.user controll.type' });
 
     docs.forEach(doc => {
       doc.responses = new Array(doc.responsesCount).fill({ submit: true });

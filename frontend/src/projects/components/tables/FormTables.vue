@@ -37,7 +37,7 @@
                     <div class="access-stack">
                         <span v-for="(v, idx) in item.access" :key="idx" class="visibility-badge"
                             :class="getVisibilityClass(v)">
-                            {{ $te('accessLabel.' + v.toLowerCase()) ? $t('accessLabel.' + v.toLowerCase()) : v }}
+                            {{ v.startsWith('Personal: ') ? v.replace('Personal: ', '') : ($te('accessLabel.' + v.toLowerCase()) ? $t('accessLabel.' + v.toLowerCase()) : v) }}
                         </span>
                     </div>
                 </td>
@@ -124,6 +124,7 @@ export default {
         }
     },
     async created() {
+        this.$store.dispatch('User/getAll');
     },
     computed: {
         fields() {
@@ -138,7 +139,7 @@ export default {
             ]
         },
         ...mapGetters('Forms', ['forms']),
-        ...mapGetters('User', ['user']),
+        ...mapGetters('User', ['user', 'users']),
 
         totalPages() {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
@@ -321,7 +322,9 @@ export default {
                 }
 
                 if (f.settings && Array.isArray(f.settings.allowedUser) && f.settings.allowedUser.length > 0) {
-                    access.push(`Personal (${f.settings.allowedUser.length})`);
+                    f.settings.allowedUser.forEach(u => {
+                        access.push('Personal: ' + this.getUserName(u));
+                    });
                 }
 
                 const createdAt = f.updatedAt || f.createdAt || '-';
@@ -465,6 +468,7 @@ export default {
             const v = String(visibility).toLowerCase();
             if (v.includes('public') || v.includes('สาธารณะ') || v === 'general') return 'visi-public';
             if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
+            if (v.includes('personal')) return 'visi-personal';
             return 'visi-org';
         },
         getProgressColor(progress) {
@@ -494,6 +498,13 @@ export default {
             }
             if (s === 'inprogress') return 'Continue Form';
             return 'Start Form';
+        },
+        getUserName(userRef) {
+            if (!userRef) return 'Unknown';
+            if (typeof userRef === 'object' && userRef.email) return userRef.name || userRef.email;
+            if (!this.users) return userRef;
+            const u = this.users.find(x => String(x._id) === String(userRef));
+            return u ? (u.name || u.email) : userRef;
         }
     }
 }
@@ -632,6 +643,22 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+    max-height: 85px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.access-stack::-webkit-scrollbar {
+    width: 3px;
+}
+
+.access-stack::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.access-stack::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
 }
 
 .visibility-badge {
@@ -656,6 +683,16 @@ export default {
 .visi-org {
     background-color: #f0f7ff;
     color: #1e40af;
+}
+
+.visi-personal {
+    background-color: #f5f3ff;
+    color: #7c3aed;
+}
+
+.visi-default {
+    background-color: #f1f5f9;
+    color: #64748b;
 }
 </style>
 ```
