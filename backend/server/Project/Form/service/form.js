@@ -104,8 +104,32 @@ exports.onQuery = async function (request, response) {
 
 exports.onQuerys = async function (request, response) {
   try {
+    // 1. Extract context from request (query or body)
+    const userId = request.query.userId || request.body.userId;
+    const organizationId = request.query.organizationId || request.body.organizationId;
+    const isAdmin = request.query.isAdmin === 'true' || request.body.isAdmin === true;
+
+    // 2. Build match condition
+    let matchCondition = {};
+
+    if (!isAdmin && organizationId) {
+      // If not admin, filter by visibility rules:
+      // - Forms that are public (access: 'public')
+      // - Forms that belong to the user's organization (organization: organizationId)
+      // - Forms where the user is specifically allowed (settings.allowedUser: userId)
+      // - Forms where the user is a collaborator (controll.user: userId)
+      matchCondition = {
+        $or: [
+          { access: 'public' },
+          { organization: new mongo.ObjectId(organizationId) },
+          { "settings.allowedUser": new mongo.ObjectId(userId) },
+          { "controll.user": new mongo.ObjectId(userId) }
+        ]
+      };
+    }
+
     const pipeline = [
-      { $match: {} }, // Match all forms, add filtering if needed
+      { $match: matchCondition },
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
@@ -116,14 +140,6 @@ exports.onQuerys = async function (request, response) {
         },
       },
       { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
-      {
-        $addFields: {
-          // Instead of fetching all responses, just count submitted ones
-          // This assumes the responses array in Form model contains all response IDs
-          // We can't easily filter the array of IDs in $addFields without a $lookup
-          // But we can use $lookup with a pipeline to get the count directly
-        }
-      },
       {
         $lookup: {
           from: "Responses",
@@ -142,7 +158,7 @@ exports.onQuerys = async function (request, response) {
       },
       {
         $project: {
-          responses: 0, // Exclude the array of IDs
+          responses: 0,
           submittedResponses: 0,
         }
       }
@@ -150,12 +166,6 @@ exports.onQuerys = async function (request, response) {
 
     const docs = await Form.onAggregate(pipeline);
 
-    // To maintain compatibility with frontend, we can add a fake responses array
-    // with the right length if the frontend relies on .length, 
-    // or better, just change how frontend calculates it.
-    // Given the previous frontend code:
-    // responses: form.responses ? form.responses.filter(r => r && (r.submit === true || r.submit === 'true')).length : 0,
-    // We can just set responses to an array of empty objects of responsesCount length.
     docs.forEach(doc => {
       doc.responses = new Array(doc.responsesCount).fill({ submit: true });
     });

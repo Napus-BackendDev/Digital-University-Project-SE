@@ -27,8 +27,28 @@ export default {
     },
     methods: {
         onInit() {
-            this.$store.dispatch('Forms/get');
+            if (this.user) {
+                const isAdmin = this.checkAdmin(this.user);
+                this.$store.dispatch('Forms/get', {
+                    userId: this.user._id,
+                    organizationId: this.user.organization ? (this.user.organization._id || this.user.organization) : null,
+                    isAdmin: isAdmin
+                });
+            } else {
+                this.$store.dispatch('Forms/get');
+            }
         },
+        checkAdmin(user) {
+            if (user && user.role) {
+                const role = user.role;
+                if (Array.isArray(role.title)) {
+                    return role.title.some(t => t && t.value && t.value.toLowerCase().includes('admin'));
+                } else if (typeof role.title === 'string') {
+                    return role.title.toLowerCase().includes('admin');
+                }
+            }
+            return false;
+        }
     },
     computed: {
         ...mapGetters('Forms', ['forms']),
@@ -38,15 +58,7 @@ export default {
             const currentUserId = this.user ? this.user._id : null;
 
             // 1. Identify Admin
-            let isAdmin = false;
-            if (this.user && this.user.role) {
-                const role = this.user.role;
-                if (Array.isArray(role.title)) {
-                    isAdmin = role.title.some(t => t && t.value && t.value.toLowerCase().includes('admin'));
-                } else if (typeof role.title === 'string') {
-                    isAdmin = role.title.toLowerCase().includes('admin');
-                }
-            }
+            const isAdmin = this.checkAdmin(this.user);
 
             // 2. Responsibility Filter
             if (currentUserId && !isAdmin) {

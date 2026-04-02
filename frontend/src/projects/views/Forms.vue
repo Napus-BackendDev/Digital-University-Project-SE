@@ -7,6 +7,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import FormTables from '../components/tables/FormTables.vue'
 import WidgetsDropdownUser from '../components/widgets/WidgetsDropdownUser.vue'
 import Header from '../components/Util/Header.vue'
@@ -28,12 +29,35 @@ export default {
     },
     methods: {
         onInit() {
-            this.$store.dispatch('Forms/get');
+            if (this.user) {
+                const isAdmin = this.checkAdmin(this.user);
+                this.$store.dispatch('Forms/get', {
+                    userId: this.user._id,
+                    organizationId: this.user.organization ? (this.user.organization._id || this.user.organization) : null,
+                    isAdmin: isAdmin
+                });
+            } else {
+                this.$store.dispatch('Forms/get');
+            }
+        },
+        checkAdmin(user) {
+            if (user && user.role) {
+                const role = user.role;
+                if (Array.isArray(role.title)) {
+                    return role.title.some(t => t && t.value && t.value.toLowerCase().includes('admin'));
+                } else if (typeof role.title === 'string') {
+                    return role.title.toLowerCase().includes('admin');
+                }
+            }
+            return false;
         },
         updateStats(newStats) {
             this.stats = newStats;
         }
     },
+    computed: {
+        ...mapGetters('User', ['user'])
+    }
 }
 </script>
 
