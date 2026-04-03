@@ -31,6 +31,16 @@ export default {
     created() {
         this.onInit();
     },
+    watch: {
+        user: {
+            async handler(val, oldVal) {
+                if (val && val._id && (!oldVal || val._id !== oldVal._id)) {
+                    await this.onInit();
+                }
+            },
+            immediate: false
+        }
+    },
     methods: {
         async onInit() {
             // Check if we have duplicated data from the buffer
@@ -46,11 +56,36 @@ export default {
             if (!formId || formId === 'new') return;
 
             try {
-                await console.log( "form id กาก" ,formId)
                 this.formData = await this.$store.dispatch('Forms/getById', { _id: formId });
-                console.log("🔥 ตอบกลับจาก backend (formData):", this.formData);
+
+                const currentUserId = this.user?._id ? String(this.user._id) : null;
+                if (currentUserId && this.formData) {
+                    const creatorId = String(this.formData.creator?._id || this.formData.creator || '');
+                    const isCreator = creatorId === currentUserId;
+                    let isEditor = false;
+                    if (Array.isArray(this.formData.controll)) {
+                        isEditor = this.formData.controll.some((item) => {
+                            const collabUserId = String(item?.user?._id || item?.user || '');
+                            if (collabUserId !== currentUserId) return false;
+                            const typeTitle = Array.isArray(item?.type?.title)
+                                ? item.type.title.map((t) => String(t?.value || '')).join(' ').toLowerCase()
+                                : String(item?.type?.title || '').toLowerCase();
+                            return typeTitle.includes('edit') || typeTitle.includes('แก้ไข');
+                        });
+                    }
+
+                    const roleTitle = Array.isArray(this.user?.role?.title)
+                        ? this.user.role.title.map((t) => String(t?.value || '')).join(' ').toLowerCase()
+                        : String(this.user?.role?.title || '').toLowerCase();
+                    const isAdmin = roleTitle.includes('admin');
+
+                    if (!isAdmin && !isCreator && !isEditor) {
+                        this.$router.replace({ name: 'ManageForms' });
+                        return;
+                    }
+                }
             } catch (error) {
-                console.error("🔥 Error fetching form:", error);
+                console.error("Error fetching form:", error);
                 this.formData = {}; // Default to empty object on error
             }
         },
@@ -97,7 +132,11 @@ export default {
                     this.formData._id = newId;
                     this.$router.replace({ name: 'EditorCreateForm', params: { _id: newId } });
                 } else {
-                    await this.$store.dispatch('Forms/update', this.formData);
+                    const payload = {
+                        ...this.formData,
+                        user: this.user?._id
+                    };
+                    await this.$store.dispatch('Forms/update', payload);
                 }
             } catch (error) {
                 console.error("Error saving form:", error);

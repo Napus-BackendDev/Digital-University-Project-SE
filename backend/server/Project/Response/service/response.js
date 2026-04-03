@@ -3,6 +3,7 @@ const path = require("path");
 const responseService = require("../controller/response");
 const ResMessage = require("../../Settings/service/message");
 const { isSubmitted, maybeSendSubmissionConfirmation } = require("../../Email/service/submission");
+const { mapResponseDto, mapResponseListDto } = require("../dto/response.dto");
 require("../../Questions/models/questions.model");
 require("../../Settings/models/question_type.model");
 require("../../User/models/user.model");
@@ -44,53 +45,6 @@ const getApiId = function (request) {
 
 const getSuccessCode = function (request) {
     return 20000 + getApiId(request);
-};
-
-const toPlainObject = function (doc) {
-    if (!doc) return doc;
-    return typeof doc.toObject === 'function' ? doc.toObject() : JSON.parse(JSON.stringify(doc));
-};
-
-const sanitizeUser = function (user) {
-    if (!user) return user;
-    const cleanUser = { ...user };
-    delete cleanUser.password;
-    return cleanUser;
-};
-
-const sanitizeResponsePayload = function (doc) {
-    if (!doc) return doc;
-
-    const cleanDoc = toPlainObject(doc);
-
-    if (cleanDoc.responder) {
-        cleanDoc.responder = sanitizeUser(cleanDoc.responder);
-    }
-
-    if (cleanDoc.form) {
-        cleanDoc.form = toPlainObject(cleanDoc.form);
-
-        if (cleanDoc.form.creator && typeof cleanDoc.form.creator === 'object') {
-            cleanDoc.form.creator = sanitizeUser(cleanDoc.form.creator);
-        }
-
-        if (Array.isArray(cleanDoc.form.responses)) {
-            cleanDoc.form.responses = cleanDoc.form.responses.map((item) => {
-                const cleanItem = toPlainObject(item);
-                if (cleanItem && cleanItem.responder) {
-                    cleanItem.responder = sanitizeUser(cleanItem.responder);
-                }
-                return cleanItem;
-            });
-        }
-    }
-
-    return cleanDoc;
-};
-
-const sanitizeResponseListPayload = function (docs) {
-    if (!Array.isArray(docs)) return docs;
-    return docs.map(doc => sanitizeResponsePayload(doc));
 };
 
 const getUploadUrl = function (file) {
@@ -161,7 +115,7 @@ exports.onQuerys = async function (request, response) {
         console.log(`[API ${getApiId(request)}] GET /api/v1/response/exp (onQuerys)`);
         const querys = {};
         const doc = await responseService.onQuerys(querys);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponseListPayload(doc));
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseListDto(doc));
     } catch (err) {
         console.error(`[API ${getApiId(request)}] Error:`, err.message);
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
@@ -181,11 +135,11 @@ exports.onQuery = async function (request, response) {
                 return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found");
             }
 
-            return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
+            return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseDto(doc));
         }
 
         const docs = await responseService.onQuerys(cleanQuery);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponseListPayload(docs || []));
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseListDto(docs || []));
     } catch (err) {
         console.error(`[API ${getApiId(request)}] Error:`, err.message);
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
@@ -226,7 +180,7 @@ exports.onCreate = async function (request, response) {
             logLabel: 'on create'
         });
 
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseDto(doc));
     } catch (err) {
         console.error(`[API ${getApiId(request)}] Error:`, err.message);
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
@@ -285,7 +239,7 @@ exports.onUpdate = async function (request, response) {
             logLabel: 'on update'
         });
 
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseDto(doc));
     } catch (err) {
         console.error(`[API ${getApiId(request)}] Error:`, err.message);
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
@@ -304,19 +258,13 @@ exports.onDelete = async function (request, response) {
             return ResMessage.sendResponse(response, getApiId(request), 40000, "Response ID is required");
         }
 
-        const mongoose = require("mongoose");
-        if (!mongoose.Types.ObjectId.isValid(idStr)) {
+        if (!mongo.ObjectId.isValid(idStr)) {
             return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid Response ID format");
         }
-        
-        const query = { _id: new mongoose.Types.ObjectId(idStr) };
-        
-        // Execute delete directly on the model to avoid potential issues with controller wrappers
-        const ResponseModel = mongoose.model("Responses");
-        const doc = await ResponseModel.deleteMany(query);
-        
-        const result = { _id: idStr, deleted: true, details: doc };
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), result);
+
+        const query = { _id: new mongo.ObjectId(idStr) };
+        const doc = await responseService.onDelete(query);
+        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
     } catch (err) {
         console.error("CRITICAL DELETE ERROR:", err);
         // Fallback to a plain response if ResMessage or other logic is failing

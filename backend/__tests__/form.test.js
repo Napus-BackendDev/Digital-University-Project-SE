@@ -26,6 +26,7 @@ jest.mock('../server/Project/Settings/setting.routes', () => {
 jest.mock('../server/Project/Form/controller/form', () => ({
   onAggregate: jest.fn().mockResolvedValue([{ _id: 'form1', title: 'Form 1' }]),
   onQuerys: jest.fn().mockResolvedValue([{ _id: 'form1' }, { _id: 'form2' }]),
+  onQuery: jest.fn().mockResolvedValue({ _id: 'form1', creator: 'user1', controll: [] }),
   onCreate: jest.fn().mockResolvedValue({ _id: 'form1' }),
   onUpdate: jest.fn().mockResolvedValue({ _id: 'form1' }),
   onDelete: jest.fn().mockResolvedValue({ deletedCount: 1 })
@@ -101,5 +102,25 @@ describe('Form API', () => {
     expect(res.body.apiId).toBe(25);
     expect(res.body.code).toBe(20025);
     expect(res.body.data.deletedCount).toBe(1);
+  });
+
+  it('GET /api/v1/form/user/:userId returns code 20026', async () => {
+    const userId = '64e1f9f32a6d1c0013a1b222';
+    const res = await request(app)
+      .get(`/api/v1/form/user/${userId}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.apiId).toBe(26);
+    expect(res.body.code).toBe(20026);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
+
+  it('GET /api/v1/form/user/:userId returns 400 for invalid user id', async () => {
+    const res = await request(app)
+      .get('/api/v1/form/user/invalid-user-id');
+
+    expect(res.status).toBe(400);
+    expect(res.body.apiId).toBe(26);
+    expect(res.body.code).toBe(40000);
   });
 });

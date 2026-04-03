@@ -1,7 +1,10 @@
 const FormModel = require("../../Form/models/form.model");
 const UserModel = require("../../User/models/user.model");
-const path = require("path");
 const mailer = require("../../../../helpers/mailer");
+const {
+  buildSubmissionConfirmationHtml,
+  buildSubmissionConfirmationText,
+} = require("../templates/submissionConfirmation");
 
 // Basic email validation regex
 const isValidEmail = (email) => {
@@ -66,29 +69,39 @@ exports.maybeSendSubmissionConfirmation = async ({ shouldSend, doc, body, logLab
       return;
     }
 
-    // 3. Prepare text content for mailer.js
+    // 3. Prepare content for mailer.js
     const formTitle = form.title[0]?.value || 'Untitled Form';
-    const emailMessage = form.settings.emailMessage || 'Thank you for your submission!';
-    const confirmationMessage = form.settings.confirmMessage || 'Your response has been recorded.';
-    const formLink = `${process.env.FRONTEND_URL}/forms/${formId}/response/${doc._id}`;
+    let responderName = 'Student';
+    if (typeof responderData === 'object' && responderData?.name) {
+      responderName = responderData.name;
+    } else if (responderData) {
+      const user = await UserModel.findById(responderData).select('name').lean();
+      if (user?.name) responderName = user.name;
+    }
 
-    const subject = `Form Confirmation: ${formTitle}`;
-    const textContent = `
-Dear User,
-
-${emailMessage}
-
-Your response to the form "${formTitle}" has been successfully recorded.
-${confirmationMessage}
-
-You can view your submission here:
-${formLink}
-
-Thank you!
-    `.trim();
+    const submittedAt = doc?.updatedAt || doc?.createdAt
+      ? new Date(doc.updatedAt || doc.createdAt).toLocaleString('en-GB')
+      : '';
+    const referenceNo = String(doc?._id || '');
+    const status = 'Received';
+    const subject = `Confirmation: ${formTitle} Submitted`;
+    const textContent = buildSubmissionConfirmationText({
+      name: responderName,
+      formTitle,
+      submittedAt,
+      referenceNo,
+      status,
+    });
+    const htmlContent = buildSubmissionConfirmationHtml({
+      name: responderName,
+      formTitle,
+      submittedAt,
+      referenceNo,
+      status,
+    });
 
     // 4. Send email using helper/mailer.js
-    const success = await mailer.sendMail(responderEmail, subject, textContent);
+    const success = await mailer.sendMail(responderEmail, subject, textContent, htmlContent);
 
     if (success) {
       console.log(`[Email] Sent confirmation to: ${responderEmail}`);

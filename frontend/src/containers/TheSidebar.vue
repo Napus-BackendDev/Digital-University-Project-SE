@@ -26,6 +26,7 @@
                         }}</div>
                 </div>
                 <v-select 
+                    v-if="isUserSwitcherEnabled"
                     v-model="selectedUser"
                     :options="userOptions"
                     :placeholder="$t('nav.selectUser')"
@@ -70,6 +71,7 @@ export default {
         }
     },
     async created() {
+        if (!this.isUserSwitcherEnabled) return;
         try {
             const res = await api.user('exp');
             const data = res && res.data && res.data.data;
@@ -85,7 +87,21 @@ export default {
                 });
                 
                 this.usersList = uniqueUsers;
-                if (!this.$store.state.User.user && uniqueUsers.length > 0) {
+                const routeSwitchUser = this.$route?.query?.switchUser;
+                const savedUserId = routeSwitchUser || window.localStorage.getItem('activeUserId');
+                const savedUser = savedUserId
+                    ? uniqueUsers.find((u) => String(u._id) === String(savedUserId))
+                    : null;
+
+                if (savedUser) {
+                    await this.$store.dispatch('User/get', { _id: savedUser._id });
+                    window.localStorage.setItem('activeUserId', String(savedUser._id));
+                    if (routeSwitchUser) {
+                        const query = { ...this.$route.query };
+                        delete query.switchUser;
+                        this.$router.replace({ path: this.$route.path, query });
+                    }
+                } else if (!this.$store.state.User.user && uniqueUsers.length > 0) {
                     this.$store.commit('User/user', uniqueUsers[0]);
                 }
             }
@@ -111,12 +127,21 @@ export default {
             this.$router.push('/permissions')
         },
         async switchUser(u) {
+            if (!this.isUserSwitcherEnabled) return;
             try {
+                window.localStorage.setItem('activeUserId', String(u._id));
                 // Clear existing forms to prevent stale data visibility
                 this.$store.dispatch('Forms/clear');
                 
                 // Fetch the full user details with population from the backend
                 await this.$store.dispatch('User/get', { _id: u._id });
+                const routeName = this.$route && this.$route.name;
+                if (routeName === 'EditorCreateForm') {
+                    this.$router.replace({ name: 'ManageForms' });
+                } else {
+                    this.$router.replace({ path: this.$route.path, query: { ...this.$route.query, _sw: Date.now() } });
+                }
+                window.location.reload();
             } catch (e) {
                 console.error('Failed to switch user', e);
                 // Fallback to the light user object if the full fetch fails
@@ -124,6 +149,7 @@ export default {
             }
         },
         onUserSelect(val) {
+            if (!this.isUserSwitcherEnabled) return;
             if (val && val.value) {
                 this.switchUser(val.value);
                 // Reset selection to null so the logout icon remains visible
@@ -133,6 +159,7 @@ export default {
             }
         },
         logout() {
+            window.localStorage.removeItem('activeUserId');
             this.$router.push('/pages/login')
         },
     },
@@ -201,6 +228,12 @@ export default {
                 label: u.name || u.email,
                 value: u
             }));
+        },
+        isUserSwitcherEnabled() {
+            const flag = String(process.env.VUE_APP_ENABLE_USER_SWITCHER || '').toLowerCase();
+            if (flag === 'true') return true;
+            if (flag === 'false') return false;
+            return process.env.NODE_ENV !== 'production';
         }
     },
 }

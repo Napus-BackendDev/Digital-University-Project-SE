@@ -13,4 +13,13 @@ var objSchema = new Schema({
 
 }, { timestamps: true });
 
+// Automatically remove sensitive fields when converting to JSON
+objSchema.set('toJSON', {
+    transform: function(doc, ret) {
+        delete ret.password;
+        delete ret.__v;
+        return ret;
+    }
+});
+
 module.exports = mongoose.model('Users', objSchema, "Users");

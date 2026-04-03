@@ -44,7 +44,8 @@ new Vue({
     App
   },
   // Mock up
-  created() {
-    this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
-  }
+  // created() {
+  //   this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
+  // }
 })
+    
