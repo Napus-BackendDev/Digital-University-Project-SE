@@ -77,6 +77,8 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 
+const mongoose = require('mongoose');
+
 // Graceful shutdown function
 const shutdown = () => {
     console.log('Gracefully shutting down...');
@@ -140,4 +142,6 @@ function onListening() {
     var bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
+    console.log(`[Server] Listening on ${bind}`);
+    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
 }

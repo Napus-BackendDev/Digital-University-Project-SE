@@ -37,7 +37,8 @@ module.exports = function (app) {
 
         app.use(morgan('combined')); // ใช้ log format ที่เหมาะสม
     } else {
-        app.use(morgan('dev')); // ใช้ log format สำหรับ development
+        // Disable morgan in development - we use custom logger instead
+        // app.use(morgan('dev'));
     }
 
     app.use(expressValidator());
@@ -56,7 +57,8 @@ module.exports = function (app) {
 
     // Handle errors
     app.use((err, req, res, next) => {
-        console.error(err);
+        // Log error without exposing sensitive details
+        console.error('[Express] Error:', err.message);
         res.status(500).send({ message: "Internal Server Error" });
     });
 };

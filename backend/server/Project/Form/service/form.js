@@ -13,6 +13,7 @@ const getSuccessCode = function (request) {
 
 exports.onQuery = async function (request, response) {
   try {
+    console.log(`[API ${getApiId(request)}] POST /api/v1/form/get (onQuery)`);
     let formId = new mongo.ObjectId(request.body._id);
 
     const pipeline = [
@@ -129,6 +130,7 @@ exports.onQuery = async function (request, response) {
 
 exports.onQueryByUser = async function (request, response) {
   try {
+    console.log(`[API ${getApiId(request)}] GET /api/v1/form/user/:userId (onQueryByUser)`);
     const userId = request.params.userId;
     let organizationId = request.query.organizationId;
     const isAdmin = request.query.isAdmin === 'true';
@@ -138,10 +140,7 @@ exports.onQueryByUser = async function (request, response) {
       organizationId = null;
     }
 
-    console.log(`[onQueryByUser] Context - User: ${userId}, Org: ${organizationId}, IsAdmin: ${isAdmin}`);
-
     if (!userId || !mongo.ObjectId.isValid(userId)) {
-      console.error(`[onQueryByUser] Invalid userId provided: ${userId}`);
       return ResMessage.sendResponse(response, getApiId(request), 40000, "A valid userId is required");
     }
 
@@ -151,7 +150,6 @@ exports.onQueryByUser = async function (request, response) {
       // System Admins see everything. 
       // This is essential for management and debugging.
       matchCondition = {};
-      console.log(`[onQueryByUser] System Admin view. Accessing all forms.`);
     } else {
       // Normal User / Switched User Visibility Rules:
       const userOID = new mongo.ObjectId(userId);
@@ -182,8 +180,6 @@ exports.onQueryByUser = async function (request, response) {
           { access: 'public' }
         ]
       };
-
-      console.log(`[onQueryByUser] User match filter applied. Org: ${organizationId || 'None'}`);
     }
 
     const pipeline = [
@@ -249,10 +245,8 @@ exports.onQueryByUser = async function (request, response) {
       }
     ];
 
-    console.log(`[onQueryByUser] Executing aggregation with match:`, JSON.stringify(matchCondition));
     const docs = await Form.onAggregate(pipeline);
     await FormModel.populate(docs, { path: 'controll.user controll.type' });
-    console.log(`[onQueryByUser] Found ${docs.length} forms for user: ${userId}`);
 
     docs.forEach(doc => {
       doc.responses = new Array(doc.responsesCount).fill({ submit: true });
@@ -260,13 +254,14 @@ exports.onQueryByUser = async function (request, response) {
 
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), docs);
   } catch (err) {
-    console.error(`[onQueryByUser] Error:`, err.stack);
+    console.error(`[API ${getApiId(request)}] Error:`, err.message);
     return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
   }
 };
 
 exports.onQuerys = async function (request, response) {
   try {
+    console.log(`[API ${getApiId(request)}] GET /api/v1/form/exp (onQuerys)`);
     // 1. Extract context from request (query or body)
     const userId = request.query.userId || request.body.userId;
     const organizationId = request.query.organizationId || request.body.organizationId;
@@ -344,6 +339,7 @@ exports.onQuerys = async function (request, response) {
 
 exports.onCreate = async function (request, response) {
   try {
+    console.log(`[API ${getApiId(request)}] POST /api/v1/form (onCreate)`);
     const doc = await Form.onCreate(request.body);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
@@ -353,6 +349,7 @@ exports.onCreate = async function (request, response) {
 
 exports.onUpdate = async function (request, response) {
   try {
+    console.log(`[API ${getApiId(request)}] PUT /api/v1/form (onUpdate)`);
     const query = { _id: new mongo.ObjectId(request.body._id) };
 
     const doc = await Form.onUpdate(query, request.body);
@@ -364,6 +361,7 @@ exports.onUpdate = async function (request, response) {
 
 exports.onDelete = async function (request, response) {
   try {
+    console.log(`[API ${getApiId(request)}] DELETE /api/v1/form (onDelete)`);
     const query = { _id: new mongo.ObjectId(request.body._id) };
     const doc = await Form.onDelete(query);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);

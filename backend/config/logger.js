@@ -23,40 +23,34 @@ const logger = winston.createLogger({
 
 // ฟังก์ชันสำหรับบันทึกข้อมูลที่เกี่ยวข้องกับ success
 function logSuccessData(req, res, body) {
-    const logData = {
-        level: 'info',
-        method: req.method,
-        url: req.originalUrl,
-        body: req.body,
-        headers: req.headers,
-        query: req.query,
-        ip: req.ip,
-        status: 'success',
-        response: JSON.parse(JSON.stringify(body, null, 2)),
-        statusCode: res.statusCode,
-        timestamp: new Date() // เก็บ timestamp
-    };
-
-    logger.info(`Request Success: ${req.url}`, logData);
+    // Only log minimal info - no sensitive data
+    const apiId = req.query.apiId || req.body.apiId || '';
+    const logLine = `[API ${apiId}] ${req.method} ${req.originalUrl} ${res.statusCode}`;
+    logger.info(logLine);
 }
 
 // ฟังก์ชันสำหรับบันทึกข้อมูลที่เกี่ยวข้องกับ error
 function logErrorData(req, res, body) {
-    const logData = {
-        level: 'error',
-        method: req.method,
-        url: req.originalUrl,
-        body: req.body,
-        headers: req.headers,
-        query: req.query,
-        ip: req.ip,
-        status: 'error',
-        response: JSON.parse(JSON.stringify(body, null, 2)),
-        statusCode: res.statusCode,
-        timestamp: new Date() // เก็บ timestamp
-    };
+    // const logData = {
+    //     level: 'error',
+    //     method: req.method,
+    //     url: req.originalUrl,
+    //     body: req.body,
+    //     headers: req.headers,
+    //     query: req.query,
+    //     ip: req.ip,
+    //     status: 'error',
+    //     response: JSON.parse(JSON.stringify(body, null, 2)),
+    //     statusCode: res.statusCode,
+    //     timestamp: new Date() // เก็บ timestamp
+    // };
 
-    logger.error(`Request Error: ${req.url}`, logData);
+    // logger.error(`Request Error: ${req.url}`, logData);
+    // Log errors with more detail but no sensitive headers
+    const apiId = req.query.apiId || req.body.apiId || '';
+    const errorMsg = body?.message || body?.error || 'Unknown error';
+    const logLine = `[API ${apiId}] ${req.method} ${req.originalUrl} ${res.statusCode} - ${errorMsg}`;
+    logger.error(logLine);
 }
 
 // ฟังก์ชันสำหรับลบ log เก่ากว่า 120 วัน (background)

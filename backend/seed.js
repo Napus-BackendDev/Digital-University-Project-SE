@@ -108,7 +108,7 @@ async function seedDatabase() {
         const adminUser = await User.create({
             _id: new mongoose.Types.ObjectId("69aec1c73996270d703db3aa"),
             name: 'System Admin',
-            email: 'admin@digital.uni',
+            email: '6631503129@lamduan.mfu.ac.th',
             password: 'password123',
             role: createdRoles[0]._id, // Admin
             organization: createdOrgs[1]._id // Digital University

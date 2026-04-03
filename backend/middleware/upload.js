@@ -2,6 +2,10 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+// Allowed file extensions from environment or defaults
+const ALLOWED_EXTENSIONS = (process.env.ALLOWED_FILE_EXTENSIONS || '.jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt').split(',');
+const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE_MB || '3') * 1024 * 1024;
+
 const parseMaybeJson = (value) => {
     if (typeof value !== 'string') {
         return value;
@@ -63,7 +67,15 @@ const storage = multer.diskStorage({
     },
 
     filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
+        const ext = path.extname(file.originalname).toLowerCase();
+        
+        // Validate file extension
+        if (!ALLOWED_EXTENSIONS.includes(ext)) {
+            const error = new Error(`File type not allowed. Allowed types: ${ALLOWED_EXTENSIONS.join(', ')}`);
+            error.code = 'INVALID_FILE_TYPE';
+            return cb(error);
+        }
+        
         const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
         cb(null, filename);
     },
@@ -71,6 +83,32 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
-    limits: { fileSize: 3 * 1024 * 1024 } // 3MB limit
+    limits: { 
+        fileSize: MAX_FILE_SIZE,
+        files: 10 // Max 10 files per request
+    },
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        
+        if (!ALLOWED_EXTENSIONS.includes(ext)) {
+            return cb(new Error(`File type ${ext} not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`), false);
+        }
+        
+        // Additional MIME type check
+        const allowedMimeTypes = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'text/plain'
+        ];
+        
+        if (!allowedMimeTypes.includes(file.mimetype)) {
+            return cb(new Error(`MIME type ${file.mimetype} not allowed`), false);
+        }
+        
+        cb(null, true);
+    }
 });
+
 module.exports = upload;

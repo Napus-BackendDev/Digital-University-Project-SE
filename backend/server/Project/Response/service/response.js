@@ -4,8 +4,8 @@ const responseService = require("../controller/response");
 const ResMessage = require("../../Settings/service/message");
 const { isSubmitted, maybeSendSubmissionConfirmation } = require("../../Email/service/submission");
 require("../../Questions/models/questions.model");
-require("../../../Project/Settings/models/question_type.model");
-require("../../../Project/User/models/user.model");
+require("../../Settings/models/question_type.model");
+require("../../User/models/user.model");
 
 // ====================================
 // Helper: Build clean query from request body
@@ -158,17 +158,19 @@ const attachFilesToAnswers = function (answers, files, body) {
 
 exports.onQuerys = async function (request, response) {
     try {
+        console.log(`[API ${getApiId(request)}] GET /api/v1/response/exp (onQuerys)`);
         const querys = {};
         const doc = await responseService.onQuerys(querys);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponseListPayload(doc));
     } catch (err) {
-        console.error("Query responses error:", err);
+        console.error(`[API ${getApiId(request)}] Error:`, err.message);
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
     }
 }
 
 exports.onQuery = async function (request, response) {
     try {
+        console.log(`[API ${getApiId(request)}] POST /api/v1/response/get (onQuery)`);
         const cleanQuery = buildCleanQuery(request.body || {});
 
         // If _id is requested, return single document. Otherwise return list by filter.
@@ -185,13 +187,14 @@ exports.onQuery = async function (request, response) {
         const docs = await responseService.onQuerys(cleanQuery);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponseListPayload(docs || []));
     } catch (err) {
-        console.error("Query response error:", err);
+        console.error(`[API ${getApiId(request)}] Error:`, err.message);
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
     }
 };
 
 exports.onCreate = async function (request, response) {
     try {
+        console.log(`[API ${getApiId(request)}] POST /api/v1/response (onCreate)`);
         let answers = request.body.answers || request.body['answers'];
 
         if (typeof answers === 'string') {
@@ -214,8 +217,10 @@ exports.onCreate = async function (request, response) {
 
         request.body.answers = answers;
         const doc = await responseService.onCreate(request.body);
+        
+        const shouldSendConfirmation = isSubmitted(request.body.submit);
         await maybeSendSubmissionConfirmation({
-            shouldSend: isSubmitted(request.body.submit),
+            shouldSend: shouldSendConfirmation,
             doc,
             body: request.body,
             logLabel: 'on create'
@@ -223,13 +228,14 @@ exports.onCreate = async function (request, response) {
 
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
     } catch (err) {
-        console.error("Create response error:", err);
+        console.error(`[API ${getApiId(request)}] Error:`, err.message);
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
     }
 };
 
 exports.onUpdate = async function (request, response) {
     try {
+        console.log(`[API ${getApiId(request)}] PUT /api/v1/response (onUpdate)`);
         const query = { _id: new mongo.ObjectId(request.body._id) };
 
         // Fetch existing response to merge answers instead of replacing
@@ -266,6 +272,7 @@ exports.onUpdate = async function (request, response) {
         request.body.answers = mergedAnswers;
 
         const doc = await responseService.onUpdate(query, request.body);
+
         if (!doc) {
             return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found after update");
         }
@@ -280,37 +287,33 @@ exports.onUpdate = async function (request, response) {
 
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), sanitizeResponsePayload(doc));
     } catch (err) {
-        console.error("Update response error:", err);
+        console.error(`[API ${getApiId(request)}] Error:`, err.message);
         return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
     }
 };
 
 exports.onDelete = async function (request, response) {
     try {
+        console.log(`[API ${getApiId(request)}] DELETE /api/v1/response (onDelete)`);
         // Check body, query, and params for the ID to be more resilient
         const idStr = (request.body && (request.body._id || request.body.id)) || 
                       (request.query && (request.query._id || request.query.id)) || 
                       (request.params && (request.params._id || request.params.id));
 
         if (!idStr) {
-            console.warn("[onDelete] Missing ID");
             return ResMessage.sendResponse(response, getApiId(request), 40000, "Response ID is required");
         }
 
         const mongoose = require("mongoose");
         if (!mongoose.Types.ObjectId.isValid(idStr)) {
-            console.warn("[onDelete] Invalid ID format:", idStr);
             return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid Response ID format");
         }
         
-        console.log("[onDelete] Attempting to delete response with ID:", idStr);
         const query = { _id: new mongoose.Types.ObjectId(idStr) };
         
         // Execute delete directly on the model to avoid potential issues with controller wrappers
         const ResponseModel = mongoose.model("Responses");
         const doc = await ResponseModel.deleteMany(query);
-        
-        console.log("[onDelete] Delete result:", doc);
         
         const result = { _id: idStr, deleted: true, details: doc };
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), result);

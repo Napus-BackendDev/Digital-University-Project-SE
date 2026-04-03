@@ -1,91 +1,102 @@
-const formCtrl = require('../../Form/controller/form');
-const userCtrl = require('../../User/controller/user');
-const mailer = require('../../../../helpers/mailer');
+const FormModel = require("../../Form/models/form.model");
+const UserModel = require("../../User/models/user.model");
+const path = require("path");
+const mailer = require("../../../../helpers/mailer");
 
-const DEFAULT_CONFIRM_MESSAGE = 'Thank you for completing this survey. Your response has been recorded.';
-
-const isSubmitted = function (value) {
-    return value === true || value === 'true';
+// Basic email validation regex
+const isValidEmail = (email) => {
+  if (!email || typeof email !== 'string') return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
 };
 
-const getFormTitle = function (formInfo) {
-    if (!formInfo || !Array.isArray(formInfo.title)) return 'Form';
-    const titleEntry = formInfo.title.find(item => item && item.value);
-    return titleEntry && titleEntry.value ? titleEntry.value : 'Form';
+// Helper to check if a response is considered "submitted"
+exports.isSubmitted = (submitValue) => {
+  return submitValue === true || submitValue === 'true';
 };
 
-const stripHtml = function (value = '') {
-    return String(value)
-        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-};
+exports.isValidEmail = isValidEmail;
 
-const renderConfirmationTemplate = function (template, formInfo, responderInfo) {
-    const formTitle = getFormTitle(formInfo);
-    const replacements = {
-        'User.name': responderInfo && responderInfo.name ? responderInfo.name : '',
-        'User.email': responderInfo && responderInfo.email ? responderInfo.email : '',
-        'Form.title': formTitle,
-        'Form.id': formInfo && formInfo._id ? String(formInfo._id) : '',
-    };
+/**
+ * maybeSendSubmissionConfirmation
+ * Sends a confirmation email to the responder only.
+ * Uses helpers/mailer.js for sending.
+ */
+exports.maybeSendSubmissionConfirmation = async ({ shouldSend, doc, body, logLabel = '' }) => {
+  if (!shouldSend) {
+    return;
+  }
 
-    return String(template || '').replace(/\{\{\s*([A-Za-z0-9_.]+)\s*\}\}/g, (match, token) => {
-        if (replacements[token] !== undefined) {
-            return replacements[token];
+  try {
+    // 1. Fetch Form settings
+    const formId = doc.form?._id || doc.form || body.form_id || body.form;
+    if (!formId) {
+      console.error('[Email] No form ID found - skipping');
+      return;
+    }
+
+    const form = await FormModel.findById(formId).select('title settings').lean();
+    if (!form) {
+      console.error(`[Email] Form not found: ${formId}`);
+      return;
+    }
+
+    // Only proceed if collectEmail is enabled
+    if (!form.settings?.collectEmail) {
+      return;
+    }
+
+    // 2. Determine responder's email
+    let responderEmail = null;
+    const responderData = doc.responder;
+    
+    if (responderData) {
+      if (typeof responderData === 'object' && isValidEmail(responderData.email)) {
+        responderEmail = responderData.email;
+      } else {
+        const user = await UserModel.findById(responderData).select('email').lean();
+        if (user && isValidEmail(user.email)) {
+          responderEmail = user.email;
         }
-        return match;
-    });
-};
-
-const getConfirmationContext = function ({ doc, body = {}, fallback = {} }) {
-    return {
-        formId: doc && doc.form ? doc.form : (body.form || fallback.form),
-        responderId: doc && doc.responder ? doc.responder : (body.responder || fallback.responder)
-    };
-};
-
-const sendSubmissionConfirmation = async function ({ formId, responderId }) {
-    if (!formId || !responderId) return false;
-
-    const [formInfo, responderInfo] = await Promise.all([
-        formCtrl.onQuery({ _id: formId }),
-        userCtrl.onQuery({ _id: responderId })
-    ]);
-
-    if (!formInfo || !formInfo.settings || !formInfo.settings.emailNotifications) {
-        return false;
+      }
     }
 
-    if (!responderInfo || !responderInfo.email) {
-        return false;
+    if (!responderEmail) {
+      console.warn('[Email] No valid responder email found');
+      return;
     }
 
-    const subject = `Confirmation: ${getFormTitle(formInfo)} Submitted`;
-    const template = formInfo.settings.confirmMessage
-        || formInfo.settings.emailMessage
-        || DEFAULT_CONFIRM_MESSAGE;
-    const renderedMessage = renderConfirmationTemplate(template, formInfo, responderInfo);
-    const text = stripHtml(renderedMessage) || DEFAULT_CONFIRM_MESSAGE;
+    // 3. Prepare text content for mailer.js
+    const formTitle = form.title[0]?.value || 'Untitled Form';
+    const emailMessage = form.settings.emailMessage || 'Thank you for your submission!';
+    const confirmationMessage = form.settings.confirmMessage || 'Your response has been recorded.';
+    const formLink = `${process.env.FRONTEND_URL}/forms/${formId}/response/${doc._id}`;
 
-    return mailer.sendMail(responderInfo.email, subject, text);
-};
+    const subject = `Form Confirmation: ${formTitle}`;
+    const textContent = `
+Dear User,
 
-const maybeSendSubmissionConfirmation = async function ({ shouldSend, doc, body, fallback, logLabel }) {
-    if (!shouldSend) return false;
+${emailMessage}
 
-    try {
-        const context = getConfirmationContext({ doc, body, fallback });
-        return await sendSubmissionConfirmation(context);
-    } catch (mailErr) {
-        console.error(`Error dispatching confirmation email${logLabel ? ` ${logLabel}` : ''}:`, mailErr);
-        return false;
+Your response to the form "${formTitle}" has been successfully recorded.
+${confirmationMessage}
+
+You can view your submission here:
+${formLink}
+
+Thank you!
+    `.trim();
+
+    // 4. Send email using helper/mailer.js
+    const success = await mailer.sendMail(responderEmail, subject, textContent);
+
+    if (success) {
+      console.log(`[Email] Sent confirmation to: ${responderEmail}`);
+    } else {
+      console.error(`[Email] Failed to send to: ${responderEmail}`);
     }
-};
 
-module.exports = {
-    isSubmitted,
-    maybeSendSubmissionConfirmation
+  } catch (err) {
+    console.error(`[Email] Error:`, err.message);
+  }
 };
