@@ -1,0 +1,43 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Digital University Project API",
+        "version": "1.0.0",
+        "description": "API Documentation for Digital University Project"
+    },
+    "servers": [
+        {
+            "url": "/api/v1",
+            "description": "V1 API Server"
+        }
+    ],
+    "paths": {},
+    "tags": [],
+    "components": {
+        "schemas": {
+            "ApiResponse": {
+                "type": "object",
+                "properties": {
+                    "code": { "type": "integer", "description": "Internal application code (e.g. 20021)", "example": 20021 },
+                    "httpcode": { "type": "integer", "description": "Standard HTTP status code", "example": 200 },
+                    "message": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/Message" }
+                    },
+                    "data": { "type": "object", "description": "The actual data payload" },
+                    "status": { "type": "string", "example": "success" },
+                    "statusCode": { "type": "integer", "example": 200 },
+                    "timestamp": { "type": "string", "format": "date-time", "example": "2026-04-02T03:00:46.498Z" },
+                    "url": { "type": "string", "example": "/api/v1/form/exp" }
+                }
+            },
+            "Message": {
+                "type": "object",
+                "properties": {
+                    "key": { "type": "string", "description": "Language key (en, th)", "example": "en" },
+                    "value": { "type": "string", "description": "Localized message text", "example": "Success" }
+                }
+            }
+        }
+    }
+}

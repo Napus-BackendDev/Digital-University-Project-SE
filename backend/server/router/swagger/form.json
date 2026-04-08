@@ -1,0 +1,175 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Form API",
+    "version": "1.0.0"
+  },
+  "tags": [{ "name": "Form" }],
+  "paths": {
+    "/form/exp": {
+      "get": {
+        "tags": ["Form"],
+        "summary": "Get all forms (apiId: 21)",
+        "responses": {
+          "200": {
+            "description": "Array of forms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Form" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/form/get": {
+      "post": {
+        "tags": ["Form"],
+        "summary": "Get a single form (apiId: 22)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 22 },
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Form" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/form": {
+      "post": {
+        "tags": ["Form"],
+        "summary": "Create form (apiId: 23)",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FormCreate" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Form"],
+        "summary": "Update form (apiId: 24)",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FormUpdate" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Form"],
+        "summary": "Delete form (apiId: 25)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 25 },
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Form": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "title": { "type": "array", "items": { "type": "object" } },
+          "settings": { "type": "object" },
+          "questions": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "FormCreate": {
+        "type": "object",
+        "required": ["apiId", "title"],
+        "properties": {
+          "apiId": { "type": "integer", "example": 23 },
+          "title": { "type": "array", "items": { "type": "object" } },
+          "settings": { "type": "object" }
+        }
+      },
+      "FormUpdate": {
+        "type": "object",
+        "required": ["apiId", "_id"],
+        "properties": {
+          "apiId": { "type": "integer", "example": 24 },
+          "_id": { "type": "string" },
+          "title": { "type": "array", "items": { "type": "object" } }
+        }
+      }
+    }
+  }
+}
