@@ -10,48 +10,55 @@ const logger = winston.createLogger({
         winston.format.json()  // บันทึก log ในรูปแบบ JSON
     ),
     transports: [
-        new winston.transports.Console(), //I write this for view erron in console in testing api
-        // new winston.transports.MongoDB({
-        //     db: 'mongodb://localhost:27017/logs',  // URL ของ MongoDB
-        //     collection: 'logs',  // ชื่อ collection ที่จะเก็บ log
-        //     level: 'info',  // กำหนดระดับ log ที่จะบันทึก (สามารถปรับให้เหมาะสมได้)
-        //     storeHost: true,  // เก็บ hostname
-        //     tryReconnect: true,  // ลองเชื่อมต่อใหม่หากการเชื่อมต่อ MongoDB ล้มเหลว
-        // })
+        new winston.transports.MongoDB({
+            db: 'mongodb://localhost:27017/logs',  // URL ของ MongoDB
+            collection: 'logs',  // ชื่อ collection ที่จะเก็บ log
+            level: 'info',  // กำหนดระดับ log ที่จะบันทึก (สามารถปรับให้เหมาะสมได้)
+            storeHost: true,  // เก็บ hostname
+            tryReconnect: true,  // ลองเชื่อมต่อใหม่หากการเชื่อมต่อ MongoDB ล้มเหลว
+        })
     ]
 });
 
 // ฟังก์ชันสำหรับบันทึกข้อมูลที่เกี่ยวข้องกับ success
 function logSuccessData(req, res, body) {
-    // Only log minimal info - no sensitive data
-    const apiId = req.query.apiId || req.body.apiId || '';
-    const logLine = `[API ${apiId}] ${req.method} ${req.originalUrl} ${res.statusCode}`;
-    logger.info(logLine);
+    const logData = {
+        level: 'info',
+        method: req.method,
+        url: req.originalUrl,
+        body: req.body,
+        headers: req.headers,
+        query: req.query,
+        ip: req.ip,
+        status: 'success',
+        response: JSON.parse(JSON.stringify(body, null, 2)),
+        statusCode: res.statusCode,
+        timestamp: new Date() // เก็บ timestamp
+    };
+
+    logger.info(`Request Success: ${req.url}`, logData);
 }
+
 
 // ฟังก์ชันสำหรับบันทึกข้อมูลที่เกี่ยวข้องกับ error
 function logErrorData(req, res, body) {
-    // const logData = {
-    //     level: 'error',
-    //     method: req.method,
-    //     url: req.originalUrl,
-    //     body: req.body,
-    //     headers: req.headers,
-    //     query: req.query,
-    //     ip: req.ip,
-    //     status: 'error',
-    //     response: JSON.parse(JSON.stringify(body, null, 2)),
-    //     statusCode: res.statusCode,
-    //     timestamp: new Date() // เก็บ timestamp
-    // };
+    const logData = {
+        level: 'error',
+        method: req.method,
+        url: req.originalUrl,
+        body: req.body,
+        headers: req.headers,
+        query: req.query,
+        ip: req.ip,
+        status: 'error',
+        response: JSON.parse(JSON.stringify(body, null, 2)),
+        statusCode: res.statusCode,
+        timestamp: new Date() // เก็บ timestamp
+    };
 
-    // logger.error(`Request Error: ${req.url}`, logData);
-    // Log errors with more detail but no sensitive headers
-    const apiId = req.query.apiId || req.body.apiId || '';
-    const errorMsg = body?.message || body?.error || 'Unknown error';
-    const logLine = `[API ${apiId}] ${req.method} ${req.originalUrl} ${res.statusCode} - ${errorMsg}`;
-    logger.error(logLine);
+    logger.error(`Request Error: ${req.url}`, logData);
 }
+
 
 // ฟังก์ชันสำหรับลบ log เก่ากว่า 120 วัน (background)
 async function deleteOldLogs() {

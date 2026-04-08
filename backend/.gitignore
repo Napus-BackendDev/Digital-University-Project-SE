@@ -1,35 +1,4 @@
-node_modules
+/.idea/
+/node_modules/
+package-lock.json
 
-# Environment variables - DO NOT COMMIT
-.env
-.env.dev
-.env.local
-.env.production
-.env.*.local
-
-# Logs
-logs
-*.log
-npm-debug.log*
-
-# Runtime data
-pids
-*.pid
-*.seed
-
-# Coverage directory
-coverage
-
-# Build output
-dist
-build
-
-# IDE
-.vscode
-.idea
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
