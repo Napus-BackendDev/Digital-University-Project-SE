@@ -64,7 +64,8 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import { getFilteredResponses } from '@/projects/utils/analytics';
+import moment from 'moment';
+import { getFilteredResponses, getTableStatusLabel } from '@/projects/utils/analytics';
 
 export default {
     name: 'WidgetsDropdown',
@@ -79,7 +80,7 @@ export default {
         ...mapGetters('User', ['users']),
 
         stats() {
-            if (!this.forms) return {
+            if (!this.forms || !Array.isArray(this.forms)) return {
                 activeForms: 0,
                 totalResponses: 0,
                 totalUsers: 0,
@@ -91,53 +92,19 @@ export default {
             let totalStarted = 0;
             let totalUsers = (this.users && Array.isArray(this.users)) ? this.users.length : 0;
 
+            const now = moment();
+
             this.forms.forEach(form => {
-                // Count active forms
-                let isActive = false;
-                let statusRaw = '';
-                if (form.status && form.status.title) {
-                    if (Array.isArray(form.status.title)) {
-                        const enItem = form.status.title.find(item => item.key === 'en');
-                        statusRaw = enItem ? enItem.value : (form.status.title[0]?.value || '');
-                    } else {
-                        statusRaw = form.status.title;
-                    }
-                }
-                statusRaw = statusRaw.toLowerCase();
-
-                if (statusRaw.includes('open') || statusRaw === 'active') {
-                    isActive = true;
-                }
-
-                if (isActive) {
+                // Count active forms using the standardized utility
+                const status = getTableStatusLabel(form, now);
+                if (status === 'Active') {
                     activeForms++;
                 }
 
-                // Count responses within range
+                // Count responses and started instances using optimized utility
                 if (form.responses && form.responses.length > 0) {
                     totalStarted += form.responses.length;
-                    const filteredResponses = form.responses.filter(r => {
-                        const isSubmitted = r && (
-                            r.submit === true || 
-                            r.submit === 1 || 
-                            String(r.submit).toLowerCase() === 'true'
-                        );
-                        if (!isSubmitted) return false;
-                        if (!r.createdAt) return false;
-
-                        // Check if r.createdAt is within timeRange
-                        const createdAt = moment(r.createdAt);
-                        if (this.timeRange === '1d') {
-                            return createdAt.isSameOrAfter(moment().startOf('day'));
-                        } else if (this.timeRange === '7d') {
-                            return createdAt.isSameOrAfter(moment().subtract(7, 'days'), 'day');
-                        } else if (this.timeRange === '30d') {
-                            return createdAt.isSameOrAfter(moment().subtract(30, 'days'), 'day');
-                        } else if (this.timeRange === '1y') {
-                            return createdAt.isSameOrAfter(moment().subtract(1, 'years'), 'day');
-                        }
-                        return true;
-                    });
+                    const filteredResponses = getFilteredResponses(form, this.timeRange, now);
                     totalResponses += filteredResponses.length;
                 }
             });
