@@ -1,16 +1,16 @@
 <template>
     <CRow>
-        <!-- Card 1: Total Forms -->
+        <!-- Card 1: Total Active Forms -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-danger-light text-danger">
-                        <CIcon name="cil-description" size="xl" />
+                    <div class="icon-box bg-primary-light text-primary">
+                        <CIcon name="cil-file" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.totalForms }}</h2>
-                    <div class="stat-label">{{ $t('analytics.widgets.totalForms') }}</div>
+                    <h2 class="stat-value">{{ stats.activeForms }}</h2>
+                    <div class="stat-label">Total Active Forms</div>
                 </div>
             </div>
         </CCol>
@@ -19,43 +19,43 @@
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-success-light text-success">
-                        <CIcon name="cil-people" size="xl" />
+                    <div class="icon-box bg-info-light text-info">
+                        <CIcon name="cil-envelope-closed" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalResponses }}</h2>
-                    <div class="stat-label">{{ $t('analytics.widgets.totalResponses') }}</div>
+                    <div class="stat-label">Total Responses</div>
                 </div>
             </div>
         </CCol>
 
-        <!-- Card 3: Total Users -->
+        <!-- Card 3: Active Users -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-warning-light text-warning">
-                        <CIcon name="cil-chart-line" size="xl" />
+                        <CIcon name="cil-people" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalUsers }}</h2>
-                    <div class="stat-label">{{ $t('analytics.widgets.totalUsers') }}</div>
+                    <div class="stat-label">Active Users</div>
                 </div>
             </div>
         </CCol>
 
-        <!-- Card 4: Avg Responses/Form -->
+        <!-- Card 4: Avg Completion Rate -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-dark-light text-dark">
-                        <CIcon name="cil-chart" size="xl" />
+                    <div class="icon-box bg-success-light text-success">
+                        <CIcon name="cil-chart-line" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.avgResponses }}</h2>
-                    <div class="stat-label">{{ $t('analytics.widgets.avgResponses') }}</div>
+                    <h2 class="stat-value">{{ stats.completionRate }}%</h2>
+                    <div class="stat-label">Avg. Completion Rate</div>
                 </div>
             </div>
         </CCol>
@@ -80,45 +80,20 @@ export default {
 
         stats() {
             if (!this.forms) return {
-                totalForms: 0,
+                activeForms: 0,
                 totalResponses: 0,
                 totalUsers: 0,
-                avgResponses: 0
+                completionRate: 0
             };
 
-            const totalForms = this.forms.length;
+            let activeForms = 0;
             let totalResponses = 0;
+            let totalStarted = 0;
             let totalUsers = (this.users && Array.isArray(this.users)) ? this.users.length : 0;
 
             this.forms.forEach(form => {
-                // Count responses within range
-                if (form.responses) {
-                    const filteredResponses = form.responses.filter(r => {
-                        const isSubmitted = r && (
-                            r.submit === true || 
-                            r.submit === 1 || 
-                            String(r.submit).toLowerCase() === 'true'
-                        );
-                        if (!isSubmitted) return false;
-                        if (!r.createdAt) return false;
-
-                        // Check if r.createdAt is within timeRange
-                        const createdAt = moment(r.createdAt);
-                        if (this.timeRange === '7d') {
-                            return createdAt.isSameOrAfter(moment().subtract(7, 'days'), 'day');
-                        } else if (this.timeRange === '30d') {
-                            return createdAt.isSameOrAfter(moment().subtract(30, 'days'), 'day');
-                        } else if (this.timeRange === '1y') {
-                            return createdAt.isSameOrAfter(moment().subtract(1, 'years'), 'day');
-                        }
-                        return true;
-                    });
-                    totalResponses += filteredResponses.length;
-                }
-
                 // Count active forms
                 let isActive = false;
-
                 let statusRaw = '';
                 if (form.status && form.status.title) {
                     if (Array.isArray(form.status.title)) {
@@ -130,22 +105,50 @@ export default {
                 }
                 statusRaw = statusRaw.toLowerCase();
 
-                if (statusRaw.includes('open')) {
+                if (statusRaw.includes('open') || statusRaw === 'active') {
                     isActive = true;
                 }
 
                 if (isActive) {
-                    // keep existing active count logic if needed
+                    activeForms++;
+                }
+
+                // Count responses within range
+                if (form.responses && form.responses.length > 0) {
+                    totalStarted += form.responses.length;
+                    const filteredResponses = form.responses.filter(r => {
+                        const isSubmitted = r && (
+                            r.submit === true || 
+                            r.submit === 1 || 
+                            String(r.submit).toLowerCase() === 'true'
+                        );
+                        if (!isSubmitted) return false;
+                        if (!r.createdAt) return false;
+
+                        // Check if r.createdAt is within timeRange
+                        const createdAt = moment(r.createdAt);
+                        if (this.timeRange === '1d') {
+                            return createdAt.isSameOrAfter(moment().startOf('day'));
+                        } else if (this.timeRange === '7d') {
+                            return createdAt.isSameOrAfter(moment().subtract(7, 'days'), 'day');
+                        } else if (this.timeRange === '30d') {
+                            return createdAt.isSameOrAfter(moment().subtract(30, 'days'), 'day');
+                        } else if (this.timeRange === '1y') {
+                            return createdAt.isSameOrAfter(moment().subtract(1, 'years'), 'day');
+                        }
+                        return true;
+                    });
+                    totalResponses += filteredResponses.length;
                 }
             });
 
-            const avgResponses = totalForms > 0 ? (totalResponses / totalForms).toFixed(1) : 0;
+            const completionRate = totalStarted > 0 ? ((totalResponses / totalStarted) * 100).toFixed(1) : 0;
 
             return {
-                totalForms,
+                activeForms,
                 totalResponses,
                 totalUsers,
-                avgResponses
+                completionRate
             };
         }
     }
@@ -186,6 +189,12 @@ export default {
 }
 
 /* Custom light backgrounds for icons */
+.bg-primary-light {
+    background-color: rgba(50, 31, 219, 0.1);
+}
+.bg-info-light {
+    background-color: rgba(57, 243, 253, 0.1);
+}
 .bg-danger-light {
     background-color: rgba(229, 83, 83, 0.1);
 }
@@ -203,6 +212,12 @@ export default {
 }
 
 /* Text colors override if needed, using CoreUI utility classes usually works but explicit here for safety */
+.text-primary {
+    color: #321fdb !important;
+}
+.text-info {
+    color: #39f3fd !important;
+}
 .text-danger {
     color: #e55353 !important;
 }
