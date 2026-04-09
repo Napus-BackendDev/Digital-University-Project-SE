@@ -64,6 +64,7 @@
     import Pagination from '@/projects/components/Util/Pagination.vue'
 import moment from 'moment'
 import localeMixin from '@/mixins/localeMixin'
+import { getFilteredResponses as filterResponsesInRange, getTableStatusLabel } from '@/projects/utils/analytics'
 
 export default {
     name: 'AdminTables',
@@ -108,22 +109,7 @@ export default {
             })
 
             return sortedForms.map(form => {
-                let statusTitle = 'Draft';
-                const now = new Date();
-                const schedule = form.schedule || (form.settings && form.settings.schedule);
-
-                if (schedule && schedule.startAt) {
-                    const start = new Date(schedule.startAt);
-                    const end = new Date(schedule.endAt);
-
-                    if (!start && !end) {
-                        statusTitle = 'Draft';
-                    } else if (start <= now && now <= end) {
-                        statusTitle = 'Active';
-                    } else {
-                        statusTitle = 'Closed';
-                    }
-                }
+                const statusTitle = getTableStatusLabel(form);
 
                 const localFormat = this.$i18n.locale === 'th' ? 'th-TH' : 'en-GB';
                 moment.locale(this.$i18n.locale === 'th' ? 'th' : 'en');
@@ -138,7 +124,7 @@ export default {
                     description: this.getLang(form.description) || '',
                     status: statusTitle,
                     access: accessTitle,
-                    responses: this.getFilteredResponses(form).length,
+                    responses: filterResponsesInRange(form, this.timeRange).length,
                     created: form.updatedAt ? new Date(form.updatedAt).toLocaleDateString(localFormat, { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
                 }
             })
@@ -174,28 +160,6 @@ export default {
             if (v.includes('public') || v.includes('สาธารณะ') || v === 'general') return 'visi-public';
             if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
             return 'visi-org';
-        },
-        getFilteredResponses(form) {
-            if (!form || !form.responses) return [];
-            return form.responses.filter(r => {
-                const isSubmitted = r && (
-                    r.submit === true || 
-                    r.submit === 1 || 
-                    String(r.submit).toLowerCase() === 'true'
-                );
-                if (!isSubmitted) return false;
-                if (!r.createdAt) return false;
-
-                const createdAt = moment(r.createdAt);
-                if (this.timeRange === '7d') {
-                    return createdAt.isSameOrAfter(moment().subtract(7, 'days'), 'day');
-                } else if (this.timeRange === '30d') {
-                    return createdAt.isSameOrAfter(moment().subtract(30, 'days'), 'day');
-                } else if (this.timeRange === '1y') {
-                    return createdAt.isSameOrAfter(moment().subtract(1, 'years'), 'day');
-                }
-                return true;
-            });
         }
     }
 }

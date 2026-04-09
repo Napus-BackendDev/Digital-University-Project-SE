@@ -64,7 +64,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import moment from 'moment';
+import { getFilteredResponses } from '@/projects/utils/analytics';
 
 export default {
     name: 'WidgetsDropdown',

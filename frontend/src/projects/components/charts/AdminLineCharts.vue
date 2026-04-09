@@ -27,6 +27,7 @@ import { CChartLine } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
 import moment from 'moment'
 import localeMixin from '@/mixins/localeMixin'
+import { getFilteredResponses } from '@/projects/utils/analytics'
 
 export default {
     name: 'AdminLineCharts',
@@ -45,6 +46,7 @@ export default {
             const labels = [];
             const dataMap = {};
             moment.locale(this.$i18n.locale);
+            const now = moment();
 
             if (this.timeRange === '1y') {
                 // Monthly aggregation for 1 year
@@ -66,7 +68,7 @@ export default {
             }
 
             this.forms.forEach(form => {
-                const submittedResponses = this.getFilteredResponses(form);
+                const submittedResponses = getFilteredResponses(form, this.timeRange, now);
                 submittedResponses.forEach(res => {
                     if (res && res.createdAt) {
                         const d = moment(res.createdAt);
@@ -78,19 +80,7 @@ export default {
                         }
 
                         if (dataMap[key] !== undefined) {
-                            const now = moment();
-                            let isMatch = false;
-                            if (this.timeRange === '7d') {
-                                isMatch = d.isSameOrAfter(now.clone().subtract(7, 'days'), 'day');
-                            } else if (this.timeRange === '30d') {
-                                isMatch = d.isSameOrAfter(now.clone().subtract(30, 'days'), 'day');
-                            } else {
-                                isMatch = true; // 1y is handled by month keys
-                            }
-
-                            if (isMatch) {
-                                dataMap[key]++;
-                            }
+                            dataMap[key]++;
                         }
                     }
                 });
@@ -196,31 +186,6 @@ export default {
                     bodySpacing: 4
                 }
             }
-        }
-    },
-    methods: {
-        getFilteredResponses(form) {
-            if (!form || !form.responses) return [];
-            return form.responses.filter(r => {
-                const isSubmitted = r && (
-                    r.submit === true || 
-                    r.submit === 1 || 
-                    String(r.submit).toLowerCase() === 'true'
-                );
-                if (!isSubmitted) return false;
-                if (!r.createdAt) return false;
-
-                const createdAt = moment(r.createdAt);
-                const now = moment();
-                if (this.timeRange === '7d') {
-                    return createdAt.isSameOrAfter(now.clone().subtract(7, 'days'), 'day');
-                } else if (this.timeRange === '30d') {
-                    return createdAt.isSameOrAfter(now.clone().subtract(30, 'days'), 'day');
-                } else if (this.timeRange === '1y') {
-                    return createdAt.isSameOrAfter(now.clone().subtract(1, 'years'), 'day');
-                }
-                return true;
-            });
         }
     }
 }
