@@ -15,6 +15,47 @@ const getSuccessCode = function (request) {
   return 20000 + getApiId(request);
 };
 
+const isValidObjectId = function (value) {
+  return Boolean(value) && mongo.ObjectId.isValid(value);
+};
+
+const toObjectId = function (value) {
+  return new mongo.ObjectId(String(value));
+};
+
+const parseBooleanFlag = function (value) {
+  return value === true || String(value || '').toLowerCase() === 'true';
+};
+
+const normalizeOptionalId = function (value) {
+  if (value === 'null' || value === 'undefined' || value === '') return null;
+  return value || null;
+};
+
+const getDocVisibilityFlags = function (doc, userId) {
+  const userIdStr = String(userId || '');
+  const isCreator = doc.creator && String(doc.creator._id || doc.creator) === userIdStr;
+  const isController = Array.isArray(doc.controll) && doc.controll.some((item) => {
+    return item && item.user && String(item.user._id || item.user) === userIdStr;
+  });
+  const isAllowedUser = Array.isArray(doc.settings?.allowedUser) && doc.settings.allowedUser.some((item) => {
+    return item && String(item._id || item) === userIdStr;
+  });
+
+  return {
+    isCreator,
+    isController,
+    isAllowedUser,
+    isPrivileged: isCreator || isController || isAllowedUser,
+  };
+};
+
+const attachResponsePlaceholders = function (docs = []) {
+  docs.forEach((doc) => {
+    doc.responses = new Array(doc.responsesCount).fill({ submit: true });
+  });
+};
+
 const normalizeObjectIdRef = function (value) {
   if (!value) return value;
   if (typeof value === 'object') {
@@ -24,27 +65,36 @@ const normalizeObjectIdRef = function (value) {
   return value;
 };
 
+const normalizeIdArray = function (values = []) {
+  if (!Array.isArray(values)) return [];
+  return values.map((item) => normalizeObjectIdRef(item)).filter(Boolean);
+};
+
+const normalizeControllArray = function (values = []) {
+  if (!Array.isArray(values)) return [];
+
+  return values
+    .map((item) => ({
+      user: normalizeObjectIdRef(item?.user),
+      type: normalizeObjectIdRef(item?.type),
+    }))
+    .filter((item) => item.user && item.type);
+};
+
 const normalizeFormPayload = function (payload = {}) {
   const clean = { ...payload };
 
   if (Array.isArray(clean.organization)) {
-    clean.organization = clean.organization.map((item) => normalizeObjectIdRef(item));
+    clean.organization = normalizeIdArray(clean.organization);
   }
 
   if (Array.isArray(clean.controll)) {
-    clean.controll = clean.controll
-      .map((item) => ({
-        user: normalizeObjectIdRef(item?.user),
-        type: normalizeObjectIdRef(item?.type),
-      }))
-      .filter((item) => item.user && item.type);
+    clean.controll = normalizeControllArray(clean.controll);
   }
 
   if (clean.settings && typeof clean.settings === 'object' && Array.isArray(clean.settings.allowedUser)) {
     clean.settings = { ...clean.settings };
-    clean.settings.allowedUser = clean.settings.allowedUser
-      .map((item) => normalizeObjectIdRef(item))
-      .filter(Boolean);
+    clean.settings.allowedUser = normalizeIdArray(clean.settings.allowedUser);
   }
 
   return clean;
@@ -78,7 +128,7 @@ const hasEditorCollaboratorAccess = function (formDoc, userId) {
 exports.onQuery = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] POST /api/v1/form/get (onQuery)`);
-    let formId = new mongo.ObjectId(request.body._id);
+    let formId = toObjectId(request.body._id);
 
     const pipeline = [
       { $match: { _id: formId } },
@@ -169,24 +219,16 @@ exports.onQuery = async function (request, response) {
     await FormModel.populate(doc, { path: 'controll.user controll.type' });
 
     const userId = request.body.userId || request.query.userId;
-    const isAdmin = request.body.isAdmin === true || request.query.isAdmin === 'true';
-    if (userId && mongo.ObjectId.isValid(userId) && !isAdmin) {
-      const userIdStr = String(userId);
-      const isCreator = doc.creator && String(doc.creator._id || doc.creator) === userIdStr;
-      const isController = Array.isArray(doc.controll) && doc.controll.some((item) => {
-        return item && item.user && String(item.user._id || item.user) === userIdStr;
-      });
-      const isAllowedUser = Array.isArray(doc.settings?.allowedUser) && doc.settings.allowedUser.some((item) => {
-        return item && String(item._id || item) === userIdStr;
-      });
-      const isPrivileged = isCreator || isController || isAllowedUser;
+    const isAdmin = parseBooleanFlag(request.body.isAdmin) || parseBooleanFlag(request.query.isAdmin);
+    if (isValidObjectId(userId) && !isAdmin) {
+      const { isPrivileged } = getDocVisibilityFlags(doc, userId);
       const status = getComputedStatus(doc.schedule);
 
       let hasSubmitted = false;
       if (!isPrivileged && status === 'closed') {
         const count = await FormModel.db.collection('Responses').countDocuments({
           form: doc._id,
-          responder: new mongo.ObjectId(userId),
+          responder: toObjectId(userId),
           submit: true
         });
         hasSubmitted = count > 0;
@@ -225,15 +267,10 @@ exports.onQueryByUser = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] GET /api/v1/form/user/:userId (onQueryByUser)`);
     const userId = request.params.userId;
-    let organizationId = request.query.organizationId;
-    const isAdmin = request.query.isAdmin === 'true';
+    let organizationId = normalizeOptionalId(request.query.organizationId);
+    const isAdmin = parseBooleanFlag(request.query.isAdmin);
 
-    // Normalize organizationId: treat "null", "undefined", or empty string as actual null
-    if (organizationId === 'null' || organizationId === 'undefined' || !organizationId) {
-      organizationId = null;
-    }
-
-    if (!userId || !mongo.ObjectId.isValid(userId)) {
+    if (!isValidObjectId(userId)) {
       return ResMessage.sendResponse(response, getApiId(request), 40000, "A valid userId is required");
     }
 
@@ -245,8 +282,8 @@ exports.onQueryByUser = async function (request, response) {
       matchCondition = {};
     } else {
       // Normal User / Switched User Visibility Rules:
-      const userOID = new mongo.ObjectId(userId);
-      const orgOID = organizationId && mongo.ObjectId.isValid(organizationId) ? new mongo.ObjectId(organizationId) : null;
+      const userOID = toObjectId(userId);
+      const orgOID = isValidObjectId(organizationId) ? toObjectId(organizationId) : null;
 
       matchCondition = {
         $or: [
@@ -344,24 +381,14 @@ exports.onQueryByUser = async function (request, response) {
     const filteredDocs = docs.filter((doc) => {
       if (isAdmin) return true;
 
-      const userIdStr = String(userId);
-      const isCreator = doc.creator && String(doc.creator._id || doc.creator) === userIdStr;
-      const isController = Array.isArray(doc.controll) && doc.controll.some((item) => {
-        return item && item.user && String(item.user._id || item.user) === userIdStr;
-      });
-      const isAllowedUser = Array.isArray(doc.settings?.allowedUser) && doc.settings.allowedUser.some((item) => {
-        return item && String(item._id || item) === userIdStr;
-      });
-      const isPrivileged = isCreator || isController || isAllowedUser;
+      const { isPrivileged } = getDocVisibilityFlags(doc, userId);
       const status = getComputedStatus(doc.schedule);
       const hasSubmitted = Number(doc.responsesCount || 0) > 0;
 
       return canResponderViewForm({ isPrivileged, status, hasSubmitted });
     });
 
-    filteredDocs.forEach(doc => {
-      doc.responses = new Array(doc.responsesCount).fill({ submit: true });
-    });
+    attachResponsePlaceholders(filteredDocs);
 
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), filteredDocs);
   } catch (err) {
@@ -373,27 +400,32 @@ exports.onQueryByUser = async function (request, response) {
 exports.onQuerys = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] GET /api/v1/form/exp (onQuerys)`);
-    // 1. Extract context from request (query or body)
-    const userId = request.query.userId || request.body.userId;
-    const organizationId = request.query.organizationId || request.body.organizationId;
-    const isAdmin = request.query.isAdmin === 'true' || request.body.isAdmin === true;
+    // 1. Extract context from query (GET should not rely on request body)
+    const userId = request.query.userId;
+    const organizationId = normalizeOptionalId(request.query.organizationId);
+    const isAdmin = parseBooleanFlag(request.query.isAdmin);
 
     // 2. Build match condition
     let matchCondition = {};
 
-    if (!isAdmin && organizationId) {
+    if (!isAdmin && isValidObjectId(organizationId)) {
       // If not admin, filter by visibility rules:
       // - Forms that are public (access: 'public')
       // - Forms that belong to the user's organization (organization: organizationId)
       // - Forms where the user is specifically allowed (settings.allowedUser: userId)
       // - Forms where the user is a collaborator (controll.user: userId)
+      const orRules = [
+        { access: 'public' },
+        { organization: toObjectId(organizationId) }
+      ];
+
+      if (isValidObjectId(userId)) {
+        orRules.push({ "settings.allowedUser": toObjectId(userId) });
+        orRules.push({ "controll.user": toObjectId(userId) });
+      }
+
       matchCondition = {
-        $or: [
-          { access: 'public' },
-          { organization: new mongo.ObjectId(organizationId) },
-          { "settings.allowedUser": new mongo.ObjectId(userId) },
-          { "controll.user": new mongo.ObjectId(userId) }
-        ]
+        $or: orRules
       };
     }
 
@@ -438,9 +470,7 @@ exports.onQuerys = async function (request, response) {
     const docs = await Form.onAggregate(pipeline);
     await FormModel.populate(docs, { path: 'controll.user controll.type' });
 
-    docs.forEach(doc => {
-      doc.responses = new Array(doc.responsesCount).fill({ submit: true });
-    });
+    attachResponsePlaceholders(docs);
 
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), docs);
   } catch (err) {
@@ -467,7 +497,7 @@ exports.onCreate = async function (request, response) {
 exports.onUpdate = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] PUT /api/v1/form (onUpdate)`);
-    const query = { _id: new mongo.ObjectId(request.body._id) };
+    const query = { _id: toObjectId(request.body._id) };
     const payload = normalizeFormPayload(request.body);
     const hasCollabUpdate = Array.isArray(payload?.controll) ||
       Array.isArray(payload?.settings?.allowedUser);
@@ -521,7 +551,7 @@ exports.onUpdate = async function (request, response) {
 exports.onDelete = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] DELETE /api/v1/form (onDelete)`);
-    const query = { _id: new mongo.ObjectId(request.body._id) };
+    const query = { _id: toObjectId(request.body._id) };
     const doc = await Form.onDelete(query);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {

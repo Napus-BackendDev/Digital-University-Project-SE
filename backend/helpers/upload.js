@@ -111,4 +111,26 @@ const upload = multer({
     }
 });
 
-module.exports = upload;
+const getUploadUrl = function (file) {
+    if (!file) return null;
+
+    const filePath = file.path || '';
+    const normalized = String(filePath).split(path.sep).join('/');
+    const marker = '/public/';
+    const markerIndex = normalized.lastIndexOf(marker);
+
+    if (markerIndex !== -1) {
+        return normalized.slice(markerIndex + '/public'.length);
+    }
+
+    if (file.filename) {
+        return `/uploads/${file.filename}`;
+    }
+
+    return null;
+};
+
+module.exports = {
+    upload
+    , getUploadUrl
+};
