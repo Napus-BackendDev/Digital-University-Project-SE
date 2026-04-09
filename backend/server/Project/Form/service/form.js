@@ -5,79 +5,11 @@ const FormModel = require("../models/form.model");
 const UserModel = require("../../User/models/user.model");
 const { getComputedStatus, canResponderViewForm } = require("./form.status");
 const { maybeSendCollaborationInvites } = require("../../Email/service/collaboration");
-const { getApiId, getSuccessCode } = require("../../../../helpers/apiUtils");
+const { getApiId, getSuccessCode, getErrorCode } = require("../../../../helpers/apiUtils");
+const { normalizeFormPayload } = require("./form.normalize");
 
-/**
- * Technique: Data Normalization
- * 
- * normalizeObjectIdRef: Extract the MongoDB ObjectId string from various possible formats. 
- * The frontend might send just the ID string or a full object (like {_id: "5f...", name: "X"}).
- * This ensures the backend always stores just the string ID in the database references.
- */
-const normalizeObjectIdRef = function (value) {
-  if (!value) return value;
-  if (typeof value === 'object') {
-    if (value._id) return value._id; // Evaluates if object has _id
-    if (value.value) return value.value; // Maps from {value: 'id', label: 'something'} format
-  }
-  return value;
-};
-
-/**
- * normalizeFormPayload: This function cleans up the request payload before Save/Update.
- * It uses the 'spread operator' ({ ...payload }) to copy existing data into 'clean', 
- * and Array.map() / Array.filter() to ensure relationships contain only IDs.
- */
-const normalizeFormPayload = function (payload = {}) {
-  const clean = { ...payload };
-
-  if (Array.isArray(clean.organization)) {
-    clean.organization = clean.organization.map((item) => normalizeObjectIdRef(item));
-  }
-
-  if (Array.isArray(clean.controll)) {
-    clean.controll = clean.controll
-      .map((item) => ({
-        user: normalizeObjectIdRef(item?.user), // ?. (Optional Chaining) checks if user exists before getting properties
-        type: normalizeObjectIdRef(item?.type),
-      }))
-      .filter((item) => item.user && item.type); // Filter removes missing users/types
-  }
-
-  if (clean.settings && typeof clean.settings === 'object' && Array.isArray(clean.settings.allowedUser)) {
-    clean.settings = { ...clean.settings }; // Clone nested object to prevent unexpected mutation
-    clean.settings.allowedUser = clean.settings.allowedUser
-      .map((item) => normalizeObjectIdRef(item))
-      .filter(Boolean); // Boolean constructor inside filter removes falsy values (null/undefined/empty)
-  }
-
-  return clean;
-};
-
-// Helper: Safely extracts text from a role object, searching for words like 'admin' or 'edit'.
-const getRoleTitleText = function (role) {
-  if (!role || !role.title) return '';
-  if (Array.isArray(role.title)) {
-    return role.title.map((t) => String(t?.value || '')).join(' ').toLowerCase();
-  }
-  return String(role.title || '').toLowerCase();
-};
-
-const isAdminUser = function (user) {
-  return getRoleTitleText(user?.role).includes('admin');
-};
-
-const hasEditorCollaboratorAccess = function (formDoc, userId) {
-  if (!formDoc || !Array.isArray(formDoc.controll)) return false;
-  const userIdStr = String(userId);
-  return formDoc.controll.some((item) => {
-    const collabUserId = String(item?.user?._id || item?.user || '');
-    if (collabUserId !== userIdStr) return false;
-    const typeText = getRoleTitleText(item?.type);
-    return typeText.includes('edit') || typeText.includes('แก้ไข');
-  });
-};
-
+// Extract helper functions
+const { isAdminUser, hasEditorCollaboratorAccess, buildUserFormsMatchCondition, canUserSeeListedForm, normalizeNullableId } = require("./form.access");
 
 /**
  * GET SPECIFIC FORM BY ID
@@ -92,7 +24,7 @@ exports.onQuery = async function (request, response) {
     // A pipeline is a sequence of data processing stages.
     const pipeline = [
       { $match: { _id: formId } }, // Stage 1: Find the form where _id matches
-      
+
       // Stage 2: $graphLookup
       // Recursively searches for "Children Forms" (e.g. templates or previous versions)
       // by following the 'originalFormId' field.
@@ -106,8 +38,8 @@ exports.onQuery = async function (request, response) {
           depthField: "depth",
         },
       },
-      
-      // Stage 3-6: $lookup (Similar to SQL JOIN)
+
+      // Stage 3-6: $lookup (like join)
       // Fetches related documents from other collections (Questions, Status, Creator)
       {
         $lookup: {
@@ -128,7 +60,7 @@ exports.onQuery = async function (request, response) {
       // $unwind flattens an array into a single object. 
       // preserveNullAndEmptyArrays keeps the form even if the status array is empty.
       { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
-      
+
       {
         $lookup: {
           from: "Users",
@@ -138,7 +70,7 @@ exports.onQuery = async function (request, response) {
         },
       },
       { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
-      
+
       {
         $lookup: {
           from: "Users",
@@ -147,7 +79,7 @@ exports.onQuery = async function (request, response) {
           as: "settings.allowedUser",
         },
       },
-      
+
       // Stage 7: $project (Similar to SQL SELECT)
       // Specifies exactly which fields to include/exclude. 
       // Setting to 0 excludes the field (hiding passwords from the API JSON response).
@@ -157,7 +89,7 @@ exports.onQuery = async function (request, response) {
           "settings.allowedUser.password": 0,
         }
       },
-      
+
       // Stage 8: Nested $lookup Pipeline
       // Fetches Responses specific to this form, sorts them, and populates the Responder.
       {
@@ -246,7 +178,7 @@ exports.onQuery = async function (request, response) {
 
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), err.message);
   }
 };
 
@@ -257,7 +189,7 @@ exports.onQuery = async function (request, response) {
 exports.onQueryByUser = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] GET /api/v1/form/user/:userId (onQueryByUser)`);
-    const userId = request.params.userId;
+    const userId = request.params.userId
     let organizationId = request.query.organizationId;
     const isAdmin = request.query.isAdmin === 'true';
 
@@ -267,8 +199,10 @@ exports.onQueryByUser = async function (request, response) {
     }
 
     if (!userId || !mongo.ObjectId.isValid(userId)) {
-      return ResMessage.sendResponse(response, getApiId(request), 40000, "A valid userId is required");
+      return ResMessage.sendResponse(response, getApiId(request),getErrorCode(request), "A valid userId is required");
     }
+
+    const targetUserId = userId;
 
     let matchCondition = {};
 
@@ -382,26 +316,15 @@ exports.onQueryByUser = async function (request, response) {
     const docs = await Form.onAggregate(pipeline);
     await FormModel.populate(docs, { path: 'controll.user controll.type' });
 
-    // JS-based Filter: Checks precise constraints after the pipeline results are returned
-    const filteredDocs = docs.filter((doc) => {
-      if (isAdmin) return true;
+    // Business filter remains unchanged, moved to helper for readability.
+    const filteredDocs = docs.filter((doc) => canUserSeeListedForm({
+      doc,
+      targetUserId,
+      isAdmin,
+    }));
 
-      const userIdStr = String(userId);
-      const isCreator = doc.creator && String(doc.creator._id || doc.creator) === userIdStr;
-      const isController = Array.isArray(doc.controll) && doc.controll.some((item) => {
-        return item && item.user && String(item.user._id || item.user) === userIdStr;
-      });
-      const isAllowedUser = Array.isArray(doc.settings?.allowedUser) && doc.settings.allowedUser.some((item) => {
-        return item && String(item._id || item) === userIdStr;
-      });
-      const isPrivileged = isCreator || isController || isAllowedUser;
-      const status = getComputedStatus(doc.schedule);
-      const hasSubmitted = Number(doc.responsesCount || 0) > 0;
-
-      return canResponderViewForm({ isPrivileged, status, hasSubmitted });
-    });
-
-    // Mock an array for backwards compatibility across older frontend code components
+    // Deprecated compatibility behavior:
+    // Keep mocked response array for legacy frontend components expecting responses array.
     filteredDocs.forEach(doc => {
       doc.responses = new Array(doc.responsesCount).fill({ submit: true });
     });
@@ -419,24 +342,12 @@ exports.onQueryByUser = async function (request, response) {
 exports.onQuerys = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] GET /api/v1/form/exp (onQuerys)`);
-    // 1. Extract context from request
-    const userId = request.query.userId;
-    const organizationId = request.query.organizationId || request.body.organizationId;
-    const isAdmin = request.query.isAdmin === 'true' || request.body.isAdmin === true;
 
-    // 2. Build match condition
-    let matchCondition = {};
+    const userId = normalizeNullableId(request.query.userId || request.body?.userId);
+    const organizationId = normalizeNullableId(request.query.organizationId || request.body?.organizationId);
+    const isAdmin = request.query.isAdmin === 'true' || request.body?.isAdmin === true;
 
-    if (!isAdmin && organizationId) {
-      matchCondition = {
-        $or: [
-          { access: 'public' },
-          { organization: new mongo.ObjectId(organizationId) },
-          { "settings.allowedUser": new mongo.ObjectId(userId) },
-          { "controll.user": new mongo.ObjectId(userId) }
-        ]
-      };
-    }
+    const matchCondition = buildUserFormsMatchCondition({ userId, organizationId, isAdmin });
 
     const pipeline = [
       { $match: matchCondition },
@@ -451,7 +362,23 @@ exports.onQuerys = async function (request, response) {
       },
       { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
       {
-        // Technique: Counting response sub-documents directly per-form
+        $lookup: {
+          from: "Users",
+          localField: "creator",
+          foreignField: "_id",
+          as: "creator",
+        },
+      },
+      { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "Users",
+          localField: "settings.allowedUser",
+          foreignField: "_id",
+          as: "settings.allowedUser",
+        },
+      },
+      {
         $lookup: {
           from: "Responses",
           let: { form_id: "$_id" },
@@ -459,39 +386,45 @@ exports.onQuerys = async function (request, response) {
             {
               $match: {
                 $expr: { $eq: ["$form", "$$form_id"] },
-                submit: true
-              }
+                submit: true,
+              },
             },
             {
               $project: {
                 _id: 0,
                 submit: 1,
-                createdAt: 1
-              }
-            }
+                createdAt: 1,
+              },
+            },
           ],
-          as: "submittedResponses"
-        }
+          as: "submittedResponses",
+        },
       },
       {
         $addFields: {
           responses: "$submittedResponses",
-          responsesCount: { $size: "$submittedResponses" }
-        }
+          responsesCount: { $size: "$submittedResponses" },
+        },
       },
       {
         $project: {
           submittedResponses: 0,
           "settings.allowedUser.password": 0,
           "creator.password": 0,
-        }
-      }
+        },
+      },
     ];
 
     const docs = await Form.onAggregate(pipeline);
     await FormModel.populate(docs, { path: 'controll.user controll.type' });
 
-    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), docs);
+    const filteredDocs = docs.filter((doc) => canUserSeeListedForm({
+      doc,
+      targetUserId: userId,
+      isAdmin,
+    }));
+
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), filteredDocs);
   } catch (err) {
     return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
   }
@@ -504,7 +437,7 @@ exports.onCreate = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] POST /api/v1/form (onCreate)`);
     // Before creating, normalize the payload to fix Object vs String ID issues using the helper
-    const payload = normalizeFormPayload(request.body);
+    const payload = request.body;
     const doc = await Form.onCreate(payload);
     
     // Check if collaboration email invites need to be sent
