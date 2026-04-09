@@ -2,14 +2,7 @@ const mongo = require("mongodb");
 const User = require("../controller/user");
 const ResMessage = require("../../Settings/service/message");
 const { mapUserDto, mapUserListDto } = require("../dto/user.dto");
-
-const getApiId = function (request) {
-  return Number(request.body.apiId) || 0;
-};
-
-const getSuccessCode = function (request) {
-  return 20000 + getApiId(request);
-};
+const { getApiId, getSuccessCode,getErrorCode } = require("../../../../helpers/apiUtils");
 
 exports.onQuery = async function (request, response) {
   try {
@@ -18,7 +11,7 @@ exports.onQuery = async function (request, response) {
     const doc = await User.onQuery(query);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapUserDto(doc));
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), err.message);
   }
 };
 
@@ -33,7 +26,7 @@ exports.onQuerys = async function (request, response) {
     const doc = await User.onQuerys(querys, lightPopulate);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapUserListDto(doc));
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), err.message);
   }
 };
 
@@ -46,7 +39,7 @@ exports.onCreate = async function (request, response) {
     const doc = await User.onCreate(request.body, lightPopulate);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapUserDto(doc));
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), err.message);
   }
 };
 
@@ -62,7 +55,7 @@ exports.onUpdate = async function (request, response) {
     const doc = await User.onUpdate(query, request.body, lightPopulate);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapUserDto(doc));
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), err.message);
   }
 };
 
@@ -73,6 +66,6 @@ exports.onDelete = async function (request, response) {
     const doc = await User.onDelete(query);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+    return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), err.message);
   }
 };
