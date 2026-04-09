@@ -222,4 +222,33 @@ export default {
     top: 20px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
+/* Modern Dropdown Styling */
+.dropdown-menu {
+    border-radius: 0.75rem !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 0.35rem !important;
+}
+
+.dropdown-item {
+    border-radius: 0.5rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    padding: 0.4rem 0.75rem !important;
+    color: #475569 !important;
+    transition: all 0.15s ease !important;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: #f0f7ff !important;
+    color: #1e40af !important;
+    font-weight: 600 !important;
+}
+
+.dropdown-item:hover:not(.active) {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+}
 </style>

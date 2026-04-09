@@ -20,7 +20,7 @@ const Response = () => import('@/projects/views/Responsedetail.vue')
 
 // Admin
 const Analytics = () => import('@/projects/views/Analytics.vue')
-const Permissions = () => import('@/projects/views/Permissions.vue')
+const Permission = () => import('@/projects/views/security/Permission.vue')
 
 Vue.use(Router)
 
@@ -76,7 +76,7 @@ export default new Router({
                 {
                     path: 'permissions',
                     name: 'Permissions',
-                    component: Permissions
+                    component: Permission
                 }
             ]
         },
