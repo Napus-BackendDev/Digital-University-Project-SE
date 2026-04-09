@@ -1,6 +1,8 @@
 // ====================================
 // Helper: Attach uploaded files to answers array
 // ====================================
+const { getUploadUrl } = require('../../../../../helpers/upload');
+
 const attachFilesToAnswers = function (answers, files, body) {
     if (!files || !files.length) return answers;
 
