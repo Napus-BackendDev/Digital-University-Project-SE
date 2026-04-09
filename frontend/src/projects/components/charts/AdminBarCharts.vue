@@ -18,8 +18,8 @@
 <script>
 import { CChartHorizontalBar } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
-import moment from 'moment'
 import localeMixin from '@/mixins/localeMixin'
+import { getFilteredResponses } from '@/projects/utils/analytics'
 
 export default {
     name: 'AdminBarCharts',
@@ -38,8 +38,8 @@ export default {
             if (!this.forms) return []
             // Sort by response count within range descending
             const sorted = [...this.forms].sort((a, b) => {
-                const countA = this.getFilteredResponses(a).length;
-                const countB = this.getFilteredResponses(b).length;
+                const countA = getFilteredResponses(a, this.timeRange).length;
+                const countB = getFilteredResponses(b, this.timeRange).length;
                 return countB - countA
             })
             // Take top 5
@@ -63,7 +63,7 @@ export default {
                 }
                 labels.push(title)
 
-                data.push(this.getFilteredResponses(form).length)
+                data.push(getFilteredResponses(form, this.timeRange).length)
             })
 
             return { labels, data }
@@ -119,30 +119,6 @@ export default {
                     displayColors: false
                 }
             }
-        }
-    },
-    methods: {
-        getFilteredResponses(form) {
-            if (!form || !form.responses) return [];
-            return form.responses.filter(r => {
-                const isSubmitted = r && (
-                    r.submit === true || 
-                    r.submit === 1 || 
-                    String(r.submit).toLowerCase() === 'true'
-                );
-                if (!isSubmitted) return false;
-                if (!r.createdAt) return false;
-
-                const createdAt = moment(r.createdAt);
-                if (this.timeRange === '7d') {
-                    return createdAt.isSameOrAfter(moment().subtract(7, 'days'), 'day');
-                } else if (this.timeRange === '30d') {
-                    return createdAt.isSameOrAfter(moment().subtract(30, 'days'), 'day');
-                } else if (this.timeRange === '1y') {
-                    return createdAt.isSameOrAfter(moment().subtract(1, 'years'), 'day');
-                }
-                return true;
-            });
         }
     }
 }

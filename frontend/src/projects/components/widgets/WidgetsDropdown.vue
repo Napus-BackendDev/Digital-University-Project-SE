@@ -64,7 +64,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import moment from 'moment';
+import { getFilteredResponses } from '@/projects/utils/analytics';
 
 export default {
     name: 'WidgetsDropdown',
@@ -93,26 +93,7 @@ export default {
             this.forms.forEach(form => {
                 // Count responses within range
                 if (form.responses) {
-                    const filteredResponses = form.responses.filter(r => {
-                        const isSubmitted = r && (
-                            r.submit === true || 
-                            r.submit === 1 || 
-                            String(r.submit).toLowerCase() === 'true'
-                        );
-                        if (!isSubmitted) return false;
-                        if (!r.createdAt) return false;
-
-                        // Check if r.createdAt is within timeRange
-                        const createdAt = moment(r.createdAt);
-                        if (this.timeRange === '7d') {
-                            return createdAt.isSameOrAfter(moment().subtract(7, 'days'), 'day');
-                        } else if (this.timeRange === '30d') {
-                            return createdAt.isSameOrAfter(moment().subtract(30, 'days'), 'day');
-                        } else if (this.timeRange === '1y') {
-                            return createdAt.isSameOrAfter(moment().subtract(1, 'years'), 'day');
-                        }
-                        return true;
-                    });
+                    const filteredResponses = getFilteredResponses(form, this.timeRange);
                     totalResponses += filteredResponses.length;
                 }
 

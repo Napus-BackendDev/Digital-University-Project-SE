@@ -2,15 +2,8 @@ const mongo = require('mongodb');
 const path = require('path');
 const Questions = require('../controller/questions');
 const ResMessage = require("../../Settings/service/message");
-
-const getApiId = function (request) {
-    return Number(request.query.apiId || request.body.apiId) || 0;
-};
-
-const getSuccessCode = function (request) {
-    return 20000 + getApiId(request);
-};
-
+const { getApiId,getSuccessCode } = require("../../../../helpers/apiUtils");
+const { getUploadUrl}= require("../../../../helpers/upload");
 const parseMaybeJson = function (value) {
     if (typeof value !== 'string') {
         return value;
@@ -26,26 +19,6 @@ const parseMaybeJson = function (value) {
 const isDataUri = function (value) {
     return typeof value === 'string' && value.startsWith('data:');
 };
-
-const getUploadUrl = function (file) {
-    if (!file) return null;
-
-    const filePath = file.path || '';
-    const normalized = String(filePath).split(path.sep).join('/');
-    const marker = '/public/';
-    const markerIndex = normalized.lastIndexOf(marker);
-
-    if (markerIndex !== -1) {
-        return normalized.slice(markerIndex + '/public'.length);
-    }
-
-    if (file.filename) {
-        return `/uploads/${file.filename}`;
-    }
-
-    return null;
-};
-
 const normalizeQuestionPayload = async function (request) {
     const rawBody = parseMaybeJson(request.body) || {};
     const body = parseMaybeJson(rawBody.payload) || rawBody;

@@ -41,6 +41,7 @@
 <script>
 import { CChartDoughnut } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
+import { getFormStatusKey } from '@/projects/utils/analytics'
 
 export default {
     name: 'AdminDoughnutCharts',
@@ -52,22 +53,8 @@ export default {
             const counts = { Open: 0, Pending: 0, Closed: 0 };
 
             this.forms.forEach(form => {
-                let status = 'Pending';
-                const now = new Date();
-                const schedule = form.schedule || (form.settings && form.settings.schedule);
-
-                if (schedule && schedule.startAt) {
-                    const start = new Date(schedule.startAt);
-                    const end = new Date(schedule.endAt);
-
-                    if (!start && !end) {
-                        status = 'Pending';
-                    } else if (start <= now && now <= end) {
-                        status = 'Open';
-                    } else {
-                        status = 'Closed';
-                    }
-                }
+                const statusKey = getFormStatusKey(form);
+                const status = statusKey.charAt(0).toUpperCase() + statusKey.slice(1);
 
                 counts[status]++
             })
