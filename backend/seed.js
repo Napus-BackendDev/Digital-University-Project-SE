@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env.dev') });
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const mongoose = require('mongoose');
 
 // Import Models
@@ -19,7 +19,16 @@ const mongoURI = process.env.MONGODB;
 async function seedDatabase() {
     try {
         // 1. Connect to MongoDB
-        await mongoose.connect(mongoURI);
+        mongoose.set('useNewUrlParser', true);
+        mongoose.set('useFindAndModify', false);
+        mongoose.set('useCreateIndex', true);
+        mongoose.set('useUnifiedTopology', true);
+
+        await mongoose.connect(mongoURI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            useCreateIndex: true,
+        });
         console.log('✅ Connected to MongoDB');
 
         // 2. Clear existing data
@@ -60,30 +69,41 @@ async function seedDatabase() {
         const createdOrgs = await Organization.insertMany(orgsData);
         console.log(`✅ Seeded ${createdOrgs.length} diverse organizations`);
 
-        // 4. Seed Roles (using title array as per roles.model.js)
+        // 4. Seed Roles (using title array and permission matrix)
+        const pages = ['Forms', 'Manage Forms', 'Analytics', 'Permissions'];
+        const defaultAccess = [
+            { key: 'create', value: true },
+            { key: 'read', value: true },
+            { key: 'update', value: true },
+            { key: 'delete', value: true }
+        ];
+
         const rolesData = [
             {
                 _id: new mongoose.Types.ObjectId("69aec1c73996270d703db3d7"), // Default role ID from user.model.js
                 title: [
                     { key: 'en', value: 'Admin' },
                     { key: 'th', value: 'ผู้ดูแลระบบ' }
-                ]
+                ],
+                permission: pages.map(p => ({ page: p, access: defaultAccess }))
             },
             {
                 title: [
                     { key: 'en', value: 'Staff' },
                     { key: 'th', value: 'เจ้าหน้าที่' }
-                ]
+                ],
+                permission: pages.map(p => ({ page: p, access: defaultAccess }))
             },
             {
                 title: [
                     { key: 'en', value: 'User' },
                     { key: 'th', value: 'ผู้ใช้งานทั่วไป' }
-                ]
+                ],
+                permission: pages.map(p => ({ page: p, access: defaultAccess }))
             }
         ];
         const createdRoles = await Role.insertMany(rolesData);
-        console.log(`✅ Seeded ${createdRoles.length} roles`);
+        console.log(`✅ Seeded ${createdRoles.length} roles with default permissions`);
 
         // 5. Seed Question Types
         const typeNames = ['short_answer', 'paragraph', 'multiple_choice', 'checkbox', 'rating', 'file_upload', 'image', 'title_description'];

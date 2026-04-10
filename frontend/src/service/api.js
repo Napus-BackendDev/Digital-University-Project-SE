@@ -181,4 +181,21 @@ export default {
     }
   },
 
+  roles(method, data) {
+    switch (method) {
+      case 'exp':
+        return instance.get('user/role/exp')
+      case 'get':
+        return instance.post('user/role/get', data)
+      case 'create':
+        return instance.post('user/role', data)
+      case 'update':
+        return instance.put('user/role', data)
+      case 'delete':
+        return instance.delete('user/role', { data })
+      default:
+        break
+    }
+  },
+
 }

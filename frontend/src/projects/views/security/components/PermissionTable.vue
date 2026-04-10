@@ -1,25 +1,25 @@
 <template>
-    <CCard class="security-table-card border-0 rounded-sm shadow-none bg-transparent">
-        <CCardBody class="p-0 bg-white">
+    <CCard class="border-0 rounded-sm shadow-none bg-transparent">
+        <CCardBody class="p-0 bg-transparent">
             <div class="security-table-card__header">
 
                 <!-- Filter dropdowns -->
                 <div class="d-flex align-items-center flex-wrap" style="gap: 0.5rem;">
-                    <!-- Organization filter -->
+                    <!-- Role filter -->
                     <CDropdown class="filter-dropdown">
                         <template #toggler>
                             <button
                                 class="btn d-flex align-items-center justify-content-between text-muted border bg-white px-3"
                                 style="border-radius: 6px; height: 36px; min-width: 170px;">
                                 <div class="d-flex align-items-center text-truncate">
-                                    <CIcon name="cil-building" size="sm" class="mr-2" />
-                                    <span class="text-truncate small">{{ selectedOrgLabel }}</span>
+                                    <CIcon name="cil-people" size="sm" class="mr-2" />
+                                    <span class="text-truncate small">{{ selectedRoleLabel }}</span>
                                 </div>
                                 <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                             </button>
                         </template>
-                        <CDropdownItem v-for="opt in organizationOptions" :key="opt.value"
-                            :active="selectedOrgId === opt.value" @click="selectedOrgId = opt.value">
+                        <CDropdownItem v-for="opt in roleOptions" :key="opt.value"
+                            :active="selectedRoleId === opt.value" @click="selectedRoleId = opt.value">
                             {{ opt.label }}
                         </CDropdownItem>
                     </CDropdown>
@@ -54,9 +54,9 @@ export default {
     props: {
         items: { type: Array, default: () => [] },
         fields: { type: Array, default: () => [] },
-        organizationOptions: {
+        roleOptions: {
             type: Array,
-            default: () => [{ value: 'all', label: 'All Organizations' }]
+            default: () => [{ value: 'all', label: 'All Roles' }]
         }
     },
     data() {
@@ -64,18 +64,18 @@ export default {
             permCols: ['create', 'read', 'update', 'delete'],
             activePage: 1,
             itemsPerPage: 15,
-            selectedOrgId: 'all'
+            selectedRoleId: 'all'
         }
     },
     computed: {
-        selectedOrgLabel() {
-            const opt = this.organizationOptions.find(o => o.value === this.selectedOrgId)
-            return opt ? opt.label : 'All Organizations'
+        selectedRoleLabel() {
+            const opt = this.roleOptions.find(o => o.value === this.selectedRoleId)
+            return opt ? opt.label : 'All Roles'
         },
         filteredItems() {
             let rows = this.items
-            if (this.selectedOrgId !== 'all') {
-                rows = rows.filter(row => row.orgId === this.selectedOrgId)
+            if (this.selectedRoleId !== 'all') {
+                rows = rows.filter(row => row.roleId === this.selectedRoleId)
             }
             return rows
         },
@@ -84,7 +84,7 @@ export default {
         }
     },
     watch: {
-        selectedOrgId() { this.activePage = 1 }
+        selectedRoleId() { this.activePage = 1 }
     }
 }
 </script>

@@ -8,6 +8,7 @@ import Questions from "@/store/modules/Questions/index.js";
 import Responses from "@/store/modules/Responses/index.js";
 import User from "@/store/modules/User";
 import Organizations from "@/store/modules/Organizations";
+import Roles from "@/store/modules/Roles";
 import dialog from "@/store/modules/dialog";
 
 const state = {
@@ -44,6 +45,7 @@ export default new Vuex.Store({
     Responses: Responses,
     User: User,
     Organizations: Organizations,
+    Roles: Roles,
     dialog: dialog
   }
 });
