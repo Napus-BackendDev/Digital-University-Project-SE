@@ -40,15 +40,7 @@ exports.onQuery = async function (request, response) {
         }
 
         const query = { ...body };
-        delete query.apiId;
-        delete query.token;
-        delete query.user;
-        if (query.form_id && !query.form) query.form = query.form_id;
-        if (query.responder_id && !query.responder) query.responder = query.responder_id;
-        if (query.question_id && !query.question) query.question = query.question_id;
-        delete query.form_id;
-        delete query.responder_id;
-        delete query.question_id;
+        
 
         const docs = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseListDto(docs || []));

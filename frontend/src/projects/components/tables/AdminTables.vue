@@ -64,7 +64,7 @@
     import Pagination from '@/projects/components/Util/Pagination.vue'
 import moment from 'moment'
 import localeMixin from '@/mixins/localeMixin'
-import { getFilteredResponses as filterResponsesInRange, getTableStatusLabel } from '@/projects/utils/analytics'
+    import { getFilteredResponses as filterResponsesInRange, getTableStatusLabel, getFormStatusKey } from '@/projects/utils/analytics'
 
 export default {
     name: 'AdminTables',
@@ -108,7 +108,21 @@ export default {
                 return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
             })
 
-            return sortedForms.map(form => {
+            return sortedForms
+                .filter(form => {
+                    if (!form) return false;
+
+                    const statusKey = getFormStatusKey(form);
+                    const schedule = form.schedule || (form.settings && form.settings.schedule);
+
+                    // Hide true draft forms from analytics table.
+                    if (statusKey === 'pending' && (!schedule || (!schedule.startAt && !schedule.endAt))) {
+                        return false;
+                    }
+
+                    return true;
+                })
+                .map(form => {
                 const statusTitle = getTableStatusLabel(form);
 
                 const localFormat = this.$i18n.locale === 'th' ? 'th-TH' : 'en-GB';
@@ -123,7 +137,7 @@ export default {
                     responses: filterResponsesInRange(form, this.timeRange).length,
                     created: form.updatedAt ? new Date(form.updatedAt).toLocaleDateString(localFormat, { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
                 }
-            })
+                })
         },
         totalPages() {
             return Math.ceil(this.tableData.length / this.pageSize)
