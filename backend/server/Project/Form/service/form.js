@@ -17,7 +17,7 @@ const { isAdminUser, hasEditorCollaboratorAccess, buildUserFormsMatchCondition, 
  */
 exports.onQuery = async function (request, response) {
   try {
-    console.log(`[API ${getApiId(request)}] POST /api/v1/form/get (onQuery)`);
+    //console.log(`[API ${getApiId(request)}] POST /api/v1/form/get (onQuery)`);
     let formId = new mongo.ObjectId(request.body._id);
 
     // Technique: MongoDB Aggregation Pipeline
@@ -39,7 +39,7 @@ exports.onQuery = async function (request, response) {
         },
       },
 
-      // Stage 3-6: $lookup (like join)
+      // Stage 3-6: $lookup (join)
       // Fetches related documents from other collections (Questions, Status, Creator)
       {
         $lookup: {

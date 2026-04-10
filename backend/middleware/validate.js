@@ -79,9 +79,6 @@ const validateResponseCreate = [
     handleValidation
 ];
 
-const validateResponseGetById = [
-    handleValidation
-];
 
 const validateResponseUpdate = [
     check('_id').exists().withMessage('Response ID (_id) is required'),
@@ -112,7 +109,6 @@ module.exports = {
     validateQuestionDelete,
     // Response
     validateResponseCreate,
-    validateResponseGetById,
     validateResponseUpdate,
     validateResponseDelete,
     validateResponseDeleteById

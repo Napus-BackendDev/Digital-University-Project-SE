@@ -11,7 +11,6 @@ require("../../User/models/user.model");
 
 exports.onQuerys = async function (request, response) {
     try {
-        console.log(`[API ${getApiId(request)}] GET /api/v1/response/exp (onQuerys)`);
         const docs = await responseService.onQuerys({});
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseListDto(docs || []));
     } catch (err) {
@@ -22,8 +21,7 @@ exports.onQuerys = async function (request, response) {
 
 exports.onQuery = async function (request, response) {
     try {
-        console.log(`[API ${getApiId(request)}] POST /api/v1/response/get (onQuery)`);
-        const body = request.body || {};
+        const body = request.body|| {};
 
         // If _id is requested, return one document. Otherwise return list by filter.
         if (body._id) {
@@ -52,7 +50,7 @@ exports.onQuery = async function (request, response) {
 
 exports.onCreate = async function (request, response) {
     try {
-        console.log(`[API ${getApiId(request)}] POST /api/v1/response (onCreate)`);
+        // console.log(`[API ${getApiId(request)}] POST /api/v1/response (onCreate)`);
 
         let answers = request.body.answers || request.body["answers"];
         if (typeof answers === "string") {
@@ -95,7 +93,7 @@ exports.onCreate = async function (request, response) {
 
 exports.onUpdate = async function (request, response) {
     try {
-        console.log(`[API ${getApiId(request)}] PUT /api/v1/response (onUpdate)`);
+        // console.log(`[API ${getApiId(request)}] PUT /api/v1/response (onUpdate)`);
 
         if (!request.body._id) {
             return ResMessage.sendResponse(response, getApiId(request), 40000, "Response ID is required");

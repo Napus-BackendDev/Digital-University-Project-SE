@@ -5,7 +5,6 @@ const response = require('./service/response');
 const { upload } = require('../../../helpers/upload');
 const {
     validateResponseCreate,
-    validateResponseGetById,
     validateResponseUpdate,
     validateResponseDelete,
     validateResponseDeleteById
@@ -21,7 +20,7 @@ router.get("/exp", function (req, res, next) {
 router.post("/get", function (req, res, next) {
     req.query.apiId = 2;
     next();
-}, validateResponseGetById, response.onQuery);
+}, response.onQuery);
 
 // Create
 router.post("", function (req, res, next) {
