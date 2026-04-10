@@ -1,9 +1,7 @@
 <template>
     <div class="flex-grow-1">
         <Header :title="headerTitle" :description="headerDescription" :isSaving="isSaving" :isSaved="isSaved" />
-        <Container>
-            <Tab :form="formData" :activeTab.sync="activeTab" @auto-save="triggerAutoSave" />
-        </Container>
+        <Tab :form="formData" :activeTab.sync="activeTab" @auto-save="triggerAutoSave" />
     </div>
 </template>
 

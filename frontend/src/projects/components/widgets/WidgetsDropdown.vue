@@ -10,7 +10,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.activeForms }}</h2>
-                    <div class="stat-label">Total Active Forms</div>
+                    <div class="stat-label">{{ $t('widget.active') }}</div>
                 </div>
             </div>
         </CCol>
@@ -25,7 +25,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalResponses }}</h2>
-                    <div class="stat-label">Total Responses</div>
+                    <div class="stat-label">{{ $t('widget.totalResponses') }}</div>
                 </div>
             </div>
         </CCol>
@@ -40,7 +40,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalUsers }}</h2>
-                    <div class="stat-label">Active Users</div>
+                    <div class="stat-label">{{ $t('widget.activeUsers') }}</div>
                 </div>
             </div>
         </CCol>
@@ -55,7 +55,7 @@
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.completionRate }}%</h2>
-                    <div class="stat-label">Avg. Completion Rate</div>
+                    <div class="stat-label">{{ $t('widget.completionRate') }}</div>
                 </div>
             </div>
         </CCol>

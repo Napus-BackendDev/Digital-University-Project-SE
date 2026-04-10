@@ -3,8 +3,8 @@
         <CCol class="mb-4 mb-lg-0">
             <div class="response-trends-container h-100">
                 <div class="header mb-4">
-                    <h4 class="m-0 font-weight-bold">Submission Activity Trend</h4>
-                    <div class="text-muted small mt-1">Overview of responses based on {{ timeRangeLabel }}</div>
+                    <h4 class="m-0 font-weight-bold">{{ $t('analytics.submissionTrend') }}</h4>
+                    <div class="text-muted small mt-1">{{ $t('analytics.overviewBasedOn', { range: timeRangeLabel }) }}</div>
                 </div>
                 <CChartLine
                     :datasets="computedTrendChartData"
@@ -71,9 +71,9 @@ export default {
         ...mapGetters('User', ['user']),
 
         timeRangeLabel() {
-            if (this.timeRange === '1d') return 'Today';
-            if (this.timeRange === '7d') return '7 Days';
-            return '30 Days';
+            if (this.timeRange === '1d') return this.$t('analytics.today');
+            if (this.timeRange === '7d') return this.$t('analytics.oneWeek');
+            return this.$t('analytics.oneMonth');
         },
 
         chartDataObj() {
@@ -130,7 +130,7 @@ export default {
 
         computedTrendChartData() {
             return [{
-                label: 'Submissions',
+                label: this.$t('analytics.submissions'),
                 backgroundColor: 'rgba(50, 31, 219, 0.08)',
                 borderColor: '#321fdb',
                 pointBackgroundColor: '#321fdb',

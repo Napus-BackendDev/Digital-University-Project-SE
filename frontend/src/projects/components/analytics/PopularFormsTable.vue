@@ -3,7 +3,7 @@
         <CCol lg="12">
             <div class="response-trends-container">
                 <div class="header mb-4">
-                    <h4 class="m-0 font-weight-bold">Top 5 Most Popular Forms</h4>
+                    <h4 class="m-0 font-weight-bold">{{ $t('analytics.popularForms') }}</h4>
                 </div>
                 <CDataTable
                     :items="computedTableItems"
@@ -30,14 +30,14 @@
                                         <CIcon name="cil-check" size="sm" />
                                     </div>
                                     <span class="font-weight-bold mr-1" style="font-size: 0.9rem;">{{ item.responses || 0 }}</span>
-                                    <span class="text-muted" style="font-size: 0.8rem;">Completed</span>
+                                    <span class="text-muted" style="font-size: 0.8rem;">{{ $t('table.completed') }}</span>
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <div class="response-icon-box text-primary mr-2">
                                         <CIcon name="cil-history" size="sm" />
                                     </div>
                                     <span class="font-weight-bold mr-1" style="font-size: 0.9rem;">{{ item.ongoing || 0 }}</span>
-                                    <span class="text-muted" style="font-size: 0.8rem;">Ongoing</span>
+                                    <span class="text-muted" style="font-size: 0.8rem;">{{ $t('table.ongoing') }}</span>
                                 </div>
                             </div>
                         </td>
@@ -65,12 +65,12 @@
                                     class="font-weight-bold" 
                                     style="font-size: 0.8rem; margin-top: 4px; color: #4f46e5;">
                                 <CIcon name="cil-clock" size="sm" class="mr-1" />
-                                {{ item.daysLeft }} {{ item.daysLeft > 1 ? 'days' : 'day' }} left
+                                {{ $t('table.daysLeft', { count: item.daysLeft }) }}
                             </div>
                             <div v-else-if="item.status === 'Closed'" 
                                     class="text-muted font-weight-bold" 
                                     style="font-size: 0.8rem; margin-top: 4px;">
-                                Closed
+                                {{ $t('table.closed') }}
                             </div>
                         </td>
                     </template>
@@ -80,7 +80,7 @@
                         <td class="align-middle py-3">
                             <span class="status-badge" :class="getStatusClass(item.status)">
                                 <span class="status-dot"></span>
-                                {{item.status}}
+                                {{ $t('status.' + item.status.toLowerCase()) }}
                             </span>
                         </td>
                     </template>
@@ -107,19 +107,22 @@ export default {
     },
     data() {
         return {
-            tableFields: [
-                { key: 'formName', label: 'Form Name', _style: 'width:30%' },
-                { key: 'access', label: 'Access' },
-                { key: 'responses', label: 'Responses' },
-                { key: 'scheduleRange', label: 'Time Range' },
-                { key: 'status', label: 'Status' }
-            ]
         }
     },
     computed: {
         ...mapGetters('Forms', ['forms']),
         ...mapGetters('User', ['user', 'users']),
         ...mapGetters('Organizations', ['organizations']),
+        
+        tableFields() {
+            return [
+                { key: 'formName', label: this.$t('table.questionnaire'), _style: 'width:30%' },
+                { key: 'access', label: this.$t('table.access') },
+                { key: 'responses', label: this.$t('table.responses') },
+                { key: 'scheduleRange', label: this.$t('table.timeRange') },
+                { key: 'status', label: this.$t('table.status') }
+            ];
+        },
 
         computedTableItems() {
             if (!this.forms || !Array.isArray(this.forms)) return [];

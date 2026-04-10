@@ -157,7 +157,9 @@ const en = {
             active: "Active Forms",
             draft: "Draft Forms",
             closed: "Closed Forms"
-        }
+        },
+        activeUsers: "Active Users",
+        completionRate: "Avg. Completion Rate"
     },
     description: "Description",
     editor: {
@@ -270,7 +272,14 @@ const en = {
             totalResponses: "Total Responses",
             totalUsers: "Total Users",
             avgResponses: "Avg Responses/Form"
-        }
+        },
+        submissionTrend: "Submission Activity Trend",
+        popularForms: "Top 5 Most Popular Forms",
+        today: "Today",
+        oneWeek: "1 Week",
+        oneMonth: "1 Month",
+        submissions: "Submissions",
+        overviewBasedOn: "Overview of responses based on {range}"
     },
     types: {
         short_answer: "Short Answer",

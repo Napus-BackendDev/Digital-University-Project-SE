@@ -5,9 +5,9 @@
             <Header :title="$t('analytics.dailyResponsesTrend')" :description="$t('analytics.dailyResponsesDesc')">
                 <template #actions>
                     <CButtonGroup>
-                        <CButton :color="timeRange === '1d' ? 'primary' : 'outline-primary'" @click="timeRange = '1d'">Today</CButton>
-                        <CButton :color="timeRange === '7d' ? 'primary' : 'outline-primary'" @click="timeRange = '7d'">1 Week</CButton>
-                        <CButton :color="timeRange === '30d' ? 'primary' : 'outline-primary'" @click="timeRange = '30d'">1 Month</CButton>
+                        <CButton :color="timeRange === '1d' ? 'primary' : 'outline-primary'" @click="timeRange = '1d'">{{ $t('analytics.today') }}</CButton>
+                        <CButton :color="timeRange === '7d' ? 'primary' : 'outline-primary'" @click="timeRange = '7d'">{{ $t('analytics.oneWeek') }}</CButton>
+                        <CButton :color="timeRange === '30d' ? 'primary' : 'outline-primary'" @click="timeRange = '30d'">{{ $t('analytics.oneMonth') }}</CButton>
                     </CButtonGroup>
                 </template>
             </Header>
