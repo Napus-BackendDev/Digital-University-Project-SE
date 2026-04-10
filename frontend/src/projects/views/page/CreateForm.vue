@@ -1,9 +1,7 @@
 <template>
     <div class="flex-grow-1">
         <Header :title="headerTitle" :description="headerDescription" :isSaving="isSaving" :isSaved="isSaved" />
-        <Container>
-            <Tab :form="formData" :activeTab.sync="activeTab" @auto-save="triggerAutoSave" />
-        </Container>
+        <Tab :form="formData" :activeTab.sync="activeTab" @auto-save="triggerAutoSave" />
     </div>
 </template>
 
@@ -63,8 +61,8 @@ export default {
                     const creatorId = String(this.formData.creator?._id || this.formData.creator || '');
                     const isCreator = creatorId === currentUserId;
                     let isEditor = false;
-                    if (Array.isArray(this.formData.controll)) {
-                        isEditor = this.formData.controll.some((item) => {
+                    if (Array.isArray(this.formData.collaborator)) {
+                        isEditor = this.formData.collaborator.some((item) => {
                             const collabUserId = String(item?.user?._id || item?.user || '');
                             if (collabUserId !== currentUserId) return false;
                             const typeTitle = Array.isArray(item?.type?.title)

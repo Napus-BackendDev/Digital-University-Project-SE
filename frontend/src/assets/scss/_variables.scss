@@ -24,7 +24,9 @@ $custom-switch-indicator-border-radius: math.div($custom-control-indicator-size,
 $nav-divider-margin-y: math.div($spacer, 2);
 
 // Variable overrides
-
+$primary:      #8c1515 !default; // Dark Red from Sidebar
+$warning:      #FEC260 !default; // Gold from Sidebar
+$accent:       #FEC260 !default;
 
 $danger-dark:  #8c1515 !default;
 $danger:       #ac1515 !default;
@@ -36,6 +38,8 @@ $theme-colors: () !default;
 // stylelint-disable-next-line scss/dollar-variable-default
 $theme-colors: map-merge(
                 (
+                        "primary":    $primary,
+                        "warning":    $warning,
                         "danger":     $danger
                 ),
                 $theme-colors

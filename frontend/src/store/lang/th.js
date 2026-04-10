@@ -157,7 +157,9 @@ const th = {
             active: "เปิดใช้งานอยู่",
             draft: "แบบฟอร์มร่าง",
             closed: "ปิดรับไปแล้ว"
-        }
+        },
+        activeUsers: "ผู้ใช้งานที่ใช้งานอยู่",
+        completionRate: "อัตราการตอบกลับเฉลี่ย"
     },
     description: "รายละเอียด",
     editor: {
@@ -270,7 +272,14 @@ const th = {
             totalResponses: "การตอบกลับทั้งหมด",
             totalUsers: "ผู้ใช้งานทั้งหมด",
             avgResponses: "การตอบกลับเฉลี่ยต่อฟอร์ม"
-        }
+        },
+        submissionTrend: "แนวโน้มกิจกรรมการส่งข้อมููล",
+        popularForms: "5 อันดับแบบฟอร์มยอดนิยม",
+        today: "วันนี้",
+        oneWeek: "1 สัปดาห์",
+        oneMonth: "1 เดือน",
+        submissions: "การตอบกลับ",
+        overviewBasedOn: "ภาพรวมของการตอบกลับตาม {range}"
     },
     types: {
         short_answer: "คำตอบสั้น",

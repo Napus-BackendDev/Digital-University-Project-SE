@@ -84,8 +84,8 @@ exports.maybeSendCollaborationInvites = async ({
 
   try {
     const populated = await FormModel.findById(currentId)
-      .select('title settings.allowedUser controll creator')
-      .populate({ path: 'controll.type', select: 'title' })
+      .select('title settings.allowedUser collaborator creator')
+      .populate({ path: 'collaborator.type', select: 'title' })
       .lean();
     if (!populated) return;
 
@@ -100,8 +100,8 @@ exports.maybeSendCollaborationInvites = async ({
     const nextAllowed = populated?.settings?.allowedUser || [];
     const newAllowedUserIds = getNewMemberIds({ prev: prevAllowed, next: nextAllowed });
 
-    const prevControllers = previousDoc?.controll || [];
-    const nextControllers = populated?.controll || [];
+    const prevControllers = previousDoc?.collaborator || [];
+    const nextControllers = populated?.collaborator || [];
     const prevControllerUserIds = new Set(normalizeIdList(prevControllers.map((item) => item?.user)));
     const newControllerEntries = nextControllers
       .map((item) => ({

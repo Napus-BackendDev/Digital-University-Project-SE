@@ -15,4 +15,4 @@ var objsSchema = new Schema({
     },
 
 });
-module.exports = mongoose.model('Setting_Controll', objsSchema, 'Setting_Controll');
+module.exports = mongoose.model('Setting_Collaborator', objsSchema, 'Setting_Collaborator');
