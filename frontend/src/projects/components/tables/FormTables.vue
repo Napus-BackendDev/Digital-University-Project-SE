@@ -125,6 +125,7 @@ export default {
     },
     async created() {
         this.$store.dispatch('User/getAll');
+        this.$store.dispatch('Organizations/getAll');
     },
     computed: {
         fields() {
@@ -140,6 +141,7 @@ export default {
         },
         ...mapGetters('Forms', ['forms']),
         ...mapGetters('User', ['user', 'users']),
+        ...mapGetters('Organizations', ['organizations']),
 
         totalPages() {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
@@ -297,19 +299,9 @@ export default {
                 const rawOrgs = f.organization || [];
                 let access = [];
 
-                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
-                    if (!o) return null;
-                    if (typeof o === 'string') return o;
-                    if (typeof o === 'object') {
-                        if (Array.isArray(o.title)) {
-                            const locale = this.$i18n.locale.toLowerCase();
-                            const localTitle = o.title.find(t => t && t.key && t.key.toLowerCase() === locale);
-                            return localTitle ? localTitle.value : (o.title[0] ? o.title[0].value : null);
-                        }
-                        return o.name || o.value || o.title || null;
-                    }
-                    return null;
-                }).filter(Boolean);
+                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs])
+                    .map(o => this.getOrganizationLabel(o))
+                    .filter(Boolean);
 
                 const isPublicForm = orgNames.some(name => name === 'General' || name === 'ทั่วไป');
 
@@ -367,13 +359,10 @@ export default {
 
             const now = new Date();
             const withAccess = mapped.filter(f => {
-                // 1. Admin check (Bypass everything)
-                if (isAdmin) return true;
-
-                // 2. Personal access check
+                // 1. Personal access check
                 if (!f.canEnter) return false;
 
-                // 3. Schedule Check
+                // 2. Schedule Check
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
 
                 // If no schedule, assume it's always open (Unless defined otherwise)
@@ -410,7 +399,8 @@ export default {
                 });
             }
             if (this.selectedStatus && this.selectedStatus !== 'All') {
-                filtered = filtered.filter(f => f.status === this.selectedStatus);
+                const selected = String(this.selectedStatus).toLowerCase().replace(/\s/g, '');
+                filtered = filtered.filter(f => String(f.status || '').toLowerCase().replace(/\s/g, '') === selected);
             }
 
             if (this.searchQuery) {
@@ -428,7 +418,7 @@ export default {
             let total = data.length;
             let pending = data.filter(f => f.status === 'Pending').length;
             let completed = data.filter(f => f.status === 'Completed').length;
-            let inProgress = data.filter(f => f.status === 'In Progress').length;
+            let inProgress = data.filter(f => String(f.status || '').toLowerCase().replace(/\s/g, '') === 'inprogress').length;
 
             return { total, pending, completed, inProgress };
         }
@@ -458,9 +448,9 @@ export default {
             this.activePage = 1;
         },
         getStatusClass(status) {
-            const s = status ? status.toLowerCase() : '';
+            const s = status ? status.toLowerCase().replace(/\s/g, '') : '';
             if (s === 'completed') return 'status-completed';
-            if (s === 'in progress') return 'status-inprogress';
+            if (s === 'inprogress') return 'status-inprogress';
             return 'status-pending';
         },
         getVisibilityClass(visibility) {
@@ -478,13 +468,13 @@ export default {
             return 'secondary';
         },
         getActionColor(status) {
-            const s = status ? status.toLowerCase() : '';
+            const s = status ? status.toLowerCase().replace(/\s/g, '') : '';
             if (s === 'completed') return 'success';
             if (s === 'pending') return 'primary';
             return 'warning';
         },
         getActionIcon(status, limitResponse) {
-            const s = status ? status.toLowerCase() : '';
+            const s = status ? status.toLowerCase().replace(/\s/g, '') : '';
             if (s === 'completed') {
                 return limitResponse ? 'cil-check-circle' : 'cil-reload';
             }
@@ -492,7 +482,7 @@ export default {
             return 'cil-input';
         },
         getActionTooltip(status, limitResponse) {
-            const s = status ? status.toLowerCase() : '';
+            const s = status ? status.toLowerCase().replace(/\s/g, '') : '';
             if (s === 'completed') {
                 return limitResponse ? 'View Summary' : 'Submit Again';
             }
@@ -505,6 +495,33 @@ export default {
             if (!this.users) return userRef;
             const u = this.users.find(x => String(x._id) === String(userRef));
             return u ? (u.name || u.email) : userRef;
+        },
+        getOrganizationLabel(orgRef) {
+            const locale = this.$i18n.locale.toLowerCase();
+            if (!orgRef) return null;
+
+            if (typeof orgRef === 'object') {
+                if (Array.isArray(orgRef.title)) {
+                    const localTitle = orgRef.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                    return localTitle ? localTitle.value : (orgRef.title[0] ? orgRef.title[0].value : null);
+                }
+                return orgRef.name || orgRef.value || orgRef.title || (orgRef._id ? String(orgRef._id) : null);
+            }
+
+            const orgId = String(orgRef);
+            const found = Array.isArray(this.organizations)
+                ? this.organizations.find(o => String(o._id) === orgId || String(o.id) === orgId)
+                : null;
+
+            if (found) {
+                if (Array.isArray(found.title)) {
+                    const localTitle = found.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                    return localTitle ? localTitle.value : (found.title[0] ? found.title[0].value : null);
+                }
+                return found.name || found.value || found.title || orgId;
+            }
+
+            return orgId;
         }
     }
 }

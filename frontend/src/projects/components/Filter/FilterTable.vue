@@ -27,7 +27,7 @@
                                 <div class="d-flex align-items-center text-truncate">
                                     <CIcon name="cil-filter" size="sm" class="mr-2" />
                                     <span class="text-truncate small">{{ selectedStatus === 'All' ? $t('status.all') :
-                                        $t('status.' + selectedStatus.toLowerCase()) }}</span>
+                                        $t('status.' + selectedStatus.toLowerCase().replace(/\s/g, '')) }}</span>
                                 </div>
                                 <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                             </button>
@@ -35,7 +35,7 @@
                         <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}
                         </CDropdownItem>
                         <template v-if="managementMode">
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Draft')">{{ $t('status.draft') }}
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}
                             </CDropdownItem>
                             <CDropdownItem @click="$emit('update:selectedStatus', 'Active')">{{ $t('status.active')
                                 }}
@@ -47,7 +47,7 @@
                         <template v-else>
                             <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}
                             </CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'InProgress')">{{
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'In Progress')">{{
                                 $t('status.inprogress') }}
                             </CDropdownItem>
                             <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{
@@ -178,8 +178,32 @@ export default {
     box-shadow: 0 0 0 0.2rem rgba(60, 75, 100, 0.1);
 }
 
+.filter-dropdown ::v-deep .dropdown-menu {
+    min-width: 160px;
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    padding: 0.35rem;
+}
+
 .filter-dropdown ::v-deep .dropdown-item {
-    font-size: 0.9rem;
-    padding: 10px 20px;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    color: #475569;
+    transition: all 0.15s ease;
+}
+
+.filter-dropdown ::v-deep .dropdown-item.active,
+.filter-dropdown ::v-deep .dropdown-item:active {
+    background-color: #f0f7ff !important;
+    color: #1e40af !important;
+    font-weight: 600;
+}
+
+.filter-dropdown ::v-deep .dropdown-item:hover:not(.active) {
+    background: #f1f5f9;
+    color: #0f172a;
 }
 </style>

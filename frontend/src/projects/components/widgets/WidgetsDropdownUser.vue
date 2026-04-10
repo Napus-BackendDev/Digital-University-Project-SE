@@ -39,7 +39,7 @@
                 </div>
             </div>
         </CCol>
-        <CCol sm="6" lg="3" @click="$emit('filter', 'InProgress')" style="cursor: pointer;">
+        <CCol sm="6" lg="3" @click="$emit('filter', 'In Progress')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-info-light text-info">

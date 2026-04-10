@@ -64,6 +64,7 @@
     import Pagination from '@/projects/components/Util/Pagination.vue'
 import moment from 'moment'
 import localeMixin from '@/mixins/localeMixin'
+    import { getFilteredResponses as filterResponsesInRange, getTableStatusLabel, getFormStatusKey } from '@/projects/utils/analytics'
 
 export default {
     name: 'AdminTables',
@@ -107,41 +108,36 @@ export default {
                 return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
             })
 
-            return sortedForms.map(form => {
-                let statusTitle = 'Draft';
-                const now = new Date();
-                const schedule = form.schedule || (form.settings && form.settings.schedule);
+            return sortedForms
+                .filter(form => {
+                    if (!form) return false;
 
-                if (schedule && schedule.startAt) {
-                    const start = new Date(schedule.startAt);
-                    const end = new Date(schedule.endAt);
+                    const statusKey = getFormStatusKey(form);
+                    const schedule = form.schedule || (form.settings && form.settings.schedule);
 
-                    if (!start && !end) {
-                        statusTitle = 'Draft';
-                    } else if (start <= now && now <= end) {
-                        statusTitle = 'Active';
-                    } else {
-                        statusTitle = 'Closed';
+                    // Hide true draft forms from analytics table.
+                    if (statusKey === 'pending' && (!schedule || (!schedule.startAt && !schedule.endAt))) {
+                        return false;
                     }
-                }
+
+                    return true;
+                })
+                .map(form => {
+                const statusTitle = getTableStatusLabel(form);
 
                 const localFormat = this.$i18n.locale === 'th' ? 'th-TH' : 'en-GB';
                 moment.locale(this.$i18n.locale === 'th' ? 'th' : 'en');
-                let accessTitle = form.isPublic ? this.$t('accessLabel.public') : this.$t('accessLabel.private');
-                if (form.controll && form.controll.type) {
-                    const cTitle = this.getLang(form.controll.type.title);
-                    if (cTitle) accessTitle = cTitle;
-                }
+                const accessTitle = this.getAccessTitle(form);
 
                 return {
                     title: this.getLang(form.title) || this.$t('common.untitled'),
                     description: this.getLang(form.description) || '',
                     status: statusTitle,
                     access: accessTitle,
-                    responses: this.getFilteredResponses(form).length,
+                    responses: filterResponsesInRange(form, this.timeRange).length,
                     created: form.updatedAt ? new Date(form.updatedAt).toLocaleDateString(localFormat, { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
                 }
-            })
+                })
         },
         totalPages() {
             return Math.ceil(this.tableData.length / this.pageSize)
@@ -175,27 +171,20 @@ export default {
             if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
             return 'visi-org';
         },
-        getFilteredResponses(form) {
-            if (!form || !form.responses) return [];
-            return form.responses.filter(r => {
-                const isSubmitted = r && (
-                    r.submit === true || 
-                    r.submit === 1 || 
-                    String(r.submit).toLowerCase() === 'true'
-                );
-                if (!isSubmitted) return false;
-                if (!r.createdAt) return false;
+        getAccessTitle(form) {
+            // Use canonical backend field first, keep legacy boolean fallback.
+            const accessRaw = (form && form.access) ? String(form.access).toLowerCase() : '';
 
-                const createdAt = moment(r.createdAt);
-                if (this.timeRange === '7d') {
-                    return createdAt.isSameOrAfter(moment().subtract(7, 'days'), 'day');
-                } else if (this.timeRange === '30d') {
-                    return createdAt.isSameOrAfter(moment().subtract(30, 'days'), 'day');
-                } else if (this.timeRange === '1y') {
-                    return createdAt.isSameOrAfter(moment().subtract(1, 'years'), 'day');
-                }
-                return true;
-            });
+            if (accessRaw === 'private') return this.$t('accessLabel.private');
+            if (accessRaw === 'organization') return this.$t('accessLabel.general');
+            if (accessRaw === 'public') return this.$t('accessLabel.public');
+
+            if (typeof form?.isPublic === 'boolean') {
+                return form.isPublic ? this.$t('accessLabel.public') : this.$t('accessLabel.private');
+            }
+
+            // Backend visibility rules treat missing access as public (legacy records).
+            return this.$t('accessLabel.public');
         }
     }
 }

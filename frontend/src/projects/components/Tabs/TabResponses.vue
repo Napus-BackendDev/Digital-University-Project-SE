@@ -264,6 +264,15 @@ export default {
             const rows = this.allSubmittedResponses.map(r => {
                 let responderName = '-';
                 let departmentValue = '-';
+
+                const getOrganizationLabel = (org) => {
+                    if (!org) return '-';
+                    if (typeof org === 'string') return org;
+                    if (Array.isArray(org.title)) {
+                        return this.getTitle(org.title) || '-';
+                    }
+                    return org.name || org.title || org.organizationName || '-';
+                };
                 
                 // Extract responder name
                 if (r.responder && typeof r.responder === 'object') {
@@ -280,10 +289,10 @@ export default {
                     const deptAns = ansList[deptQuestionIdx].response;
                     departmentValue = Array.isArray(deptAns) ? deptAns.join(', ') : (deptAns || '-');
                 } else {
-                    if (r.responder && r.responder.org) {
-                        departmentValue = r.responder.org.name || r.responder.org.organizationName || '-';
+                    if (r.responder && typeof r.responder === 'object' && r.responder.organization) {
+                        departmentValue = getOrganizationLabel(r.responder.organization);
                     } else {
-                        departmentValue = r.org || '-';
+                        departmentValue = r.department || r.organization || r.responderDepartment || '-';
                     }
                 }
 

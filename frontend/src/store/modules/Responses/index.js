@@ -1,20 +1,89 @@
 import Service from "@/service/api.js";
 
+const normalizeResponse = (payload) => {
+    if (!payload) return null;
+    if (Array.isArray(payload)) return payload;
+    if (payload._id) return payload;
+    if (payload.data) {
+        if (Array.isArray(payload.data)) return payload.data;
+        if (payload.data && payload.data._id) return payload.data;
+    }
+    return null;
+};
+
+const RESPONSES_CACHE_KEY = 'du.responses.cache';
+
+const loadCachedResponses = () => {
+    try {
+        if (typeof window === 'undefined' || !window.sessionStorage) return [];
+        const raw = window.sessionStorage.getItem(RESPONSES_CACHE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        return [];
+    }
+};
+
+const persistResponses = (data) => {
+    try {
+        if (typeof window === 'undefined' || !window.sessionStorage) return;
+        const safeList = Array.isArray(data) ? data : [];
+        window.sessionStorage.setItem(RESPONSES_CACHE_KEY, JSON.stringify(safeList));
+    } catch (e) {
+        // Ignore storage errors to avoid breaking response flow.
+    }
+};
+
+const normalizeResponsePayload = (payload) => {
+    if (!payload) return null;
+    if (Array.isArray(payload)) return payload;
+    if (payload._id) return payload;
+
+    if (payload.data) {
+        if (Array.isArray(payload.data)) return payload.data;
+        if (payload.data && payload.data._id) return payload.data;
+    }
+
+    return null;
+};
+
 const module = {
     namespaced: true,
     state: {
-        responses: []
+        responses: loadCachedResponses()
     },
     mutations: {
         responses(state, data) {
             state.responses = data;
+            persistResponses(data);
         }
     },
     actions: {
+        upsertResponseList({ state, commit }, payload) {
+            const normalized = normalizeResponse(payload);
+
+            if (Array.isArray(normalized)) {
+                commit('responses', normalized);
+                return;
+            }
+
+            if (normalized && normalized._id) {
+                const list = Array.isArray(state.responses) ? [...state.responses] : [];
+                const idx = list.findIndex(item => String(item && item._id) === String(normalized._id));
+                if (idx >= 0) {
+                    list.splice(idx, 1, normalized);
+                } else {
+                    list.unshift(normalized);
+                }
+                commit('responses', list);
+                return;
+            }
+        },
         exp({ commit }, data) {
             return Service.response('exp', data, {})
                 .then(response => {
-                    commit('responses', response.data.data || []);
+                    commit('responses', normalizeResponse(response?.data?.data) || []);
                     return response;
                 })
                 .catch(err => { throw err; });
@@ -22,7 +91,7 @@ const module = {
         get({ commit }, data) {
             return Service.response('get', data, {})
                 .then(response => {
-                    const result = response.data.data;
+                    const result = normalizeResponse(response?.data?.data);
                     if (Array.isArray(result)) {
                         commit('responses', result);
                     }
@@ -40,7 +109,7 @@ const module = {
                     throw err;
                 });
         },
-        create({ commit }, data) {
+        create({ dispatch }, data) {
             const hasFile = (data.answers || []).some(ans =>
                 ans.response instanceof File ||
                 (Array.isArray(ans.response) && ans.response.some(r => r instanceof File))
@@ -101,12 +170,12 @@ const module = {
 
             return Service.response(hasFile ? 'submit' : 'create', payload, {})
                 .then(response => {
-                    commit('responses', response.data.data);
+                    dispatch('upsertResponseList', response?.data?.data || response?.data);
                     return response;
                 })
                 .catch(err => { throw err; });
         },
-        update({ commit }, data) {
+        update({ dispatch }, data) {
             const hasFile = (data.answers || []).some(ans =>
                 ans.response instanceof File ||
                 (Array.isArray(ans.response) && ans.response.some(r => r instanceof File))
@@ -156,7 +225,7 @@ const module = {
 
             return Service.response(hasFile ? 'update-multipart' : 'update', payload, {})
                 .then(response => {
-                    commit('responses', response.data.data);
+                    dispatch('upsertResponseList', response?.data?.data || response?.data);
                     return response;
                 })
                 .catch(err => { throw err; });

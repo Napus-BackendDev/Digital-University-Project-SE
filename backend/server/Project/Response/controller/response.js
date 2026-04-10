@@ -2,7 +2,13 @@ const objSchema = require("../models/response.model");
 const createBaseService = require("../../../../helpers/base.service")
 
 const defaultPopulate = [
-    { path: 'responder', select: '-password' },
+    {
+        path: 'responder',
+        select: '-password',
+        populate: [
+            { path: 'organization' }
+        ]
+    },
     {
         path: 'form',
         populate: [

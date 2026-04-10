@@ -174,6 +174,7 @@ export default {
     },
     async created() {
         this.$store.dispatch('User/getAll');
+        this.$store.dispatch('Organizations/getAll');
     },
     computed: {
         fields() {
@@ -190,6 +191,7 @@ export default {
         },
         ...mapGetters('Forms', ['forms']),
         ...mapGetters('User', ['user', 'users']),
+        ...mapGetters('Organizations', ['organizations']),
         ...mapGetters('dialog', ['isCode']),
 
         totalPages() {
@@ -289,8 +291,8 @@ export default {
                     timeRange = f.timeRange;
                 }
 
-                // Status: derive from schedule if available (Draft / Active / Closed)
-                let status = 'Draft';
+                // Status: derive from schedule if available (Pending / Active / Closed)
+                let status = 'Pending';
                 const now = new Date();
                 const hasStart = f.schedule && f.schedule.startAt;
                 const hasEnd = f.schedule && f.schedule.endAt;
@@ -310,8 +312,8 @@ export default {
                     else if (typeof f.status === 'object') status = f.status.type || f.status.name || 'Pending';
                 }
                 else {
-                    // no schedule or explicit status -> default to Draft
-                    status = 'Draft';
+                    // no schedule or explicit status -> default to Pending
+                    status = 'Pending';
                 }
 
                 // Extract Collaborators
@@ -331,18 +333,7 @@ export default {
                 // Access/Visibility Logic (Based on Organization)
                 let access = [];
                 const rawOrgs = f.organization || [];
-                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
-                    if (!o) return null;
-                    if (typeof o === 'string') return o;
-                    if (typeof o === 'object') {
-                        if (Array.isArray(o.title)) {
-                            const localOrgTitle = o.title.find(t => t && t.key && t.key.toLowerCase() === locale);
-                            return localOrgTitle ? localOrgTitle.value : (o.title[0] ? o.title[0].value : null);
-                        }
-                        return o.name || o.title || o.value || null;
-                    }
-                    return null;
-                }).filter(Boolean);
+                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => this.getOrganizationLabel(o, locale)).filter(Boolean);
 
                 const hasPersonalAccess = f.settings && Array.isArray(f.settings.allowedUser) && f.settings.allowedUser.length > 0;
 
@@ -484,6 +475,32 @@ export default {
             if (v.includes('private')) return 'visi-private';
             if (v.includes('personal')) return 'visi-personal';
             return 'visi-org';
+        },
+        getOrganizationLabel(orgRef, locale) {
+            if (!orgRef) return null;
+
+            if (typeof orgRef === 'object') {
+                if (Array.isArray(orgRef.title)) {
+                    const localOrgTitle = orgRef.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                    return localOrgTitle ? localOrgTitle.value : (orgRef.title[0] ? orgRef.title[0].value : null);
+                }
+                return orgRef.name || orgRef.title || orgRef.value || (orgRef._id ? String(orgRef._id) : null);
+            }
+
+            const orgId = String(orgRef);
+            const found = Array.isArray(this.organizations)
+                ? this.organizations.find(o => String(o._id) === orgId || String(o.id) === orgId)
+                : null;
+
+            if (found) {
+                if (Array.isArray(found.title)) {
+                    const localOrgTitle = found.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                    return localOrgTitle ? localOrgTitle.value : (found.title[0] ? found.title[0].value : null);
+                }
+                return found.name || found.title || found.value || orgId;
+            }
+
+            return orgId;
         },
         getUserName(userRef) {
             if (!userRef) return 'Unknown';

@@ -90,25 +90,27 @@
                                 v-model="answers[convertIdToStr(question._id)]" :placeholder="$t('form.yourAnswer')"
                                 class="mb-0" :disabled="isPreviewMode || isAlreadySubmitted"
                                 @input="(e) => { clearError(question._id); autoSave(); }"
-                                @change="(e) => { scrollToNextQuestion(question); }" />
+                                @change="(e) => { autoSave(true); scrollToNextQuestion(question); }"
+                                @blur="() => autoSave(true)" />
 
                             <!-- Paragraph -->
                             <CTextarea v-else-if="isType(question, 'paragraph')"
                                 v-model="answers[convertIdToStr(question._id)]" placeholder="Your answer" rows="4"
                                 class="mb-0" :disabled="isPreviewMode || isAlreadySubmitted"
                                 @input="(e) => { clearError(question._id); autoSave(); }"
-                                @change="(e) => { scrollToNextQuestion(question); }" />
+                                @change="(e) => { autoSave(true); scrollToNextQuestion(question); }"
+                                @blur="() => autoSave(true)" />
 
                             <!-- Multiple Choice / Checkboxes -->
                             <div v-else-if="isType(question, 'multiple_choice', 'checkbox')" class="options-container">
                                 <label v-for="(opt, oIdx) in (question.config && question.config.choices || [])"
-                                    :key="oIdx" class="option-row">
+                                    :key="'opt-' + convertIdToStr(question._id) + '-' + getOptionKey(opt, oIdx)" class="option-row">
                                     <input
                                         :type="(question.config && question.config.allowMultipleSelect) ? 'checkbox' : 'radio'"
                                         :name="'q_' + convertIdToStr(question._id)" :value="getOptionKey(opt, oIdx)"
                                         v-model="answers[convertIdToStr(question._id)]" class="option-input"
                                         :disabled="isPreviewMode || isAlreadySubmitted"
-                                        @change="(e) => { clearError(question._id); autoSave(); scrollToNextQuestion(question); }"
+                                        @change="(e) => { clearError(question._id); autoSave(true); scrollToNextQuestion(question); }"
                                         @click="scrollToNextQuestion(question)" />
                                     <span>{{ getOptionLabel(opt) }}</span>
                                 </label>
@@ -136,42 +138,60 @@
                                 <input type="file" :multiple="(question.config && Number(question.config.maxFiles) > 1)"
                                     :accept="getAcceptString(question)" class="text-muted"
                                     :disabled="isPreviewMode || isAlreadySubmitted"
-                                    @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); autoSave(); }" />
+                                    @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); autoSave(true); }" />
 
                                 <!-- Display uploaded / selected files -->
                                 <div v-if="answers[convertIdToStr(question._id)]" class="mt-2">
                                     <template v-if="Array.isArray(answers[convertIdToStr(question._id)])">
-                                        <div v-for="(f, idx) in answers[convertIdToStr(question._id)]" :key="idx"
-                                            class="d-flex align-items-center mb-1 text-primary small">
-                                            <CIcon name="cil-paperclip" size="sm" class="mr-2" />
-                                            <a v-if="typeof f === 'string' && f.startsWith('http')" :href="f"
-                                                target="_blank" rel="noopener noreferrer" class="text-truncate"
-                                                style="max-width: 90%;">{{ f.split('/').pop() }}</a>
-                                            <a v-else-if="f && f.url" :href="f.url" target="_blank"
-                                                rel="noopener noreferrer" class="text-truncate"
-                                                style="max-width: 90%;">{{ f.name || f.filename || 'Attachment' }}</a>
-                                            <span v-else class="text-truncate" style="max-width: 90%;">{{ f ? (f.name ||
-                                                f.filename || f) : '-' }}</span>
+                                        <div v-for="(f, idx) in answers[convertIdToStr(question._id)]" :key="'file-' + convertIdToStr(question._id) + '-' + idx + '-' + getAnswerFileName(f)"
+                                            class="mb-2">
+                                            <div class="d-flex align-items-center mb-1 text-primary small">
+                                                <CIcon name="cil-paperclip" size="sm" class="mr-2" />
+                                                <a v-if="resolveAnswerFileUrl(f)" :href="resolveAnswerFileUrl(f)"
+                                                    target="_blank" rel="noopener noreferrer" class="text-truncate"
+                                                    style="max-width: 90%;">{{ getAnswerFileName(f) }}</a>
+                                                <span v-else class="text-truncate" style="max-width: 90%;">{{
+                                                    getAnswerFileName(f) }}</span>
+                                            </div>
+                                            <div v-if="isPreviewableImage(f) && resolveAnswerFileUrl(f)" class="file-preview-wrapper">
+                                                <img :src="resolveAnswerFileUrl(f)" alt="uploaded preview"
+                                                    class="answer-upload-preview" />
+                                            </div>
+                                            <div v-else-if="isPreviewablePdf(f) && resolveAnswerFileUrl(f)" class="file-preview-wrapper">
+                                                <iframe :src="resolveAnswerFileUrl(f)" class="answer-upload-pdf-preview"
+                                                    title="pdf preview"></iframe>
+                                            </div>
+                                            <div v-else-if="isPreviewableVideo(f) && resolveAnswerFileUrl(f)" class="file-preview-wrapper">
+                                                <video :src="resolveAnswerFileUrl(f)" controls class="answer-upload-media-preview"></video>
+                                            </div>
                                         </div>
                                     </template>
                                     <template v-else>
-                                        <div class="d-flex align-items-center mb-1 text-primary small">
-                                            <CIcon name="cil-paperclip" size="sm" class="mr-2" />
-                                            <a v-if="typeof answers[convertIdToStr(question._id)] === 'string' && answers[convertIdToStr(question._id)].startsWith('http')"
-                                                :href="answers[convertIdToStr(question._id)]" target="_blank"
-                                                rel="noopener noreferrer" class="text-truncate"
-                                                style="max-width: 90%;">{{
-                                                    answers[convertIdToStr(question._id)].split('/').pop() }}</a>
-                                            <a v-else-if="answers[convertIdToStr(question._id)] && answers[convertIdToStr(question._id)].url"
-                                                :href="answers[convertIdToStr(question._id)].url" target="_blank"
-                                                rel="noopener noreferrer" class="text-truncate"
-                                                style="max-width: 90%;">{{ answers[convertIdToStr(question._id)].name ||
-                                                    answers[convertIdToStr(question._id)].filename || 'Attachment' }}</a>
-                                            <span v-else class="text-truncate" style="max-width: 90%;">{{
-                                                answers[convertIdToStr(question._id)] ?
-                                                    (answers[convertIdToStr(question._id)].name ||
-                                                        answers[convertIdToStr(question._id)].filename ||
-                                                        answers[convertIdToStr(question._id)]) : '-' }}</span>
+                                        <div class="mb-2">
+                                            <div class="d-flex align-items-center mb-1 text-primary small">
+                                                <CIcon name="cil-paperclip" size="sm" class="mr-2" />
+                                                <a v-if="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
+                                                    :href="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
+                                                    target="_blank" rel="noopener noreferrer" class="text-truncate"
+                                                    style="max-width: 90%;">{{ getAnswerFileName(answers[convertIdToStr(question._id)]) }}</a>
+                                                <span v-else class="text-truncate" style="max-width: 90%;">{{
+                                                    getAnswerFileName(answers[convertIdToStr(question._id)]) }}</span>
+                                            </div>
+                                            <div v-if="isPreviewableImage(answers[convertIdToStr(question._id)]) && resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
+                                                class="file-preview-wrapper">
+                                                <img :src="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
+                                                    alt="uploaded preview" class="answer-upload-preview" />
+                                            </div>
+                                            <div v-else-if="isPreviewablePdf(answers[convertIdToStr(question._id)]) && resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
+                                                class="file-preview-wrapper">
+                                                <iframe :src="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
+                                                    class="answer-upload-pdf-preview" title="pdf preview"></iframe>
+                                            </div>
+                                            <div v-else-if="isPreviewableVideo(answers[convertIdToStr(question._id)]) && resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
+                                                class="file-preview-wrapper">
+                                                <video :src="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
+                                                    controls class="answer-upload-media-preview"></video>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>
@@ -190,7 +210,10 @@
 
                             <!-- Fallback -->
                             <CInput v-else v-model="answers[question._id]" :placeholder="$t('form.yourAnswer')"
-                                class="mb-0" />
+                                class="mb-0"
+                                @input="() => autoSave()"
+                                @change="() => autoSave(true)"
+                                @blur="() => autoSave(true)" />
                         </CCardBody>
                     </CCard>
                 </transition-group>
@@ -264,20 +287,101 @@ export default {
             isSaving: false,
             needsSave: false,
             saveTimeout: null,
+            saveTimer: null,
             error: null,
             isNewMode: this.$route.query.new === 'true',
             errorIds: new Set(),
             responderId: null,
             isAlreadySubmitted: false, // New state for Limit to One Response
+            filePreviewUrlCache: null,
+            filePreviewUrls: [],
+            isHydrating: false,
         };
     },
     created() {
+        this.filePreviewUrlCache = new WeakMap();
         if (this.user && this.user._id) {
             this.responderId = this.user._id;
         }
+    },
+    mounted() {
         this.onInit();
     },
+    beforeDestroy() {
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        if (this.saveTimer) {
+            clearTimeout(this.saveTimer);
+            this.saveTimer = null;
+        }
+        this.filePreviewUrls.forEach((url) => {
+            try {
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                // no-op
+            }
+        });
+        this.filePreviewUrls = [];
+    },
     methods: {
+        getResponderStorageKey() {
+            return `du.formfill.responder.${this.formId}`;
+        },
+        loadStoredResponderId() {
+            try {
+                if (typeof window === 'undefined' || !window.localStorage) return null;
+                return window.localStorage.getItem(this.getResponderStorageKey());
+            } catch (e) {
+                return null;
+            }
+        },
+        persistResponderId(id) {
+            try {
+                if (!id || typeof window === 'undefined' || !window.localStorage) return;
+                window.localStorage.setItem(this.getResponderStorageKey(), String(id));
+            } catch (e) {
+                // ignore storage errors
+            }
+        },
+        async ensureResponderId() {
+            if (this.user && this.user._id) {
+                this.responderId = this.user._id;
+                this.persistResponderId(this.responderId);
+                return this.responderId;
+            }
+            if (this.responderId) return this.responderId;
+
+            const storedResponder = this.loadStoredResponderId();
+            if (storedResponder) {
+                this.responderId = storedResponder;
+                return this.responderId;
+            }
+
+            // Legacy fallback kept for compatibility with existing deployments.
+            try {
+                const user = await this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
+                if (user && user._id) {
+                    this.responderId = user._id;
+                    this.persistResponderId(this.responderId);
+                    return this.responderId;
+                }
+            } catch (e) {
+                // continue with fallback
+            }
+
+            // Prefer form creator as a stable fallback responder when collectEmail is disabled.
+            const creator = this.form && this.form.creator;
+            const creatorId = typeof creator === 'object' ? creator && creator._id : creator;
+            if (creatorId) {
+                this.responderId = this.convertIdToStr(creatorId);
+                this.persistResponderId(this.responderId);
+                return this.responderId;
+            }
+
+            return null;
+        },
         resolveImageUrl(value) {
             if (!value || typeof value !== 'string') return '';
             if (value.startsWith('data:') || value.startsWith('http://') || value.startsWith('https://')) {
@@ -292,9 +396,95 @@ export default {
 
             return `${backendOrigin}/${value}`;
         },
+        resolveAnswerFileUrl(value) {
+            if (!value) return '';
 
+            if (value instanceof File) {
+                if (this.filePreviewUrlCache && this.filePreviewUrlCache.has(value)) {
+                    return this.filePreviewUrlCache.get(value);
+                }
+                const objUrl = URL.createObjectURL(value);
+                if (this.filePreviewUrlCache) this.filePreviewUrlCache.set(value, objUrl);
+                this.filePreviewUrls.push(objUrl);
+                return objUrl;
+            }
+
+            if (typeof value === 'string') {
+                if (value.startsWith('blob:')) return value;
+                return this.resolveImageUrl(value);
+            }
+
+            if (value && typeof value === 'object') {
+                if (value.url) return this.resolveImageUrl(value.url);
+                if (value.path) return this.resolveImageUrl(value.path);
+            }
+
+            return '';
+        },
+        restoreAnswersFromResponse(responseDoc) {
+            if (!responseDoc || !Array.isArray(responseDoc.answers)) return;
+
+            const questionIds = new Set((this.form && this.form.questions || []).map(q => String(q._id)));
+            const restored = {};
+
+            responseDoc.answers.forEach(answer => {
+                if (!answer || !answer.question) return;
+                const qid = typeof answer.question === 'object' && answer.question !== null
+                    ? String(answer.question._id || answer.question)
+                    : String(answer.question);
+
+                if (!questionIds.has(qid)) return;
+
+                let val = answer.response;
+                try {
+                    if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
+                        val = JSON.parse(val);
+                    }
+                } catch (e) {
+                    // Keep raw value if parsing fails.
+                }
+                restored[qid] = val;
+            });
+
+            this.answers = { ...this.answers, ...restored };
+        },
+        getAnswerFileName(value) {
+            if (!value) return '-';
+            if (value instanceof File) return value.name || 'Attachment';
+            if (typeof value === 'string') return value.split('/').pop() || 'Attachment';
+            return value.name || value.filename || value.originalname || 'Attachment';
+        },
+        getAnswerFileType(value) {
+            if (!value) return '';
+            if (value instanceof File) return String(value.type || '').toLowerCase();
+            if (value && typeof value === 'object') {
+                return String(value.type || value.mimeType || value.mimetype || '').toLowerCase();
+            }
+            return '';
+        },
+        getAnswerFileExt(value) {
+            const filename = this.getAnswerFileName(value);
+            const idx = filename.lastIndexOf('.');
+            return idx >= 0 ? filename.slice(idx + 1).toLowerCase() : '';
+        },
+        isPreviewableImage(value) {
+            const type = this.getAnswerFileType(value);
+            const ext = this.getAnswerFileExt(value);
+            return type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+        },
+        isPreviewablePdf(value) {
+            const type = this.getAnswerFileType(value);
+            const ext = this.getAnswerFileExt(value);
+            return type === 'application/pdf' || ext === 'pdf';
+        },
+        isPreviewableVideo(value) {
+            const type = this.getAnswerFileType(value);
+            const ext = this.getAnswerFileExt(value);
+            return type.startsWith('video/') || ['mp4', 'webm', 'mov', 'm4v', 'ogg'].includes(ext);
+        },
         async onInit() {
             this.loading = true;
+            this.isHydrating = true;
             this.error = null;
             try {
                 const data = await this.$store.dispatch('Forms/getById', { _id: this.formId });
@@ -308,7 +498,15 @@ export default {
                 const settings = this.form.settings || {};
                 const currentUser = this.user || {};
                 const isAdmin = currentUser.role === 'Admin' || currentUser.role === 'SuperAdmin';
+                if (!this.responderId) {
+                    const storedResponder = this.loadStoredResponderId();
+                    if (storedResponder) this.responderId = storedResponder;
+                }
                 let currentResponder = currentUser._id || this.responderId;
+
+                if (currentResponder) {
+                    this.persistResponderId(currentResponder);
+                }
 
                 // 2.1 Personal Access Check (Specified Users Only)
                 if (settings.allowedUser && Array.isArray(settings.allowedUser) && settings.allowedUser.length > 0 && !this.isPreviewMode && !isAdmin) {
@@ -350,8 +548,15 @@ export default {
                 });
                 this.answers = init;
                 try {
-                    // 3. Fetch user responses for this form
-                    await this.$store.dispatch('Responses/get', { form: this.form._id });
+                    // 3. Fetch user responses for this form/responder on load
+                    if (!currentResponder) {
+                        currentResponder = await this.ensureResponderId();
+                    }
+
+                    await this.$store.dispatch('Responses/get', {
+                        form: this.form._id,
+                        responder: currentResponder
+                    });
                     const allFormResponses = this.$store.getters['Responses/responses'] || [];
 
                     // Check if already submitted (for Limit to One Response)
@@ -370,23 +575,10 @@ export default {
 
                             // Load submitted answers
                             if (submitted.answers) {
-                                const submittedInit = {};
-                                submitted.answers.forEach(ans => {
-                                    if (ans && ans.question) {
-                                        const qId = typeof ans.question === 'object' ? ans.question._id : ans.question;
-                                        submittedInit[qId] = ans.value;
-                                    }
-                                });
-                                this.answers = { ...this.answers, ...submittedInit };
+                                this.restoreAnswersFromResponse(submitted);
                             }
                             return; // Stop here as we just want to view
                         }
-                    }
-
-                    // 4. Ensure user is loaded (if not already found)
-                    if (!currentResponder) {
-                        await this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
-                        currentResponder = this.user?._id;
                     }
 
                     // If New Mode is active, we don't load any existing draft
@@ -395,18 +587,8 @@ export default {
                         return;
                     }
 
-                    // 5. Build/Find draft from the responses we already fetched
-                    let responsesToProcess = allFormResponses;
-                    if (!responsesToProcess || responsesToProcess.length === 0) {
-                        const res = await this.$store.dispatch('Responses/get', {
-                            form: this.form._id,
-                            responder: currentResponder
-                        });
-                        responsesToProcess = this.$store.getters['Responses/responses'] || [];
-                    }
-
-                    // Find the most recent unsubmitted draft for this form and user
-                    const draft = (responsesToProcess || [])
+                    // 4. Find latest unsubmitted draft for this form and responder
+                    const draft = (allFormResponses || [])
                         .filter(r => {
                             if (!r) return false;
                             const fId = (typeof r.form === 'object' ? r.form._id : r.form);
@@ -423,29 +605,7 @@ export default {
 
                     if (draft && draft._id) {
                         this.draftResponseId = draft._id;
-
-                        const questionIds = new Set((this.form.questions || []).map(q => String(q._id)));
-                        const map = {};
-                        (draft.answers || []).forEach(answer => {
-                            if (!answer || !answer.question) return;
-                            const qid = typeof answer.question === 'object' && answer.question !== null
-                                ? String(answer.question._id || answer.question)
-                                : String(answer.question);
-                            
-                            if (!questionIds.has(qid)) return;
-
-                            // Backend might store response as string or JSON
-                            let val = answer.response;
-                            try {
-                                if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
-                                    val = JSON.parse(val);
-                                }
-                            } catch (e) {
-                                // use as is
-                            }
-                            map[qid] = val;
-                        });
-                        this.answers = { ...this.answers, ...map };
+                        this.restoreAnswersFromResponse(draft);
                     }
                 } catch (e) {
                     console.error('Failed to load draft response:', e);
@@ -454,6 +614,7 @@ export default {
                 this.error = err.message || 'Failed to load form.';
             } finally {
                 this.loading = false;
+                this.isHydrating = false;
             }
         },
 
@@ -469,7 +630,7 @@ export default {
                 return;
             }
 
-            const currentResponder = this.user?._id || this.responderId;
+            const currentResponder = this.user?._id || this.responderId || await this.ensureResponderId();
             if (!currentResponder) return;
 
             this.isSaving = true;
@@ -533,6 +694,26 @@ export default {
 
                     if (id) {
                         this.draftResponseId = id;
+                    } else {
+                        // Fallback: recover latest draft id from store after create.
+                        const latestDraft = (this.$store.getters['Responses/responses'] || [])
+                            .filter(r => {
+                                if (!r) return false;
+                                const fId = (typeof r.form === 'object' ? r.form._id : r.form);
+                                const rId = (typeof r.responder === 'object' ? r.responder._id : r.responder);
+                                return String(fId) === String(this.form._id) &&
+                                    String(rId) === String(currentResponder) &&
+                                    !r.submit;
+                            })
+                            .sort((a, b) => {
+                                const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                                const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                                return dateB - dateA;
+                            })[0];
+
+                        if (latestDraft && latestDraft._id) {
+                            this.draftResponseId = latestDraft._id;
+                        }
                     }
                 }
             } catch (err) {
@@ -546,20 +727,30 @@ export default {
             }
         },
 
-        autoSave() {
+        autoSave(force = false) {
             if (this.submit || this.isPreviewMode) return;
-            
-            // Basic debounce using setTimeout
-            if (this.saveTimeout) clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => {
+
+            if (force) {
+                if (this.saveTimeout) clearTimeout(this.saveTimeout);
+                if (this.saveTimer) clearTimeout(this.saveTimer);
+                this.saveTimeout = null;
+                this.saveTimer = null;
                 this.saveDraftResponse();
-            }, 1000); // Wait 1 second after last input
+                return;
+            }
+            
+            // Match CreateForm autosave style: single timer with debounce.
+            if (this.saveTimeout) clearTimeout(this.saveTimeout);
+            if (this.saveTimer) clearTimeout(this.saveTimer);
+            this.saveTimer = setTimeout(() => {
+                this.saveDraftResponse();
+            }, 2000); // Wait 2 seconds after last input
         },
 
         onRate(question, n) {
             const qIdStr = this.convertIdToStr(question._id);
             this.$set(this.answers, qIdStr, n);
-            this.autoSave();
+            this.autoSave(true);
         },
 
         async onAuthenGoogle() {
@@ -575,6 +766,7 @@ export default {
                     const user = await this.$store.dispatch('User/get', body);
                     if (user) {
                         this.responderId = user._id;
+                        this.persistResponderId(this.responderId);
                         this.onInit(); // Refresh form state with new user
                     }
                 }
@@ -869,7 +1061,7 @@ export default {
             const missing = (this.form.questions || []).filter(q => {
                 const isGlobalRequired = this.form && this.form.requireResponse;
                 if (!isGlobalRequired && !q.isRequired) return false;
-                const a = this.answers[q._id];
+                const a = this.answers[this.convertIdToStr(q._id)];
                 return Array.isArray(a) ? a.length === 0 : (a === null || a === '' || a === undefined);
             });
             if (missing.length) {
@@ -882,7 +1074,7 @@ export default {
             }
             this.errorIds = new Set();
 
-            const currentResponder = this.user?._id || this.responderId;
+            const currentResponder = this.user?._id || this.responderId || await this.ensureResponderId();
 
             if (!currentResponder) {
                 this.modalTitle = this.$t('form.notAuthenticated');
@@ -895,7 +1087,7 @@ export default {
             this.submit = true;
             this.submitting = true;
             try {
-                const currentResponder = this.user?._id || this.responderId;
+                const currentResponder = this.user?._id || this.responderId || await this.ensureResponderId();
                 const createPayload = {
                     responder: currentResponder,
                     form: this.form._id,
@@ -931,6 +1123,8 @@ export default {
                 this.modalType = 'success';
                 this.showModal = true;
             } catch (err) {
+                // If submit fails, keep working in draft mode so autosave continues.
+                this.submit = false;
                 this.modalTitle = this.$t('common.error');
                 this.modalMessage = this.$t('common.error');
                 this.modalType = 'error';
@@ -1109,11 +1303,21 @@ export default {
         }
     },
     watch: {
-        answers: {
-            handler() {
-                this.autoSave();
+        user: {
+            async handler(val, oldVal) {
+                const newId = val && val._id ? String(val._id) : null;
+                const oldId = oldVal && oldVal._id ? String(oldVal._id) : null;
+                if (!newId || newId === oldId) return;
+
+                this.responderId = newId;
+                this.persistResponderId(newId);
+
+                // If initial render loaded with a different responder, refresh once with the real user id.
+                if (this.form && !this.loading && !this.isPreviewMode && !this.isDuplicateMode && !this.isSaving) {
+                    await this.onInit();
+                }
             },
-            deep: true
+            immediate: false
         }
     }
 }
@@ -1279,6 +1483,35 @@ export default {
 .star-btn:hover,
 .star-btn.star-active {
     color: #f9ab00;
+}
+
+.file-preview-wrapper {
+    margin-left: 1.25rem;
+}
+
+.answer-upload-preview {
+    max-width: 280px;
+    max-height: 180px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    object-fit: contain;
+    background: #fff;
+}
+
+.answer-upload-pdf-preview {
+    width: 280px;
+    height: 180px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.answer-upload-media-preview {
+    width: 280px;
+    max-height: 180px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
 }
 
 .star-btn:hover {
