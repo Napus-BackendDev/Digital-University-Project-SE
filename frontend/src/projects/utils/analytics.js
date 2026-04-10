@@ -74,5 +74,5 @@ export function getTableStatusLabel(form, now = moment()) {
     const key = getFormStatusKey(form, now);
     if (key === 'open') return 'Active';
     if (key === 'closed') return 'Closed';
-    return 'Draft';
+    return 'Pending';
 }

@@ -289,8 +289,8 @@ export default {
                     timeRange = f.timeRange;
                 }
 
-                // Status: derive from schedule if available (Draft / Active / Closed)
-                let status = 'Draft';
+                // Status: derive from schedule if available (Pending / Active / Closed)
+                let status = 'Pending';
                 const now = new Date();
                 const hasStart = f.schedule && f.schedule.startAt;
                 const hasEnd = f.schedule && f.schedule.endAt;
@@ -310,8 +310,8 @@ export default {
                     else if (typeof f.status === 'object') status = f.status.type || f.status.name || 'Pending';
                 }
                 else {
-                    // no schedule or explicit status -> default to Draft
-                    status = 'Draft';
+                    // no schedule or explicit status -> default to Pending
+                    status = 'Pending';
                 }
 
                 // Extract Collaborators

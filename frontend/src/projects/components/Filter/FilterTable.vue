@@ -27,7 +27,7 @@
                                 <div class="d-flex align-items-center text-truncate">
                                     <CIcon name="cil-filter" size="sm" class="mr-2" />
                                     <span class="text-truncate small">{{ selectedStatus === 'All' ? $t('status.all') :
-                                        $t('status.' + selectedStatus.toLowerCase()) }}</span>
+                                        $t('status.' + selectedStatus.toLowerCase().replace(/\s/g, '')) }}</span>
                                 </div>
                                 <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
                             </button>
@@ -35,7 +35,7 @@
                         <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}
                         </CDropdownItem>
                         <template v-if="managementMode">
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Draft')">{{ $t('status.draft') }}
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}
                             </CDropdownItem>
                             <CDropdownItem @click="$emit('update:selectedStatus', 'Active')">{{ $t('status.active')
                                 }}
@@ -47,7 +47,7 @@
                         <template v-else>
                             <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}
                             </CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'InProgress')">{{
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'In Progress')">{{
                                 $t('status.inprogress') }}
                             </CDropdownItem>
                             <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{

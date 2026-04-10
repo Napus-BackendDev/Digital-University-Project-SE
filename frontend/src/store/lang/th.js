@@ -135,7 +135,7 @@ const th = {
         draft: "ร่าง",
         active: "เปิด",
         closed: "ปิด",
-        pending: "ร่าง",
+        pending: "รอดำเนินการ",
         inprogress: "กำลังดำเนินการ",
         completed: "เสร็จสิ้น",
         all: "ทุกสถานะ"
@@ -146,7 +146,7 @@ const th = {
         active: "เปิด",
         draft: "ฟอร์มร่าง",
         closed: "ปิด",
-        pending: "ฟอร์มร่าง",
+        pending: "รอดำเนินการ",
         completed: "เสร็จสิ้น",
         inprogress: "กำลังดำเนินการ",
         totalResponses: "การตอบกลับทั้งหมด",

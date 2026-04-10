@@ -27,7 +27,7 @@
                     </div>
                 </div>
             </CCol>
-            <CCol sm="6" lg="3" @click="$emit('filter', 'Draft')" style="cursor: pointer;">
+            <CCol sm="6" lg="3" @click="$emit('filter', 'Pending')" style="cursor: pointer;">
                 <div class="stat-card">
                     <div class="stat-header">
                         <div class="icon-box bg-warning-light text-warning">
@@ -35,8 +35,8 @@
                         </div>
                     </div>
                     <div class="stat-content">
-                        <h2 class="stat-value">{{ stats.draft }}</h2>
-                        <div class="stat-label">{{ $t('widget.manage.draft') }}</div>
+                        <h2 class="stat-value">{{ stats.pending }}</h2>
+                        <div class="stat-label">{{ $t('widget.pending') }}</div>
                     </div>
                 </div>
             </CCol>
@@ -71,9 +71,9 @@ export default {
         stats() {
             const forms = this.forms || [];
             const now = new Date();
-            let active = 0, draft = 0, closed = 0;
+            let active = 0, pending = 0, closed = 0;
             for (const f of forms) {
-                let status = 'Draft';
+                let status = 'Pending';
                 if (f) {
                     const hasStart = f.schedule && f.schedule.startAt;
                     const hasEnd = f.schedule && f.schedule.endAt;
@@ -93,13 +93,13 @@ export default {
                 // Align with derived status strings
                 if (status === 'Active') active++;
                 else if (status === 'Closed') closed++;
-                else draft++;
+                else pending++;
             }
 
             return {
                 total: forms.length,
                 active,
-                draft,
+                pending,
                 closed
             };
         }
