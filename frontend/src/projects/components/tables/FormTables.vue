@@ -46,7 +46,7 @@
             <!-- Time Range Slot (match ManagementTables) -->
             <template #timeRange="{ item }">
                 <td class="align-middle">
-                    <div class="small text-dark font-weight-bold">{{ item.timeRange || '-' }}</div>
+                    <div class="small text-dark font-weight-bold" v-if="item.timeRange && item.timeRange !== '-'">{{ item.timeRange }}</div>
                     <div class="small text-muted mt-1" v-if="item.daysLeft">{{ item.daysLeft }}</div>
                 </td>
             </template>
@@ -365,8 +365,8 @@ export default {
                 // 2. Schedule Check
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
 
-                // If no schedule, assume it's always open (Unless defined otherwise)
-                if (!sched.startAt && !sched.endAt) return true;
+                // If no schedule, do not show in the datatable as per requirement
+                if (!sched.startAt && !sched.endAt) return false;
 
                 let isInTimeRange = true;
                 if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
@@ -580,12 +580,12 @@ export default {
 }
 
 .status-inprogress {
-    background-color: #dbeafe;
-    color: #1e40af;
+    background-color: #fef3f2;
+    color: #8c1515;
 }
 
 .status-inprogress .status-dot {
-    background-color: #2563eb;
+    background-color: #8c1515;
 }
 
 .plus-circle {
@@ -621,9 +621,9 @@ export default {
 }
 
 ::v-deep .page-item.active .page-link {
-    background-color: #0ea5e9;
-    /* Sky blue or primary brand color */
-    color: white;
+    background-color: #8c1515 !important;
+    /* Red primary brand color */
+    color: white !important;
 }
 
 .search-input-group {
@@ -698,8 +698,8 @@ export default {
 }
 
 .visi-org {
-    background-color: #f0f7ff;
-    color: #1e40af;
+    background-color: #fff7ed;
+    color: #8c1515;
 }
 
 .visi-personal {

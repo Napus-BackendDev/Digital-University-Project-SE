@@ -157,7 +157,7 @@ export default {
 
 /* Custom light backgrounds for icons */
 .bg-primary-light {
-    background-color: rgba(50, 31, 219, 0.1);
+    background-color: rgba(140, 21, 21, 0.1);
 }
 .bg-info-light {
     background-color: rgba(57, 243, 253, 0.1);
@@ -180,7 +180,7 @@ export default {
 
 /* Text colors override if needed, using CoreUI utility classes usually works but explicit here for safety */
 .text-primary {
-    color: #321fdb !important;
+    color: #8c1515 !important;
 }
 .text-info {
     color: #39f3fd !important;

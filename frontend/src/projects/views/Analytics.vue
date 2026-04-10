@@ -26,16 +26,19 @@ import WidgetsDropdown from '../components/widgets/WidgetsDropdown.vue'
 import SubmissionTrendChart from '../components/analytics/SubmissionTrendChart.vue'
 import PopularFormsTable from '../components/analytics/PopularFormsTable.vue'
 import localeMixin from '@/mixins/localeMixin'
+import { mapGetters } from 'vuex'
 
 export default {
-    name: "Dashboard",
+    name: "Analytics",
+    mixins: [localeMixin],
     components: {
-        AdminLineCharts,
+        Header,
         WidgetsDropdown,
-        AdminTables,
-        AdminDoughnutCharts,
-        AdminBarCharts,
-        Header
+        SubmissionTrendChart,
+        PopularFormsTable
+    },
+    computed: {
+        ...mapGetters('User', ['user'])
     },
     data() {
         return {
@@ -44,37 +47,21 @@ export default {
     },
     created() {
         this.onInit();
+        // Fetch demo user if not already set to ensure analytics have a context
+        if (!this.user) {
+            this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
+        }
     },
     methods: {
         onInit() {
             this.$store.dispatch('Forms/get');
             this.$store.dispatch('User/getAll');
+            this.$store.dispatch('Organizations/getAll');
         },
         handleTimeRangeChange(newRange) {
             this.timeRange = newRange;
         }
-    },
-    computed: {
-    },
-    watch: {
-        forms: {
-            handler(val) {
-            },
-            deep: true,
-            immediate: true
-        }
     }
-  },
-  created() {
-    this.onInit();
-  },
-  methods: {
-    onInit() {
-      this.$store.dispatch('Forms/get');
-      this.$store.dispatch('User/getAll');
-      this.$store.dispatch('Organizations/getAll');
-    }
-  }
 }
 </script>
 

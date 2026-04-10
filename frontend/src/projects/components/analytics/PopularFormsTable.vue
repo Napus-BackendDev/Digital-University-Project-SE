@@ -63,7 +63,7 @@
                             </div>
                             <div v-if="item.status === 'Active' && item.daysLeft !== null" 
                                     class="font-weight-bold" 
-                                    style="font-size: 0.8rem; margin-top: 4px; color: #4f46e5;">
+                                    style="font-size: 0.8rem; margin-top: 4px; color: #8c1515;">
                                 <CIcon name="cil-clock" size="sm" class="mr-1" />
                                 {{ $t('table.daysLeft', { count: item.daysLeft }) }}
                             </div>

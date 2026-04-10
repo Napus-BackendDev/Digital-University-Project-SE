@@ -101,7 +101,7 @@ export default {
 }
 
 .bg-primary-light {
-    background-color: rgba(50, 31, 219, 0.1);
+    background-color: rgba(140, 21, 21, 0.1);
 }
 
 .bg-warning-light {

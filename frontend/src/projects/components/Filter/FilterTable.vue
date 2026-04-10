@@ -197,8 +197,8 @@ export default {
 
 .filter-dropdown ::v-deep .dropdown-item.active,
 .filter-dropdown ::v-deep .dropdown-item:active {
-    background-color: #f0f7ff !important;
-    color: #1e40af !important;
+    background-color: #fef3f2 !important;
+    color: #8c1515 !important;
     font-weight: 600;
 }
 

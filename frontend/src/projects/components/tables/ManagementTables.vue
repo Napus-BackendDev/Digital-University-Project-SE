@@ -663,8 +663,8 @@ export default {
 }
 
 .visi-org {
-    background-color: #f0f7ff;
-    color: #1e40af;
+    background-color: #fff7ed;
+    color: #8c1515;
 }
 
 .visi-personal {
