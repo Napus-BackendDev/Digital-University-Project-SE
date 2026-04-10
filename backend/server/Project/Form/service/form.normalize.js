@@ -26,8 +26,8 @@ const normalizeFormPayload = function (payload = {}) {
     clean.organization = clean.organization.map((item) => normalizeObjectIdRef(item));
   }
 
-  if (Array.isArray(clean.controll)) {
-    clean.controll = clean.controll
+  if (Array.isArray(clean.collaborator)) {
+    clean.collaborator = clean.collaborator
       .map((item) => ({
         user: normalizeObjectIdRef(item?.user), // ?. (Optional Chaining) checks if user exists before getting properties
         type: normalizeObjectIdRef(item?.type),

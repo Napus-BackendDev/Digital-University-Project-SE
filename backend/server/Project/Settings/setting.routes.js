@@ -6,7 +6,7 @@ const group = require("./service/group");
 const status = require("./service/status");
 const verification = require("./service/verification");
 const question = require("./service/question_type");
-const controll = require("./service/controll");
+const collaborator = require("./service/controll");
 // const auth_message = require("./service/auth_message");
 // const Role = require("../Accounts/service/role");
 // const Authen_Type = require("../Accounts/service/authen_type");
@@ -61,9 +61,9 @@ router.post("/question_type", question.onCreate);
 router.put("/question_type", question.onUpdate);
 router.delete("/question_type", question.onDelete);
 
-router.get("/controll", controll.onQuerys);
-router.post("/controll", controll.onCreate);
-router.put("/controll", controll.onUpdate);
-router.delete("/controll", controll.onDelete);
+router.get("/collaborator", collaborator.onQuerys);
+router.post("/collaborator", collaborator.onCreate);
+router.put("/collaborator", collaborator.onUpdate);
+router.delete("/collaborator", collaborator.onDelete);
 
 module.exports = router;

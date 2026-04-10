@@ -109,8 +109,8 @@ export default {
                     if (String(creatorId) === String(currentUserId)) return true;
 
                     // Collaborator check
-                    if (Array.isArray(f.controll)) {
-                        if (f.controll.some(c => {
+                    if (Array.isArray(f.collaborator)) {
+                        if (f.collaborator.some(c => {
                             const collabUserId = c.user && typeof c.user === 'object' ? c.user._id : c.user;
                             return String(collabUserId) === String(currentUserId);
                         })) return true;

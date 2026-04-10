@@ -9,7 +9,8 @@ const { getApiId, getSuccessCode, getErrorCode } = require("../../../../helpers/
 const { normalizeFormPayload } = require("./form.normalize");
 
 // Extract helper functions
-const { isAdminUser, hasEditorCollaboratorAccess, buildUserFormsMatchCondition, canUserSeeListedForm, normalizeNullableId } = require("./form.access");
+const { getDemoAuthUser, isAdminUser, normalizeNullableId } = require("../../../../helpers/authUtils");
+const { hasEditorCollaboratorAccess, buildUserFormsMatchCondition, canUserSeeListedForm } = require("./form.access");
 
 /**
  * GET SPECIFIC FORM BY ID
@@ -25,6 +26,7 @@ exports.onQuery = async function (request, response) {
     const pipeline = [
       { $match: { _id: formId } }, // Stage 1: Find the form where _id matches
 
+
       // Stage 2: $graphLookup
       // Recursively searches for "Children Forms" (e.g. templates or previous versions)
       // by following the 'originalFormId' field.
@@ -38,6 +40,8 @@ exports.onQuery = async function (request, response) {
           depthField: "depth",
         },
       },
+
+      // Stage 3-6: $lookup (like join)
 
       // Stage 3-6: $lookup (like join)
       // Fetches related documents from other collections (Questions, Status, Creator)
@@ -61,6 +65,7 @@ exports.onQuery = async function (request, response) {
       // preserveNullAndEmptyArrays keeps the form even if the status array is empty.
       { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
 
+
       {
         $lookup: {
           from: "Users",
@@ -71,6 +76,7 @@ exports.onQuery = async function (request, response) {
       },
       { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
 
+
       {
         $lookup: {
           from: "Users",
@@ -79,6 +85,7 @@ exports.onQuery = async function (request, response) {
           as: "settings.allowedUser",
         },
       },
+
 
       // Stage 7: $project (Similar to SQL SELECT)
       // Specifies exactly which fields to include/exclude. 
@@ -89,6 +96,7 @@ exports.onQuery = async function (request, response) {
           "settings.allowedUser.password": 0,
         }
       },
+
 
       // Stage 8: Nested $lookup Pipeline
       // Fetches Responses specific to this form, sorts them, and populates the Responder.
@@ -122,36 +130,42 @@ exports.onQuery = async function (request, response) {
     const results = await Form.onAggregate(pipeline);
 
     if (results.length === 0) {
-      return ResMessage.sendResponse(response, getApiId(request), 40400, "Form not found");
+      return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), err.message);
     }
 
     let doc = results[0]; // Extract the first (and only) document from the array
 
     // FormModel.populate: Uses Mongoose to resolve nested references not covered by the aggregation
-    await FormModel.populate(doc, { path: 'controll.user controll.type' });
+    await FormModel.populate(doc, { path: 'collaborator.user collaborator.type' });
 
     // --- Access Control Logic (JavaScript checks) ---
-    const userId = request.body.userId || request.query.userId;
-    const isAdmin = request.body.isAdmin === true || request.query.isAdmin === 'true';
-    if (userId && mongo.ObjectId.isValid(userId) && !isAdmin) {
-      const userIdStr = String(userId);
-      // Determine if the user is the creator, an allowed user, or a collaborator
-      const isCreator = doc.creator && String(doc.creator._id || doc.creator) === userIdStr;
-      const isController = Array.isArray(doc.controll) && doc.controll.some((item) => {
-        return item && item.user && String(item.user._id || item.user) === userIdStr;
-      });
-      const isAllowedUser = Array.isArray(doc.settings?.allowedUser) && doc.settings.allowedUser.some((item) => {
-        return item && String(item._id || item) === userIdStr;
-      });
-      
-      const isPrivileged = isCreator || isController || isAllowedUser;
+    const authUser = getDemoAuthUser(request);
+    const authUserId = authUser ? normalizeNullableId(authUser._id || authUser.id || authUser.userId) : null;
+    const isAdmin = authUser?.role?.code === 'admin' || isAdminUser(authUser);
+
+    if (!isAdmin) {
+      let isPrivileged = false;
+      let hasSubmitted = false;
+
+      if (authUserId && mongo.ObjectId.isValid(authUserId)) {
+        const userIdStr = String(authUserId);
+        // Determine if the user is the creator, an allowed user, or a collaborator
+        const isCreator = doc.creator && String(doc.creator._id || doc.creator) === userIdStr;
+        const isController = Array.isArray(doc.collaborator) && doc.collaborator.some((item) => {
+          return item && item.user && String(item.user._id || item.user) === userIdStr;
+        });
+        const isAllowedUser = Array.isArray(doc.settings?.allowedUser) && doc.settings.allowedUser.some((item) => {
+          return item && String(item._id || item) === userIdStr;
+        });
+        isPrivileged = isCreator || isController || isAllowedUser;
+      }
+
       const status = getComputedStatus(doc.schedule);
 
-      let hasSubmitted = false;
-      if (!isPrivileged && status === 'closed') {
+      if (!isPrivileged && status === 'closed' && authUserId) {
         const count = await FormModel.db.collection('Responses').countDocuments({
           form: doc._id,
-          responder: new mongo.ObjectId(userId),
+          responder: new mongo.ObjectId(authUserId),
           submit: true
         });
         hasSubmitted = count > 0;
@@ -186,62 +200,37 @@ exports.onQuery = async function (request, response) {
  * LIST FORMS FOR A CURRENT USER
  * Built dynamically using 'matchCondition'
  */
+
 exports.onQueryByUser = async function (request, response) {
   try {
-    console.log(`[API ${getApiId(request)}] GET /api/v1/form/user/:userId (onQueryByUser)`);
-    const userId = request.params.userId
-    let organizationId = request.query.organizationId;
-    const isAdmin = request.query.isAdmin === 'true';
+    console.log('[API ' + getApiId(request) + '] GET /api/v1/form/user/:userId (onQueryByUser)');
+    const targetUserId = request.params.userId;
 
-    // Normalize organizationId: treat "null", "undefined", or empty string as actual null
-    if (organizationId === 'null' || organizationId === 'undefined' || !organizationId) {
-      organizationId = null;
+    if (!targetUserId || !mongo.ObjectId.isValid(targetUserId)) {
+      return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), "A valid userId is required");
     }
 
-    if (!userId || !mongo.ObjectId.isValid(userId)) {
-      return ResMessage.sendResponse(response, getApiId(request),getErrorCode(request), "A valid userId is required");
+    // Security improvement: authorization context comes from auth middleware only.
+    // Do NOT trust query params for role/org authorization decisions.
+    const authUser = getDemoAuthUser(request);  //Change this when done authentication
+    if (!authUser) {
+      return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request, 40100), "Unauthorized");
     }
 
-    const targetUserId = userId;
+    const authUserId = normalizeNullableId(authUser._id || authUser.userId || authUser.id);
+    const isAdmin = authUser?.role?.code === 'admin';
+    const organizationId = normalizeNullableId(authUser.organizationId || authUser.organization);
 
-    let matchCondition = {};
-
-    if (isAdmin) {
-      // System Admins see everything. 
-      matchCondition = {};
-    } else {
-      // Normal User / Switched User Visibility Rules:
-      const userOID = new mongo.ObjectId(userId);
-      const orgOID = organizationId && mongo.ObjectId.isValid(organizationId) ? new mongo.ObjectId(organizationId) : null;
-
-      // $or operator means if ANY of these rules are true, the form will be returned
-      matchCondition = {
-        $or: [
-          // 1. Ownership & Direct Collaboration (Highest priority)
-          { creator: userOID },
-          { "controll.user": userOID },
-          { "settings.allowedUser": userOID },
-
-          // 2. Organization-based Access (Only if user has an organization)
-          // Uses the spread operator (...) to conditionally add this array if orgOID exists
-          ...(orgOID ? [{
-            $and: [
-              { organization: orgOID },
-              {
-                $or: [
-                   { access: 'organization' },
-                   { access: 'public' },
-                   { access: { $exists: false } } // Handle legacy data
-                ]
-              }
-            ]
-          }] : []),
-
-          // 3. Global Public Access (Regardless of organization)
-          { access: 'public' }
-        ]
-      };
+    // Security hardening: non-admin users may only list forms for themselves.
+    if (!isAdmin && authUserId && authUserId !== String(targetUserId)) {
+      return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request, 40300), "Forbidden");
     }
+
+    const matchCondition = buildUserFormsMatchCondition({
+      isAdmin,
+      targetUserId,
+      organizationId,
+    });
 
     // Pipeline to get all forms matching the visibility rules
     const pipeline = [
@@ -281,7 +270,7 @@ exports.onQueryByUser = async function (request, response) {
         },
       },
       { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
-      
+
       // Technique: Counting Responses without memory overhead
       // Instead of fetching all the response documents, this counts them directly 
       // inside the lookup pipeline and returns just the final count number
@@ -314,7 +303,7 @@ exports.onQueryByUser = async function (request, response) {
     ];
 
     const docs = await Form.onAggregate(pipeline);
-    await FormModel.populate(docs, { path: 'controll.user controll.type' });
+    await FormModel.populate(docs, { path: 'collaborator.user collaborator.type' });
 
     // Business filter remains unchanged, moved to helper for readability.
     const filteredDocs = docs.filter((doc) => canUserSeeListedForm({
@@ -331,7 +320,7 @@ exports.onQueryByUser = async function (request, response) {
 
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), filteredDocs);
   } catch (err) {
-    console.error(`[API ${getApiId(request)}] Error:`, err.message);
+    console.error('[API ' + getApiId(request) + '] Error:', err.message);
     return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
   }
 };
@@ -342,43 +331,39 @@ exports.onQueryByUser = async function (request, response) {
 exports.onQuerys = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] GET /api/v1/form/exp (onQuerys)`);
+    // 1. Extract context from request or auth token
+    const userId = request.query.userId || request.body.userId;
+    const organizationId = request.query.organizationId || request.body.organizationId;
+    const isAdmin = request.query.isAdmin === 'true' || request.body.isAdmin === true;
 
-    const userId = normalizeNullableId(request.query.userId || request.body?.userId);
-    const organizationId = normalizeNullableId(request.query.organizationId || request.body?.organizationId);
-    const isAdmin = request.query.isAdmin === 'true' || request.body?.isAdmin === true;
+    // 2. Build match condition
+    let matchCondition = {};
 
-    const matchCondition = buildUserFormsMatchCondition({ userId, organizationId, isAdmin });
+    if (!isAdmin && organizationId) {
+      matchCondition = {
+        $or: [
+          { access: 'public' },
+          { organization: new mongo.ObjectId(organizationId) },
+          { "settings.allowedUser": new mongo.ObjectId(userId) },
+          { "collaborator.user": new mongo.ObjectId(userId) }
+        ]
+      };
+    }
 
     const pipeline = [
       { $match: matchCondition },
-      { $sort: { createdAt: -1 } },
+      { $sort: { createdAt: -1 } }, // Sort by newest first
       {
         $lookup: {
-          from: "Setting_Status",
-          localField: "status",
-          foreignField: "_id",
-          as: "status",
+          from: "Setting_Status", //Where or Which collection to join with
+          localField: "status", //Field from the Form collection
+          foreignField: "_id",  //Field from the Setting_Status collection
+          as: "status", //As "status" for the joined data (will be an array)
         },
       },
       { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
       {
-        $lookup: {
-          from: "Users",
-          localField: "creator",
-          foreignField: "_id",
-          as: "creator",
-        },
-      },
-      { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: "Users",
-          localField: "settings.allowedUser",
-          foreignField: "_id",
-          as: "settings.allowedUser",
-        },
-      },
-      {
+        // Technique: Counting response sub-documents directly per-form
         $lookup: {
           from: "Responses",
           let: { form_id: "$_id" },
@@ -386,45 +371,39 @@ exports.onQuerys = async function (request, response) {
             {
               $match: {
                 $expr: { $eq: ["$form", "$$form_id"] },
-                submit: true,
-              },
+                submit: true
+              }
             },
             {
               $project: {
                 _id: 0,
                 submit: 1,
-                createdAt: 1,
-              },
-            },
+                createdAt: 1
+              }
+            }
           ],
-          as: "submittedResponses",
-        },
+          as: "submittedResponses"
+        }
       },
       {
         $addFields: {
           responses: "$submittedResponses",
-          responsesCount: { $size: "$submittedResponses" },
-        },
+          responsesCount: { $size: "$submittedResponses" }
+        }
       },
       {
         $project: {
           submittedResponses: 0,
           "settings.allowedUser.password": 0,
           "creator.password": 0,
-        },
-      },
+        }
+      }
     ];
 
     const docs = await Form.onAggregate(pipeline);
-    await FormModel.populate(docs, { path: 'controll.user controll.type' });
+    await FormModel.populate(docs, { path: 'collaborator.user collaborator.type' });
 
-    const filteredDocs = docs.filter((doc) => canUserSeeListedForm({
-      doc,
-      targetUserId: userId,
-      isAdmin,
-    }));
-
-    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), filteredDocs);
+    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), docs);
   } catch (err) {
     return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
   }
@@ -439,7 +418,7 @@ exports.onCreate = async function (request, response) {
     // Before creating, normalize the payload to fix Object vs String ID issues using the helper
     const payload = request.body;
     const doc = await Form.onCreate(payload);
-    
+
     // Check if collaboration email invites need to be sent
     await maybeSendCollaborationInvites({
       previousDoc: null,
@@ -460,11 +439,11 @@ exports.onUpdate = async function (request, response) {
     console.log(`[API ${getApiId(request)}] PUT /api/v1/form (onUpdate)`);
     const query = { _id: new mongo.ObjectId(request.body._id) };
     const payload = normalizeFormPayload(request.body);
-    const hasCollabUpdate = Array.isArray(payload?.controll) ||
+    const hasCollabUpdate = Array.isArray(payload?.collaborator) ||
       Array.isArray(payload?.settings?.allowedUser);
     const needPreviousDoc = Boolean(payload.user) || hasCollabUpdate;
     let previousDoc = null;
-    
+
     // Fetch previous state of Form Document to compare changes
     if (needPreviousDoc) {
       previousDoc = typeof Form.onQuery === 'function'
@@ -472,34 +451,35 @@ exports.onUpdate = async function (request, response) {
         : null;
       if (!previousDoc) {
         previousDoc = await FormModel.findOne(query)
-          .populate('creator controll.user controll.type')
+          .populate('creator collaborator.user collaborator.type')
           .lean();
       }
     }
-    const actorId = payload.user || payload.creator || previousDoc?.creator;
-
     // Security Check: Enforce edit permissions
-    // Keep backward compatibility for legacy clients that do not send user context.
-    if (payload.user) {
-      if (!previousDoc) {
-        return ResMessage.sendResponse(response, getApiId(request), 40400, "Form not found");
-      }
-      const actor = await UserModel.findById(actorId)
-        .select('role')
-        .populate({ path: 'role', select: 'title' })
-        .lean();
-        
-      const canEdit = isAdminUser(actor) ||
-        String(previousDoc.creator?._id || previousDoc.creator || '') === String(actorId) ||
-        hasEditorCollaboratorAccess(previousDoc, actorId);
-
-      if (!canEdit) {
-        return ResMessage.sendResponse(response, getApiId(request), 40300, "You do not have permission to edit this form");
-      }
+    const authUser = getDemoAuthUser(request);  //Change this when done authentication
+    if (!authUser) {
+      return ResMessage.sendResponse(response, getApiId(request), 40100, "Unauthorized");
     }
 
+    const authUserId = normalizeNullableId(authUser._id || authUser.id || authUser.userId);
+    const isAdmin = authUser?.role?.code === 'admin' || isAdminUser(authUser);
+
+    if (!previousDoc) {
+      return ResMessage.sendResponse(response, getApiId(request), 40400, "Form not found");
+    }
+
+    const canEdit = isAdmin ||
+      String(previousDoc.creator?._id || previousDoc.creator || '') === String(authUserId) ||
+      hasEditorCollaboratorAccess(previousDoc, authUserId);
+
+    if (!canEdit) {
+      return ResMessage.sendResponse(response, getApiId(request), 40300, "You do not have permission to edit this form");
+    }
+
+    const actorId = authUserId; // Used for email invites below
+
     const doc = await Form.onUpdate(query, payload);
-    
+
     // If Collaborators changed, send them email invites
     if (hasCollabUpdate && previousDoc) {
       await maybeSendCollaborationInvites({
@@ -520,7 +500,30 @@ exports.onUpdate = async function (request, response) {
 exports.onDelete = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] DELETE /api/v1/form (onDelete)`);
+
+    const authUser = getDemoAuthUser(request);  //Change this when done authentication
+    if (!authUser) {
+      return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), "Unauthorized");
+    }
+
+    const authUserId = normalizeNullableId(authUser._id || authUser.id || authUser.userId);
+    const isAdmin = authUser?.role?.code === 'admin' || isAdminUser(authUser);
+
     const query = { _id: new mongo.ObjectId(request.body._id) };
+
+    const previousDoc = await FormModel.findOne(query).select('creator collaborator').lean();
+    if (!previousDoc) {
+      return ResMessage.sendResponse(response, getApiId(request), 40400, "Form not found");
+    }
+
+    const canDelete = isAdmin ||
+      String(previousDoc.creator?._id || previousDoc.creator || '') === String(authUserId) ||
+      hasEditorCollaboratorAccess(previousDoc, authUserId);
+
+    if (!canDelete) {
+      return ResMessage.sendResponse(response, getApiId(request), 40300, "You do not have permission to delete this form");
+    }
+
     const doc = await Form.onDelete(query);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
