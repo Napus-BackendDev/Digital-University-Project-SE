@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 
 const form = require('./service/form');
+const {
+    validateFormCreate,
+    validateFormGetById,
+    validateFormUpdate,
+    validateFormDelete
+} = require('../../../middleware/validate');
 
 // Get All form might don't need.
 // router.get("/exp", function (req, res, next) {

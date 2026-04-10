@@ -26,6 +26,7 @@ exports.onQuery = async function (request, response) {
     const pipeline = [
       { $match: { _id: formId } }, // Stage 1: Find the form where _id matches
 
+
       // Stage 2: $graphLookup
       // Recursively searches for "Children Forms" (e.g. templates or previous versions)
       // by following the 'originalFormId' field.
@@ -39,6 +40,8 @@ exports.onQuery = async function (request, response) {
           depthField: "depth",
         },
       },
+
+      // Stage 3-6: $lookup (like join)
 
       // Stage 3-6: $lookup (like join)
       // Fetches related documents from other collections (Questions, Status, Creator)
@@ -62,6 +65,7 @@ exports.onQuery = async function (request, response) {
       // preserveNullAndEmptyArrays keeps the form even if the status array is empty.
       { $unwind: { path: "$status", preserveNullAndEmptyArrays: true } },
 
+
       {
         $lookup: {
           from: "Users",
@@ -72,6 +76,7 @@ exports.onQuery = async function (request, response) {
       },
       { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
 
+
       {
         $lookup: {
           from: "Users",
@@ -80,6 +85,7 @@ exports.onQuery = async function (request, response) {
           as: "settings.allowedUser",
         },
       },
+
 
       // Stage 7: $project (Similar to SQL SELECT)
       // Specifies exactly which fields to include/exclude. 
@@ -90,6 +96,7 @@ exports.onQuery = async function (request, response) {
           "settings.allowedUser.password": 0,
         }
       },
+
 
       // Stage 8: Nested $lookup Pipeline
       // Fetches Responses specific to this form, sorts them, and populates the Responder.
@@ -185,6 +192,7 @@ exports.onQuery = async function (request, response) {
 
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
   } catch (err) {
+    return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), err.message);
     return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), err.message);
   }
 };
@@ -307,6 +315,15 @@ exports.onQueryByUser = async function (request, response) {
 
     // Deprecated compatibility behavior:
     // Keep mocked response array for legacy frontend components expecting responses array.
+    // Business filter remains unchanged, moved to helper for readability.
+    const filteredDocs = docs.filter((doc) => canUserSeeListedForm({
+      doc,
+      targetUserId,
+      isAdmin,
+    }));
+
+    // Deprecated compatibility behavior:
+    // Keep mocked response array for legacy frontend components expecting responses array.
     filteredDocs.forEach(doc => {
       doc.responses = new Array(doc.responsesCount).fill({ submit: true });
     });
@@ -409,6 +426,7 @@ exports.onCreate = async function (request, response) {
   try {
     console.log(`[API ${getApiId(request)}] POST /api/v1/form (onCreate)`);
     // Before creating, normalize the payload to fix Object vs String ID issues using the helper
+    const payload = request.body;
     const payload = request.body;
     const doc = await Form.onCreate(payload);
 
