@@ -31,6 +31,19 @@ const normalizeNullableId = function (value) {
   return normalized;
 };
 
+const GENERAL_ORG_ID = process.env.GENERAL_ORG_ID;
+
+const isGeneralOrganization = function (organization) {
+  const organizations = Array.isArray(organization) ? organization : [organization];
+  return organizations.some((item) => {
+    if (!item) return false;
+    const titleText = Array.isArray(item.title)
+      ? item.title.map((titleItem) => String(titleItem?.value || '')).join(' ').toLowerCase()
+      : String(item.title || '').toLowerCase();
+    return titleText.includes('general') || titleText.includes('ทั่วไป') || normalizeNullableId(item?._id || item) === GENERAL_ORG_ID;
+  });
+};
+
 const buildUserFormsMatchCondition = function ({ userId, organizationId, isAdmin }) {
   if (isAdmin) return {};
 
@@ -48,6 +61,7 @@ const buildUserFormsMatchCondition = function ({ userId, organizationId, isAdmin
   const orConditions = [
     { access: 'public' },
     { access: { $exists: false } },
+    { organization: GENERAL_ORG_ID },
   ];
 
   if (userOID) {
@@ -80,6 +94,7 @@ const canUserSeeListedForm = function ({ doc, targetUserId, isAdmin }) {
   const userIdStr = normalizeNullableId(targetUserId);
   const access = String(doc?.access || '').toLowerCase();
   const isPublic = !access || access === 'public';
+  if (isGeneralOrganization(doc?.organization)) return true;
 
   if (!userIdStr) return isPublic;
 
@@ -101,4 +116,5 @@ module.exports = {
   buildUserFormsMatchCondition,
   canUserSeeListedForm,
   normalizeNullableId,
+  isGeneralOrganization,
 };

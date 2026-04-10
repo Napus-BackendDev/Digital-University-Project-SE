@@ -9,7 +9,7 @@ const { getApiId, getSuccessCode, getErrorCode } = require("../../../../helpers/
 const { normalizeFormPayload } = require("./form.normalize");
 
 // Extract helper functions
-const { isAdminUser, hasEditorCollaboratorAccess, buildUserFormsMatchCondition, canUserSeeListedForm, normalizeNullableId } = require("./form.access");
+const { isAdminUser, hasEditorCollaboratorAccess, buildUserFormsMatchCondition, canUserSeeListedForm, normalizeNullableId, isGeneralOrganization } = require("./form.access");
 
 /**
  * GET SPECIFIC FORM BY ID
@@ -213,6 +213,7 @@ exports.onQueryByUser = async function (request, response) {
       // Normal User / Switched User Visibility Rules:
       const userOID = new mongo.ObjectId(userId);
       const orgOID = organizationId && mongo.ObjectId.isValid(organizationId) ? new mongo.ObjectId(organizationId) : null;
+      const generalOrgOID = new mongo.ObjectId('69baf8349050b9215c700b96');
 
       // $or operator means if ANY of these rules are true, the form will be returned
       matchCondition = {
@@ -236,6 +237,9 @@ exports.onQueryByUser = async function (request, response) {
               }
             ]
           }] : []),
+
+          // 2b. General organization is public to everyone
+          { organization: generalOrgOID },
 
           // 3. Global Public Access (Regardless of organization)
           { access: 'public' }
