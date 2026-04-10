@@ -9,8 +9,7 @@ const { getApiId, getSuccessCode, getErrorCode } = require("../../../../helpers/
 const { normalizeFormPayload } = require("./form.normalize");
 
 // Extract helper functions
-const { getDemoAuthUser, isAdminUser, normalizeNullableId } = require("../../../../helpers/authUtils");
-const { hasEditorCollaboratorAccess, buildUserFormsMatchCondition, canUserSeeListedForm } = require("./form.access");
+const { isAdminUser, hasEditorCollaboratorAccess, buildUserFormsMatchCondition, canUserSeeListedForm, normalizeNullableId } = require("./form.access");
 
 /**
  * GET SPECIFIC FORM BY ID
@@ -18,7 +17,7 @@ const { hasEditorCollaboratorAccess, buildUserFormsMatchCondition, canUserSeeLis
  */
 exports.onQuery = async function (request, response) {
   try {
-    console.log(`[API ${getApiId(request)}] POST /api/v1/form/get (onQuery)`);
+    //console.log(`[API ${getApiId(request)}] POST /api/v1/form/get (onQuery)`);
     let formId = new mongo.ObjectId(request.body._id);
 
     // Technique: MongoDB Aggregation Pipeline
@@ -43,7 +42,7 @@ exports.onQuery = async function (request, response) {
 
       // Stage 3-6: $lookup (like join)
 
-      // Stage 3-6: $lookup (like join)
+      // Stage 3-6: $lookup (join)
       // Fetches related documents from other collections (Questions, Status, Creator)
       {
         $lookup: {
@@ -217,20 +216,46 @@ exports.onQueryByUser = async function (request, response) {
       return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request, 40100), "Unauthorized");
     }
 
-    const authUserId = normalizeNullableId(authUser._id || authUser.userId || authUser.id);
-    const isAdmin = authUser?.role?.code === 'admin';
-    const organizationId = normalizeNullableId(authUser.organizationId || authUser.organization);
+    const targetUserId = userId;
 
-    // Security hardening: non-admin users may only list forms for themselves.
-    if (!isAdmin && authUserId && authUserId !== String(targetUserId)) {
-      return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request, 40300), "Forbidden");
+    let matchCondition = {};
+
+    if (isAdmin) {
+      // System Admins see everything. 
+      matchCondition = {};
+    } else {
+      // Normal User / Switched User Visibility Rules:
+      const userOID = new mongo.ObjectId(userId);
+      const orgOID = organizationId && mongo.ObjectId.isValid(organizationId) ? new mongo.ObjectId(organizationId) : null;
+
+      // $or operator means if ANY of these rules are true, the form will be returned
+      matchCondition = {
+        $or: [
+          // 1. Ownership & Direct Collaboration (Highest priority)
+          { creator: userOID },
+          { "controll.user": userOID },
+          { "settings.allowedUser": userOID },
+
+          // 2. Organization-based Access (Only if user has an organization)
+          // Uses the spread operator (...) to conditionally add this array if orgOID exists
+          ...(orgOID ? [{
+            $and: [
+              { organization: orgOID },
+              {
+                $or: [
+                   { access: 'organization' },
+                   { access: 'public' },
+                   { access: { $exists: false } } // Handle legacy data
+                ]
+              }
+            ]
+          }] : []),
+
+          // 3. Global Public Access (Regardless of organization)
+          { access: 'public' }
+        ]
+      };
     }
-
-    const matchCondition = buildUserFormsMatchCondition({
-      isAdmin,
-      targetUserId,
-      organizationId,
-    });
 
     // Pipeline to get all forms matching the visibility rules
     const pipeline = [

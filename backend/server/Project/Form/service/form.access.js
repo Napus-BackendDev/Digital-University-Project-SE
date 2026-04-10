@@ -13,9 +13,56 @@ const hasEditorCollaboratorAccess = function (formDoc, userId) {
   });
 };
 
+<<<<<<< HEAD
 const buildUserFormsMatchCondition = ({ isAdmin, targetUserId, organizationId }) => {
   if (isAdmin) {
     return {};
+=======
+const normalizeNullableId = function (value) {
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).trim();
+  if (!normalized || normalized === 'null' || normalized === 'undefined') return null;
+  return normalized;
+};
+
+const GENERAL_ORG_ID = process.env.GENERAL_ORG_ID;
+
+const isGeneralOrganization = function (organization) {
+  const organizations = Array.isArray(organization) ? organization : [organization];
+  return organizations.some((item) => {
+    if (!item) return false;
+    const titleText = Array.isArray(item.title)
+      ? item.title.map((titleItem) => String(titleItem?.value || '')).join(' ').toLowerCase()
+      : String(item.title || '').toLowerCase();
+    return titleText.includes('general') || titleText.includes('ทั่วไป') || normalizeNullableId(item?._id || item) === GENERAL_ORG_ID;
+  });
+};
+
+const buildUserFormsMatchCondition = function ({ userId, organizationId, isAdmin }) {
+  if (isAdmin) return {};
+
+  const normalizedUserId = normalizeNullableId(userId);
+  const normalizedOrgId = normalizeNullableId(organizationId);
+
+  // Legacy compatibility: when no user/org context is provided, return the same full list.
+  if (!normalizedUserId && !normalizedOrgId) return {};
+
+  const hasValidUserId = normalizedUserId && mongo.ObjectId.isValid(normalizedUserId);
+  const hasValidOrgId = normalizedOrgId && mongo.ObjectId.isValid(normalizedOrgId);
+  const userOID = hasValidUserId ? new mongo.ObjectId(normalizedUserId) : null;
+  const orgOID = hasValidOrgId ? new mongo.ObjectId(normalizedOrgId) : null;
+
+  const orConditions = [
+    { access: 'public' },
+    { access: { $exists: false } },
+    { organization: GENERAL_ORG_ID },
+  ];
+
+  if (userOID) {
+    orConditions.push({ creator: userOID });
+    orConditions.push({ "controll.user": userOID });
+    orConditions.push({ "settings.allowedUser": userOID });
+>>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
   }
 
   const userOID = new mongo.ObjectId(targetUserId);
@@ -48,10 +95,23 @@ const buildUserFormsMatchCondition = ({ isAdmin, targetUserId, organizationId })
 const canUserSeeListedForm = ({ doc, targetUserId, isAdmin }) => {
   if (isAdmin) return true;
 
+<<<<<<< HEAD
   const userIdStr = String(targetUserId);
   const isCreator = doc.creator && String(doc.creator._id || doc.creator) === userIdStr;
   const isController = Array.isArray(doc.collaborator) && doc.collaborator.some((item) => {
     return item && item.user && String(item.user._id || item.user) === userIdStr;
+=======
+  const userIdStr = normalizeNullableId(targetUserId);
+  const access = String(doc?.access || '').toLowerCase();
+  const isPublic = !access || access === 'public';
+  if (isGeneralOrganization(doc?.organization)) return true;
+
+  if (!userIdStr) return isPublic;
+
+  const isCreator = String(doc?.creator?._id || doc?.creator || '') === userIdStr;
+  const isController = Array.isArray(doc?.controll) && doc.controll.some((item) => {
+    return String(item?.user?._id || item?.user || '') === userIdStr;
+>>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
   });
   const isAllowedUser = Array.isArray(doc.settings?.allowedUser) && doc.settings.allowedUser.some((item) => {
     return item && String(item._id || item) === userIdStr;
@@ -67,5 +127,12 @@ const canUserSeeListedForm = ({ doc, targetUserId, isAdmin }) => {
 module.exports = {
   hasEditorCollaboratorAccess,
   buildUserFormsMatchCondition,
+<<<<<<< HEAD
   canUserSeeListedForm
 };
+=======
+  canUserSeeListedForm,
+  normalizeNullableId,
+  isGeneralOrganization,
+};
+>>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4

@@ -2,6 +2,16 @@ const express = require('express');
 const router = express.Router();
 const response = require('./service/response');
 const { upload } = require('../../../helpers/upload');
+<<<<<<< HEAD
+=======
+const {
+    validateResponseCreate,
+    validateResponseUpdate,
+    validateResponseDelete,
+    validateResponseDeleteById
+} = require('../../../middleware/validate');
+
+>>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
 // Get All
 router.get("/exp", function (req, res, next) {
     req.query.apiId = 1;

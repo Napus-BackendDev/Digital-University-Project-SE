@@ -37,7 +37,6 @@ const checkFormAccess = async (request, formId) => {
 
 exports.onQuery = async function (request, response) {
     try {
-        console.log(`[API ${getApiId(request)}] POST /api/v1/question/get (onQuery)`);
         const query = { _id: new mongo.ObjectId(request.body._id) };
 
         const doc = await Questions.onQuery(query);
@@ -49,12 +48,16 @@ exports.onQuery = async function (request, response) {
 
 exports.onQuerys = async function (request, response) {
     try {
+<<<<<<< HEAD
         console.log(`[API ${getApiId(request)}] GET /api/v1/question/exp (onQuerys)`);
         const formId = request.body.form || request.query.form;
         if (!formId) {
             return sendResponse(response, getApiId(request), 40000, "Form ID is required to query questions.");
         }
         const querys = { form: new mongo.ObjectId(formId) };
+=======
+        const querys = {};
+>>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
         const doc = await Questions.onQuerys(querys);
         return sendResponse(response, getApiId(request), getSuccessCode(request), doc);
     } catch (err) {
@@ -64,7 +67,6 @@ exports.onQuerys = async function (request, response) {
 
 exports.onCreate = async function (request, response) {
     try {
-        console.log(`[API ${getApiId(request)}] POST /api/v1/question (onCreate)`);
         const payload = await normalizeQuestionPayload(request);
         
         await checkFormAccess(request, payload.form);
@@ -79,7 +81,6 @@ exports.onCreate = async function (request, response) {
 
 exports.onUpdate = async function (request, response) {
     try {
-        console.log(`[API ${getApiId(request)}] PUT /api/v1/question (onUpdate)`);
         const payload = await normalizeQuestionPayload(request);
         const query = { _id: new mongo.ObjectId(payload._id) };
 
@@ -101,11 +102,14 @@ exports.onUpdate = async function (request, response) {
 
 exports.onDelete = async function (request, response) {
     try {
+<<<<<<< HEAD
         console.log(`[API ${getApiId(request)}] DELETE /api/v1/question (onDelete)`);
         if (!request.body._id || !mongo.ObjectId.isValid(request.body._id)) {
             return sendResponse(response, getApiId(request), 40000, "Valid question _id is required");
         }
 
+=======
+>>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
         const query = { _id: new mongo.ObjectId(request.body._id) };
         const existingQuestion = await Questions.onQuery(query);
         if (!existingQuestion) {

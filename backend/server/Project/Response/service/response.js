@@ -40,6 +40,7 @@ const checkResponseAccess = async (request, doc) => {
 
 exports.onQuerys = async function (request, response) {
     try {
+<<<<<<< HEAD
         console.log(`[API ${getApiId(request)}] GET /api/v1/response/exp (onQuerys)`);
         
         const authUser = getDemoAuthUser(request);
@@ -54,6 +55,9 @@ exports.onQuerys = async function (request, response) {
         }
 
         const docs = await responseService.onQuerys(query);
+=======
+        const docs = await responseService.onQuerys({});
+>>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseListDto(docs || []));
     } catch (err) {
         console.error(`[API ${getApiId(request)}] Error:`, err.message);
@@ -63,8 +67,12 @@ exports.onQuerys = async function (request, response) {
 
 exports.onQuery = async function (request, response) {
     try {
+<<<<<<< HEAD
         console.log(`[API ${getApiId(request)}] POST /api/v1/response/get (onQuery)`);
         const body = request.body;
+=======
+        const body = request.body|| {};
+>>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
 
         // If _id is requested, return one document. Otherwise return list by filter.
         if (body._id) {
@@ -88,6 +96,7 @@ exports.onQuery = async function (request, response) {
         }
 
         const query = { ...body };
+<<<<<<< HEAD
         // If not admin, bind queries to either their own user ID or explicitly check the form access beforehand. 
         if (!isAdminUser(authUser)) {
             if (query.form) {
@@ -101,6 +110,9 @@ exports.onQuery = async function (request, response) {
                 query.responder = new mongo.ObjectId(authUser._id);
             }
         }
+=======
+        
+>>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
 
         const docs = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseListDto(docs || []));
@@ -112,7 +124,7 @@ exports.onQuery = async function (request, response) {
 
 exports.onCreate = async function (request, response) {
     try {
-        console.log(`[API ${getApiId(request)}] POST /api/v1/response (onCreate)`);
+        // console.log(`[API ${getApiId(request)}] POST /api/v1/response (onCreate)`);
 
         let answers = request.body.answers || request.body["answers"];
         if (typeof answers === "string") {
@@ -160,7 +172,7 @@ exports.onCreate = async function (request, response) {
 
 exports.onUpdate = async function (request, response) {
     try {
-        console.log(`[API ${getApiId(request)}] PUT /api/v1/response (onUpdate)`);
+        // console.log(`[API ${getApiId(request)}] PUT /api/v1/response (onUpdate)`);
 
         if (!request.body._id) {
             return ResMessage.sendResponse(response, getApiId(request), getErrorCode(request), "Response ID is required");
