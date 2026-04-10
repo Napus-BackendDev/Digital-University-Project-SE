@@ -114,8 +114,8 @@ export default {
                 const localFormat = this.$i18n.locale === 'th' ? 'th-TH' : 'en-GB';
                 moment.locale(this.$i18n.locale === 'th' ? 'th' : 'en');
                 let accessTitle = form.isPublic ? this.$t('accessLabel.public') : this.$t('accessLabel.private');
-                if (form.controll && form.controll.type) {
-                    const cTitle = this.getLang(form.controll.type.title);
+                if (form.collaborator && form.collaborator.type) {
+                    const cTitle = this.getLang(form.collaborator.type.title);
                     if (cTitle) accessTitle = cTitle;
                 }
 

@@ -27,7 +27,7 @@ const checkResponseAccess = async (request, doc) => {
     // Check if user is form owner/editor
     const formId = doc.form?._id || doc.form;
     if (formId) {
-        const form = await FormModel.findById(formId).select('creator controll').lean();
+        const form = await FormModel.findById(formId).select('creator collaborator').lean();
         if (form) {
             const isCreator = String(form.creator?._id || form.creator || '') === String(authUser._id);
             const isEditor = hasEditorCollaboratorAccess(form, authUser._id);
@@ -91,7 +91,7 @@ exports.onQuery = async function (request, response) {
         // If not admin, bind queries to either their own user ID or explicitly check the form access beforehand. 
         if (!isAdminUser(authUser)) {
             if (query.form) {
-                const form = await FormModel.findById(query.form).select('creator controll').lean();
+                const form = await FormModel.findById(query.form).select('creator collaborator').lean();
                 const isCreator = String(form?.creator?._id || form?.creator || '') === String(authUser._id);
                 const isEditor = form && hasEditorCollaboratorAccess(form, authUser._id);
                 if (!isCreator && !isEditor) {

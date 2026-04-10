@@ -7,14 +7,14 @@
             <div class="mb-4">
                 <label class="mb-3 font-weight-bold">{{ $t('editor.settings.access.selectedCollaborators') }}</label>
                 <div class="org-list">
-                    <span v-for="(collab, index) in settings.controll" :key="'collab-' + index" class="badge-custom border d-inline-flex align-items-center mb-2">
+                    <span v-for="(collab, index) in settings.collaborator" :key="'collab-' + index" class="badge-custom border d-inline-flex align-items-center mb-2">
                         <span class="mr-2">{{ getUserName(collab.user) }}</span>
                         <span class="role-badge" :class="getRoleClass(collab.type)" style="text-transform: capitalize; margin: 0 5px;">{{ getRoleName(collab.type) }}</span>
                         <span class="ml-2 delete-icon-wrapper" @click.stop="removeCollaborator(index)" :title="$t('editor.settings.access.remove')">
                             <CIcon name="cil-x" size="sm" class="delete-icon" />
                         </span>
                     </span>
-                    <div v-if="!settings.controll || !settings.controll.length" class="text-muted small my-auto">
+                    <div v-if="!settings.collaborator || !settings.collaborator.length" class="text-muted small my-auto">
                         {{ $t('editor.settings.access.noCollaborators') }}
                     </div>
                 </div>
@@ -41,7 +41,7 @@
                     <CCol md="4" class="mb-3">
                         <label class="mb-2 font-weight-bold small text-muted d-block">{{ $t('editor.settings.access.role') || 'Role' }}</label>
                         <v-select 
-                            :options="controllOptions" 
+                            :options="collaboratorOptions" 
                             v-model="newCollaborator.type"
                             :reduce="role => role.value"
                             class="form-select-custom"
@@ -103,7 +103,7 @@ export default {
         }
     },
     watch: {
-        controllOptions: {
+        collaboratorOptions: {
             handler(val) {
                 if (val && val.length > 0 && !this.newCollaborator.type) {
                     this.newCollaborator.type = val[0].value;
@@ -114,16 +114,16 @@ export default {
     },
     created() {
         this.$store.dispatch('Setting/status/get');
-        this.$store.dispatch('Setting/controll/get');
+        this.$store.dispatch('Setting/collaborator/get');
         this.$store.dispatch('User/getAll');
 
-        if (!Array.isArray(this.settings.controll)) {
-            this.$set(this.settings, 'controll', []);
+        if (!Array.isArray(this.settings.collaborator)) {
+            this.$set(this.settings, 'collaborator', []);
         }
     },
     computed: {
         ...mapGetters('Setting/status', { statusItems: 'item' }),
-        ...mapGetters('Setting/controll', { controllItems: 'item' }),
+        ...mapGetters('Setting/collaborator', { collaboratorItems: 'item' }),
         ...mapGetters('User', ['users']),
 
         userOptions() {
@@ -142,16 +142,16 @@ export default {
                 label: this.getLang(item.title)
             }));
         },
-        controllOptions() {
-            if (!this.controllItems || !Array.isArray(this.controllItems)) return [];
-            return this.controllItems.map(item => ({
+        collaboratorOptions() {
+            if (!this.collaboratorItems || !Array.isArray(this.collaboratorItems)) return [];
+            return this.collaboratorItems.map(item => ({
                 value: item._id,
                 label: this.getLang(item.title)
             }));
         },
         selectedControllId() {
-            if (!this.settings || !this.settings.controll) return '';
-            const type = this.settings.controll.type;
+            if (!this.settings || !this.settings.collaborator) return '';
+            const type = this.settings.collaborator.type;
             return typeof type === 'object' && type !== null ? type._id : type;
         },
         currentStatusId() {
@@ -171,7 +171,7 @@ export default {
         getRoleName(typeRef) {
             if (!typeRef) return '';
             const tid = typeof typeRef === 'object' ? typeRef._id : typeRef;
-            const t = this.controllItems ? this.controllItems.find(x => x._id === tid) : null;
+            const t = this.collaboratorItems ? this.collaboratorItems.find(x => x._id === tid) : null;
             return t ? this.getLang(t.title) : 'Viewer';
         },
         getRoleClass(typeRef) {
@@ -188,21 +188,21 @@ export default {
         addCollaborator() {
             if (!this.selectedUser || this.selectedUser.length === 0 || !this.newCollaborator.type) return;
 
-            if (!Array.isArray(this.settings.controll)) {
-                this.$set(this.settings, 'controll', []);
+            if (!Array.isArray(this.settings.collaborator)) {
+                this.$set(this.settings, 'collaborator', []);
             }
 
             this.selectedUser.forEach(email => {
                 const userObj = this.users ? this.users.find(u => u.email === email) : null;
                 if (!userObj) return;
 
-                const exists = this.settings.controll.find(c => {
+                const exists = this.settings.collaborator.find(c => {
                     let uId = (c.user && c.user._id) ? c.user._id : c.user;
                     return String(uId) === String(userObj._id);
                 });
 
                 if (!exists) {
-                    this.settings.controll.push({
+                    this.settings.collaborator.push({
                         user: userObj._id,
                         type: this.newCollaborator.type
                     });
@@ -213,8 +213,8 @@ export default {
             this.triggerAutoSave();
         },
         removeCollaborator(index) {
-            if (Array.isArray(this.settings.controll)) {
-                this.settings.controll.splice(index, 1);
+            if (Array.isArray(this.settings.collaborator)) {
+                this.settings.collaborator.splice(index, 1);
                 this.triggerAutoSave();
             }
         },

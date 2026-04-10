@@ -19,7 +19,7 @@ const checkFormAccess = async (request, formId) => {
     const isAdmin = isAdminUser(authUser);
     if (isAdmin) return true;
 
-    const form = await FormModel.findById(formId).select('creator controll').lean();
+    const form = await FormModel.findById(formId).select('creator collaborator').lean();
     if (!form) {
         throw new Error("Form not found");
     }

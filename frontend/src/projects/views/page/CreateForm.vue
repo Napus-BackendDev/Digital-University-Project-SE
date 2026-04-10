@@ -61,8 +61,8 @@ export default {
                     const creatorId = String(this.formData.creator?._id || this.formData.creator || '');
                     const isCreator = creatorId === currentUserId;
                     let isEditor = false;
-                    if (Array.isArray(this.formData.controll)) {
-                        isEditor = this.formData.controll.some((item) => {
+                    if (Array.isArray(this.formData.collaborator)) {
+                        isEditor = this.formData.collaborator.some((item) => {
                             const collabUserId = String(item?.user?._id || item?.user || '');
                             if (collabUserId !== currentUserId) return false;
                             const typeTitle = Array.isArray(item?.type?.title)
