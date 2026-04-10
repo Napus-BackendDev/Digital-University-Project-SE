@@ -33,8 +33,19 @@ export function isInTimeRange(createdAt, timeRange, now = moment()) {
 export function getFilteredResponses(form, timeRange, now = moment()) {
     if (!form || !Array.isArray(form.responses)) return [];
 
-    return form.responses.filter((response) => {
-        return isSubmittedResponse(response) && isInTimeRange(response.createdAt, timeRange, now);
+    const submittedResponses = form.responses.filter((response) => isSubmittedResponse(response));
+    const hasAnyValidDate = submittedResponses.some((response) => {
+        return response && response.createdAt && moment(response.createdAt).isValid();
+    });
+
+    // Backward compatibility: some records provide submit flags but no createdAt.
+    // In that case, return submitted responses instead of incorrectly showing zero.
+    if (!hasAnyValidDate) {
+        return submittedResponses;
+    }
+
+    return submittedResponses.filter((response) => {
+        return isInTimeRange(response.createdAt, timeRange, now);
     });
 }
 

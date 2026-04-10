@@ -40,7 +40,7 @@ export default {
     },
     data() {
         return {
-            timeRange: '7d'
+            timeRange: '30d'
         }
     },
     created() {

@@ -113,11 +113,7 @@ export default {
 
                 const localFormat = this.$i18n.locale === 'th' ? 'th-TH' : 'en-GB';
                 moment.locale(this.$i18n.locale === 'th' ? 'th' : 'en');
-                let accessTitle = form.isPublic ? this.$t('accessLabel.public') : this.$t('accessLabel.private');
-                if (form.controll && form.controll.type) {
-                    const cTitle = this.getLang(form.controll.type.title);
-                    if (cTitle) accessTitle = cTitle;
-                }
+                const accessTitle = this.getAccessTitle(form);
 
                 return {
                     title: this.getLang(form.title) || this.$t('common.untitled'),
@@ -160,6 +156,21 @@ export default {
             if (v.includes('public') || v.includes('สาธารณะ') || v === 'general') return 'visi-public';
             if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
             return 'visi-org';
+        },
+        getAccessTitle(form) {
+            // Use canonical backend field first, keep legacy boolean fallback.
+            const accessRaw = (form && form.access) ? String(form.access).toLowerCase() : '';
+
+            if (accessRaw === 'private') return this.$t('accessLabel.private');
+            if (accessRaw === 'organization') return this.$t('accessLabel.general');
+            if (accessRaw === 'public') return this.$t('accessLabel.public');
+
+            if (typeof form?.isPublic === 'boolean') {
+                return form.isPublic ? this.$t('accessLabel.public') : this.$t('accessLabel.private');
+            }
+
+            // Backend visibility rules treat missing access as public (legacy records).
+            return this.$t('accessLabel.public');
         }
     }
 }
