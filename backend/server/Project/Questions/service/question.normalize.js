@@ -1,3 +1,5 @@
+const { getUploadUrl } = require('../../../../helpers/upload');
+
 const parseMaybeJson = function (value) {
     if (typeof value !== 'string') {
         return value;
