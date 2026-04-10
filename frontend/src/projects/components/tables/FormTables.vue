@@ -125,6 +125,7 @@ export default {
     },
     async created() {
         this.$store.dispatch('User/getAll');
+        this.$store.dispatch('Organizations/getAll');
     },
     computed: {
         fields() {
@@ -140,6 +141,7 @@ export default {
         },
         ...mapGetters('Forms', ['forms']),
         ...mapGetters('User', ['user', 'users']),
+        ...mapGetters('Organizations', ['organizations']),
 
         totalPages() {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
@@ -297,19 +299,9 @@ export default {
                 const rawOrgs = f.organization || [];
                 let access = [];
 
-                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => {
-                    if (!o) return null;
-                    if (typeof o === 'string') return o;
-                    if (typeof o === 'object') {
-                        if (Array.isArray(o.title)) {
-                            const locale = this.$i18n.locale.toLowerCase();
-                            const localTitle = o.title.find(t => t && t.key && t.key.toLowerCase() === locale);
-                            return localTitle ? localTitle.value : (o.title[0] ? o.title[0].value : null);
-                        }
-                        return o.name || o.value || o.title || null;
-                    }
-                    return null;
-                }).filter(Boolean);
+                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs])
+                    .map(o => this.getOrganizationLabel(o))
+                    .filter(Boolean);
 
                 const isPublicForm = orgNames.some(name => name === 'General' || name === 'ทั่วไป');
 
@@ -503,6 +495,33 @@ export default {
             if (!this.users) return userRef;
             const u = this.users.find(x => String(x._id) === String(userRef));
             return u ? (u.name || u.email) : userRef;
+        },
+        getOrganizationLabel(orgRef) {
+            const locale = this.$i18n.locale.toLowerCase();
+            if (!orgRef) return null;
+
+            if (typeof orgRef === 'object') {
+                if (Array.isArray(orgRef.title)) {
+                    const localTitle = orgRef.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                    return localTitle ? localTitle.value : (orgRef.title[0] ? orgRef.title[0].value : null);
+                }
+                return orgRef.name || orgRef.value || orgRef.title || (orgRef._id ? String(orgRef._id) : null);
+            }
+
+            const orgId = String(orgRef);
+            const found = Array.isArray(this.organizations)
+                ? this.organizations.find(o => String(o._id) === orgId || String(o.id) === orgId)
+                : null;
+
+            if (found) {
+                if (Array.isArray(found.title)) {
+                    const localTitle = found.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                    return localTitle ? localTitle.value : (found.title[0] ? found.title[0].value : null);
+                }
+                return found.name || found.value || found.title || orgId;
+            }
+
+            return orgId;
         }
     }
 }
