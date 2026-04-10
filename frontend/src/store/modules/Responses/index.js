@@ -1,5 +1,16 @@
 import Service from "@/service/api.js";
 
+const normalizeResponse = (payload) => {
+    if (!payload) return null;
+    if (Array.isArray(payload)) return payload;
+    if (payload._id) return payload;
+    if (payload.data) {
+        if (Array.isArray(payload.data)) return payload.data;
+        if (payload.data && payload.data._id) return payload.data;
+    }
+    return null;
+};
+
 const RESPONSES_CACHE_KEY = 'du.responses.cache';
 
 const loadCachedResponses = () => {
@@ -50,7 +61,7 @@ const module = {
     },
     actions: {
         upsertResponseList({ state, commit }, payload) {
-            const normalized = normalizeResponsePayload(payload);
+            const normalized = normalizeResponse(payload);
 
             if (Array.isArray(normalized)) {
                 commit('responses', normalized);
@@ -72,7 +83,7 @@ const module = {
         exp({ commit }, data) {
             return Service.response('exp', data, {})
                 .then(response => {
-                    commit('responses', response.data.data || []);
+                    commit('responses', normalizeResponse(response?.data?.data) || []);
                     return response;
                 })
                 .catch(err => { throw err; });
@@ -80,7 +91,7 @@ const module = {
         get({ commit }, data) {
             return Service.response('get', data, {})
                 .then(response => {
-                    const result = response.data.data;
+                    const result = normalizeResponse(response?.data?.data);
                     if (Array.isArray(result)) {
                         commit('responses', result);
                     }
@@ -159,7 +170,7 @@ const module = {
 
             return Service.response(hasFile ? 'submit' : 'create', payload, {})
                 .then(response => {
-                    dispatch('upsertResponseList', response.data.data);
+                    dispatch('upsertResponseList', response?.data?.data || response?.data);
                     return response;
                 })
                 .catch(err => { throw err; });
@@ -214,7 +225,7 @@ const module = {
 
             return Service.response(hasFile ? 'update-multipart' : 'update', payload, {})
                 .then(response => {
-                    dispatch('upsertResponseList', response.data.data);
+                    dispatch('upsertResponseList', response?.data?.data || response?.data);
                     return response;
                 })
                 .catch(err => { throw err; });
