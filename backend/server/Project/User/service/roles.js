@@ -1,7 +1,15 @@
 const mongo = require("mongodb");
 const Roles = require("../controller/roles");
 const ResMessage = require("../../Settings/service/message");
-const { getApiId, getSuccessCode, getErrorCode } = require("../../../../helpers/apiUtils");
+const getApiId = function (request) {
+  return Number(request?.query?.apiId || request?.body?.apiId) || 0;
+};
+const getSuccessCode = function (request) {
+  return 20000 + getApiId(request);
+};
+const getErrorCode = function () {
+  return 50000;
+};
 
 
 exports.onQuery = async function (request, response) {

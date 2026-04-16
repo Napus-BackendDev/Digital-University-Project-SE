@@ -5,7 +5,29 @@ const FormModel = require("../models/form.model");
 const UserModel = require("../../User/models/user.model");
 const { getComputedStatus, canResponderViewForm } = require("./form.status");
 const { maybeSendCollaborationInvites } = require("../../Email/service/collaboration");
-const { getApiId, getSuccessCode, getErrorCode } = require("../../../../helpers/apiUtils");
+const getApiId = function (request) {
+  return Number(request?.query?.apiId || request?.body?.apiId) || 0;
+};
+const getSuccessCode = function (request) {
+  return 20000 + getApiId(request);
+};
+const getErrorCode = function () {
+  return 50000;
+};
+
+const getDemoAuthUser = function (request) {
+  const userId = request?.body?.user || request?.body?.userId || request?.query?.user || request?.query?.userId;
+  if (!userId) return null;
+
+  const role = request?.body?.role || request?.query?.role;
+  const isAdmin = request?.body?.isAdmin === true || request?.query?.isAdmin === 'true';
+
+  return {
+    _id: userId,
+    role: isAdmin ? { code: 'admin', title: 'Admin' } : role,
+  };
+};
+
 const { normalizeFormPayload } = require("./form.normalize");
 
 // Extract helper functions

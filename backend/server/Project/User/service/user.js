@@ -2,7 +2,15 @@ const mongo = require("mongodb");
 const User = require("../controller/user");
 const ResMessage = require("../../Settings/service/message");
 const { mapUserDto, mapUserListDto } = require("../dto/user.dto");
-const { getApiId, getSuccessCode,getErrorCode } = require("../../../../helpers/apiUtils");
+const getApiId = function (request) {
+  return Number(request?.query?.apiId || request?.body?.apiId) || 0;
+};
+const getSuccessCode = function (request) {
+  return 20000 + getApiId(request);
+};
+const getErrorCode = function () {
+  return 50000;
+};
 
 exports.onQuery = async function (request, response) {
   try {

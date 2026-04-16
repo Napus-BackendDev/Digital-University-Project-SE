@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const form = require('./service/form.service');
+const form = require('./service/form');
 
 
 // Get All form might don't need.
@@ -12,10 +12,10 @@ router.get("/exp", function (req, res, next) {
 }, form.onQuerys);
 
 // // Get Forms by User ID
-// router.post("/user", function (req, res, next) {
-//     req.query.apiId = 26;
-//     next();
-// }, form.onQueryByUser);
+router.get("/user/:userId", function (req, res, next) {
+    req.query.apiId = 26;
+    next();
+}, form.onQueryByUser);
 
 // Get One by ID
 router.post("/get", function (req, res, next) {

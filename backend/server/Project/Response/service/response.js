@@ -4,11 +4,40 @@ const ResMessage = require("../../Settings/service/message");
 const { isSubmitted, maybeSendSubmissionConfirmation } = require("../../Email/service/submission");
 const { mapResponseDto, mapResponseListDto } = require("../dto/response.dto");
 const { attachFilesToAnswers } = require("./utils/utils");
-const { getApiId,getSuccessCode, getErrorCode}= require("../../../../helpers/apiUtils")
+const getApiId = function (request) {
+    return Number(request?.query?.apiId || request?.body?.apiId) || 0;
+};
+const getSuccessCode = function (request) {
+    return 20000 + getApiId(request);
+};
+const getErrorCode = function () {
+    return 50000;
+};
 
 const FormModel = require('../../Form/models/form.model');
-const { getDemoAuthUser, isAdminUser } = require('../../../../helpers/authUtils');
 const { hasEditorCollaboratorAccess } = require('../../Form/service/form.access');
+
+const getDemoAuthUser = function (request) {
+    const userId = request?.body?.user || request?.body?.userId || request?.query?.user || request?.query?.userId;
+    if (!userId) return null;
+
+    const role = request?.body?.role || request?.query?.role;
+    const isAdmin = request?.body?.isAdmin === true || request?.query?.isAdmin === 'true';
+
+    return {
+        _id: userId,
+        role: isAdmin ? { code: 'admin', title: 'Admin' } : role,
+    };
+};
+
+const isAdminUser = function (user) {
+    if (!user) return false;
+    const role = user?.role;
+    const roleText = Array.isArray(role?.title)
+        ? role.title.map((item) => String(item?.value || '')).join(' ').toLowerCase()
+        : String(role?.title || role?.code || role || '').toLowerCase();
+    return roleText.includes('admin') || roleText.includes('ผู้ดูแล');
+};
 
 require("../../Questions/models/questions.model");
 require("../../Settings/models/question_type.model");
@@ -40,7 +69,6 @@ const checkResponseAccess = async (request, doc) => {
 
 exports.onQuerys = async function (request, response) {
     try {
-<<<<<<< HEAD
         console.log(`[API ${getApiId(request)}] GET /api/v1/response/exp (onQuerys)`);
         
         const authUser = getDemoAuthUser(request);
@@ -55,9 +83,6 @@ exports.onQuerys = async function (request, response) {
         }
 
         const docs = await responseService.onQuerys(query);
-=======
-        const docs = await responseService.onQuerys({});
->>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseListDto(docs || []));
     } catch (err) {
         console.error(`[API ${getApiId(request)}] Error:`, err.message);
@@ -67,12 +92,8 @@ exports.onQuerys = async function (request, response) {
 
 exports.onQuery = async function (request, response) {
     try {
-<<<<<<< HEAD
         console.log(`[API ${getApiId(request)}] POST /api/v1/response/get (onQuery)`);
         const body = request.body;
-=======
-        const body = request.body|| {};
->>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
 
         // If _id is requested, return one document. Otherwise return list by filter.
         if (body._id) {
@@ -96,7 +117,6 @@ exports.onQuery = async function (request, response) {
         }
 
         const query = { ...body };
-<<<<<<< HEAD
         // If not admin, bind queries to either their own user ID or explicitly check the form access beforehand. 
         if (!isAdminUser(authUser)) {
             if (query.form) {
@@ -110,9 +130,6 @@ exports.onQuery = async function (request, response) {
                 query.responder = new mongo.ObjectId(authUser._id);
             }
         }
-=======
-        
->>>>>>> 85c61afe831f80497f7226c786e833dde151c5f4
 
         const docs = await responseService.onQuerys(query);
         return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapResponseListDto(docs || []));
