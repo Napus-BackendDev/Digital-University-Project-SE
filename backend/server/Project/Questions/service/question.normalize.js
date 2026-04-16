@@ -44,5 +44,4 @@ const normalizeQuestionPayload = async function (request) {
 
 module.exports = {
     normalizeQuestionPayload
-    
 };

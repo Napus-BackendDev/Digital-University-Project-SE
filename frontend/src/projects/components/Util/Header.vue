@@ -33,7 +33,7 @@
                             color="primary" 
                             size="lg"
                             class="d-flex align-items-center shadow-sm px-4 py-2"
-                            style="border-radius: 12px; font-weight: 600; transition: all 0.2s ease; background-color: #2563eb; border-color: #2563eb;"
+                            style="border-radius: 12px; font-weight: 600; transition: all 0.2s ease;"
                             @click="createNewForm"
                             :disabled="isCreating"
                         >
@@ -131,7 +131,7 @@ export default {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     position: relative;
-    border-left: 5px solid #3c4b64;
+    border-left: 5px solid #8c1515;
 }
 
 .header-title {
@@ -186,7 +186,7 @@ export default {
 
 .lang-pill.active {
     background: #fff;
-    color: #2563eb;
+    color: #8c1515;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 

@@ -9,7 +9,7 @@ const defaultPopulate = [
     { path: 'responses', select: 'submit createdAt' },
     { path: 'questions', select: 'type nextQuestion' },
     {
-        path: 'controll',
+        path: 'collaborator',
         populate: [
             { path: 'user', select: 'name email' },
             { path: 'type', select: 'title' }

@@ -1,16 +1,16 @@
 <template>
     <CRow>
-        <!-- Card 1: Total Forms -->
+        <!-- Card 1: Total Active Forms -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-danger-light text-danger">
-                        <CIcon name="cil-description" size="xl" />
+                    <div class="icon-box bg-primary-light text-primary">
+                        <CIcon name="cil-file" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.totalForms }}</h2>
-                    <div class="stat-label">{{ $t('analytics.widgets.totalForms') }}</div>
+                    <h2 class="stat-value">{{ stats.activeForms }}</h2>
+                    <div class="stat-label">{{ $t('widget.active') }}</div>
                 </div>
             </div>
         </CCol>
@@ -19,43 +19,43 @@
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-success-light text-success">
-                        <CIcon name="cil-people" size="xl" />
+                    <div class="icon-box bg-info-light text-info">
+                        <CIcon name="cil-envelope-closed" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalResponses }}</h2>
-                    <div class="stat-label">{{ $t('analytics.widgets.totalResponses') }}</div>
+                    <div class="stat-label">{{ $t('widget.totalResponses') }}</div>
                 </div>
             </div>
         </CCol>
 
-        <!-- Card 3: Total Users -->
+        <!-- Card 3: Active Users -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-warning-light text-warning">
-                        <CIcon name="cil-chart-line" size="xl" />
+                        <CIcon name="cil-people" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalUsers }}</h2>
-                    <div class="stat-label">{{ $t('analytics.widgets.totalUsers') }}</div>
+                    <div class="stat-label">{{ $t('widget.activeUsers') }}</div>
                 </div>
             </div>
         </CCol>
 
-        <!-- Card 4: Avg Responses/Form -->
+        <!-- Card 4: Avg Completion Rate -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-dark-light text-dark">
-                        <CIcon name="cil-chart" size="xl" />
+                    <div class="icon-box bg-success-light text-success">
+                        <CIcon name="cil-chart-line" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.avgResponses }}</h2>
-                    <div class="stat-label">{{ $t('analytics.widgets.avgResponses') }}</div>
+                    <h2 class="stat-value">{{ stats.completionRate }}%</h2>
+                    <div class="stat-label">{{ $t('widget.completionRate') }}</div>
                 </div>
             </div>
         </CCol>
@@ -64,7 +64,8 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import { getFilteredResponses } from '@/projects/utils/analytics';
+import moment from 'moment';
+import { getFilteredResponses, getTableStatusLabel } from '@/projects/utils/analytics';
 
 export default {
     name: 'WidgetsDropdown',
@@ -79,54 +80,42 @@ export default {
         ...mapGetters('User', ['users']),
 
         stats() {
-            if (!this.forms) return {
-                totalForms: 0,
+            if (!this.forms || !Array.isArray(this.forms)) return {
+                activeForms: 0,
                 totalResponses: 0,
                 totalUsers: 0,
-                avgResponses: 0
+                completionRate: 0
             };
 
-            const totalForms = this.forms.length;
+            let activeForms = 0;
             let totalResponses = 0;
+            let totalStarted = 0;
             let totalUsers = (this.users && Array.isArray(this.users)) ? this.users.length : 0;
 
+            const now = moment();
+
             this.forms.forEach(form => {
-                // Count responses within range
-                if (form.responses) {
-                    const filteredResponses = getFilteredResponses(form, this.timeRange);
+                // Count active forms using the standardized utility
+                const status = getTableStatusLabel(form, now);
+                if (status === 'Active') {
+                    activeForms++;
+                }
+
+                // Count responses and started instances using optimized utility
+                if (form.responses && form.responses.length > 0) {
+                    totalStarted += form.responses.length;
+                    const filteredResponses = getFilteredResponses(form, this.timeRange, now);
                     totalResponses += filteredResponses.length;
-                }
-
-                // Count active forms
-                let isActive = false;
-
-                let statusRaw = '';
-                if (form.status && form.status.title) {
-                    if (Array.isArray(form.status.title)) {
-                        const enItem = form.status.title.find(item => item.key === 'en');
-                        statusRaw = enItem ? enItem.value : (form.status.title[0]?.value || '');
-                    } else {
-                        statusRaw = form.status.title;
-                    }
-                }
-                statusRaw = statusRaw.toLowerCase();
-
-                if (statusRaw.includes('open')) {
-                    isActive = true;
-                }
-
-                if (isActive) {
-                    // keep existing active count logic if needed
                 }
             });
 
-            const avgResponses = totalForms > 0 ? (totalResponses / totalForms).toFixed(1) : 0;
+            const completionRate = totalStarted > 0 ? ((totalResponses / totalStarted) * 100).toFixed(1) : 0;
 
             return {
-                totalForms,
+                activeForms,
                 totalResponses,
                 totalUsers,
-                avgResponses
+                completionRate
             };
         }
     }
@@ -167,6 +156,12 @@ export default {
 }
 
 /* Custom light backgrounds for icons */
+.bg-primary-light {
+    background-color: rgba(140, 21, 21, 0.1);
+}
+.bg-info-light {
+    background-color: rgba(57, 243, 253, 0.1);
+}
 .bg-danger-light {
     background-color: rgba(229, 83, 83, 0.1);
 }
@@ -184,6 +179,12 @@ export default {
 }
 
 /* Text colors override if needed, using CoreUI utility classes usually works but explicit here for safety */
+.text-primary {
+    color: #8c1515 !important;
+}
+.text-info {
+    color: #39f3fd !important;
+}
 .text-danger {
     color: #e55353 !important;
 }

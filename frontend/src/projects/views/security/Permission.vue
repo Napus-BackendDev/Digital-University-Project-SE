@@ -4,8 +4,8 @@
             description="Review group-to-menu rules, tune access switches, and keep the permission grid controlled." />
         <CRow>
             <CCol col="12">
-                <PermissionTable :items="permissionTableRows" :fields="fields"
-                    :organization-options="organizationOptions" @toggle="onToggle" />
+                <PermissionTable :items="filteredPermissionRows" :fields="fields"
+                    :role-options="roleOptions" @toggle="onToggle" />
             </CCol>
         </CRow>
     </div>
@@ -21,48 +21,48 @@ export default {
     data() {
         return {
             fields: [
-                { key: 'organization', label: 'Organization', _style: 'width: 150px; text-align: center;' },
+                { key: 'role', label: 'Role', _style: 'width: 150px; text-align: left;' },
                 { key: 'page', label: 'Page' },
-                { key: 'create', label: 'Create', _style: 'width: 100px; text-align: center;' },
                 { key: 'read', label: 'Read', _style: 'width: 100px; text-align: center;' },
+                { key: 'create', label: 'Create', _style: 'width: 100px; text-align: center;' },
                 { key: 'update', label: 'Update', _style: 'width: 100px; text-align: center;' },
                 { key: 'delete', label: 'Delete', _style: 'width: 100px; text-align: center;' }
             ],
-            organizations: [],
+            roles: [],
             pages: [],
             permissions: [],
-            selectedOrgId: 'all'
+            selectedRoleId: 'all'
         }
     },
     computed: {
-        organizationOptions() {
+        roleOptions() {
             return [
-                { value: 'all', label: 'All Organizations' },
-                ...this.organizations.map(org => ({
-                    value: org._id,
-                    label: this.getText(org.title) || org.name
+                { value: 'all', label: 'All Roles' },
+                ...this.roles.map(role => ({
+                    value: role._id,
+                    label: this.getText(role.title) || role.name
                 }))
             ]
         },
         permissionTableRows() {
             const map = {}
             this.permissions.forEach(row => {
-                map[`${row.orgId}:${row.pageId}`] = row
+                map[`${row.roleId}:${row.pageId}`] = row
             })
             const rows = []
-            this.organizations.forEach(org => {
+            this.roles.forEach(role => {
                 this.pages.forEach(page => {
-                    const key = `${org._id}:${page._id}`
+                    const key = `${role._id}:${page._id}`
                     const current = map[key] || {}
                     rows.push({
                         _id: current._id || null,
-                        orgId: org._id,
+                        roleId: role._id,
                         pageId: page._id,
                         create: !!current.create,
                         read: !!current.read,
                         update: !!current.update,
                         delete: !!current.delete,
-                        organization: this.getText(org.title) || org.name,
+                        role: this.getText(role.title) || role.name,
                         page: this.getText(page.title) || page.name
                     })
                 })
@@ -71,8 +71,8 @@ export default {
         },
         filteredPermissionRows() {
             let rows = this.permissionTableRows
-            if (this.selectedOrgId !== 'all') {
-                rows = rows.filter(row => row.orgId === this.selectedOrgId)
+            if (this.selectedRoleId !== 'all') {
+                rows = rows.filter(row => row.roleId === this.selectedRoleId)
             }
             return rows
         }
@@ -92,20 +92,40 @@ export default {
         },
         async loadData() {
             try {
-                // Mock pages for UI context
                 this.pages = [
-                    { _id: 'm1', name: 'Dashboard', title: [{ key: 'en', value: 'Dashboard' }] },
-                    { _id: 'm2', name: 'ManageForms', title: [{ key: 'en', value: 'Manage Forms' }] },
-                    { _id: 'm3', name: 'Analytics', title: [{ key: 'en', value: 'Analytics' }] },
-                    { _id: 'm4', name: 'Permissions', title: [{ key: 'en', value: 'Permissions' }] },
+                    { _id: 'Forms', name: 'Forms', title: [{ key: 'en', value: 'Forms' }] },
+                    { _id: 'Manage Forms', name: 'Manage Forms', title: [{ key: 'en', value: 'Manage Forms' }] },
+                    { _id: 'Analytics', name: 'Analytics', title: [{ key: 'en', value: 'Analytics' }] },
+                    { _id: 'Permissions', name: 'Permissions', title: [{ key: 'en', value: 'Permissions' }] },
                 ]
 
-                // Fetch real organizations from the backend
-                const orgs = await this.$store.dispatch('Organizations/getAll')
-                this.organizations = orgs || []
+                const roles = await this.$store.dispatch('Roles/getAll')
+                this.roles = roles || []
 
-                // Initialize empty permissions matrix
-                this.permissions = []
+                const extractedPerms = []
+                this.roles.forEach(role => {
+                    if (role.permission && Array.isArray(role.permission)) {
+                        role.permission.forEach(p => {
+                            const permObj = {
+                                roleId: role._id,
+                                pageId: p.page,
+                                create: false,
+                                read: false,
+                                update: false,
+                                delete: false
+                            }
+                            if (p.access && Array.isArray(p.access)) {
+                                p.access.forEach(a => {
+                                    if (['create', 'read', 'update', 'delete'].includes(a.key)) {
+                                        permObj[a.key] = a.value
+                                    }
+                                })
+                            }
+                            extractedPerms.push(permObj)
+                        })
+                    }
+                })
+                this.permissions = extractedPerms
             } catch (err) {
                 console.error('Failed to load data.', err)
             }
@@ -113,7 +133,7 @@ export default {
         async onToggle(row, key, checked) {
             const working = {
                 _id: row._id || null,
-                orgId: row.orgId,
+                roleId: row.roleId,
                 pageId: row.pageId,
                 create: !!row.create,
                 read: !!row.read,
@@ -122,7 +142,7 @@ export default {
             }
             working[key] = checked
 
-            const index = this.permissions.findIndex(p => p.orgId === row.orgId && p.pageId === row.pageId)
+            const index = this.permissions.findIndex(p => p.roleId === row.roleId && p.pageId === row.pageId)
             if (index !== -1) {
                 this.permissions.splice(index, 1, { ...this.permissions[index], ...working })
             } else {

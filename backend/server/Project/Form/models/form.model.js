@@ -15,9 +15,9 @@ var objSchema = new Schema({
         type: [{ type: Schema.Types.ObjectId, ref: 'Organizations' }],
         default: ["69baf8349050b9215c700b96"]
     },
-    controll: [{
+    collaborator: [{
         user: { type: Schema.Types.ObjectId, ref: 'Users' },
-        type: { type: Schema.Types.ObjectId, ref: 'Setting_Controll' }
+        type: { type: Schema.Types.ObjectId, ref: 'Setting_Collaborator' }
     }],
     settings: {
         collectEmail: { type: Boolean, default: false },

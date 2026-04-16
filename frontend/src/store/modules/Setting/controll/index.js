@@ -15,7 +15,7 @@ const module = {
 
     actions: {
         get({ commit }, data) {
-            return Service.setting('controll-get', data, {})
+            return Service.setting('collaborator-get', data, {})
                 .then((response) => {
                     commit("item", response.data.data)
                     return response;
@@ -24,7 +24,7 @@ const module = {
                 });
         },
         create({ commit }, data) {
-            return Service.setting('controll-create', data, {})
+            return Service.setting('collaborator-create', data, {})
                 .then((response) => {
                     return response;
                 }).catch((err) => {
@@ -32,7 +32,7 @@ const module = {
                 });
         },
         update({ commit }, data) {
-            return Service.setting('controll-update', data, {})
+            return Service.setting('collaborator-update', data, {})
                 .then((response) => {
                     return response;
                 }).catch((err) => {
@@ -40,7 +40,7 @@ const module = {
                 });
         },
         delete({ commit }, data) {
-            return Service.setting('controll-delete', data, {})
+            return Service.setting('collaborator-delete', data, {})
                 .then((response) => {
                     return response;
                 }).catch((err) => {

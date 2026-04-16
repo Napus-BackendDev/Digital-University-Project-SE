@@ -232,9 +232,9 @@ export default {
                 const isCreator = String(creatorId) === String(currentUserId);
                 if (isCreator) canEdit = true;
 
-                if (!canEdit && Array.isArray(f.controll)) {
+                if (!canEdit && Array.isArray(f.collaborator)) {
                     // Check if user is an Editor collaborator
-                    const collab = f.controll.find(c => {
+                    const collab = f.collaborator.find(c => {
                         const collabUserId = c.user && typeof c.user === 'object' ? c.user._id : c.user;
                         return String(collabUserId) === String(currentUserId);
                     });
@@ -319,8 +319,8 @@ export default {
                 // Extract Collaborators
                 let collaborators = [];
                 console.log(f)
-                if (Array.isArray(f.controll) && f.controll.length > 0) {
-                    f.controll.forEach(c => {
+                if (Array.isArray(f.collaborator) && f.collaborator.length > 0) {
+                    f.collaborator.forEach(c => {
                         let name = this.getUserName(c.user);
                         let role = 'Viewer';
                         if (c.type) {
@@ -663,8 +663,8 @@ export default {
 }
 
 .visi-org {
-    background-color: #f0f7ff;
-    color: #1e40af;
+    background-color: #fff7ed;
+    color: #8c1515;
 }
 
 .visi-personal {
