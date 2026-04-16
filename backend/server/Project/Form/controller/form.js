@@ -1,6 +1,7 @@
 var mongo = require("mongodb");
 var objSchema = require("../models/form.model");
-const createBaseService = require("../../../../helpers/base.service")
+const createBaseService = require("../../../../helpers/base.service");
+const { onQuery, onQuerys, onUpdate } = require("../service/form.service");
 
 const defaultPopulate = [
     { path: 'creator', select: '-password' },
@@ -16,5 +17,28 @@ const defaultPopulate = [
     },
     { path: 'settings.allowedUser', select: 'name email' }
 ];
+const formPopulate = [
+  { path: 'creator', select: '-password' },
+  {
+    path: 'controll',
+    populate: [
+      { path: 'user', select: 'name email' },
+      { path: 'type', select: 'title' }
+    ]
+  },
+  { path: 'settings.allowedUser', select: 'name email' },
+  { path: 'responsesCount',select: 'responsesCount'}
+];
 
-module.exports = createBaseService(objSchema, defaultPopulate);
+const baseService = createBaseService(objSchema, defaultPopulate);
+
+
+module.exports = {
+    baseService,
+    formPopulate,
+    onQuerys: baseService.onQuerys,
+    onQuery: baseService.onQuery,
+    onCreate: baseService.onCreate,
+    onUpdate:baseService.onUpdate,
+    onDelete:baseService.onDelete
+  };

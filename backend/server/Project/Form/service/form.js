@@ -97,7 +97,12 @@ exports.onQuery = async function (request, response) {
           from: "Responses",
           let: { form_id: "$_id" },
           pipeline: [
-            { $match: { $expr: { $eq: ["$form", "$$form_id"] } } }, // Match Response.form == Form._id
+            {
+              $match: {
+                $expr: { $eq: ["$form", "$$form_id"] },
+                submit: true,
+              },
+            }, // Match only submitted responses for consistent counts
             { $sort: { createdAt: -1 } },
             {
               $lookup: {
@@ -115,6 +120,11 @@ exports.onQuery = async function (request, response) {
             },
           ],
           as: "responses",
+        },
+      },
+      {
+        $addFields: {
+          responsesCount: { $size: "$responses" },
         },
       },
     ];
@@ -188,10 +198,10 @@ exports.onQuery = async function (request, response) {
  */
 exports.onQueryByUser = async function (request, response) {
   try {
-    console.log(`[API ${getApiId(request)}] GET /api/v1/form/user/:userId (onQueryByUser)`);
-    const userId = request.params.userId
-    let organizationId = request.query.organizationId;
-    const isAdmin = request.query.isAdmin === 'true';
+    console.log(`[API ${getApiId(request)}] POST /api/v1/form/user (onQueryByUser)`);
+    const userId = request.params.userId || request.query.userId || request.body?.userId || request.body?._id;
+    let organizationId = request.query.organizationId || request.body?.organizationId;
+    const isAdmin = request.query.isAdmin === 'true' || request.body?.isAdmin === true;
 
     // Normalize organizationId: treat "null", "undefined", or empty string as actual null
     if (organizationId === 'null' || organizationId === 'undefined' || !organizationId) {

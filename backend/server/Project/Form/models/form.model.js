@@ -33,6 +33,19 @@ var objSchema = new Schema({
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null, index: true },
     creator: { type: Schema.Types.ObjectId, ref: 'Users' },
     status: { type: Schema.Types.ObjectId, ref: 'Setting_Status' },
-}, { timestamps: true });
+}, { 
+    timestamps: true,
+    toJSON: {virtuals:true},
+    toObject: {virtuals:true}
+ });
+
+
+objSchema.virtual("responsesCount",{
+    ref: "Responses",
+    localField: "_id",
+    foreignField: "form",
+    count: true,
+    match: { submit: true }
+});
 
 module.exports = mongoose.model('Forms', objSchema, "Forms");
