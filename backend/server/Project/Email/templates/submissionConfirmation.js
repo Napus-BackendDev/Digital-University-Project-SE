@@ -15,12 +15,14 @@ const buildSubmissionConfirmationHtml = function ({
   submittedAt = '',
   referenceNo = '',
   status = 'Received',
+  emailMessage = '',
 }) {
   const safeName = escapeHtml(name);
   const safeFormTitle = escapeHtml(formTitle);
   const safeSubmittedAt = escapeHtml(submittedAt || '-');
   const safeReferenceNo = escapeHtml(referenceNo || '-');
   const safeStatus = escapeHtml(status);
+  const safeEmailMessage = escapeHtml(emailMessage);
 
   return `
   <div style="margin:0;padding:0;background-color:#fff6f6;font-family:Arial,Helvetica,sans-serif;">
@@ -33,7 +35,7 @@ const buildSubmissionConfirmationHtml = function ({
       <div style="padding:24px;">
         <p style="font-size:15px;margin-bottom:12px;color:#2f2a2a;">Dear <strong>${safeName}</strong>,</p>
         <p style="font-size:14px;color:#4b3f3f;line-height:1.6;">
-          Your response has been successfully submitted. This email confirms that the system has received your submission.
+          ${safeEmailMessage || 'Your response has been successfully submitted. This email confirms that the system has received your submission.'}
         </p>
 
         <div style="margin-top:18px;padding:16px;background:#fff1f1;border-left:4px solid #ac1515;border-radius:8px;">
@@ -69,12 +71,12 @@ const buildSubmissionConfirmationText = function ({
   submittedAt = '',
   referenceNo = '',
   status = 'Received',
+  emailMessage = '',
 }) {
   return [
     `Dear ${name},`,
     '',
-    'Your response has been successfully submitted.',
-    'This email confirms that the system has received your submission.',
+    emailMessage || 'Your response has been successfully submitted. This email confirms that the system has received your submission.',
     '',
     `Form: ${formTitle}`,
     `Submitted: ${submittedAt || '-'}`,

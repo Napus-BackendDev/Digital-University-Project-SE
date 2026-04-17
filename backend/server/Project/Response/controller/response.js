@@ -12,7 +12,13 @@ const defaultPopulate = [
     {
         path: 'form',
         populate: [
-            { path: 'questions' }
+            { path: 'questions' },
+            { path: 'creator', select: '-password' },
+            {
+                path: 'responses',
+                select: 'submit createdAt',
+                populate: { path: 'responder', select: '-password' }
+            }
         ]
     },
 ]

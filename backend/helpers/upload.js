@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Allowed file extensions from environment or defaults
-const ALLOWED_EXTENSIONS = (process.env.ALLOWED_FILE_EXTENSIONS || '.jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt').split(',');
+const ALLOWED_EXTENSIONS = (process.env.ALLOWED_FILE_EXTENSIONS || '.jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt,.csv').split(',');
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE_MB || '3') * 1024 * 1024;
 
 const parseMaybeJson = (value) => {
@@ -100,7 +100,9 @@ const upload = multer({
             'application/pdf',
             'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'text/plain'
+            'text/plain',
+            'text/csv',
+            'application/csv'
         ];
         
         if (!allowedMimeTypes.includes(file.mimetype)) {

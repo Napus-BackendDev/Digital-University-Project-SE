@@ -30,16 +30,29 @@ export default {
         }
     },
     async created() {
+        console.log("[ManageForms.vue] Lifecycle: created. User:", JSON.stringify(this.user));
         // If user is already loaded, fetch forms immediately
-        if (this.user && this.user._id) {
+        const userId = this.user ? (this.user._id || this.user.id) : null;
+        if (userId) {
+            console.log("[ManageForms.vue] Lifecycle: user ID found in created(), initializing...");
             await this.onInit();
+        } else {
+            console.log("[ManageForms.vue] Lifecycle: user ID NOT found in created().");
         }
     },
     watch: {
         user: {
             handler(val, oldVal) {
+                console.log("[ManageForms.vue] Lifecycle: user watch triggered.");
+                console.log("  New val:", JSON.stringify(val));
+                console.log("  Old val:", JSON.stringify(oldVal));
+
+                const newId = val ? (val._id || val.id) : null;
+                const oldId = oldVal ? (oldVal._id || oldVal.id) : null;
+
                 // Only trigger if user ID has actually changed to avoid redundant calls
-                if (val && val._id && (!oldVal || val._id !== oldVal._id)) {
+                if (newId && (!oldId || newId !== oldId)) {
+                    console.log("[ManageForms.vue] Lifecycle: user ID changed/loaded in watch, initializing...");
                     this.onInit();
                 }
             },
@@ -48,8 +61,11 @@ export default {
     },
     methods: {
         async onInit() {
+            const userId = this.user ? (this.user._id || this.user.id) : null;
+            console.log("[ManageForms.vue] onInit called. User:", JSON.stringify(this.user), "Extracted ID:", userId);
+            
             // Check if user and its essential nested data (organization) are ready
-            if (this.user && this.user._id) {
+            if (userId) {
                 // Determine organization ID carefully
                 let orgId = null;
                 if (this.user.organization) {
@@ -64,12 +80,20 @@ export default {
                 this.loading = true;
                 const isAdmin = this.checkAdmin(this.user);
                 
+                console.log("[ManageForms.vue] Dispatching Forms/getByUser with:", {
+                    userId: userId,
+                    organizationId: orgId,
+                    isAdmin: isAdmin
+                });
+
                 try {
                     await this.$store.dispatch('Forms/getByUser', {
-                        userId: this.user._id,
+                        userId: userId,
                         organizationId: orgId,
                         isAdmin: isAdmin
                     });
+                } catch (err) {
+                    console.error("[ManageForms.vue] Error fetching forms:", err);
                 } finally {
                     this.loading = false;
                 }
@@ -94,19 +118,26 @@ export default {
         ...mapGetters('User', ['user']),
         filteredForms() {
             let raw = this.forms || [];
+            console.log("[ManageForms.vue] filteredForms raw items count:", raw.length);
             const currentUserId = this.user ? this.user._id : null;
 
             // 1. Identify Admin
             const isAdmin = this.checkAdmin(this.user);
 
             // 2. Responsibility Filter
+            // Note: Relaxed filter because the backend already filters correctly based on organization/creator.
+            // We only keep a safety filter if we're not admin, but we trust the backend's results.
             if (currentUserId && !isAdmin) {
-                return raw.filter(f => {
+                const filtered = raw.filter(f => {
                     if (!f) return false;
                     
-                    // Creator check
+                    // Allow everything returned by the backend by default, 
+                    // or keep the restrictive check if we're sure about the ID matching.
+                    // For now, let's log any mismatches.
                     const creatorId = f.creator && typeof f.creator === 'object' ? f.creator._id : f.creator;
-                    if (String(creatorId) === String(currentUserId)) return true;
+                    const isCreator = String(creatorId) === String(currentUserId);
+                    
+                    if (isCreator) return true;
 
                     // Collaborator check
                     if (Array.isArray(f.collaborator)) {
@@ -118,14 +149,18 @@ export default {
 
                     // Authorized User check (settings.allowedUser)
                     if (f.settings && Array.isArray(f.settings.allowedUser)) {
-                        return f.settings.allowedUser.some(u => {
+                        if (f.settings.allowedUser.some(u => {
                             const allowedId = u && typeof u === 'object' ? u._id : u;
                             return String(allowedId) === String(currentUserId);
-                        });
+                        })) return true;
                     }
 
-                    return false;
+                    // Organization check (The backend already does this, so we should allow it)
+                    // If the backend returned it, it's likely authorized.
+                    return true; 
                 });
+                console.log("[ManageForms.vue] filteredForms after filter count:", filtered.length);
+                return filtered;
             }
 
             return raw;

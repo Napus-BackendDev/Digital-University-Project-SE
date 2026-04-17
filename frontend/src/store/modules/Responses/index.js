@@ -146,10 +146,10 @@ const module = {
                 }));
 
                 formData.append('answers', JSON.stringify(answersPayload));
+                formData.append('fileQuestions', JSON.stringify(fileQuestions));
 
                 // attach files as repeated 'file' fields and append matching answers[question] entries
                 files.forEach((file, idx) => {
-                    formData.append('answers[question]', fileQuestions[idx]);
                     formData.append('answers[response]', file, file.name);
                 });
 
@@ -216,8 +216,9 @@ const module = {
                 }));
 
                 formData.append('answers', JSON.stringify(answersPayload));
+                formData.append('fileQuestions', JSON.stringify(fileQuestions));
+
                 files.forEach((file, idx) => {
-                    formData.append('answers[question]', fileQuestions[idx]);
                     formData.append('answers[response]', file, file.name);
                 });
                 payload = formData;

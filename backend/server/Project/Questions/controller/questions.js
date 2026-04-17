@@ -7,4 +7,13 @@ const defaultPopulate = [
     { path: "nextQuestion" },
 ];
 
-module.exports = createBaseService(objSchema, defaultPopulate);
+const baseService = createBaseService(objSchema, defaultPopulate);
+
+module.exports = {
+    baseService,
+    onQuerys: baseService.onQuerys,
+    onQuery: baseService.onQuery,
+    onCreate: baseService.onCreate,
+    onUpdate: baseService.onUpdate,
+    onDelete: baseService.onDelete
+};

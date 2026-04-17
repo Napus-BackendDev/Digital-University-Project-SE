@@ -65,21 +65,16 @@ objSchema.post('save', async function (doc, next) {
 });
 
 // Auto-remove Question from Form's questions array when a Question is deleted via query
-objSchema.pre('deleteMany', async function (next) {
-    try {
-        const query = this.getQuery();
-        if (query._id) {
-            const form = mongoose.model('Forms');
-            // Pull the Question ID from any Form's questions array
-            await form.updateMany(
-                { questions: query._id },
-                { $pull: { questions: query._id } }
-            );
-        }
-        next();
-    } catch (err) {
-        next(err);
-    }
+objSchema.pre('deleteMany', async function () {
+    const query = this.getQuery();
+    if (!query._id) return;
+
+    const form = mongoose.model('Forms');
+    // Pull the Question ID from any Form's questions array
+    await form.updateMany(
+        { questions: query._id },
+        { $pull: { questions: query._id } }
+    );
 });
 
 module.exports = mongoose.model('Questions', objSchema, 'Questions');
