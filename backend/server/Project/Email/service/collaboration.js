@@ -8,14 +8,17 @@ const {
   buildInvitationCollaborationHtml,
   buildInvitationCollaborationText,
 } = require("../templates/invitationCollaboration");
-const {
-  normalizeObjectIdRef,
-  normalizeIdList,
-  getNewMemberIds,
-  getPermissionFromControlType,
-  getPermissionLabel,
-  buildFrontendLink,
-} = require("./collaboration.utils");
+
+// Helper to extract title from localized array
+const getFormTitle = (form) => {
+    if (!form || !form.title || !Array.isArray(form.title) || form.title.length === 0) return 'Untitled Form';
+    const enTitle = form.title.find(t => t.key === 'en');
+    const thTitle = form.title.find(t => t.key === 'th');
+    return enTitle ? enTitle.value : (thTitle ? thTitle.value : form.title[0].value);
+};
+
+// Helper to normalize IDs to strings
+const toIdString = (id) => String(id?._id || id || '').trim();
 
 const isValidEmail = (email) => {
   if (!email || typeof email !== 'string') return false;
@@ -30,116 +33,103 @@ const sendInvitationToUser = async ({
   permission,
   formId,
 }) => {
-  const normalizedUserId = normalizeObjectIdRef(userId);
-  if (!mongo.ObjectId.isValid(normalizedUserId)) {
-    console.warn(`[Collaboration Email] Skip invalid userId: ${normalizedUserId}`);
-    return false;
-  }
-  const user = await UserModel.findById(normalizedUserId).select('name email').lean();
-  if (!user || !isValidEmail(user.email)) {
-    console.warn(`[Collaboration Email] Skip user without valid email: ${normalizedUserId}`);
-    return false;
-  }
+  if (!mongo.ObjectId.isValid(userId)) return false;
 
-  const permissionLabel = getPermissionLabel(permission);
-  const invitationLink = buildFrontendLink({
-    formId,
-    permission,
-    userId: normalizedUserId,
-  });
+  const user = await UserModel.findById(userId).select('name email').lean();
+  if (!user || !isValidEmail(user.email)) return false;
+
+  const permissionLabel = permission === 'edit' ? 'Editor' : 'Viewer';
+  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+  
+  // Build professional link
+  const invitationLink = permission === 'edit' 
+    ? `${baseUrl}/manage/${formId}` 
+    : `${baseUrl}/forms/${formId}?mode=preview&source=invite`;
 
   const subject = `Invitation: ${formTitle} (${permissionLabel})`;
-  const textContent = buildInvitationCollaborationText({
+  const params = {
     inviterName,
     collaboratorName: user.name || 'Collaborator',
     formTitle,
     permission: permissionLabel,
     invitationLink,
-  });
-  const htmlContent = buildInvitationCollaborationHtml({
-    inviterName,
-    collaboratorName: user.name || 'Collaborator',
-    formTitle,
-    permission: permissionLabel,
-    invitationLink,
-  });
+  };
+
+  const textContent = buildInvitationCollaborationText(params);
+  const htmlContent = buildInvitationCollaborationHtml(params);
 
   const sent = await mailer.sendMail(user.email, subject, textContent, htmlContent);
   if (sent) {
-      console.log(`[Collaboration Email] Invite sent to ${user.email} (${permissionLabel})`);
-  } else {
-    console.warn(`[Collaboration Email] Invite failed to ${user.email} (${permissionLabel})`);
+    console.log(`[Collaboration Email] Invite sent to ${user.email} (${permissionLabel})`);
   }
   return sent;
 };
 
+/**
+ * Analyzes form diff and sends invitations to NEW collaborators only.
+ */
 exports.maybeSendCollaborationInvites = async ({
   previousDoc = null,
   currentDoc,
-  actorId = null,
 }) => {
   if (!currentDoc?._id) return;
-  const currentId = String(currentDoc._id || '');
-  if (!mongo.ObjectId.isValid(currentId)) return;
 
   try {
-    const populated = await FormModel.findById(currentId)
+    // Fetch current state with full population to get names and emails
+    const populated = await FormModel.findById(currentDoc._id)
       .select('title settings.allowedUser collaborator creator')
-      .populate({ path: 'collaborator.type', select: 'title' })
+      .populate({ path: 'creator', select: 'name' })
       .lean();
+    
     if (!populated) return;
 
-    const formTitle = populated.title?.[0]?.value || 'Untitled Form';
-    const inviterId = normalizeObjectIdRef(actorId || populated.creator || '');
-    const inviter = mongo.ObjectId.isValid(inviterId)
-      ? await UserModel.findById(inviterId).select('name').lean()
-      : null;
-    const inviterName = inviter?.name || 'Form Owner';
+    const formTitle = getFormTitle(populated);
+    const inviterName = populated.creator?.name || 'Form Owner';
 
-    const prevAllowed = previousDoc?.settings?.allowedUser || [];
-    const nextAllowed = populated?.settings?.allowedUser || [];
-    const newAllowedUserIds = getNewMemberIds({ prev: prevAllowed, next: nextAllowed });
-
-    const prevControllers = previousDoc?.collaborator || [];
-    const nextControllers = populated?.collaborator || [];
-    const prevControllerUserIds = new Set(normalizeIdList(prevControllers.map((item) => item?.user)));
-    const newControllerEntries = nextControllers
-      .map((item) => ({
-        userId: normalizeObjectIdRef(item?.user),
-        permission: getPermissionFromControlType(item?.type),
-      }))
-      .filter((item) => item.userId && !prevControllerUserIds.has(item.userId));
-
-    const invitationTasks = [];
-
-    newAllowedUserIds.forEach((userId) => {
-      if (userId === inviterId) return;
-      invitationTasks.push(sendInvitationToUser({
-        userId,
-        inviterName,
-        formTitle,
-        permission: 'view',
-        formId: populated._id,
-      }));
-    });
-
-    newControllerEntries.forEach(({ userId, permission }) => {
-      if (userId === inviterId) return;
-      invitationTasks.push(sendInvitationToUser({
-        userId,
-        inviterName,
-        formTitle,
-        permission,
-        formId: populated._id,
-      }));
-    });
-
-    if (!invitationTasks.length) {
-      console.log('[Collaboration Email] No new collaborators to invite');
-      return;
+    // 1. Build map of userIds to permission level in PREVIOUS version
+    const prevMap = new Map();
+    if (previousDoc) {
+        (previousDoc.settings?.allowedUser || []).forEach(id => {
+            if (id) prevMap.set(toIdString(id), 'view');
+        });
+        (previousDoc.collaborator || []).forEach(c => {
+            if (c?.user) prevMap.set(toIdString(c.user), 'edit');
+        });
     }
-    await Promise.all(invitationTasks);
+
+    // 2. Build map for CURRENT version
+    const nextMap = new Map();
+    (populated.settings?.allowedUser || []).forEach(id => {
+        if (id) nextMap.set(toIdString(id), 'view');
+    });
+    (populated.collaborator || []).forEach(c => {
+        if (c?.user) nextMap.set(toIdString(c.user), 'edit');
+    });
+
+    // 3. Find truly NEW entries
+    const invitationTasks = [];
+    for (const [userId, permission] of nextMap.entries()) {
+        // Only invite if they weren't in the previous list at all
+        if (!prevMap.has(userId)) {
+            // Don't invite the form owner to their own form
+            if (toIdString(populated.creator) === userId) continue;
+
+            invitationTasks.push(sendInvitationToUser({
+                userId,
+                inviterName,
+                formTitle,
+                permission,
+                formId: populated._id,
+            }));
+        }
+    }
+
+    if (invitationTasks.length > 0) {
+        console.log(`[Collaboration Email] Processing ${invitationTasks.length} new invitations for form: ${formTitle}`);
+        await Promise.all(invitationTasks);
+    }
+
   } catch (err) {
-    console.error('[Collaboration Email] Error:', err.message);
+    console.error('[Collaboration Email] Error during diffing/sending:', err.message);
   }
 };

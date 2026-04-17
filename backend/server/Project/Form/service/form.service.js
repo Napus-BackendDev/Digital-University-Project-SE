@@ -4,6 +4,7 @@ const User = require('../../User/controller/user');
 const ResMessage = require("../../Settings/service/message");
 const {formsPopulate} = require("../controller/form");
 const userModel = require('../../User/models/user.model');
+const { maybeSendCollaborationInvites } = require('../../Email/service/collaboration');
 
 exports.onQuerys = async function (request, response) {
     try {
@@ -90,6 +91,10 @@ exports.onCreate = async function (request, response) {
     try {
 
         const doc = await Form.onCreate(request.body);
+        
+        // Trigger invitations for everyone listed in the new form
+        maybeSendCollaborationInvites({ previousDoc: null, currentDoc: doc });
+
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.log(err);
@@ -102,7 +107,16 @@ exports.onUpdate = async function (request, response) {
         let query = {}
         query._id = new mongo.ObjectId(request.body._id);
 
+        // Fetch previous document to calculate "Newly Added" collaborators
+        const previousDoc = await Form.onQuery(query);
+
         const doc = await Form.onUpdate(query, request.body);
+
+        // Trigger invitation service to diff and send emails to NEW members
+        if (previousDoc && doc) {
+            maybeSendCollaborationInvites({ previousDoc, currentDoc: doc });
+        }
+
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         console.error(err);

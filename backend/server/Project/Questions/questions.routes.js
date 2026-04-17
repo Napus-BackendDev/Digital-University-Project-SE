@@ -3,10 +3,10 @@ const router = express.Router();
 const { upload } = require('../../../helpers/upload');
 const question = require('./service/question.service');
 // Get All Question might not need.
-// router.get("/exp", function (req, res, next) {
-//     req.query.apiId = 12;
-//     next();
-// }, question.onQuerys);
+router.get("/exp", function (req, res, next) {
+    req.query.apiId = 12;
+    next();
+}, question.onQuerys);
 
 // Get One by ID
 router.post("/get", function (req, res, next) {
