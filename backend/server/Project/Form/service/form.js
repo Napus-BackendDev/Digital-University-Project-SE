@@ -2,13 +2,11 @@ const mongo = require('mongodb');
 const Form = require('../controller/form');
 const User = require('../../User/controller/user');
 const ResMessage = require("../../Settings/service/message");
-const {formsPopulate} = require("../controller/form");
-const userModel = require('../../User/models/user.model');
 
 exports.onQuerys = async function (request, response) {
     try {
         const query = {};
-        const doc = await Form.onQuerys(query, formsPopulate);
+        const doc = await Form.onQuerys(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         return ResMessage.sendResponse(response, 0, 40400);
@@ -31,7 +29,7 @@ exports.onQuery = async function (request, response) {
 exports.onQueryByUser = async (request, response, next) => {
     try {
         const _id = new mongo.ObjectId(request.body._id);
-        console.log("[form.service.js] onQueryByUser for ID:", _id);
+
 
         // Fetch user with role details to check for Admin privilege
         const user = await User.onQuery({ _id: _id }, [{ path: 'role' }], "_id organization role");
@@ -53,13 +51,13 @@ exports.onQueryByUser = async (request, response, next) => {
             }
         }
 
-        console.log("[form.service.js] User found. Organization:", user.organization, "| isAdmin:", isAdmin);
+
 
         let query = {};
         if (isAdmin) {
             // Admins can see ALL forms globally in this system
             query = {}; 
-            console.log("[form.service.js] Admin access: showing all forms.");
+
         } else {
             // Regular user: Limited to what they own, collab on, or their organization
             query = {
@@ -72,10 +70,10 @@ exports.onQueryByUser = async (request, response, next) => {
             };
         }
 
-        console.log("[form.service.js] Executing query:", JSON.stringify(query));
 
-        const doc = await Form.onQuerys(query, Form.formsPopulate);
-        console.log("[form.service.js] Query results count:", doc ? doc.length : 0);
+
+        const doc = await Form.onQuerys(query);
+
         
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
@@ -92,7 +90,7 @@ exports.onCreate = async function (request, response) {
         const doc = await Form.onCreate(request.body);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        console.log(err);
+
         return ResMessage.sendResponse(response, 0, 40400);
     }
 };

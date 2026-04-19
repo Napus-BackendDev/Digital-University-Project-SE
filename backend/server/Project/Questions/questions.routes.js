@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { upload } = require('../../../helpers/upload');
-const question = require('./service/question.service');
+const question = require('./service/question');
 // Get All Question might not need.
 // router.get("/exp", function (req, res, next) {
 //     req.query.apiId = 12;

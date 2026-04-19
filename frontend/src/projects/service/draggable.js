@@ -151,7 +151,7 @@ export async function onDragStop(newLayout = [], localQuestions = [], convertIdT
         }
     }
 
-    console.log(newQuestions)
+
 
     return newQuestions;
 }

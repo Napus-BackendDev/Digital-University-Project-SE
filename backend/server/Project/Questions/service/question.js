@@ -28,7 +28,7 @@ exports.onCreate = async function (request, response) {
         const doc = await Question.onCreate(request.body);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        console.log(err);
+
         return ResMessage.sendResponse(response, 0, 40400);
     }
 };

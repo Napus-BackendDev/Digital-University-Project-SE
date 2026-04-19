@@ -54,7 +54,7 @@ objSchema.pre("deleteMany", async function () {
       const Form = mongoose.models.Forms;
       const User = mongoose.models.Users;
 
-      console.log(`[Response Hook] Cleaning up references for IDs:`, ids);
+
 
       for (const deleteId of ids) {
         // Pull from Form if Form model exists

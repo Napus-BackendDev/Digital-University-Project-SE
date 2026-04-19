@@ -25,12 +25,12 @@ exports.onQuerys = async function (request, response, next) {
         const doc = await SVerification.onQuerys(querys);
 
         var resData = await resMsg.onMessage_Response(0,20000)
-        console.log(resData)
+
         resData.data = doc
         response.status(200).json(resData);
 
     } catch (err) {
-        console.log(err)
+
         var resData = await resMsg.onMessage_Response(0,40400)
         response.status(404).json(resData);
     }

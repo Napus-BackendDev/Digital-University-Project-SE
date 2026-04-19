@@ -150,7 +150,7 @@ export default {
         baseTableData() {
             if (!this.forms || this.forms.length === 0) return [];
 
-            console.log(this.forms)
+
 
             const currentUser = this.user;
 

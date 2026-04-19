@@ -6,8 +6,6 @@ const settingsRoutes = require("../Project/Settings/setting.routes");
 const userRoutes = require("../Project/User/user.routes");
 const organizationRoutes = require("../Project/Organizations/organization.routes");
 
-
-
 module.exports = function (app) {
 
   const path = "/api/v1";

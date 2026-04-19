@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const form = require('./service/form.service');
+const form = require('./service/form');
 
 
 // Get All form might don't need.

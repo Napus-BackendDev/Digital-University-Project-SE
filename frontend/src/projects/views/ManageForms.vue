@@ -30,29 +30,27 @@ export default {
         }
     },
     async created() {
-        console.log("[ManageForms.vue] Lifecycle: created. User:", JSON.stringify(this.user));
+
         // If user is already loaded, fetch forms immediately
         const userId = this.user ? (this.user._id || this.user.id) : null;
         if (userId) {
-            console.log("[ManageForms.vue] Lifecycle: user ID found in created(), initializing...");
+
             await this.onInit();
         } else {
-            console.log("[ManageForms.vue] Lifecycle: user ID NOT found in created().");
+
         }
     },
     watch: {
         user: {
             handler(val, oldVal) {
-                console.log("[ManageForms.vue] Lifecycle: user watch triggered.");
-                console.log("  New val:", JSON.stringify(val));
-                console.log("  Old val:", JSON.stringify(oldVal));
+
 
                 const newId = val ? (val._id || val.id) : null;
                 const oldId = oldVal ? (oldVal._id || oldVal.id) : null;
 
                 // Only trigger if user ID has actually changed to avoid redundant calls
                 if (newId && (!oldId || newId !== oldId)) {
-                    console.log("[ManageForms.vue] Lifecycle: user ID changed/loaded in watch, initializing...");
+
                     this.onInit();
                 }
             },
@@ -62,7 +60,7 @@ export default {
     methods: {
         async onInit() {
             const userId = this.user ? (this.user._id || this.user.id) : null;
-            console.log("[ManageForms.vue] onInit called. User:", JSON.stringify(this.user), "Extracted ID:", userId);
+
             
             // Check if user and its essential nested data (organization) are ready
             if (userId) {
@@ -80,11 +78,7 @@ export default {
                 this.loading = true;
                 const isAdmin = this.checkAdmin(this.user);
                 
-                console.log("[ManageForms.vue] Dispatching Forms/getByUser with:", {
-                    userId: userId,
-                    organizationId: orgId,
-                    isAdmin: isAdmin
-                });
+
 
                 try {
                     await this.$store.dispatch('Forms/getByUser', {
@@ -118,7 +112,7 @@ export default {
         ...mapGetters('User', ['user']),
         filteredForms() {
             let raw = this.forms || [];
-            console.log("[ManageForms.vue] filteredForms raw items count:", raw.length);
+
             const currentUserId = this.user ? this.user._id : null;
 
             // 1. Identify Admin
@@ -159,7 +153,7 @@ export default {
                     // If the backend returned it, it's likely authorized.
                     return true; 
                 });
-                console.log("[ManageForms.vue] filteredForms after filter count:", filtered.length);
+
                 return filtered;
             }
 

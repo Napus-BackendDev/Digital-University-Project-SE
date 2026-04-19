@@ -66,7 +66,7 @@ const sendInvitationToUser = async ({
 
   const sent = await mailer.sendMail(user.email, subject, textContent, htmlContent);
   if (sent) {
-      console.log(`[Collaboration Email] Invite sent to ${user.email} (${permissionLabel})`);
+
   } else {
     console.warn(`[Collaboration Email] Invite failed to ${user.email} (${permissionLabel})`);
   }
@@ -135,7 +135,7 @@ exports.maybeSendCollaborationInvites = async ({
     });
 
     if (!invitationTasks.length) {
-      console.log('[Collaboration Email] No new collaborators to invite');
+
       return;
     }
     await Promise.all(invitationTasks);

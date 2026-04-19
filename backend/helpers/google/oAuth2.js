@@ -27,7 +27,7 @@ exports.onQuery = async function (request, response, next) {
     config.params = params;
 
     var response = await googleAuthAPI.get("/oauth2/v3/userinfo", config)
-    console.log(response)
+
 };
 
 exports.onDistance = async function (request, response, next) {
@@ -52,7 +52,7 @@ exports.onDistance = async function (request, response, next) {
 
         const res = await googleMapsAPI.get('/maps/api/distancematrix/json', config);
 
-        console.log('Google Response:', res.data); // <-- เพิ่มบรรทัดนี้
+
 
         const result = res.data.rows[0].elements.map((element, index) => ({
             from: res.data.origin_addresses[0],
