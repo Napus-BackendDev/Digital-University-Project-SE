@@ -71,7 +71,7 @@ async function deleteOldLogs() {
         await mongoose.connection.db.collection('logs').deleteMany({
             timestamp: { $lt: cutoffDate }
         });
-        console.log('Old logs deleted successfully.');
+
     } catch (error) {
         console.error('Error deleting old logs:', error);
     }

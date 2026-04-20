@@ -13,7 +13,7 @@ export default {
             try {
                 await this.$store.dispatch("Organizations/getAll");
 
-                console.log("Global Application Data Loaded Successfully");
+
             } catch (err) {
                 console.error("Critical error during application initialization:", err);
             }

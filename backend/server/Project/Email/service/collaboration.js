@@ -59,9 +59,6 @@ const sendInvitationToUser = async ({
   const htmlContent = buildInvitationCollaborationHtml(params);
 
   const sent = await mailer.sendMail(user.email, subject, textContent, htmlContent);
-  if (sent) {
-    console.log(`[Collaboration Email] Invite sent to ${user.email} (${permissionLabel})`);
-  }
   return sent;
 };
 

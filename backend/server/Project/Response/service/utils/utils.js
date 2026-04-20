@@ -13,7 +13,7 @@ const cleanUpOrphanedFile = function (fileUrl) {
         const filePath = path.join(__dirname, '../../../../../public', relativeUrl);
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-            console.log(`[Auto-Cleanup] Successfully deleted orphaned file at: ${fileUrl}`);
+
         }
     } catch (e) {
         console.error(`[Auto-Cleanup] Failed to delete file ${fileUrl}:`, e.message);

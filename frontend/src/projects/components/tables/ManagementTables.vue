@@ -208,7 +208,7 @@ export default {
 
         tableData() {
             const raw = this.items || [];
-            console.log("[ManagementTables.vue] tableData received items:", raw.length);
+
             const locale = this.$i18n.locale.toLowerCase();
             const currentUserId = this.user ? this.user._id : null;
 
@@ -319,7 +319,7 @@ export default {
 
                 // Extract Collaborators
                 let collaborators = [];
-                console.log(f)
+
                 if (Array.isArray(f.collaborator) && f.collaborator.length > 0) {
                     f.collaborator.forEach(c => {
                         let name = this.getUserName(c.user);

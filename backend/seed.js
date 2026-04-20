@@ -20,8 +20,13 @@ async function seedDatabase() {
   try {
     // 1. Connect to MongoDB
     mongoose.Promise = global.Promise;
-    await mongoose.connect(mongoURI);
-    console.log('Connected to MongoDB');
+    await mongoose.connect(mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useCreateIndex: true,
+      useFindAndModify: false
+    });
+
 
     // 2. Clear existing data
     await Promise.all([
@@ -34,7 +39,7 @@ async function seedDatabase() {
       Response.deleteMany({}),
       SettingControll.deleteMany({})
     ]);
-    console.log('Cleared existing data');
+
 
     // 3. Seed Organizations
     const orgTemplates = [
@@ -58,7 +63,7 @@ async function seedDatabase() {
     }));
 
     const createdOrgs = await Organization.insertMany(orgsData);
-    console.log(`Seeded ${createdOrgs.length} organizations`);
+
 
     // 4. Seed Roles
     const pages = ['Forms', 'Manage Forms', 'Analytics', 'Permissions'];
@@ -95,12 +100,12 @@ async function seedDatabase() {
     ];
 
     const createdRoles = await Role.insertMany(rolesData);
-    console.log(`Seeded ${createdRoles.length} roles`);
+
 
     // 5. Seed Question Types
     const typeNames = ['short_answer', 'paragraph', 'multiple_choice', 'checkbox', 'rating', 'file_upload', 'image', 'title_description'];
     const createdTypes = await QuestionType.insertMany(typeNames.map((t) => ({ type: t })));
-    console.log(`Seeded ${createdTypes.length} question types`);
+
 
     // 6. Seed Control Types
     const controllData = [
@@ -108,7 +113,7 @@ async function seedDatabase() {
       { title: [{ key: 'en', value: 'Viewer' }, { key: 'th', value: 'ดูฟอร์ม' }] }
     ];
     const createdControlls = await SettingControll.insertMany(controllData);
-    console.log(`Seeded ${createdControlls.length} control types`);
+
 
     // 7. Seed Users
     const users = [];
@@ -142,7 +147,7 @@ async function seedDatabase() {
       users.push(u);
     }
 
-    console.log(`Seeded ${users.length} users`);
+
 
     // 8. Seed Forms with mixed creators (not only system admin)
     const forms = [];
@@ -184,7 +189,7 @@ async function seedDatabase() {
       forms.push(f);
     }
 
-    console.log(`Seeded ${forms.length} forms with mixed creators`);
+
 
     // 9. Seed Questions and Responses per form
     const departments = ['IT Support', 'Human Resources', 'Accounting', 'Public Relations', 'Student Development', 'Academic Office'];
@@ -251,15 +256,15 @@ async function seedDatabase() {
       }
 
       const formName = currentForm.title.find((t) => t.key === 'en')?.value || String(currentForm._id);
-      console.log(`Seeded ${createdQuestions.length} questions and ${responsesPerForm} responses for: ${formName}`);
+
     }
 
-    console.log('\nDatabase seeding completed successfully!');
+
   } catch (error) {
     console.error('Error during database seeding:', error);
   } finally {
     await mongoose.connection.close();
-    console.log('Database connection closed\n');
+
     process.exit(0);
   }
 }

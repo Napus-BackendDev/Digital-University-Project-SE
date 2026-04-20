@@ -19,7 +19,7 @@ exports.sendMail = async function (to, subject, text, html) {
 
     try {
         let info = await transporter.sendMail(mailOptions);
-        console.log("Mail sent: %s", info.messageId);
+
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error("Error sending mail:", error);

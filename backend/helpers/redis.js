@@ -11,7 +11,7 @@ class RedisClient {
     async connect() {
         try {
             await this.client.connect();
-            console.log("Redis connected");
+
         } catch (error) {
             console.error("Redis connection failed:", error);
         }

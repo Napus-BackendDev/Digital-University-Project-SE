@@ -31,7 +31,7 @@ exports.onQuerys = async function (request, response, next) {
         response.status(200).json(resData);
 
     } catch (err) {
-        console.log(err)
+
         var resData = await resMsg.onMessage_Response(0, 40400)
         response.status(404).json(resData);
     }
