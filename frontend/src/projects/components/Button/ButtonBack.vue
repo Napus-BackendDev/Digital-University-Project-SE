@@ -34,20 +34,20 @@ export default {
     align-items: center;
     padding: 0.5rem 1.25rem;
     border-radius: 50px;
-    background-color: #4a6cf7;
+    background-color: #8B1A1A;
     color: #ffffff;
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 0.875rem;
     font-weight: 600;
-    box-shadow: 0 4px 6px -1px rgba(74, 108, 247, 0.2), 0 2px 4px -1px rgba(74, 108, 247, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(139, 26, 26, 0.2), 0 2px 4px -1px rgba(139, 26, 26, 0.1);
     border: none;
 }
 
 .back-pill:hover {
-    background-color: #3b5bdb;
+    background-color: #6e1515;
     transform: translateY(-1px);
-    box-shadow: 0 6px 12px -2px rgba(74, 108, 247, 0.25);
+    box-shadow: 0 6px 12px -2px rgba(139, 26, 26, 0.3);
 }
 
 .back-pill:active {

@@ -847,7 +847,7 @@ export default {
             if (!Array.isArray(this.form.title)) {
                 this.$set(this.form, 'title', [{ key: 'en', value: 'Untitled Form' }]);
             } else {
-                this.form.title.push({ key: '', value: '' });
+                this.form.title.push({ key: this.getNextLang(this.form.title), value: '' });
             }
             this.updateFormMeta();
         },
@@ -864,7 +864,7 @@ export default {
             if (!Array.isArray(this.form.description)) {
                 this.$set(this.form, 'description', [{ key: 'en', value: 'Description' }]);
             } else {
-                this.form.description.push({ key: '', value: '' });
+                this.form.description.push({ key: this.getNextLang(this.form.description), value: '' });
             }
             this.updateFormMeta();
         },
@@ -955,8 +955,9 @@ export default {
                 allowMultipleSelect: isCheckboxes,
                 maxRating: isRating ? 5 : null,
                 maxText: isParagraph ? 300 : null,
-                maxFiles: isFileUpload ? 1 : null,
+                maxFiles: isFileUpload ? 5 : null,
                 maxFileSize: isFileUpload ? 1 : null,
+                fileTypes: isFileUpload ? ['image', 'pdf', 'doc'] : [],
                 image: null,
                 description: isTitleDescription ? [{ key: 'en', value: 'Description' }] : [],
             };
@@ -1063,8 +1064,11 @@ export default {
                 this.$set(question.config, 'maxRating', 5);
             }
             if (isFileUpload) {
-                if (typeof question.config.maxFiles !== 'number') this.$set(question.config, 'maxFiles', 1);
+                if (typeof question.config.maxFiles !== 'number') this.$set(question.config, 'maxFiles', 5);
                 if (typeof question.config.maxFileSize !== 'number') this.$set(question.config, 'maxFileSize', 1);
+                if (!Array.isArray(question.config.fileTypes) || question.config.fileTypes.length === 0) {
+                    this.$set(question.config, 'fileTypes', ['image', 'pdf', 'doc']);
+                }
             }
             const isTitleDescription = foundType.type === 'title_description';
             if (isTitleDescription) {
@@ -1114,7 +1118,7 @@ export default {
             if (!Array.isArray(question.title) || question.title.length === 0) {
                 this.$set(question, 'title', [{ key: 'en', value: '' }]);
             } else {
-                question.title.push({ key: '', value: '' });
+                question.title.push({ key: this.getNextLang(question.title), value: '' });
             }
             this.putQuestion(question);
         },
@@ -1173,14 +1177,19 @@ export default {
                     const q = this.localQuestions[this.modalImageIndex];
                     if (q) {
                         if (!q.config) this.$set(q, 'config', {});
+                        this.$set(q.config, 'image', this.modalFiles);
                         if (this.modalImageFile) {
                             await this.putQuestion(q, this.modalImageFile);
                         }
                     }
                 } else {
                     const created = await this.addQuestion('image');
-                    if (created && this.modalImageFile) {
-                        await this.putQuestion(created, this.modalImageFile);
+                    if (created) {
+                        if (!created.config) this.$set(created, 'config', {});
+                        this.$set(created.config, 'image', this.modalFiles);
+                        if (this.modalImageFile) {
+                            await this.putQuestion(created, this.modalImageFile);
+                        }
                     }
                 }
                 this.showImageModal = false;
@@ -1234,7 +1243,7 @@ export default {
             const choice = question.config.choices[choiceIndex];
             if (!choice) return;
             if (!Array.isArray(choice.lang)) this.$set(choice, 'lang', []);
-            choice.lang.push({ key: '', value: '' });
+            choice.lang.push({ key: this.getNextLang(choice.lang), value: '' });
             this.putQuestion(question);
         },
         removeOptionLanguage(question, choiceIndex, langIndex) {
@@ -1321,7 +1330,7 @@ export default {
             if (!Array.isArray(question.config.description)) {
                 this.$set(question.config, 'description', [{ key: 'en', value: '' }]);
             } else {
-                question.config.description.push({ key: '', value: '' });
+                question.config.description.push({ key: this.getNextLang(question.config.description), value: '' });
             }
             this.putQuestion(question);
         },
@@ -1349,6 +1358,13 @@ export default {
                 this.$set(item, 'key', 'en');
                 this.$set(item, 'isManualMode', false);
             }
+        },
+        // Returns the next unused language key given an array of existing lang items
+        getNextLang(existingItems) {
+            const priority = ['en', 'th'];
+            const usedKeys = (existingItems || []).map(i => (i.key || '').toLowerCase());
+            const next = priority.find(k => !usedKeys.includes(k));
+            return next || '';
         },
         getAvailableNextQuestions(question) {
             if (!question || !this.localQuestions) return [];
