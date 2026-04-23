@@ -215,24 +215,26 @@
                                 class="mb-0" @input="() => autoSave()" @change="() => autoSave(true)"
                                 @blur="() => autoSave(true)" />
 
-                            <!-- Submit / Duplicate Button -->
-                            <div v-if="!isPreviewMode && !isAlreadySubmitted" id="submit-section"
-                                class="p-3 d-flex justify-content-end">
-                                <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm"
-                                    :disabled="submitting" class="px-5">
-                                    <CSpinner v-if="submitting" size="sm" class="mr-1" />
-                                    {{ submitting ? $t('common.submitting') : $t('form.submit') }}
-                                </CButton>
-                                <CButton v-else color="info" @click="duplicateForm" :disabled="submitting"
-                                    class="px-5 text-white font-weight-bold">
-                                    <CSpinner v-if="submitting" size="sm" class="mr-1" />
-                                    <CIcon name="cil-copy" class="mr-2" />
-                                    {{ submitting ? $t('common.submitting') : $t('form.copyForm') }}
-                                </CButton>
-                            </div>
                         </CCardBody>
                     </CCard>
                 </transition-group>
+
+                <!-- Submit / Duplicate Button -->
+                <div v-if="!isPreviewMode && !isAlreadySubmitted && visibleQuestions && visibleQuestions.length > 0" id="submit-section"
+                    class="p-3 d-flex justify-content-end mb-3">
+                    <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm"
+                        :disabled="submitting" class="px-5">
+                        <CSpinner v-if="submitting" size="sm" class="mr-1" />
+                        {{ submitting ? $t('common.submitting') : $t('form.submit') }}
+                    </CButton>
+                    <CButton v-else color="info" @click="duplicateForm" :disabled="submitting"
+                        class="px-5 text-white font-weight-bold">
+                        <CSpinner v-if="submitting" size="sm" class="mr-1" />
+                        <CIcon name="cil-copy" class="mr-2" />
+                        {{ submitting ? $t('common.submitting') : $t('form.copyForm') }}
+                    </CButton>
+                </div>
+
             </template>
         </div>
 
