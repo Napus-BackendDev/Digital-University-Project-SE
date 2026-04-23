@@ -2,7 +2,7 @@ const mongo = require('mongodb');
 const moment = require('moment');
 const Response = require('../controller/response');
 const ResMessage = require("../../Settings/service/message");
-const sentMail = require("../../../../helpers/mailer");
+const sentMail = require("../../../../helpers/google/Mail");
 const { attachFilesToAnswers, cleanUpOrphanedFile } = require('./utils/utils');
 const { buildSubmissionConfirmationHtml, buildSubmissionConfirmationText } = require('../../Email/templates/submissionConfirmation');
 
