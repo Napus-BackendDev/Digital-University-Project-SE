@@ -1,5 +1,5 @@
 <template>
-    <div class="pb-5 px-3 pt-4">
+        <div class="c-main">
         <CProgress v-if="loading" indeterminate color="primary" class="mb-3" style="height: 4px;" />
         
         <CRow v-if="error" class="justify-content-center mt-5">
@@ -12,7 +12,7 @@
             </CCol>
         </CRow>
 
-        <div v-else-if="response">
+            <div v-else-if="response" class="pb-5 px-3 pt-4">
             <CRow class="justify-content-center">
                 <CCol lg="10" xl="9">
                     <!-- Header Section -->
@@ -20,7 +20,7 @@
                         <CCardBody class="p-4">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <div class="d-flex align-items-center">
-                                    <ButtonBack :route="backRoute" class="mr-3" />
+                                    <ButtonBack :to="backRoute" class="mr-3" />
                                     <div>
                                         <h2 class="m-0 font-weight-bold text-dark" style="letter-spacing: -0.5px;">
                                             Response Detail
@@ -78,7 +78,7 @@
                         </CCardBody>
                     </CCard>
 
-                    <!-- Detailed Answers Table (Restored) -->
+                        <!-- Detailed Answers Table -->
                     <CCard class="mb-5 border-0 shadow-sm rounded-20 overflow-hidden">
                         <CCardHeader class="bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
                             <h4 class="m-0 font-weight-bold text-dark">Detailed Answers</h4>
@@ -102,10 +102,11 @@
                 </CCol>
             </CRow>
         </div>
-    </div>
+        </div>
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
 import moment from 'moment';
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue';
 import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
@@ -125,6 +126,10 @@ export default {
         };
     },
     computed: {
+        ...mapGetters({
+            organizations: 'Organizations/organizations',
+            questionTypesStore: 'Setting/question_type/item'
+        }),
         lang() {
             var store = this.$store;
             return (store && store.getters['Setting/lang']) || 'en';
@@ -183,11 +188,11 @@ export default {
         },
         backRoute() {
             if (this.response && this.response.form) {
-                var form = this.response.form;
-                var formId = form._id || (typeof form === 'string' ? form : (form.id || null));
+                const form = this.response.form;
+                const formId = form._id || form.id || (typeof form === 'string' ? form : null);
                 if (formId) return { name: 'EditorCreateForm', params: { _id: formId } };
             }
-            return null;
+            return { name: 'ManageForms' };
         }
     },
     watch: {
@@ -227,9 +232,22 @@ export default {
                 }
                 
                 var responderName = this.getResponderName();
+                var responderEmail = this.getResponderEmail();
+                
+                // Resolve Department Name
+                let departmentName = '-';
+                const responder = this.response.responder;
+                if (responder && responder.organization) {
+                    const orgId = responder.organization._id || responder.organization;
+                    const foundOrg = (this.organizations || []).find(o => (o._id === orgId || o.id === orgId));
+                    departmentName = foundOrg ? (this.getTitle(foundOrg.title) || foundOrg.name) : orgId;
+                }
+
                 var metadata = [
                     ["Individual Response Report"],
                     ["Responder:", responderName],
+                    ["Email:", responderEmail],
+                    ["Department:", departmentName],
                     ["Submission Date:", this.formatDate(this.response.createdAt)],
                     [""],
                     ["#", "Question", "Type", "Response"]
@@ -239,9 +257,29 @@ export default {
                 var rows = this.enrichedAnswers.map(function(item, index) {
                     var questionText = self.getTitle(item.question && item.question.title) || 'Question';
                     var type = self.getQuestionTypeLabel(item.question);
-                    var val = item.response;
-                    if (Array.isArray(val)) val = val.join(', ');
-                    return [index + 1, questionText, type, String(val || '')];
+                    const isChoice = self.isChoiceType(type);
+                    
+                    let val = item.response;
+                    
+                    // Choice Label Resolution (New)
+                    if (isChoice) {
+                        const options = (item.question.config && Array.isArray(item.question.config.choices)) 
+                            ? item.question.config.choices 
+                            : (item.question.options || []);
+                        
+                        const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
+                        const labels = choices.map(c => {
+                            let opt = options.find(o => o && (String(o.key) === String(c) || String(o._id) === String(c) || String(o.value) === String(c)));
+                            if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
+                            if (opt) return (opt.lang && Array.isArray(opt.lang)) ? self.getTitle(opt.lang) : (opt.label ? self.getTitle(opt.label) : (opt.value || c));
+                            return c;
+                        });
+                        val = labels.join(', ');
+                    } else {
+                        val = Array.isArray(val) ? val.join(', ') : (val === null || val === undefined ? '' : String(val));
+                    }
+
+                    return [index + 1, questionText, type, val];
                 });
 
                 var worksheet = XLSX.utils.aoa_to_sheet(metadata.concat(rows));
@@ -250,7 +288,10 @@ export default {
                 
                 worksheet['!cols'] = [{ wch: 5 }, { wch: 50 }, { wch: 20 }, { wch: 60 }];
 
-                XLSX.writeFile(workbook, "Report_" + responderName.replace(/\s+/g, '_') + ".xlsx");
+                var formTitle = this.getTitle(this.response.form && this.response.form.title) || 'Form';
+                var filename = (formTitle + "_Response_" + responderName).replace(/\s+/g, '_') + ".xlsx";
+
+                XLSX.writeFile(workbook, filename);
             } catch (err) { 
                 alert("XLSX Export Error: " + err.message); 
             }
@@ -261,9 +302,65 @@ export default {
                     alert("No data available.");
                     return;
                 }
-                var dateStr = moment(this.response.createdAt || new Date()).format('YYYYMMDD');
-                var filename = "response_" + dateStr + ".json";
-                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.response, null, 2));
+                
+                var responderName = this.getResponderName();
+                var responderEmail = this.getResponderEmail();
+                
+                // Resolve Department Name
+                let departmentName = '-';
+                const responder = this.response.responder;
+                if (responder && responder.organization) {
+                    const orgId = responder.organization._id || responder.organization;
+                    const foundOrg = (this.organizations || []).find(o => (o._id === orgId || o.id === orgId));
+                    departmentName = foundOrg ? (this.getTitle(foundOrg.title) || foundOrg.name) : orgId;
+                }
+
+                var self = this;
+                var data = {
+                    metadata: {
+                        reportType: "Individual Response Report",
+                        responder: responderName,
+                        email: responderEmail,
+                        department: departmentName,
+                        submittedAt: this.formatDate(this.response.createdAt),
+                        exportedAt: moment().format('DD/MM/YYYY, HH:mm:ss')
+                    },
+                    answers: this.enrichedAnswers.map(function(item) {
+                        const qTitle = self.getTitle(item.question && item.question.title) || 'Question';
+                        const qTypeLabel = self.getQuestionTypeLabel(item.question);
+                        
+                        // Use the resolved label to check for choice types since the raw type might be an ID
+                        const isChoice = self.isChoiceType(qTypeLabel);
+                        
+                        let resolvedResponse = item.response;
+
+                        // Choice Label Resolution
+                        if (isChoice) {
+                            const options = (item.question.config && Array.isArray(item.question.config.choices)) 
+                                ? item.question.config.choices 
+                                : (item.question.options || []);
+                            
+                            const choices = Array.isArray(resolvedResponse) ? resolvedResponse : (resolvedResponse !== null && resolvedResponse !== undefined ? [resolvedResponse] : []);
+                            const labels = choices.map(c => {
+                                let opt = options.find(o => o && (String(o.key) === String(c) || String(o._id) === String(c) || String(o.value) === String(c)));
+                                if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
+                                if (opt) return (opt.lang && Array.isArray(opt.lang)) ? self.getTitle(opt.lang) : (opt.label ? self.getTitle(opt.label) : (opt.value || c));
+                                return c;
+                            });
+                            resolvedResponse = labels.length === 1 ? labels[0] : labels;
+                        }
+
+                        return {
+                            question: qTitle,
+                            type: qTypeLabel,
+                            response: resolvedResponse
+                        };
+                    })
+                };
+
+                var formTitle = this.getTitle(this.response.form && this.response.form.title) || 'Form';
+                var filename = (formTitle + "_Response_" + responderName).replace(/\s+/g, '_') + ".json";
+                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
                 var dl = document.createElement('a');
                 dl.setAttribute("href", dataStr);
                 dl.setAttribute("download", filename);
@@ -271,7 +368,7 @@ export default {
                 dl.click();
                 dl.remove();
             } catch (err) {
-                alert("JSON Error: " + err.message);
+                alert("JSON Export Error: " + err.message);
             }
         },
         fetchResponseDetail() {
@@ -310,16 +407,32 @@ export default {
         },
         getQuestionTypeLabel(question) {
             if (!question || !question.type) return 'Text';
-            var t = String(question.type.type || question.type || '').toLowerCase();
-            switch (t) {
-                case 'short_answer': return 'Short Text';
-                case 'paragraph': return 'Long Paragraph';
-                case 'multiple_choice': return 'Multiple Choice';
-                case 'checkboxes': return 'Checkboxes';
-                case 'dropdown': return 'Dropdown';
-                case 'rating': return 'Rating';
-                default: return t.charAt(0).toUpperCase() + t.slice(1);
+            
+            let rawType = question.type;
+            let typeStr = '';
+
+            // If type is an ObjectId (string), look it up in the store
+            if (typeof rawType === 'string') {
+                const found = (this.questionTypesStore || []).find(t => t._id === rawType || t.id === rawType);
+                typeStr = found ? (found.type || found.name || rawType) : rawType;
+            } else {
+                typeStr = rawType.type || rawType.name || String(rawType);
             }
+
+            const t = typeStr.toString().toLowerCase();
+            if (t.includes('short')) return 'Short Text';
+            if (t.includes('paragraph')) return 'Long Paragraph';
+            if (t.includes('multiple_choice') || t.includes('multiplechoice')) return 'Multiple Choice';
+            if (t.includes('checkboxes')) return 'Checkboxes';
+            if (t.includes('dropdown')) return 'Dropdown';
+            if (t.includes('rating')) return 'Rating';
+            if (t.includes('file')) return 'File Upload';
+            
+            return t.charAt(0).toUpperCase() + t.slice(1);
+        },
+        isChoiceType(type) {
+            const t = (type || '').toLowerCase();
+            return t.includes('choice') || t.includes('check') || t.includes('dropdown') || t.includes('select');
         },
         deleteResponse() {
             if (confirm("Are you sure you want to delete this response?")) {

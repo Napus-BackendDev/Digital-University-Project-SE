@@ -16,7 +16,7 @@ const defaultPopulate = [
             { path: 'creator', select: '-password' },
             {
                 path: 'responses',
-                select: 'submit createdAt',
+                select: 'submit createdAt answers',
                 populate: { path: 'responder', select: '-password' }
             }
         ]
