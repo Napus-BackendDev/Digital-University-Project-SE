@@ -109,8 +109,18 @@ async function seedDatabase() {
 
     // 6. Seed Control Types
     const controllData = [
-      { title: [{ key: 'en', value: 'Editor' }, { key: 'th', value: 'แก้ไขฟอร์ม' }] },
-      { title: [{ key: 'en', value: 'Viewer' }, { key: 'th', value: 'ดูฟอร์ม' }] }
+      {
+        title: [
+          { key: 'en', value: 'Editor' },
+          { key: 'th', value: 'แก้ไขฟอร์ม (สามารถแก้ไขและจัดการฟอร์มได้)' }
+        ]
+      },
+      {
+        title: [
+          { key: 'en', value: 'Viewer' },
+          { key: 'th', value: 'ดูอย่างเดียว (สามารถดูข้อมูลได้อย่างเดียว)' }
+        ]
+      }
     ];
     const createdControlls = await SettingControll.insertMany(controllData);
 
