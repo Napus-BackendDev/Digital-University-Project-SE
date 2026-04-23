@@ -245,12 +245,46 @@ export default {
                 alert("No data available to export.");
                 return;
             }
-            const dateStr = moment(this.response.form?.createdAt || new Date()).format('YYYYMMDD');
+
+            // Map to a clean, human-readable format
+            const cleanedData = {
+                formTitle: this.getTitle(this.response.form?.title) || 'Untitled Form',
+                description: this.getTitle(this.response.form?.description) || '',
+                exportedAt: moment().format('YYYY-MM-DD HH:mm:ss'),
+                responder: {
+                    name: this.response.responder?.name || this.response.responderName || 'Anonymous',
+                    email: this.response.responder?.email || ''
+                },
+                submittedAt: this.formatDate(this.response.createdAt),
+                answers: {}
+            };
+
+
+            (this.response.answers || []).forEach((a, i) => {
+                const questionTitle = a.question && Array.isArray(a.question.title) 
+                    ? this.getTitle(a.question.title) 
+                    : `Question ${i + 1}`;
+                
+                let val = a.response;
+                if (Array.isArray(val)) {
+                    val = val.join(', ');
+                } else if (this.isRating(a.question)) {
+                    val = `${val} / ${this.getRatingMax(a.question)}`;
+                } else if (this.isEmpty(val)) {
+                    val = '';
+                } else {
+                    val = String(val);
+                }
+
+                cleanedData.answers[questionTitle] = val;
+            });
+
+            const dateStr = moment(this.response.createdAt || new Date()).format('YYYYMMDD');
             const responder = this.response.responder;
             const responderName = responder ? (responder.name || responder.email || 'Anonymous').split('@')[0] : (this.response.responderName || 'Anonymous');
             const filename = `response_${responderName}_${dateStr}.json`;
             
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.response, null, 2));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleanedData, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
             downloadAnchorNode.setAttribute("download", filename);
@@ -258,6 +292,7 @@ export default {
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
         },
+
 
         // ── Export XLSX ───────────────────────────────────────────────────
         exportXlsx() {
