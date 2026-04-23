@@ -71,7 +71,12 @@
                                         <CBadge :color="response.submit ? 'success' : 'warning'" class="px-3 py-2 rounded-pill mr-2 shadow-sm">
                                             {{ response.submit ? 'Completed' : 'Draft' }}
                                         </CBadge>
-                                        <span class="text-muted small font-weight-bold">{{ (response.answers || []).length }} Answered</span>
+                                        <span class="text-muted small font-weight-bold" v-if="response.submit && (response.answers || []).length === 0">
+                                            Submitted (No answers)
+                                        </span>
+                                        <span class="text-muted small font-weight-bold" v-else>
+                                            {{ (response.answers || []).length }} Answered
+                                        </span>
                                     </div>
                                 </CCol>
                             </CRow>

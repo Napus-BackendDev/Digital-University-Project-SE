@@ -53,12 +53,18 @@
                         </td>
                     </template>
 
-                    <!-- Answers column -->
+                    <!-- Answers column (Renamed to Completion/Status) -->
                     <template #answers="{ item }">
                         <td class="align-middle text-center border-0">
-                            <div v-if="!item.isEmpty" class="answer-count-pill">
-                                <span class="count-num">{{ item.answers }}</span>
-                                <span class="count-label">Answers</span>
+                            <div v-if="!item.isEmpty">
+                                <CBadge :color="item.status === 'Completed' ? 'success' : 'warning'" 
+                                        class="px-3 py-2 rounded-pill font-weight-bold shadow-sm"
+                                        style="font-size: 0.75rem; letter-spacing: 0.3px;">
+                                    {{ item.status }}
+                                </CBadge>
+                                <div class="small text-muted mt-1" v-if="item.answers > 0">
+                                    {{ item.answers }} Answers
+                                </div>
                             </div>
                         </td>
                     </template>
@@ -162,6 +168,8 @@ export default {
                     }
                 }
 
+                const isSubmitted = r && (r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true');
+
                 return {
                     id: idx + 1,
                     _id: r._id,
@@ -169,6 +177,7 @@ export default {
                     responder: responder || '-',
                     responderEmail: responderEmail,
                     submitted: r.createdAt ? moment(r.createdAt).format('DD/MM/YYYY, HH:mm') : '-',
+                    status: isSubmitted ? 'Completed' : 'Ongoing',
                     answers: Array.isArray(r.answers) ? r.answers.length : 0,
                     raw: r,
                     isEmpty: false

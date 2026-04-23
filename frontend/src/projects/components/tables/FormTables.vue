@@ -126,6 +126,7 @@ export default {
     async created() {
         this.$store.dispatch('User/getAll');
         this.$store.dispatch('Organizations/getAll');
+        this.$store.dispatch('Responses/get');
     },
     computed: {
         fields() {
@@ -142,6 +143,7 @@ export default {
         ...mapGetters('Forms', ['forms']),
         ...mapGetters('User', ['user', 'users']),
         ...mapGetters('Organizations', ['organizations']),
+        ...mapGetters('Responses', ['responses']),
 
         totalPages() {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
@@ -231,19 +233,31 @@ export default {
                 else if (Array.isArray(f.questionIds)) totalQuestions = f.questionIds.length;
 
                 const userObj = currentUser || {};
+                
+                // Combine responses from user object and the global responses store for maximum consistency
                 const userResponses = userObj.response || [];
+                const globalResponses = this.responses || [];
+                const allRelevantResponses = [...userResponses, ...globalResponses];
+
                 let status = 'Pending';
                 let progress = 0;
                 let userAnswerCount = 0;
 
-                const matchedResponses = userResponses.filter(r => {
-                    if (!r || !r.form) return false;
-                    const resFormId = (typeof r.form === 'object' ? r.form._id : r.form).toString();
+                // Match responses by form ID
+                const matchedResponses = allRelevantResponses.filter(r => {
+                    if (!r) return false;
+                    
+                    // Handle both populated objects and ID strings
+                    const rForm = r.form;
+                    if (!rForm) return false;
+                    
+                    const resFormId = (typeof rForm === 'object' ? (rForm._id || rForm.id) : rForm).toString();
                     return resFormId === f._id.toString();
                 });
 
                 let userResponse = null;
                 if (matchedResponses.length > 0) {
+                    // Sort to get the most recent response
                     matchedResponses.sort((a, b) => {
                         const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
                         const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();

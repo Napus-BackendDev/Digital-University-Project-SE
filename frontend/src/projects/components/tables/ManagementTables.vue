@@ -147,7 +147,7 @@
                             <div class="icon-wrapper mr-2 chart-color" style="width: 20px; height: 20px;">
                                 <CIcon name="cil-check-alt" size="sm" class="text-success" />
                             </div>
-                            <span class="response-count font-weight-bold mr-1">{{ getCompletedCount(item.responses)
+                            <span class="response-count font-weight-bold mr-1">{{ getCompletedCount(item)
                                 }}</span>
                             <small class="text-muted">{{ $t('table.completedResponse') }}</small>
                         </div>
@@ -156,7 +156,7 @@
                                 style="width: 20px; height: 20px; background-color: #f1f5f9;">
                                 <CIcon name="cil-history" size="sm" class="text-info" />
                             </div>
-                            <span class="response-count font-weight-bold mr-1">{{ getOngoingCount(item.responses)
+                            <span class="response-count font-weight-bold mr-1">{{ getOngoingCount(item)
                                 }}</span>
                             <small class="text-muted">{{ $t('table.ongoingResponse') }}</small>
                         </div>
@@ -255,6 +255,7 @@ export default {
         ...mapGetters('Forms', ['forms']),
         ...mapGetters('User', ['user', 'users']),
         ...mapGetters('Organizations', ['organizations']),
+        ...mapGetters('Responses', ['responses']),
         ...mapGetters('dialog', ['isCode']),
 
         totalPages() {
@@ -492,13 +493,40 @@ export default {
         }
     },
     methods: {
-        getCompletedCount(responses) {
+        getCompletedCount(item) {
+            const formId = item._id ? item._id.toString() : null;
+            if (!formId) return 0;
+            
+            // Priority 1: Use global responses store for most accurate real-time data
+            if (this.responses && Array.isArray(this.responses)) {
+                return this.responses.filter(r => {
+                    const rFormId = r.form && typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form;
+                    return String(rFormId) === formId && (r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true');
+                }).length;
+            }
+            
+            // Priority 2: Fallback to item's own responses array if global store is empty
+            const responses = item.responses;
             if (!Array.isArray(responses)) return 0;
-            return responses.filter(r => r.submit === true).length;
+            return responses.filter(r => r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true').length;
         },
-        getOngoingCount(responses) {
+        getOngoingCount(item) {
+            const formId = item._id ? item._id.toString() : null;
+            if (!formId) return 0;
+
+            // Priority 1: Use global responses store
+            if (this.responses && Array.isArray(this.responses)) {
+                return this.responses.filter(r => {
+                    const rFormId = r.form && typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form;
+                    const isSubmitted = r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true';
+                    return String(rFormId) === formId && !isSubmitted;
+                }).length;
+            }
+
+            // Priority 2: Fallback
+            const responses = item.responses;
             if (!Array.isArray(responses)) return 0;
-            return responses.filter(r => r.submit !== true).length;
+            return responses.filter(r => !(r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true')).length;
         },
         calculateDaysLeft(endAt) {
             try {
