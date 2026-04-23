@@ -247,11 +247,15 @@ export default {
             return dateStr ? moment(dateStr).format('D/M/YYYY, h:mm:ss') : '-';
         },
         downloadJson() {
-            if (!this.response || !this.response.answers) { alert("No data available to export."); return; }
+            if (!this.response || !this.response.answers) {
+                alert("No data available to export.");
+                return;
+            }
             const dateStr = moment(this.response.form?.createdAt || new Date()).format('YYYYMMDD');
             const responder = this.response.responder;
             const responderName = responder ? (responder.name || responder.email || 'Anonymous').split('@')[0] : (this.response.responderName || 'Anonymous');
             const filename = `response_${responderName}_${dateStr}.json`;
+            
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.response, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
@@ -260,6 +264,8 @@ export default {
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
         },
+
+        // ── Export XLSX ───────────────────────────────────────────────────
         exportXlsx() {
             if (!this.response || !this.enrichedAnswers.length) { alert("No data available to export."); return; }
             const headers = ["Question", "Response"];

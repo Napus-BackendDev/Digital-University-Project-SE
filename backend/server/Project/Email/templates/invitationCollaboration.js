@@ -14,11 +14,13 @@ const buildInvitationCollaborationHtml = function ({
   collaboratorName = 'Collaborator',
   formTitle = 'Untitled Form',
   permission = 'view',
+  invitationLink = '',
 }) {
   const safeInviterName = escapeHtml(inviterName);
   const safeCollaboratorName = escapeHtml(collaboratorName);
   const safeFormTitle = escapeHtml(formTitle);
   const safePermission = escapeHtml(permission);
+  const safeInvitationLink = escapeHtml(invitationLink || '');
 
   return `
   <div style="margin:0;padding:0;background-color:#fff6f6;font-family:Arial,Helvetica,sans-serif;">
@@ -38,6 +40,13 @@ const buildInvitationCollaborationHtml = function ({
           <p style="margin:6px 0;font-size:14px;color:#3f2f2f;"><strong style="color:#8c1515;">Form:</strong> ${safeFormTitle}</p>
           <p style="margin:6px 0;font-size:14px;color:#3f2f2f;"><strong style="color:#8c1515;">Permission:</strong> ${safePermission}</p>
         </div>
+
+        ${safeInvitationLink ? `
+        <div style="margin-top:18px;">
+          <a href="${safeInvitationLink}" style="display:inline-block;background:#ac1515;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;">
+            Open Form
+          </a>
+        </div>` : ''}
 
 
         <p style="margin-top:20px;font-size:14px;color:#5a4a4a;">
@@ -60,6 +69,7 @@ const buildInvitationCollaborationText = function ({
   collaboratorName = 'Collaborator',
   formTitle = 'Untitled Form',
   permission = 'view',
+  invitationLink = '',
 }) {
   return [
     `Dear ${collaboratorName},`,
@@ -67,6 +77,7 @@ const buildInvitationCollaborationText = function ({
     `${inviterName} invited you to ${permission.toLowerCase() === 'viewer' ? 'view' : 'collaborate on'} a form.`,
     `Form: ${formTitle}`,
     `Permission: ${permission}`,
+    invitationLink ? `Open Form: ${invitationLink}` : '',
     '',
     'If you were not expecting this invitation, please contact the form owner.',
   ].filter(Boolean).join('\n');

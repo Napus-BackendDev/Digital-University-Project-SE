@@ -39,13 +39,20 @@ const sendInvitationToUser = async ({
   if (!user || !isValidEmail(user.email)) return false;
 
   const permissionLabel = permission === 'edit' ? 'Editor' : 'Viewer';
+  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
   
+  // Build professional link
+  const invitationLink = permission === 'edit' 
+    ? `${baseUrl}/manage/${formId}` 
+    : `${baseUrl}/forms/${formId}?mode=preview&source=invite`;
+
   const subject = `Invitation: ${formTitle} (${permissionLabel})`;
   const params = {
     inviterName,
     collaboratorName: user.name || 'Collaborator',
     formTitle,
     permission: permissionLabel,
+    invitationLink,
   };
 
   const textContent = buildInvitationCollaborationText(params);

@@ -400,11 +400,68 @@ export default {
                 alert(this.$t('responses.noExportData'));
                 return;
             }
+
             const formTitle = this.getTitle(this.responses.title) || 'responses';
-            const timestamp = moment().format('YYYY-MM-DD');
-            const filename = `${formTitle}(${timestamp}).json`;
-            
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.allSubmittedResponses, null, 2));
+            const formDescription = this.getTitle(this.responses.description) || '';
+            const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+
+            // Wrap in a metadata object for better context
+            const exportData = {
+                formTitle: formTitle,
+                description: formDescription,
+                exportedAt: timestamp,
+                totalResponses: this.allSubmittedResponses.length,
+                responses: this.allSubmittedResponses.map(r => {
+                    const responseObj = {
+                        responder: r.responder?.name || r.responderName || 'Anonymous',
+                        email: r.responder?.email || '',
+                        submittedAt: this.formatDate(r.createdAt),
+                        answers: {}
+                    };
+
+                    (r.answers || []).forEach((a, i) => {
+                        const questionTitle = a.question && Array.isArray(a.question.title) 
+                            ? this.getTitle(a.question.title) 
+                            : `Question ${i + 1}`;
+                        
+                        let val = a.response;
+                        const qType = a.question && a.question.type 
+                            ? (a.question.type.type || a.question.type).toString().toLowerCase() 
+                            : '';
+                        
+                        // Robust choice label resolution
+                        if (this.isChoiceType(qType) && a.question) {
+                            const options = (a.question.config && Array.isArray(a.question.config.choices)) 
+                                ? a.question.config.choices 
+                                : (a.question.options || []);
+                            
+                            const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
+                            const labels = choices.map(c => {
+                                // Try to find the option by key, id, or value
+                                let opt = options.find(o => o && (o.key === String(c) || (o._id && o._id.toString() === String(c)) || (o.value === String(c))));
+                                if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
+                                
+                                if (opt) {
+                                    return (opt.lang && Array.isArray(opt.lang)) 
+                                        ? this.getTitle(opt.lang) 
+                                        : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
+                                }
+                                return c;
+                            });
+                            val = labels.length ? labels.join(', ') : (val || '');
+                        } else {
+                            val = Array.isArray(val) ? val.join(', ') : (val === null || val === undefined ? '' : val);
+                        }
+                        
+                        responseObj.answers[questionTitle] = val;
+                    });
+
+                    return responseObj;
+                })
+            };
+
+            const filename = `${formTitle}(${moment().format('YYYY-MM-DD')}).json`;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
             downloadAnchorNode.setAttribute("download", filename);
@@ -412,6 +469,8 @@ export default {
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
         },
+
+
 
         formatDate(dateStr) {
             return dateStr ? moment(dateStr).format('DD/MM/YYYY, HH:mm:ss') : '-';

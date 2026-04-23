@@ -3,6 +3,48 @@ const Form = require('../controller/form');
 const User = require('../../User/controller/user');
 const ResMessage = require("../../Settings/service/message");
 const { maybeSendCollaborationInvites } = require('../../Email/service/collaboration');
+const { maybeSendOrganizationInvites } = require('../../Email/service/inviteOrganization');
+
+exports.checkAccess = async function (request, response) {
+    try {
+        const form_id = request.body.form_id;
+        const user_id = request.body.user_id;
+
+        if (!form_id || !user_id) {
+            return ResMessage.sendResponse(response, 0, 40400, "form_id and user_id are required");
+        }
+
+        const doc = await Form.onQuery({ _id: new mongo.ObjectId(form_id) }, Form.formPopulate);
+        if (!doc) {
+            return ResMessage.sendResponse(response, 0, 40400, "Form not found");
+        }
+
+        // 1. Check if Creator
+        if (String(doc.creator?._id || doc.creator) === String(user_id)) {
+            return ResMessage.sendResponse(response, 0, 20000, { role: 'editor' });
+        }
+
+        // 2. Check Collaborators
+        const collaborator = (doc.collaborator || []).find(c => String(c.user?._id || c.user) === String(user_id));
+        if (collaborator) {
+            const typeTitle = collaborator.type?.title || [];
+            const fullTitle = (Array.isArray(typeTitle) ? typeTitle.map(t => t.value).join('') : String(typeTitle)).toLowerCase();
+            const role = fullTitle.includes('view') ? 'viewer' : 'editor';
+            return ResMessage.sendResponse(response, 0, 20000, { role });
+        }
+
+        // 3. Check Allowed Users
+        const isAllowed = (doc.settings?.allowedUser || []).some(u => String(u._id || u) === String(user_id));
+        if (isAllowed) {
+            return ResMessage.sendResponse(response, 0, 20000, { role: 'viewer' });
+        }
+
+        return ResMessage.sendResponse(response, 0, 40300, "Access Denied");
+    } catch (err) {
+        console.error("[form.service.js] checkAccess Error:", err);
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
+    }
+};
 
 exports.onQuerys = async function (request, response) {
     try {
@@ -85,13 +127,12 @@ exports.onQueryByUser = async (request, response, next) => {
     }
 };
 
+
+
 exports.onCreate = async function (request, response) {
     try {
 
         const doc = await Form.onCreate(request.body);
-        
-        // Trigger invitations for everyone listed in the new form
-        maybeSendCollaborationInvites({ previousDoc: null, currentDoc: doc });
 
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
@@ -113,6 +154,7 @@ exports.onUpdate = async function (request, response) {
         // Trigger invitation service to diff and send emails to NEW members
         if (previousDoc && doc) {
             maybeSendCollaborationInvites({ previousDoc, currentDoc: doc });
+            maybeSendOrganizationInvites({ previousDoc, currentDoc: doc });
         }
 
         return ResMessage.sendResponse(response, 0, 20000, doc);
