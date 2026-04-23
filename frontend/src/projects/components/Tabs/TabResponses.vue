@@ -248,11 +248,11 @@ export default {
                 }
             });
 
-            // 2. Prepare Headers (Responder, Department, Submitted, then Others)
-            const headers = ['Responder', 'Department', 'Submitted'];
+            // 2. Prepare Headers (Email, Responder, Department, Submitted, then Others)
+            const headers = ['Email', 'Responder', 'Department', 'Submitted'];
             const questionHeaders = [];
             firstAnswers.forEach((a, i) => {
-                if (i === deptQuestionIdx) return; // Skip because it's promoted to the 2nd column
+                if (i === deptQuestionIdx) return; // Skip because it's promoted to the 3rd column
                 const title = a.question && Array.isArray(a.question.title) && a.question.title.length
                     ? this.getTitle(a.question.title)
                     : `Question ${i + 1}`;
@@ -263,6 +263,7 @@ export default {
             // 3. Prepare Rows
             const rows = this.allSubmittedResponses.map(r => {
                 let responderName = '-';
+                let responderEmail = '-';
                 let departmentValue = '-';
 
                 const getOrganizationLabel = (org) => {
@@ -274,11 +275,13 @@ export default {
                     return org.name || org.title || org.organizationName || '-';
                 };
                 
-                // Extract responder name
+                // Extract responder name & email
                 if (r.responder && typeof r.responder === 'object') {
                     responderName = r.responder.name || r.responder.fullname || r.responder.username || r.responder.email || 'Anonymous';
+                    responderEmail = r.responder.email || '-';
                 } else if (r.responderName) {
                     responderName = r.responderName;
+                    responderEmail = r.responderEmail || '-';
                 } else if (typeof r.responder === 'string') {
                     responderName = r.responder;
                 }
@@ -286,17 +289,48 @@ export default {
                 // Extract Department value (Priority: Question answer > Responder metadata)
                 const ansList = r.answers || [];
                 if (deptQuestionIdx !== -1 && ansList[deptQuestionIdx]) {
-                    const deptAns = ansList[deptQuestionIdx].response;
-                    departmentValue = Array.isArray(deptAns) ? deptAns.join(', ') : (deptAns || '-');
+                    let deptVal = ansList[deptQuestionIdx].response;
+                    
+                    // Resolve labels if it's a choice question
+                    const deptQ = (this.responses.questions || [])[deptQuestionIdx] || ansList[deptQuestionIdx].question;
+                    const deptQType = deptQ && deptQ.type ? (deptQ.type.type || deptQ.type).toString().toLowerCase() : '';
+                    
+                    if (this.isChoiceType(deptQType)) {
+                        const opts = (deptQ.config && deptQ.config.choices) ? deptQ.config.choices : (deptQ.options || []);
+                        const choices = Array.isArray(deptVal) ? deptVal : (deptVal !== null && deptVal !== undefined ? [deptVal] : []);
+                        departmentValue = choices.map(c => {
+                            // If the choice itself is an object (sometimes happens with populated fields)
+                            if (typeof c === 'object' && c !== null) return getOrganizationLabel(c);
+                            
+                            let opt = opts.find(o => o && (String(o.key) === String(c) || String(o._id) === String(c) || String(o.value) === String(c)));
+                            if (!opt && !isNaN(c) && opts[Number(c)]) opt = opts[Number(c)];
+                            if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
+                            return c;
+                        }).join(', ');
+                    } else {
+                        if (Array.isArray(deptVal)) {
+                            departmentValue = deptVal.map(v => (typeof v === 'object' && v !== null) ? getOrganizationLabel(v) : v).join(', ');
+                        } else if (typeof deptVal === 'object' && deptVal !== null) {
+                            departmentValue = getOrganizationLabel(deptVal);
+                        } else {
+                            departmentValue = deptVal || '-';
+                        }
+                    }
                 } else {
                     if (r.responder && typeof r.responder === 'object' && r.responder.organization) {
                         departmentValue = getOrganizationLabel(r.responder.organization);
                     } else {
-                        departmentValue = r.department || r.organization || r.responderDepartment || '-';
+                        const rawFallback = r.department || r.organization || r.responderDepartment || '-';
+                        if (typeof rawFallback === 'object' && rawFallback !== null) {
+                            departmentValue = getOrganizationLabel(rawFallback);
+                        } else {
+                            departmentValue = rawFallback;
+                        }
                     }
                 }
 
                 const row = [
+                    responderEmail,
                     responderName,
                     departmentValue,
                     this.formatDate(r.createdAt)
@@ -307,18 +341,31 @@ export default {
                     if (i === deptQuestionIdx) return; // Skip promoted column
                     
                     let val = a.response;
-                    const qType = a.question && a.question.type 
-                        ? (a.question.type.type || a.question.type).toString().toLowerCase() 
+                    const qId = a.question && (a.question._id || a.question.id || a.question);
+                    
+                    // Resolve full question object first to get accurate metadata
+                    const fullQuestion = (this.responses.questions || []).find(qq => 
+                        String(qq._id || qq.id) === String(qId)
+                    ) || a.question;
+
+                    const qType = fullQuestion && fullQuestion.type 
+                        ? (fullQuestion.type.type || fullQuestion.type).toString().toLowerCase() 
                         : '';
                     
-                    if (this.isChoiceType(qType) && a.question) {
-                        const options = (a.question.config && a.question.config.choices) 
-                            ? a.question.config.choices 
-                            : (a.question.options || []);
+                    if (this.isChoiceType(qType)) {
+                        const options = (fullQuestion && fullQuestion.config && fullQuestion.config.choices) 
+                            ? fullQuestion.config.choices 
+                            : (fullQuestion && fullQuestion.options ? fullQuestion.options : []);
+
                         const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
                         const labels = choices.map(c => {
-                            let opt = options.find(o => o && (o.key === c || (o._id && o._id.toString() === c) || (o.value === c)));
+                            let opt = options.find(o => o && (
+                                String(o.key) === String(c) || 
+                                String(o._id) === String(c) || 
+                                String(o.value) === String(c)
+                            ));
                             if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
+                            
                             if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
                             return c;
                         });
@@ -380,7 +427,7 @@ export default {
             return ['short', 'short_answer', 'paragraph', 'text'].includes((type || '').toLowerCase());
         },
         isChoiceType(type) {
-            return ['multiple_choice', 'multiplechoice', 'checkboxes', 'checkbox'].includes((type || '').toLowerCase());
+            return ['multiple_choice', 'multiplechoice', 'checkboxes', 'checkbox', 'dropdown', 'select'].includes((type || '').toLowerCase());
         },
         isRatingType(type) {
             return ['rating', 'rating'].includes((type || '').toLowerCase());

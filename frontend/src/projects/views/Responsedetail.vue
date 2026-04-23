@@ -62,7 +62,7 @@
                                 <CCol md="4" class="py-2 border-right-md d-flex flex-column justify-content-center">
                                     <label class="small text-uppercase font-weight-bold text-muted d-block mb-1">Responder</label>
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-circle mr-3" style="background-color: #f1f5f9; color: #475569; min-width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        <div class="avatar-circle mr-3">
                                             {{ (response.responder ? (response.responder.name || response.responder.email || 'A') : (response.responderName || 'A')).charAt(0).toUpperCase() }}
                                         </div>
                                         <div class="d-flex flex-column overflow-hidden">
@@ -100,11 +100,11 @@
                         <CCardHeader class="bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
                             <h4 class="m-0 font-weight-bold text-dark">Detailed Answers</h4>
                             <span class="badge badge-light p-2 px-3 rounded-pill text-primary font-weight-bold">
-                                {{ (response.answers || []).length }} Submissions
+                                {{ (enrichedAnswers || []).length }} Questions
                             </span>
                         </CCardHeader>
                         <CCardBody class="p-0">
-                            <AnswerTable :answers="response.answers || []" />
+                            <AnswerTable :answers="enrichedAnswers" />
                         </CCardBody>
                     </CCard>
 
@@ -132,7 +132,7 @@ import ButtonBack from '@/projects/components/Button/ButtonBack.vue';
 import Header from '@/projects/components/Util/Header.vue';
 
 export default {
-    name: 'Response',
+    name: 'ResponseDetail',
     components: { ResponseTables, AnswerTable, ButtonBack, Header },
     props: {
         id: {
@@ -149,6 +149,32 @@ export default {
     },
     computed: {
         ...mapGetters('Setting', ['lang']),
+        enrichedAnswers() {
+            if (!this.response || !Array.isArray(this.response.answers)) return [];
+            
+            // Create a map of Question IDs -> Question Objects from the form structure
+            const questionMap = {};
+            if (this.response.form && Array.isArray(this.response.form.questions)) {
+                this.response.form.questions.forEach(q => {
+                    const qid = q._id || q.id;
+                    if (qid) questionMap[String(qid)] = q;
+                });
+            }
+
+            // Map through answers and enrich them with full question metadata
+            return this.response.answers.map(ans => {
+                let q = ans.question;
+                const qId = q && (q._id || q.id || (typeof q === 'string' ? q : null));
+                
+                if (qId && questionMap[String(qId)]) {
+                    return {
+                        ...ans,
+                        question: questionMap[String(qId)]
+                    };
+                }
+                return ans;
+            });
+        },
         responsesList() {
             return (this.response && this.response.form && Array.isArray(this.response.form.responses)) 
                 ? this.response.form.responses 
@@ -159,27 +185,19 @@ export default {
         },
         currentIndex() {
             if (!this.id) return -1;
-            // First search in list
             let idx = this.responsesList.findIndex(r => (r._id || r.id) === this.id);
-            // If not found in list (e.g. refresh), but match current response, return 0
-            if (idx === -1 && this.response && (this.response._id || this.response.id) === this.id) {
-                return 0;
-            }
+            if (idx === -1 && this.response && (this.response._id || this.response.id) === this.id) return 0;
             return idx;
         },
         backRoute() {
             if (this.response && this.response.form) {
-                const formId = this.response.form._id || (typeof this.response.form === 'string' ? this.response.form : null);
-                if (formId) {
-                    return { name: 'EditorCreateForm', params: { _id: formId } };
-                }
+                const formId = this.response.form._id || (typeof this.response.form === 'string' ? this.response.form : (this.response.form.id || null));
+                if (formId) return { name: 'EditorCreateForm', params: { _id: formId } };
             }
             return null;
         }
     },
-
     watch: {
-        // Watch for ID changes to refresh data when navigating between different responses
         id: {
             handler: 'fetchResponseDetail',
             immediate: false
@@ -194,17 +212,13 @@ export default {
             this.error = null;
             this.response = null;
             try {
-                // Dispatch 'get' action from store to fetch or retrieve the response
                 const result = await this.$store.dispatch('Responses/get', { _id: this.id });
-
                 const doc = Array.isArray(result) ? result[0] : result;
-
                 if (doc && typeof doc === 'object' && doc._id) {
                     this.response = doc;
                 } else {
                     this.error = "Response not found.";
                 }
-
             } catch (err) {
                 console.error('[Responsedetail] Error fetching from store:', err);
                 this.error = "Failed to load response details.";
@@ -215,41 +229,29 @@ export default {
         getTitle(titleArr) {
             if (!titleArr || !Array.isArray(titleArr) || titleArr.length === 0) return '';
             const currentLang = this.lang || 'en';
-            let content = titleArr.find(t => t.key && t.key.toLowerCase() === currentLang.toLowerCase());
-            if (!content) content = titleArr.find(t => t.key && t.key.toLowerCase() === 'en');
-            if (!content) content = titleArr[0];
+            let content = titleArr.find(t => t.key && t.key.toLowerCase() === currentLang.toLowerCase()) || titleArr.find(t => t.key && t.key.toLowerCase() === 'en') || titleArr[0];
             return content ? content.value : '';
         },
         isEmpty(val) {
-            if (val === null || val === undefined || val === '') return true;
-            if (Array.isArray(val) && val.length === 0) return true;
-            return false;
+            return val === null || val === undefined || val === '' || (Array.isArray(val) && val.length === 0);
         },
         isRating(question) {
             if (!question || !question.type) return false;
-            const t = question.type.type ? question.type.type.toLowerCase() : '';
+            const t = (question.type.type || question.type || '').toString().toLowerCase();
             return t === 'rating' || t === 'rate';
         },
         getRatingMax(question) {
-            if (question && question.config && question.config.maxRate) {
-                return Number(question.config.maxRate);
-            }
-            return 5;
+            return (question && question.config && question.config.maxRate) ? Number(question.config.maxRate) : 5;
         },
         formatDate(dateStr) {
-            if (!dateStr) return '-';
-            return moment(dateStr).format('D/M/YYYY, h:mm:ss');
+            return dateStr ? moment(dateStr).format('D/M/YYYY, h:mm:ss') : '-';
         },
         downloadJson() {
-            if (!this.response || !this.response.answers) {
-                alert("No data available to export.");
-                return;
-            }
+            if (!this.response || !this.response.answers) { alert("No data available to export."); return; }
             const dateStr = moment(this.response.form?.createdAt || new Date()).format('YYYYMMDD');
             const responder = this.response.responder;
             const responderName = responder ? (responder.name || responder.email || 'Anonymous').split('@')[0] : (this.response.responderName || 'Anonymous');
             const filename = `response_${responderName}_${dateStr}.json`;
-            
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.response, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
@@ -258,80 +260,56 @@ export default {
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
         },
-
-        // ── Export XLSX ───────────────────────────────────────────────────
         exportXlsx() {
-            if (!this.response || !this.response.answers) {
-                alert("No data available to export.");
-                return;
-            }
-
-            // Create Rows
+            if (!this.response || !this.enrichedAnswers.length) { alert("No data available to export."); return; }
             const headers = ["Question", "Response"];
-            const rows = this.response.answers.map(item => {
+            const rows = this.enrichedAnswers.map(item => {
                 const questionText = this.getTitle(item.question && item.question.title) || 'Unknown Question';
-                
                 let responseText = '';
-                if (this.isEmpty(item.response)) {
+                const raw = item.response;
+
+                if (this.isEmpty(raw)) {
                     responseText = '';
-                } else if (Array.isArray(item.response)) {
-                    responseText = item.response.join(', ');
                 } else if (this.isRating(item.question)) {
-                    responseText = `${item.response} / ${this.getRatingMax(item.question)}`;
+                    responseText = `${raw} / ${this.getRatingMax(item.question)}`;
                 } else {
-                    responseText = String(item.response);
+                    const type = (item.question?.type?.type || item.question?.type || '').toString().toLowerCase();
+                    const isChoice = ['multiple_choice', 'dropdown', 'checkboxes', 'checkbox', 'select'].includes(type);
+                    
+                    if (isChoice && item.question?.config?.choices) {
+                        const options = item.question.config.choices;
+                        const values = Array.isArray(raw) ? raw : [raw];
+                        const labels = values.map(v => {
+                            const opt = options.find(o => String(o.key) === String(v) || String(o._id) === String(v));
+                            if (opt) return (opt.lang ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || v)));
+                            return v;
+                        });
+                        responseText = labels.join(', ');
+                    } else {
+                        responseText = Array.isArray(raw) ? raw.join(', ') : String(raw);
+                    }
                 }
-                
                 return [questionText, responseText];
             });
 
             const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Response Details");
+            worksheet['!cols'] = [{ wch: 50 }, { wch: 60 }];
 
-            // Set column widths
-            worksheet['!cols'] = [
-                { wch: 50 }, // Question
-                { wch: 60 }  // Response
-            ];
-
-            // Format filename with responder info and date
             const dateStr = moment(this.response.form.createdAt).format('YYYYMMDD');
             const responder = this.response.responder;
             const responderName = responder ? (responder.name || responder.email || 'Anonymous').split('@')[0] : (this.response.responderName || 'Anonymous');
             const filename = `response_${responderName}_${dateStr}.xlsx`;
-
             XLSX.writeFile(workbook, filename);
         },
-
-        copyApiLink() {
-            const responsesID = this.responses && this.responses._id;
-            if (!responsesID) { alert('ResponsesID not available yet.'); return; }
-            const BASE = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
-            const url = `${BASE}/response/download/${responsesID}`;
-
-        },
-
-        goToResponse(index) {
-            if (index >= 0 && index < this.totalResponses) {
-                const targetId = this.responsesList[index]._id;
-                this.$router.push({ name: 'Response', params: { id: targetId } });
-            }
-        },
-
         async deleteResponse() {
             if (confirm("Are you sure you want to delete this response?")) {
                 this.loading = true;
                 try {
                     await this.$store.dispatch('Responses/delete', { _id: this.id });
                     alert("Response deleted successfully.");
-                    
-                    // Redirect back to the form's responses list or a fallback
-                    if (this.backRoute) {
-                        this.$router.push(this.backRoute);
-                    } else {
-                        this.$router.push('/forms');
-                    }
+                    if (this.backRoute) this.$router.push(this.backRoute); else this.$router.push('/forms');
                 } catch (err) {
                     console.error("Error deleting response:", err);
                     alert("An error occurred while deleting the response.");
@@ -345,85 +323,33 @@ export default {
 </script>
 
 <style scoped>
-.rounded-20 {
-    border-radius: 20px !important;
-}
-.rounded-16 {
-    border-radius: 16px !important;
-}
-.rounded-pill {
-    border-radius: 50rem !important;
-}
-
-.bg-light {
-    background-color: #f8fafc !important;
-}
-
+.rounded-20 { border-radius: 20px !important; }
+.rounded-16 { border-radius: 16px !important; }
+.rounded-pill { border-radius: 50rem !important; }
+.bg-light { background-color: #f8fafc !important; }
 .avatar-circle {
-    width: 38px;
-    height: 38px;
-    background: #e0e7ff;
-    color: #4338ca;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1rem;
-    box-shadow: 0 2px 4px rgba(67, 56, 202, 0.1);
+    width: 38px; height: 38px; background: #e0e7ff; color: #4338ca;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem; box-shadow: 0 2px 4px rgba(67, 56, 202, 0.1);
 }
-
-.border-right-md {
-    border-right: 1px solid #e2e8f0;
-}
-
+.border-right-md { border-right: 1px solid #e2e8f0; }
 @media (max-width: 767.98px) {
-    .border-right-md {
-        border-right: none;
-        border-bottom: 1px solid #e2e8f0;
-        margin-bottom: 1rem;
-        padding-bottom: 1rem;
-    }
+    .border-right-md { border-right: none; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem; padding-bottom: 1rem; }
 }
-
-.gap-2 {
-    gap: 0.5rem;
-}
-
-h4 {
-    letter-spacing: -0.02em;
-}
-
-::v-deep .card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-::v-deep .card:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-}
-
+.gap-2 { gap: 0.5rem; }
+h4 { letter-spacing: -0.02em; }
+::v-deep .card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+::v-deep .card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important; }
 .btn-export-custom {
-    background-color: #ffffff !important;
-    border: none !important;
+    background-color: #ffffff !important; border: none !important;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.04) !important;
-    border-radius: 100px !important;
-    padding: 0.5rem 1.4rem !important;
-    color: #0f172a !important;
-    transition: all 0.2s ease;
-    cursor: pointer;
+    border-radius: 100px !important; padding: 0.5rem 1.4rem !important;
+    color: #0f172a !important; transition: all 0.2s ease; cursor: pointer;
 }
-
 .btn-export-custom:hover {
-    background-color: #f8fafc !important;
+    background-color: #f8fafc !important; transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.05) !important;
-    transform: translateY(-2px);
 }
-
-.dropdown-export /deep/ .dropdown-toggle::after {
-    display: none !important;
-}
-
-.font-weight-medium {
-    font-weight: 500;
-}
+.dropdown-export /deep/ .dropdown-toggle::after { display: none !important; }
+.font-weight-medium { font-weight: 500; }
 </style>
