@@ -20,8 +20,10 @@
                             <h6 class="font-weight-bold text-dark mb-1 question-text">
                                 {{ getTitle(item.question && item.question.title) || 'Untitled Question' }}
                             </h6>
-                            <div class="text-muted extra-small font-weight-bold text-uppercase letter-spacing-1">
-                                {{ getQuestionTypeLabel(item.question) }}
+                            <div class="d-flex align-items-center">
+                                <span class="badge-type-custom">
+                                    {{ getQuestionTypeLabel(item.question) }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -117,8 +119,19 @@ export default {
             perPage: 20
         }
     },
+    created() {
+        this.$store.dispatch('Setting/question_type/get');
+    },
     computed: {
         ...mapGetters('Setting', ['lang']),
+        ...mapGetters('Setting/question_type', { question_type_list: 'item' }),
+        questionTypes() {
+            if (!this.question_type_list || !Array.isArray(this.question_type_list)) return [];
+            return this.question_type_list.map(type => ({
+                _id: type._id,
+                type: type.type,
+            }));
+        },
         totalPages() {
             return Math.max(1, Math.ceil((this.answers || []).length / this.perPage));
         },
@@ -148,7 +161,7 @@ export default {
         },
         isRating(question) {
             if (!question || !question.type) return false;
-            const t = question.type.type ? question.type.type.toLowerCase() : '';
+            const t = (question.type.type || question.type || '').toString().toLowerCase();
             return t === 'rating' || t === 'rate';
         },
         getRatingMax(question) {
@@ -198,7 +211,14 @@ export default {
         },
         getQuestionIcon(question) {
             if (!question || !question.type) return 'cil-help';
-            const t = question.type.type ? question.type.type.toLowerCase() : '';
+            let t = (question.type.type || question.type || '').toString().toLowerCase();
+
+            // Resolve ID if it looks like a Mongo ID
+            if (/^[0-9a-fA-F]{24}$/.test(t) && this.questionTypes.length) {
+                const found = this.questionTypes.find(type => type._id === t);
+                if (found) t = found.type.toLowerCase();
+            }
+
             switch (t) {
                 case 'short_answer': return 'cil-short-text';
                 case 'paragraph': return 'cil-align-left';
@@ -214,7 +234,14 @@ export default {
         },
         getQuestionTypeLabel(question) {
             if (!question || !question.type) return 'Unknown Type';
-            const t = question.type.type ? question.type.type.toLowerCase() : '';
+            let t = (question.type.type || question.type || '').toString().toLowerCase();
+
+            // Resolve ID if it looks like a Mongo ID
+            if (/^[0-9a-fA-F]{24}$/.test(t) && this.questionTypes.length) {
+                const found = this.questionTypes.find(type => type._id === t);
+                if (found) t = found.type.toLowerCase();
+            }
+
             switch (t) {
                 case 'short_answer': case 'short': return 'Short Text';
                 case 'paragraph': return 'Long Paragraph';
@@ -228,6 +255,8 @@ export default {
                 case 'image': return 'Image';
                 case 'video': return 'Video';
                 default:
+                    // If it looks like a MongoDB ObjectID (24 hex chars), don't display it as a label
+                    if (/^[0-9a-fA-F]{24}$/.test(t)) return 'Unknown Type';
                     return t.charAt(0).toUpperCase() + t.slice(1);
             }
         },
@@ -250,7 +279,11 @@ export default {
             }
 
             // Handle single choice (Multiple Choice / Dropdown)
-            const t = item.question?.type?.type?.toLowerCase() || '';
+            var q = item.question;
+            var t = '';
+            if (q && q.type) {
+                t = (q.type.type || q.type || '').toString().toLowerCase();
+            }
             if (['multiple_choice', 'dropdown'].includes(t)) {
                 return this.getChoiceLabel(item.question, raw);
             }
@@ -337,6 +370,19 @@ export default {
 
 .letter-spacing-1 {
     letter-spacing: 0.05em;
+}
+
+.badge-type-custom {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: #f0f7ff;
+    color: #007bff;
+    padding: 3px 10px;
+    border-radius: 100px;
+    display: inline-block;
+    border: 1px solid #d0e7ff;
 }
 
 /* Response Formatting */

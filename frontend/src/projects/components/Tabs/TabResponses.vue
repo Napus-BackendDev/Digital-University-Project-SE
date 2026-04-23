@@ -174,6 +174,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import moment from 'moment'
 import * as XLSX from 'xlsx'
 import { CChartBar } from '@coreui/vue-chartjs'
@@ -199,6 +200,11 @@ export default {
             loading: false,
             error: null,
             copied: false,
+        }
+    },
+    created() {
+        if (this.$store) {
+            this.$store.dispatch('Organizations/getAll');
         }
     },
     watch: {
@@ -268,7 +274,12 @@ export default {
 
                 const getOrganizationLabel = (org) => {
                     if (!org) return '-';
-                    if (typeof org === 'string') return org;
+                    if (typeof org === 'string') {
+                        // Try to find the organization in the store by ID
+                        const found = this.allOrganizations.find(o => (o._id && o._id.toString() === org) || (o.id && o.id.toString() === org));
+                        if (found) return this.getTitle(found.title) || found.name || org;
+                        return org;
+                    }
                     if (Array.isArray(org.title)) {
                         return this.getTitle(org.title) || '-';
                     }
@@ -309,11 +320,9 @@ export default {
                         }).join(', ');
                     } else {
                         if (Array.isArray(deptVal)) {
-                            departmentValue = deptVal.map(v => (typeof v === 'object' && v !== null) ? getOrganizationLabel(v) : v).join(', ');
-                        } else if (typeof deptVal === 'object' && deptVal !== null) {
-                            departmentValue = getOrganizationLabel(deptVal);
+                            departmentValue = deptVal.map(v => getOrganizationLabel(v)).join(', ');
                         } else {
-                            departmentValue = deptVal || '-';
+                            departmentValue = getOrganizationLabel(deptVal);
                         }
                     }
                 } else {
@@ -526,6 +535,9 @@ export default {
         },
     },
     computed: {
+        ...mapGetters({
+            allOrganizations: 'Organizations/organizations'
+        }),
         allSubmittedResponses() {
             const list = (this.responses && this.responses.responses) || [];
             const unique = [];

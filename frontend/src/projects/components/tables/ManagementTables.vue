@@ -30,14 +30,30 @@
             <template #collaborators="{ item }">
                 <td class="align-middle">
                     <div v-if="!item.isEmpty">
-                        <div v-if="item.collaborators && item.collaborators.length > 0" class="collab-stack">
-                            <div v-for="(collab, i) in item.collaborators" :key="i"
-                                class="d-flex align-items-center mb-1">
-                                <span class="small font-weight-bold text-dark text-truncate mr-2"
-                                    style="max-width: 100px;">{{ collab.name }}</span>
-                                <span class="badge"
-                                    :class="collab.role.toLowerCase().includes('edit') ? 'badge-info' : 'badge-secondary'"
-                                    style="font-size: 0.65rem;">{{ collab.role }}</span>
+                        <div v-if="item.collaborators && item.collaborators.length > 0">
+                            <!-- Grouped Collaborators by Role -->
+                            <div v-for="(collabs, role) in groupCollaboratorsByRole(item.collaborators)" :key="role" class="mb-1 mr-1">
+                                <!-- Single person in this role -->
+                                <div v-if="collabs.length === 1" class="visibility-badge" :class="getRoleClass(role)">
+                                    <CIcon name="cil-user" size="sm" class="mr-2"/>
+                                    {{ collabs[0].name }} ({{ role }})
+                                </div>
+                                
+                                <!-- Multiple people in this role -->
+                                <CDropdown v-else variant="ghost" size="sm" class="m-0 p-0 custom-dropdown" placement="bottom-start" :popper-options="{ positionFixed: true }">
+                                    <template #toggler-content>
+                                        <div class="visibility-badge cursor-pointer" :class="getRoleClass(role)">
+                                            <CIcon name="cil-people" size="sm" class="mr-2"/>
+                                            {{ collabs.length }} {{ role }}{{ collabs.length > 1 ? 's' : '' }}
+                                        </div>
+                                    </template>
+                                    <CDropdownItem v-for="(person, idx) in collabs" :key="idx" class="p-0 border-bottom last-border-0">
+                                        <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
+                                            <CIcon name="cil-user" size="sm" class="mr-3" :class="getRoleIconClass(role)"/>
+                                            <span class="small font-weight-bold text-dark text-truncate">{{ person.name }}</span>
+                                        </div>
+                                    </CDropdownItem>
+                                </CDropdown>
                             </div>
                         </div>
                         <span v-else class="small text-muted">-</span>
@@ -66,12 +82,59 @@
             <!-- Access -->
             <template #access="{ item }">
                 <td class="align-middle">
-                    <div v-if="!item.isEmpty" class="access-stack">
-                        <span v-for="(acc, i) in (Array.isArray(item.access) ? item.access : [item.access])" :key="i"
-                            class="visibility-badge" :class="getVisibilityClass(acc)">
-                            {{ acc.startsWith('Personal: ') ? acc.replace('Personal: ', '') : ($te('accessLabel.' +
-                                acc.toLowerCase()) ? $t('accessLabel.' + acc.toLowerCase()) : acc) }}
-                        </span>
+                    <div v-if="!item.isEmpty" class="d-flex flex-column align-items-start gap-1" style="min-width: 150px;">
+                        <!-- Organization/Public Access -->
+                        <div v-if="orgAccessOnly(item.access).length === 1" class="mb-1 mr-1">
+                            <div class="visibility-badge" :class="getVisibilityClass(orgAccessOnly(item.access)[0])">
+                                <CIcon v-if="orgAccessOnly(item.access)[0] === 'Public' || orgAccessOnly(item.access)[0] === 'Publicly'" name="cil-globe-alt" size="sm" class="mr-2"/>
+                                <CIcon v-else name="cil-bank" size="sm" class="mr-2"/>
+                                {{ orgAccessOnly(item.access)[0] }}
+                            </div>
+                        </div>
+                        
+                        <!-- Multiple Organizations -->
+                        <CDropdown v-else-if="orgAccessOnly(item.access).length > 1" variant="ghost" size="sm" class="m-0 p-0 custom-dropdown mr-2" placement="bottom-start" :popper-options="{ positionFixed: true }">
+                            <template #toggler-content>
+                                <div class="visibility-badge visi-org cursor-pointer">
+                                    <CIcon name="cil-bank" size="sm" class="mr-2"/>
+                                    {{ orgAccessOnly(item.access).length }} Orgs
+                                </div>
+                            </template>
+                            <CDropdownItem v-for="(acc, i) in orgAccessOnly(item.access)" :key="'org-list-'+i" class="p-0 border-bottom last-border-0">
+                                <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
+                                    <CIcon v-if="acc === 'Public' || acc === 'Publicly'" name="cil-globe-alt" size="sm" class="mr-3 text-success"/>
+                                    <CIcon v-else name="cil-bank" size="sm" class="mr-3 text-info"/>
+                                    <span class="small font-weight-bold text-dark text-truncate">{{ acc }}</span>
+                                </div>
+                            </CDropdownItem>
+                        </CDropdown>
+
+                        <!-- Personal Access (Collaborator/Allowed Users) -->
+                        <div v-if="personalAccessOnly(item.access).length > 0" class="mb-1">
+                            <!-- Single Personal Access -->
+                            <div v-if="personalAccessOnly(item.access).length === 1" class="visibility-badge visi-personal">
+                                <CIcon name="cil-user" size="sm" class="mr-1"/>
+                                {{ personalAccessOnly(item.access)[0].replace('Personal: ', '') }}
+                            </div>
+
+                            <!-- Multiple Personal Access -->
+                            <CDropdown v-else-if="personalAccessOnly(item.access).length > 1" variant="ghost" size="sm" class="m-0 p-0 custom-dropdown" placement="bottom-start" :popper-options="{ positionFixed: true }">
+                                <template #toggler-content>
+                                    <div class="visibility-badge visi-personal cursor-pointer">
+                                        <CIcon name="cil-user" size="sm" class="mr-2"/>
+                                        {{ personalAccessOnly(item.access).length }} Access
+                                    </div>
+                                </template>
+                                <CDropdownItem v-for="(acc, i) in personalAccessOnly(item.access)" :key="'pers-'+i" class="p-0 border-bottom last-border-0">
+                                    <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
+                                        <CIcon name="cil-user" size="sm" class="mr-3 text-primary"/>
+                                        <span class="small font-weight-bold text-dark text-truncate">{{ acc.replace('Personal: ', '') }}</span>
+                                    </div>
+                                </CDropdownItem>
+                            </CDropdown>
+                        </div>
+
+                        <span v-if="item.access.length === 0" class="small text-muted">-</span>
                     </div>
                 </td>
             </template>
@@ -522,16 +585,57 @@ export default {
         async deleteForm(item) {
             try {
                 const formId = item._id || (item._raw ? item._raw._id : null) || item.id;
-
                 if (!formId) {
                     console.error("Could not find a valid ID to delete the form.");
                     return;
                 }
-
                 await this.$store.dispatch('Forms/delete', { _id: formId });
             } catch (error) {
                 console.error("Failed to delete form:", error);
             }
+        },
+        // Helper to filter organization/public access
+        orgAccessOnly(access) {
+            if (!Array.isArray(access)) return [];
+            return access.filter(acc => !acc.startsWith('Personal: '));
+        },
+        // Helper to filter personal access
+        personalAccessOnly(access) {
+            if (!Array.isArray(access)) return [];
+            return access.filter(acc => acc.startsWith('Personal: '));
+        },
+        // Helper to filter out public from organization count
+        realOrgAccessOnly(access) {
+            if (!Array.isArray(access)) return [];
+            return access.filter(acc => !acc.startsWith('Personal: ') && acc !== 'Public' && acc !== 'Publicly');
+        },
+        // Helper to group collaborators by their role
+        groupCollaboratorsByRole(collaborators) {
+            if (!collaborators || !Array.isArray(collaborators)) return {};
+            return collaborators.reduce((acc, curr) => {
+                const role = curr.role || 'Contributor';
+                if (!acc[role]) acc[role] = [];
+                acc[role].push(curr);
+                return acc;
+            }, {});
+        },
+        // Get CSS class based on role for color coding
+        getRoleClass(role) {
+            if (!role) return 'role-default';
+            const r = role.toLowerCase();
+            if (r.includes('owner')) return 'role-owner';
+            if (r.includes('edit')) return 'role-editor';
+            if (r.includes('view')) return 'role-viewer';
+            return 'role-default';
+        },
+        // Get icon color class based on role
+        getRoleIconClass(role) {
+            if (!role) return 'text-primary';
+            const r = role.toLowerCase();
+            if (r.includes('owner')) return 'text-warning';
+            if (r.includes('edit')) return 'text-success';
+            if (r.includes('view')) return 'text-secondary';
+            return 'text-primary';
         }
     },
     watch: {
@@ -646,36 +750,61 @@ export default {
 
 .visibility-badge {
     display: inline-flex;
-    padding: 0.25em 0.8em;
-    border-radius: 6px;
-    font-size: 0.75rem;
+    align-items: center;
+    padding: 0.4rem 1.1rem;
+    border-radius: 100px; /* Pill shape like image */
+    font-size: 0.85rem;
     font-weight: 600;
     white-space: nowrap;
+    transition: all 0.2s ease;
+    border: none;
 }
 
 .visi-public {
-    background-color: #ecfdf5;
-    color: #059669;
+    background-color: #ecfdf5; /* Mint green background */
+    color: #065f46; /* Dark teal text */
 }
 
 .visi-private {
-    background-color: #fff1f2;
-    color: #e11d48;
+    background-color: #fef2f2; /* Light red/rose */
+    color: #dc2626; /* Vibrant red text */
+    border: 1px solid #fee2e2;
 }
 
 .visi-org {
-    background-color: #fff7ed;
-    color: #8c1515;
+    background-color: #eff6ff;
+    color: #1e40af;
 }
 
 .visi-personal {
     background-color: #f5f3ff;
-    color: #7c3aed;
+    color: #5b21b6;
 }
 
 .visi-default {
     background-color: #f1f5f9;
-    color: #64748b;
+    color: #475569;
+}
+
+/* Role Specific Colors */
+.role-editor {
+    background-color: #ecfdf5; /* Green */
+    color: #065f46;
+}
+
+.role-viewer {
+    background-color: #f1f5f9; /* Gray/Slate */
+    color: #475569;
+}
+
+.role-owner {
+    background-color: #fffbeb; /* Amber/Gold */
+    color: #92400e;
+}
+
+.role-default {
+    background-color: #eff6ff; /* Blue */
+    color: #1e40af;
 }
 
 .response-badge {
@@ -741,5 +870,53 @@ export default {
     background-color: #f1f5f9 !important;
     color: #3c4b64 !important;
     transform: translateY(-1px);
+}
+
+.dropdown-item-custom {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    text-align: left;
+}
+.dropdown-item-custom:hover {
+    background-color: #f8fafc;
+}
+/* Style the actual dropdown container from CoreUI */
+.custom-dropdown /deep/ .dropdown-menu {
+    background: white !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    margin-top: 8px !important;
+    z-index: 2000 !important; /* Extremely high for fixed positioning */
+    border: 1px solid #edf2f7 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+    max-height: 250px;
+    overflow-y: auto;
+    min-width: 220px;
+}
+/* Reset CoreUI specific dropdown item padding */
+.custom-dropdown /deep/ .dropdown-item {
+    padding: 0 !important;
+}
+.custom-dropdown /deep/ .dropdown-toggle {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    display: flex;
+    align-items: center;
+}
+.custom-dropdown /deep/ .dropdown-toggle::after {
+    display: none !important;
+}
+.last-border-0:last-child {
+    border-bottom: 0 !important;
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+.gap-1 {
+    gap: 0.25rem;
 }
 </style>
