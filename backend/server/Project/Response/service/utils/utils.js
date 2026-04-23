@@ -42,7 +42,28 @@ const attachFilesToAnswers = function (answers, files, body) {
         if (questionForFile) {
             for (const ans of answers) {
                 if (ans && String(ans.question) === String(questionForFile)) {
-                    ans.response = uploadUrl;
+                    let replaced = false;
+                    try {
+                        if (typeof ans.response === 'string' && (ans.response.startsWith('[') || ans.response.startsWith('{'))) {
+                            let parsed = JSON.parse(ans.response);
+                            if (Array.isArray(parsed)) {
+                                const originalName = file.originalname || file.name || '';
+                                const idx = parsed.indexOf(originalName);
+                                if (idx !== -1) {
+                                    parsed[idx] = uploadUrl;
+                                } else {
+                                    parsed.push(uploadUrl);
+                                }
+                                ans.response = JSON.stringify(parsed);
+                                replaced = true;
+                            }
+                        }
+                    } catch(e) {}
+
+                    if (!replaced) {
+                        ans.response = uploadUrl;
+                    }
+                    
                     attached = true;
                     break;
                 }

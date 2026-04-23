@@ -104,7 +104,8 @@
                             <!-- Multiple Choice / Checkboxes -->
                             <div v-else-if="isType(question, 'multiple_choice', 'checkbox')" class="options-container">
                                 <label v-for="(opt, oIdx) in (question.config && question.config.choices || [])"
-                                    :key="'opt-' + convertIdToStr(question._id) + '-' + getOptionKey(opt, oIdx)" class="option-row">
+                                    :key="'opt-' + convertIdToStr(question._id) + '-' + getOptionKey(opt, oIdx)"
+                                    class="option-row">
                                     <input
                                         :type="(question.config && question.config.allowMultipleSelect) ? 'checkbox' : 'radio'"
                                         :name="'q_' + convertIdToStr(question._id)" :value="getOptionKey(opt, oIdx)"
@@ -135,66 +136,62 @@
 
                             <!-- File Upload -->
                             <div v-else-if="isType(question, 'file_upload')">
-                                <input type="file" :multiple="(question.config && Number(question.config.maxFiles) > 1)"
-                                    :accept="getAcceptString(question)" class="text-muted"
-                                    :disabled="isPreviewMode || isAlreadySubmitted"
-                                    @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); autoSave(true); }" />
+                                <div class="d-flex flex-wrap" style="gap: 12px;">
+                                    <template v-for="n in (question.config && Number(question.config.maxFiles) || 1)">
+                                        <div class="file-upload-slot"
+                                            :class="{ 'has-file': getAnswerAsArray(question._id)[n - 1] }"
+                                            @click="!isPreviewMode && !isAlreadySubmitted && triggerUpload(question._id)">
 
-                                <!-- Display uploaded / selected files -->
-                                <div v-if="answers[convertIdToStr(question._id)]" class="mt-2">
-                                    <template v-if="Array.isArray(answers[convertIdToStr(question._id)])">
-                                        <div v-for="(f, idx) in answers[convertIdToStr(question._id)]" :key="'file-' + convertIdToStr(question._id) + '-' + idx + '-' + getAnswerFileName(f)"
-                                            class="mb-2">
-                                            <div class="d-flex align-items-center mb-1 text-primary small">
-                                                <CIcon name="cil-paperclip" size="sm" class="mr-2" />
-                                                <a v-if="resolveAnswerFileUrl(f)" :href="resolveAnswerFileUrl(f)"
-                                                    target="_blank" rel="noopener noreferrer" class="text-truncate"
-                                                    style="max-width: 90%;">{{ getAnswerFileName(f) }}</a>
-                                                <span v-else class="text-truncate" style="max-width: 90%;">{{
-                                                    getAnswerFileName(f) }}</span>
-                                            </div>
-                                            <div v-if="isPreviewableImage(f) && resolveAnswerFileUrl(f)" class="file-preview-wrapper">
-                                                <img :src="resolveAnswerFileUrl(f)" alt="uploaded preview"
-                                                    class="answer-upload-preview" />
-                                            </div>
-                                            <div v-else-if="isPreviewablePdf(f) && resolveAnswerFileUrl(f)" class="file-preview-wrapper">
-                                                <iframe :src="resolveAnswerFileUrl(f)" class="answer-upload-pdf-preview"
-                                                    title="pdf preview"></iframe>
-                                            </div>
-                                            <div v-else-if="isPreviewableVideo(f) && resolveAnswerFileUrl(f)" class="file-preview-wrapper">
-                                                <video :src="resolveAnswerFileUrl(f)" controls class="answer-upload-media-preview"></video>
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <template v-else>
-                                        <div class="mb-2">
-                                            <div class="d-flex align-items-center mb-1 text-primary small">
-                                                <CIcon name="cil-paperclip" size="sm" class="mr-2" />
-                                                <a v-if="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
-                                                    :href="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
-                                                    target="_blank" rel="noopener noreferrer" class="text-truncate"
-                                                    style="max-width: 90%;">{{ getAnswerFileName(answers[convertIdToStr(question._id)]) }}</a>
-                                                <span v-else class="text-truncate" style="max-width: 90%;">{{
-                                                    getAnswerFileName(answers[convertIdToStr(question._id)]) }}</span>
-                                            </div>
-                                            <div v-if="isPreviewableImage(answers[convertIdToStr(question._id)]) && resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
-                                                class="file-preview-wrapper">
-                                                <img :src="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
-                                                    alt="uploaded preview" class="answer-upload-preview" />
-                                            </div>
-                                            <div v-else-if="isPreviewablePdf(answers[convertIdToStr(question._id)]) && resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
-                                                class="file-preview-wrapper">
-                                                <iframe :src="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
-                                                    class="answer-upload-pdf-preview" title="pdf preview"></iframe>
-                                            </div>
-                                            <div v-else-if="isPreviewableVideo(answers[convertIdToStr(question._id)]) && resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
-                                                class="file-preview-wrapper">
-                                                <video :src="resolveAnswerFileUrl(answers[convertIdToStr(question._id)])"
-                                                    controls class="answer-upload-media-preview"></video>
-                                            </div>
+                                            <template
+                                                v-if="getAnswerAsArray(question._id)[n - 1]">
+                                                <div
+                                                    class="file-slot-preview w-100 h-100 d-flex flex-column align-items-center justify-content-center position-relative">
+                                                    
+                                                    <div class="remove-btn bg-danger rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm"
+                                                         style="width: 22px; height: 22px; position: absolute; top: 6px; right: 6px; cursor: pointer; z-index: 2;"
+                                                         @click.stop="removeFile(question._id, n - 1)">
+                                                         <span style="font-size: 14px; font-weight: bold; line-height: 1;">&times;</span>
+                                                    </div>
+                                                    <template
+                                                        v-if="isPreviewableImage(getAnswerAsArray(question._id)[n - 1])">
+                                                        <img :src="resolveAnswerFileUrl(getAnswerAsArray(question._id)[n - 1])"
+                                                            class="slot-image" />
+                                                    </template>
+                                                    <template
+                                                        v-else-if="isPreviewablePdf(getAnswerAsArray(question._id)[n - 1])">
+                                                        <CIcon name="cil-description" height="40"
+                                                            class="text-danger mb-1" />
+                                                        <span class="small text-truncate w-100 px-2 text-center">{{
+                                                            getAnswerFileName(getAnswerAsArray(question._id)[n - 1])
+                                                        }}</span>
+                                                    </template>
+                                                    <template v-else>
+                                                        <CIcon name="cil-paperclip" height="40"
+                                                            class="text-primary mb-1" />
+                                                        <span class="small text-truncate w-100 px-2 text-center">{{
+                                                            getAnswerFileName(getAnswerAsArray(question._id)[n - 1])
+                                                        }}</span>
+                                                    </template>
+                                                </div>
+                                            </template>
+
+                                            <template v-else>
+                                                <div
+                                                    class="file-slot-empty d-flex flex-column align-items-center justify-content-center h-100">
+                                                    <CIcon name="cil-cloud-upload" height="32"
+                                                        class="text-muted mb-2" />
+                                                    <span class="small text-muted font-weight-bold">Upload</span>
+                                                </div>
+                                            </template>
                                         </div>
                                     </template>
                                 </div>
+
+                                <input :ref="'fileInput-' + question._id" type="file"
+                                    :multiple="(question.config && Number(question.config.maxFiles) > 1)"
+                                    :accept="getAcceptString(question)" class="d-none"
+                                    :disabled="isPreviewMode || isAlreadySubmitted"
+                                    @change="e => { handleFileChange(question._id, e.target.files, question); clearError(question._id); autoSave(true); }" />
                             </div>
 
                             <!-- Title & Description -->
@@ -205,35 +202,37 @@
                             </div>
 
                             <!-- Image -->
-                            <img v-else-if="isType(question, 'image') && question.config && question.config.image"
-                                :src="resolveImageUrl(question.config.image)" class="question-full-image" alt="" />
+                            <div v-else-if="isType(question, 'image')">
+                                <img v-if="question.config && question.config.image"
+                                    :src="resolveImageUrl(question.config.image)" class="question-full-image" alt="" />
+                                <div v-else class="image-question-placeholder">
+                                    <CIcon name="cil-image-1" :height="40" class="mb-2" />
+                                </div>
+                            </div>
 
                             <!-- Fallback -->
                             <CInput v-else v-model="answers[question._id]" :placeholder="$t('form.yourAnswer')"
-                                class="mb-0"
-                                @input="() => autoSave()"
-                                @change="() => autoSave(true)"
+                                class="mb-0" @input="() => autoSave()" @change="() => autoSave(true)"
                                 @blur="() => autoSave(true)" />
+
+                            <!-- Submit / Duplicate Button -->
+                            <div v-if="!isPreviewMode && !isAlreadySubmitted" id="submit-section"
+                                class="p-3 d-flex justify-content-end">
+                                <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm"
+                                    :disabled="submitting" class="px-5">
+                                    <CSpinner v-if="submitting" size="sm" class="mr-1" />
+                                    {{ submitting ? $t('common.submitting') : $t('form.submit') }}
+                                </CButton>
+                                <CButton v-else color="info" @click="duplicateForm" :disabled="submitting"
+                                    class="px-5 text-white font-weight-bold">
+                                    <CSpinner v-if="submitting" size="sm" class="mr-1" />
+                                    <CIcon name="cil-copy" class="mr-2" />
+                                    {{ submitting ? $t('common.submitting') : $t('form.copyForm') }}
+                                </CButton>
+                            </div>
                         </CCardBody>
                     </CCard>
                 </transition-group>
-
-                <!-- Submit / Duplicate Button -->
-                <div v-if="!isPreviewMode && !isAlreadySubmitted" id="submit-section"
-                    class="p-3 d-flex justify-content-end">
-                    <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm" :disabled="submitting"
-                        class="px-5">
-                        <CSpinner v-if="submitting" size="sm" class="mr-1" />
-                        {{ submitting ? $t('common.submitting') : $t('form.submit') }}
-                    </CButton>
-                    <CButton v-else color="info" @click="duplicateForm" :disabled="submitting"
-                        class="px-5 text-white font-weight-bold">
-                        <CSpinner v-if="submitting" size="sm" class="mr-1" />
-                        <CIcon name="cil-copy" class="mr-2" />
-                        {{ submitting ? $t('common.submitting') : $t('form.copyForm') }}
-                    </CButton>
-                </div>
-
             </template>
         </div>
 
@@ -326,6 +325,12 @@ export default {
         this.filePreviewUrls = [];
     },
     methods: {
+        getAnswerAsArray(questionId) {
+            const ans = this.answers[this.convertIdToStr(questionId)];
+            if (ans === undefined || ans === null || ans === '') return [];
+            if (Array.isArray(ans)) return ans;
+            return [ans];
+        },
         getResponderStorageKey() {
             return `du.formfill.responder.${this.formId}`;
         },
@@ -515,7 +520,7 @@ export default {
                         this.loading = false;
                         return;
                     }
-                    
+
                     const isAllowed = settings.allowedUser.some(u => {
                         const allowedId = String(typeof u === 'object' ? (u._id || u.value) : u);
                         return allowedId === String(currentResponder);
@@ -738,7 +743,7 @@ export default {
                 this.saveDraftResponse();
                 return;
             }
-            
+
             // Match CreateForm autosave style: single timer with debounce.
             if (this.saveTimeout) clearTimeout(this.saveTimeout);
             if (this.saveTimer) clearTimeout(this.saveTimer);
@@ -914,9 +919,9 @@ export default {
         getAcceptString(question) {
             if (!question || !question.config || !Array.isArray(question.config.fileTypes)) return '';
             const map = {
-                img: 'image/*',
+                image: 'image/*',
                 pdf: '.pdf',
-                docs: '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                doc: '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 sheet: '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             };
             const types = question.config.fileTypes.map(t => map[t] || '').filter(Boolean);
@@ -956,12 +961,36 @@ export default {
 
             const max = question && question.config && Number(question.config.maxFiles) ? Number(question.config.maxFiles) : validFiles.length;
             const qIdStr = this.convertIdToStr(questionId);
-            if (max <= 1) {
-                this.$set(this.answers, qIdStr, validFiles[0] || null);
-                if (validFiles[0]) this.scrollToNextQuestion(question);
-            } else {
-                this.$set(this.answers, qIdStr, validFiles.slice(0, max));
-                if (validFiles.length > 0) this.scrollToNextQuestion(question);
+
+            const currentFiles = [...this.getAnswerAsArray(questionId)];
+            
+            for (let f of validFiles) {
+                if (currentFiles.length < max) {
+                    currentFiles.push(f);
+                }
+            }
+
+            this.$set(this.answers, qIdStr, currentFiles.length > 0 ? currentFiles : null);
+            if (currentFiles.length > 0) this.scrollToNextQuestion(question);
+        },
+        removeFile(questionId, index) {
+            const qIdStr = this.convertIdToStr(questionId);
+            const currentFiles = [...this.getAnswerAsArray(questionId)];
+            if (index >= 0 && index < currentFiles.length) {
+                currentFiles.splice(index, 1);
+                this.$set(this.answers, qIdStr, currentFiles.length > 0 ? currentFiles : null);
+                this.autoSave(true);
+            }
+        },
+        triggerUpload(questionId) {
+            const refName = 'fileInput-' + questionId;
+            const inputElements = this.$refs[refName];
+            if (inputElements) {
+                const el = Array.isArray(inputElements) ? inputElements[0] : inputElements;
+                if (el) {
+                    el.value = '';
+                    el.click();
+                }
             }
         },
         clearError(questionId) {
@@ -1543,6 +1572,20 @@ export default {
     border-radius: 4px;
 }
 
+.image-question-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 120px;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #9ca3af;
+    font-size: 0.85rem;
+}
+
 .card-error {
     border: 1.5px solid #e55353 !important;
     border-radius: 8px;
@@ -1670,5 +1713,39 @@ export default {
 ::v-deep .success-modal .modal-content {
     background: transparent;
     box-shadow: none;
+}
+
+.file-upload-slot {
+    width: 140px;
+    height: 140px;
+    border: 2px dashed #d8dbe0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.2s ease-in-out;
+}
+
+.file-upload-slot:hover {
+    border-color: #321fdb;
+    background-color: #ebedef;
+}
+
+.file-upload-slot.has-file {
+    border-style: solid;
+    border-color: #c4c9d0;
+    background-color: #ffffff;
+}
+
+.file-slot-preview {
+    background-color: #fff;
+    border-radius: 6px;
+}
+
+.slot-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 </style>

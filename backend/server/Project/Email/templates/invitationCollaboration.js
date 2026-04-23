@@ -14,13 +14,11 @@ const buildInvitationCollaborationHtml = function ({
   collaboratorName = 'Collaborator',
   formTitle = 'Untitled Form',
   permission = 'view',
-  invitationLink = '',
 }) {
   const safeInviterName = escapeHtml(inviterName);
   const safeCollaboratorName = escapeHtml(collaboratorName);
   const safeFormTitle = escapeHtml(formTitle);
   const safePermission = escapeHtml(permission);
-  const safeInvitationLink = escapeHtml(invitationLink || '');
 
   return `
   <div style="margin:0;padding:0;background-color:#fff6f6;font-family:Arial,Helvetica,sans-serif;">
@@ -33,7 +31,7 @@ const buildInvitationCollaborationHtml = function ({
       <div style="padding:24px;">
         <p style="font-size:15px;margin-bottom:12px;color:#2f2a2a;">Dear <strong>${safeCollaboratorName}</strong>,</p>
         <p style="font-size:14px;color:#4b3f3f;line-height:1.6;">
-          <strong>${safeInviterName}</strong> invited you to collaborate on a form.
+          <strong>${safeInviterName}</strong> invited you to ${safePermission.toLowerCase() === 'viewer' ? 'view' : 'collaborate on'} a form.
         </p>
 
         <div style="margin-top:18px;padding:16px;background:#fff1f1;border-left:4px solid #ac1515;border-radius:8px;">
@@ -41,12 +39,6 @@ const buildInvitationCollaborationHtml = function ({
           <p style="margin:6px 0;font-size:14px;color:#3f2f2f;"><strong style="color:#8c1515;">Permission:</strong> ${safePermission}</p>
         </div>
 
-        ${safeInvitationLink ? `
-        <div style="margin-top:18px;">
-          <a href="${safeInvitationLink}" style="display:inline-block;background:#ac1515;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;">
-            Open Form
-          </a>
-        </div>` : ''}
 
         <p style="margin-top:20px;font-size:14px;color:#5a4a4a;">
           If you were not expecting this invitation, please contact the form owner.
@@ -68,15 +60,13 @@ const buildInvitationCollaborationText = function ({
   collaboratorName = 'Collaborator',
   formTitle = 'Untitled Form',
   permission = 'view',
-  invitationLink = '',
 }) {
   return [
     `Dear ${collaboratorName},`,
     '',
-    `${inviterName} invited you to collaborate on a form.`,
+    `${inviterName} invited you to ${permission.toLowerCase() === 'viewer' ? 'view' : 'collaborate on'} a form.`,
     `Form: ${formTitle}`,
     `Permission: ${permission}`,
-    invitationLink ? `Open Form: ${invitationLink}` : '',
     '',
     'If you were not expecting this invitation, please contact the form owner.',
   ].filter(Boolean).join('\n');
