@@ -142,6 +142,7 @@ export default {
         ...mapGetters('Forms', ['forms']),
         ...mapGetters('User', ['user', 'users']),
         ...mapGetters('Organizations', ['organizations']),
+        ...mapGetters('Responses', { allResponses: 'responses' }),
 
         totalPages() {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
@@ -231,7 +232,7 @@ export default {
                 else if (Array.isArray(f.questionIds)) totalQuestions = f.questionIds.length;
 
                 const userObj = currentUser || {};
-                const userResponses = userObj.response || [];
+                const userResponses = (this.allResponses && this.allResponses.length > 0) ? this.allResponses : (userObj.response || []);
                 let status = 'Pending';
                 let progress = 0;
                 let userAnswerCount = 0;
@@ -271,8 +272,17 @@ export default {
                     if (Array.isArray(userResponse.answers)) {
                         userAnswerCount = userResponse.answers.filter(a => {
                             if (!a || a.response === null || a.response === undefined) return false;
-                            const resStr = String(a.response).trim();
-                            return resStr !== '' && resStr !== 'null' && resStr !== 'undefined' && resStr !== '[]';
+                            
+                            // Check for empty strings, null strings, or empty arrays (stringified or not)
+                            const val = a.response;
+                            if (typeof val === 'string') {
+                                const s = val.trim();
+                                return s !== '' && s !== 'null' && s !== 'undefined' && s !== '[]' && s !== '[""]';
+                            }
+                            if (Array.isArray(val)) {
+                                return val.length > 0 && val.some(v => v !== '' && v !== null);
+                            }
+                            return true;
                         }).length;
                     }
 

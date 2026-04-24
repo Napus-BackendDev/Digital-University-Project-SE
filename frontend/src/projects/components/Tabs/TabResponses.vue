@@ -1,5 +1,5 @@
 <template>
-        <div class="responses-container">
+    <div class="responses-container">
         <!-- Toolbar -->
         <div class="d-flex justify-content-between align-items-center mb-4 px-3">
             <div>
@@ -112,7 +112,7 @@
                                         <div class="choice-count">{{ opt.count }}</div>
                                     </div>
                                     <div class="custom-progress-container">
-                                        <div class="custom-progress-fill" 
+                                        <div class="custom-progress-fill"
                                             :style="{ width: opt.pct + '%', backgroundColor: opt.color }">
                                             <div class="gloss-overlay"></div>
                                         </div>
@@ -124,23 +124,36 @@
                         <!-- ── RATING ── -->
                         <template v-else-if="isRatingType(q.type)">
                             <div class="chart-box-modern">
-                                <CChartBar :datasets="q.chartData.datasets" :labels="q.chartData.labels" :options="chartOptions"
-                                    style="height: 280px" />
+                                <CChartBar :datasets="q.chartData.datasets" :labels="q.chartData.labels"
+                                    :options="chartOptions" style="height: 280px" />
                             </div>
                         </template>
 
                         <!-- ── FILE UPLOAD ── -->
                         <template v-else-if="isFileType(q.type)">
                             <div class="file-responses-grid">
-                                <div v-for="(r, i) in q.responses.slice(0, 6)" :key="i" class="file-response-item">
-                                    <div class="item-index">{{ i + 1 }}</div>
+                                <div v-for="(file, i) in paginateResponses(q._id, flattenFiles(q.responses))" :key="i"
+                                    class="file-response-item">
                                     <div class="item-content">
-                                        <a :href="resolveImageUrl(r)" target="_blank" rel="noopener noreferrer" class="file-link">
-                                            <img v-if="isImageResponse(r)" :src="resolveImageUrl(r)" class="file-image-preview" />
-                                            <span v-else class="item-text">{{ fileNameFromPath(r) }}</span>
+                                        <a :href="resolveImageUrl(file)" target="_blank" rel="noopener noreferrer"
+                                            class="file-link">
+                                            <div v-if="isImageResponse(file)" class="image-wrapper">
+                                                <img :src="resolveImageUrl(file)" class="file-image-preview" />
+                                            </div>
+                                            <div v-else class="file-placeholder">
+                                                <CIcon name="cil-file" size="xl" class="mb-2" />
+                                                <span class="item-text text-truncate px-2 w-100">{{ fileNameFromPath(file) }}</span>
+                                            </div>
                                         </a>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Pagination for File Responses -->
+                            <div v-if="flattenFiles(q.responses).length > 8" class="mt-4">
+                                <Pagination :activePage="currentPageMap[q._id] || 1"
+                                    :pages="Math.ceil(flattenFiles(q.responses).length / 8)"
+                                    @update:activePage="(v) => handlePageChange(q._id, v)" />
                             </div>
                         </template>
 
@@ -165,7 +178,9 @@
                     <div class="q-index-circle mr-3">
                         <CIcon name="cil-list" size="sm" />
                     </div>
-                    <h3 class="mb-0 font-weight-bold section-title-inner" style="color: #0f172a;">{{ $t('responses.individual') }}</h3>
+                    <h3 class="mb-0 font-weight-bold section-title-inner" style="color: #0f172a;">{{
+                        $t('responses.individual')
+                        }}</h3>
                 </div>
                 <ResponseTables :responseList="allSubmittedResponses" />
             </div>
@@ -209,9 +224,25 @@ export default {
         },
         paginateResponses(qId, responses) {
             const page = this.currentPageMap[qId] || 1;
-            const size = 5;
+            const size = this.isFileTypeByQId(qId) ? 8 : 5;
             const start = (page - 1) * size;
             return responses.slice(start, start + size);
+        },
+        isFileTypeByQId(qId) {
+            const q = this.summaryByQuestion.find(qq => qq._id === qId);
+            return q && this.isFileType(q.type);
+        },
+        flattenFiles(responses) {
+            if (!responses) return [];
+            const flattened = [];
+            responses.forEach(r => {
+                if (Array.isArray(r)) {
+                    flattened.push(...r.filter(f => f));
+                } else if (r) {
+                    flattened.push(r);
+                }
+            });
+            return flattened;
         },
         getTypeIcon(type) {
             const t = (type || '').toLowerCase();
@@ -238,7 +269,7 @@ export default {
             // 1. Identify "Department" question index to avoid duplicates
             const firstAnswers = this.allSubmittedResponses[0].answers || [];
             let deptQuestionIdx = -1;
-            
+
             firstAnswers.forEach((a, i) => {
                 const title = a.question && Array.isArray(a.question.title) && a.question.title.length
                     ? this.getTitle(a.question.title).toLowerCase()
@@ -273,7 +304,7 @@ export default {
                     }
                     return org.name || org.title || org.organizationName || '-';
                 };
-                
+
                 // Extract responder name
                 if (r.responder && typeof r.responder === 'object') {
                     responderName = r.responder.name || r.responder.fullname || r.responder.username || r.responder.email || 'Anonymous';
@@ -305,15 +336,15 @@ export default {
                 // Add other question answers
                 ansList.forEach((a, i) => {
                     if (i === deptQuestionIdx) return; // Skip promoted column
-                    
+
                     let val = a.response;
-                    const qType = a.question && a.question.type 
-                        ? (a.question.type.type || a.question.type).toString().toLowerCase() 
+                    const qType = a.question && a.question.type
+                        ? (a.question.type.type || a.question.type).toString().toLowerCase()
                         : '';
-                    
+
                     if (this.isChoiceType(qType) && a.question) {
-                        const options = (a.question.config && a.question.config.choices) 
-                            ? a.question.config.choices 
+                        const options = (a.question.config && a.question.config.choices)
+                            ? a.question.config.choices
                             : (a.question.options || []);
                         const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
                         const labels = choices.map(c => {
@@ -343,7 +374,7 @@ export default {
             const formTitle = this.getTitle(this.responses.title) || 'responses';
             const timestamp = moment().format('YYYY-MM-DD');
             const filename = `${formTitle}(${timestamp}).xlsx`;
-            
+
             XLSX.writeFile(workbook, filename);
         },
 
@@ -356,7 +387,7 @@ export default {
             const formTitle = this.getTitle(this.responses.title) || 'responses';
             const timestamp = moment().format('YYYY-MM-DD');
             const filename = `${formTitle}(${timestamp}).json`;
-            
+
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.allSubmittedResponses, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
@@ -441,7 +472,7 @@ export default {
             });
             return unique;
         },
-        
+
         chartOptions() {
             return {
                 maintainAspectRatio: false,
@@ -520,7 +551,7 @@ export default {
                     if (!map[qId]) {
                         const title = (qObj && qObj.title) ? qObj.title : (qRaw && qRaw.title) ? qRaw.title : [{ key: 'en', value: 'Unknown question' }];
                         const typeVal = (qObj && qObj.type) ? (qObj.type.type || qObj.type) : (qRaw && qRaw.type ? (qRaw.type.type || qRaw.type) : 'short');
-                        
+
                         // Handle both standard options array and config.choices from your JSON
                         let options = [];
                         if (qObj && qObj.config && Array.isArray(qObj.config.choices)) options = qObj.config.choices;
@@ -560,7 +591,7 @@ export default {
                         if (q.options && q.options.length > 0) {
                             // Try finding by key string (from your JSON: { "key": "0", "lang": [...] })
                             let opt = q.options.find(o => o && (o.key === respKey || (o._id && o._id.toString() === respKey) || (o.value === respKey)));
-                            
+
                             // If not found by key, try by numeric index
                             if (!opt && !isNaN(respKey) && q.options[Number(respKey)]) {
                                 opt = q.options[Number(respKey)];
@@ -568,8 +599,8 @@ export default {
 
                             if (opt) {
                                 // Extract title using multilingual lang array or label field
-                                label = (opt.lang && Array.isArray(opt.lang)) 
-                                    ? this.getTitle(opt.lang) 
+                                label = (opt.lang && Array.isArray(opt.lang))
+                                    ? this.getTitle(opt.lang)
                                     : (opt.label ? this.getTitle(opt.label) : (opt.value || respKey));
                             }
                         }
@@ -585,9 +616,9 @@ export default {
 
                 if (this.isRatingType(q.type)) {
                     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-                    q.responses.forEach(r => { 
-                        const n = Math.round(Number(r)); 
-                        if (n >= 1 && n <= 5) counts[n] = (counts[n] || 0) + 1; 
+                    q.responses.forEach(r => {
+                        const n = Math.round(Number(r));
+                        if (n >= 1 && n <= 5) counts[n] = (counts[n] || 0) + 1;
                     });
 
                     q.chartData = {
@@ -645,36 +676,65 @@ export default {
 
 .file-responses-grid {
     display: grid;
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    margin-top: 10px;
 }
 
 .file-response-item {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
+    flex-direction: column;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
+    border-radius: 12px;
     background: #fff;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    aspect-ratio: 4/3;
+}
+
+.file-response-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
 }
 
 .file-response-item .item-content {
-    flex: 1;
+    height: 100%;
 }
 
 .file-link {
-    display: inline-flex;
-    align-items: center;
+    display: block;
+    height: 100%;
+    width: 100%;
     color: inherit;
     text-decoration: none;
 }
 
+.image-wrapper {
+    height: 100%;
+    width: 100%;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .file-image-preview {
-    max-width: 220px;
-    max-height: 120px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+}
+
+.file-placeholder {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f1f5f9;
+    color: #64748b;
+    text-align: center;
 }
 
 ::v-deep .custom-dropdown .dropdown-toggle {
@@ -781,8 +841,15 @@ export default {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .section-title {
@@ -815,9 +882,17 @@ export default {
 }
 
 @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
 }
 
 /* View Toggle Pills */
@@ -843,14 +918,14 @@ export default {
 }
 
 .toggle-pill:hover:not(.active) {
-    background: rgba(0,0,0,0.03);
+    background: rgba(0, 0, 0, 0.03);
     color: #1e293b;
 }
 
 .toggle-pill.active {
     background: white;
     color: #1e293b;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .divider-vertical {
@@ -867,14 +942,14 @@ export default {
     padding: 10px 20px !important;
     border-radius: 12px !important;
     font-weight: 600 !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     transition: all 0.2s ease !important;
 }
 
 .btn-export-main:hover {
     background: #f8fafc !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
 }
 
 .dropdown-item-modern {
@@ -899,7 +974,7 @@ export default {
 .question-response-card {
     background: white;
     border-radius: 24px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     border: 1px solid rgba(241, 245, 249, 1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     overflow: hidden;
@@ -907,7 +982,7 @@ export default {
 
 .question-response-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05), 0 10px 10px -5px rgba(0,0,0,0.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
 }
 
 .card-inner {
@@ -929,7 +1004,7 @@ export default {
     color: #1e293b;
     font-weight: 800;
     font-size: 1.1rem;
-    box-shadow: inset 0 2px 4px rgba(255,255,255,0.8);
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.8);
 }
 
 .q-title-display {
@@ -995,7 +1070,7 @@ export default {
 .text-response-item:hover {
     background: white;
     border-color: #e2e8f0;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
     transform: translateX(4px);
 }
 
@@ -1066,7 +1141,7 @@ export default {
     left: 0;
     right: 0;
     height: 40%;
-    background: rgba(255,255,255,0.15);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 50rem;
 }
 
@@ -1076,7 +1151,7 @@ export default {
 
 /* Individual Table Card Elite */
 .table-card-premium {
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
     border: 1px solid #f1f5f9;
 }
 
@@ -1102,7 +1177,7 @@ export default {
 ::v-deep .custom-pagination-modern .page-item.active .page-link {
     background: #1e293b !important;
     color: white !important;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 ::v-deep .custom-pagination-modern .page-item:not(.active):hover .page-link {
@@ -1122,13 +1197,16 @@ export default {
         width: 100%;
         gap: 15px;
     }
+
     .toggle-pill-wrapper {
         width: 100%;
     }
+
     .toggle-pill {
         flex: 1;
         justify-content: center;
     }
+
     .divider-vertical {
         display: none;
     }

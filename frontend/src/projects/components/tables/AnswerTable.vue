@@ -37,12 +37,28 @@
                             <span class="empty-text font-italic">No response provided</span>
                         </template>
 
-                        <!-- List / Multi-select (Labels resolved) -->
+                        <!-- List / Multi-select (Labels resolved) or Multi-file -->
                         <template v-else-if="Array.isArray(resolveResponse(item))">
                             <div class="d-flex flex-wrap gap-2">
-                                <span v-for="(val, i) in resolveResponse(item)" :key="i" class="response-pill">
-                                    {{ val }}
-                                </span>
+                                <template v-for="(val, i) in resolveResponse(item)">
+                                    <!-- Image in Array -->
+                                    <template v-if="isImagePath(val)">
+                                        <a :key="i" :href="resolveFileUrl(val)" target="_blank" rel="noopener noreferrer" class="file-response-link p-1 border-0 bg-transparent shadow-none">
+                                            <img :src="resolveFileUrl(val)" class="answer-image-preview sm" loading="lazy" />
+                                        </a>
+                                    </template>
+                                    <!-- File in Array -->
+                                    <template v-else-if="isFilePath(val)">
+                                        <a :key="i" :href="resolveFileUrl(val)" target="_blank" rel="noopener noreferrer" class="file-response-link">
+                                            <CIcon name="cil-file" class="mr-1" style="width: 14px" />
+                                            <span class="text-truncate" style="max-width: 120px">{{ getFileName(val) }}</span>
+                                        </a>
+                                    </template>
+                                    <!-- Standard Pill -->
+                                    <span v-else :key="i" class="response-pill">
+                                        {{ val }}
+                                    </span>
+                                </template>
                             </div>
                         </template>
 
@@ -422,10 +438,22 @@ export default {
 
 .answer-image-preview {
     max-width: 220px;
-    max-height: 120px;
-    border-radius: 8px;
-    border: 1px solid #dbeafe;
+    max-height: 140px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
     object-fit: cover;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.answer-image-preview:hover {
+    transform: scale(1.02);
+}
+
+.answer-image-preview.sm {
+    max-width: 100px;
+    max-height: 70px;
+    border-radius: 8px;
 }
 
 .gap-2 {

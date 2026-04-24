@@ -66,11 +66,16 @@ export default {
                 const isAdmin = this.checkAdmin(this.user);
                 
                 try {
-                    await this.$store.dispatch('Forms/getByUser', {
-                        userId: this.user._id,
-                        organizationId: orgId,
-                        isAdmin: isAdmin
-                    });
+                    await Promise.all([
+                        this.$store.dispatch('Forms/getByUser', {
+                            userId: this.user._id,
+                            organizationId: orgId,
+                            isAdmin: isAdmin
+                        }),
+                        this.$store.dispatch('Responses/get', {
+                            responder: this.user._id
+                        })
+                    ]);
                 } finally {
                     this.loading = false;
                 }
