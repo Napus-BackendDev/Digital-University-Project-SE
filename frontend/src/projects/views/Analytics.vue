@@ -4,10 +4,23 @@
         <CCol lg="12">
             <Header :title="$t('analytics.dailyResponsesTrend')" :description="$t('analytics.dailyResponsesDesc')">
                 <template #actions>
-                    <CButtonGroup>
-                        <CButton :color="timeRange === '1d' ? 'primary' : 'outline-primary'" @click="timeRange = '1d'">{{ $t('analytics.today') }}</CButton>
-                        <CButton :color="timeRange === '7d' ? 'primary' : 'outline-primary'" @click="timeRange = '7d'">{{ $t('analytics.oneWeek') }}</CButton>
-                        <CButton :color="timeRange === '30d' ? 'primary' : 'outline-primary'" @click="timeRange = '30d'">{{ $t('analytics.oneMonth') }}</CButton>
+                    <CButtonGroup class="analytics-filter-group">
+                        <CButton 
+                            :color="timeRange === 'all' ? 'primary' : 'secondary'"
+                            :variant="timeRange === 'all' ? null : 'outline'"
+                            @click="timeRange = 'all'">{{ $t('table.quickDate.all') }}</CButton>
+                        <CButton 
+                            :color="timeRange === '1d' ? 'primary' : 'secondary'"
+                            :variant="timeRange === '1d' ? null : 'outline'"
+                            @click="timeRange = '1d'">{{ $t('table.quickDate.today') }}</CButton>
+                        <CButton 
+                            :color="timeRange === '7d' ? 'primary' : 'secondary'"
+                            :variant="timeRange === '7d' ? null : 'outline'"
+                            @click="timeRange = '7d'">{{ $t('table.quickDate.last7Days') }}</CButton>
+                        <CButton 
+                            :color="timeRange === '30d' ? 'primary' : 'secondary'"
+                            :variant="timeRange === '30d' ? null : 'outline'"
+                            @click="timeRange = '30d'">{{ $t('table.quickDate.last30Days') }}</CButton>
                     </CButtonGroup>
                 </template>
             </Header>
@@ -42,14 +55,17 @@ export default {
     },
     data() {
         return {
-            timeRange: '30d'
+            timeRange: 'all'
         }
     },
-    created() {
-        this.onInit();
-        // Fetch demo user if not already set to ensure analytics have a context
-        if (!this.user) {
-            this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
+    watch: {
+        user: {
+            handler(val) {
+                if (val && val._id) {
+                    this.onInit();
+                }
+            },
+            immediate: true
         }
     },
     methods: {

@@ -79,10 +79,7 @@ export default {
         chartDataObj() {
             if (!this.forms || !this.user) return { labels: [], data: [] };
 
-            const myForms = this.forms.filter(f => {
-                const creatorId = f.creator && f.creator._id ? f.creator._id : f.creator;
-                return String(creatorId) === String(this.user._id);
-            });
+            const myForms = this.forms;
 
             let formatStr = 'MMM DD';
             let loopCount = 0;
@@ -92,10 +89,10 @@ export default {
                 formatStr = 'HH:00';
                 loopCount = 24;
                 unit = 'hours';
-            } else if (this.timeRange === '7d') {
-                loopCount = 7;
-            } else if (this.timeRange === '30d') {
+            } else if (this.timeRange === 'all' || this.timeRange === '30d') {
                 loopCount = 30;
+            } else {
+                loopCount = 7;
             }
 
             const dataMap = {};
@@ -131,11 +128,11 @@ export default {
         computedTrendChartData() {
             return [{
                 label: this.$t('analytics.submissions'),
-                backgroundColor: 'rgba(50, 31, 219, 0.08)',
-                borderColor: '#321fdb',
-                pointBackgroundColor: '#321fdb',
+                backgroundColor: 'rgba(140, 21, 21, 0.08)',
+                borderColor: '#8c1515',
+                pointBackgroundColor: '#8c1515',
                 pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#321fdb',
+                pointHoverBorderColor: '#8c1515',
                 borderWidth: 3,
                 lineTension: 0.4,
                 data: this.chartDataObj.data
@@ -144,6 +141,17 @@ export default {
 
         computedTrendChartLabels() {
             return this.chartDataObj.labels;
+        },
+        checkAdmin(user) {
+            if (user && user.role) {
+                const role = user.role;
+                if (Array.isArray(role.title)) {
+                    return role.title.some(t => t && t.value && t.value.toLowerCase().includes('admin'));
+                } else if (typeof role.title === 'string') {
+                    return role.title.toLowerCase().includes('admin');
+                }
+            }
+            return false;
         }
     }
 }

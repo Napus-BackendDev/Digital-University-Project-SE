@@ -1,11 +1,26 @@
 <template>
     <CRow>
-        <!-- Card 1: Total Active Forms -->
+        <!-- Card 1: Total Forms -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-primary-light text-primary">
                         <CIcon name="cil-file" size="xl" />
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h2 class="stat-value">{{ stats.totalForms }}</h2>
+                    <div class="stat-label">{{ $t('widget.total') }}</div>
+                </div>
+            </div>
+        </CCol>
+
+        <!-- Card 2: Active Forms -->
+        <CCol sm="6" lg="3">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="icon-box bg-success-light text-success">
+                        <CIcon name="cil-chart-line" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
@@ -15,11 +30,11 @@
             </div>
         </CCol>
 
-        <!-- Card 2: Total Responses -->
+        <!-- Card 3: Total Responses -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-info-light text-info">
+                    <div class="icon-box bg-warning-light text-warning">
                         <CIcon name="cil-envelope-closed" size="xl" />
                     </div>
                 </div>
@@ -30,32 +45,17 @@
             </div>
         </CCol>
 
-        <!-- Card 3: Active Users -->
+        <!-- Card 4: Active Users -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-warning-light text-warning">
+                    <div class="icon-box bg-info-light text-info">
                         <CIcon name="cil-people" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalUsers }}</h2>
                     <div class="stat-label">{{ $t('widget.activeUsers') }}</div>
-                </div>
-            </div>
-        </CCol>
-
-        <!-- Card 4: Avg Completion Rate -->
-        <CCol sm="6" lg="3">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="icon-box bg-success-light text-success">
-                        <CIcon name="cil-chart-line" size="xl" />
-                    </div>
-                </div>
-                <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.completionRate }}%</h2>
-                    <div class="stat-label">{{ $t('widget.completionRate') }}</div>
                 </div>
             </div>
         </CCol>
@@ -81,15 +81,15 @@ export default {
 
         stats() {
             if (!this.forms || !Array.isArray(this.forms)) return {
-                activeForms: 0,
+                totalForms: 0,
                 totalResponses: 0,
                 totalUsers: 0,
-                completionRate: 0
+                activeForms: 0
             };
 
+            let totalForms = this.forms.length;
             let activeForms = 0;
             let totalResponses = 0;
-            let totalStarted = 0;
             let totalUsers = (this.users && Array.isArray(this.users)) ? this.users.length : 0;
 
             const now = moment();
@@ -101,21 +101,18 @@ export default {
                     activeForms++;
                 }
 
-                // Count responses and started instances using optimized utility
+                // Count responses using optimized utility
                 if (form.responses && form.responses.length > 0) {
-                    totalStarted += form.responses.length;
                     const filteredResponses = getFilteredResponses(form, this.timeRange, now);
                     totalResponses += filteredResponses.length;
                 }
             });
 
-            const completionRate = totalStarted > 0 ? ((totalResponses / totalStarted) * 100).toFixed(1) : 0;
-
             return {
-                activeForms,
+                totalForms,
                 totalResponses,
                 totalUsers,
-                completionRate
+                activeForms
             };
         }
     }
@@ -160,43 +157,37 @@ export default {
     background-color: rgba(140, 21, 21, 0.1);
 }
 .bg-info-light {
-    background-color: rgba(57, 243, 253, 0.1);
+    background-color: rgba(57, 181, 255, 0.1);
 }
 .bg-danger-light {
     background-color: rgba(229, 83, 83, 0.1);
 }
-
 .bg-success-light {
     background-color: rgba(46, 184, 92, 0.1);
 }
-
 .bg-warning-light {
     background-color: rgba(249, 177, 21, 0.1);
 }
-
 .bg-dark-light {
     background-color: rgba(50, 50, 50, 0.05);
 }
 
-/* Text colors override if needed, using CoreUI utility classes usually works but explicit here for safety */
+/* Text colors override */
 .text-primary {
     color: #8c1515 !important;
 }
 .text-info {
-    color: #39f3fd !important;
+    color: #39b5ff !important;
 }
 .text-danger {
     color: #e55353 !important;
 }
-
 .text-success {
     color: #2eb85c !important;
 }
-
 .text-warning {
     color: #f9b115 !important;
 }
-
 .text-dark {
     color: #3c4b64 !important;
 }

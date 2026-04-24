@@ -128,14 +128,7 @@ export default {
             if (!this.forms || !Array.isArray(this.forms)) return [];
             
             const now = moment();
-            const targetUserId = this.user && this.user._id ? this.user._id : null;
-            
-            const myForms = targetUserId
-                ? this.forms.filter(f => {
-                    const creatorId = f.creator && f.creator._id ? f.creator._id : f.creator;
-                    return String(creatorId) === String(targetUserId);
-                })
-                : this.forms;
+            const myForms = this.forms;
             
             const items = myForms.map(f => {
                 const formName = this.getLang(f.title) || this.$t('common.untitled') || 'Untitled Form';
@@ -236,6 +229,17 @@ export default {
             if (v.includes('private') || v.includes('ส่วนตัว')) return 'visi-private';
             if (v.includes('personal')) return 'visi-personal';
             return 'visi-org';
+        },
+        checkAdmin(user) {
+            if (user && user.role) {
+                const role = user.role;
+                if (Array.isArray(role.title)) {
+                    return role.title.some(t => t && t.value && t.value.toLowerCase().includes('admin'));
+                } else if (typeof role.title === 'string') {
+                    return role.title.toLowerCase().includes('admin');
+                }
+            }
+            return false;
         }
     }
 }

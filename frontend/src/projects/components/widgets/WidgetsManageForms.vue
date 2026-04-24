@@ -43,7 +43,7 @@
             <CCol sm="6" lg="3" @click="$emit('filter', 'Closed')" style="cursor: pointer;">
                 <div class="stat-card">
                     <div class="stat-header">
-                        <div class="icon-box bg-danger-light text-danger">
+                        <div class="icon-box bg-info-light text-info">
                             <CIcon name="cil-lock-locked" size="xl" />
                         </div>
                     </div>
@@ -144,19 +144,43 @@ export default {
 }
 
 .bg-primary-light {
-    background-color: rgba(37, 99, 235, 0.1);
+    background-color: rgba(140, 21, 21, 0.1);
 }
 
 .bg-success-light {
-    background-color: rgba(22, 163, 74, 0.1);
+    background-color: rgba(46, 184, 92, 0.1);
 }
 
 .bg-warning-light {
-    background-color: rgba(234, 179, 8, 0.1);
+    background-color: rgba(249, 177, 21, 0.1);
+}
+
+.bg-info-light {
+    background-color: rgba(57, 181, 255, 0.1);
 }
 
 .bg-danger-light {
-    background-color: rgba(220, 38, 38, 0.1);
+    background-color: rgba(229, 83, 83, 0.1);
+}
+
+.text-primary {
+    color: #8c1515 !important;
+}
+
+.text-success {
+    color: #2eb85c !important;
+}
+
+.text-warning {
+    color: #f9b115 !important;
+}
+
+.text-info {
+    color: #39b5ff !important;
+}
+
+.text-danger {
+    color: #e55353 !important;
 }
 
 .stat-value {

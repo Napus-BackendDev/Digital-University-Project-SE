@@ -10,6 +10,10 @@ export function isSubmittedResponse(response) {
 }
 
 export function getRangeStart(timeRange, now = moment()) {
+    if (timeRange === '1d') {
+        return now.clone().startOf('day');
+    }
+    
     if (timeRange === '30d') {
         return now.clone().startOf('day').subtract(29, 'days');
     }
@@ -22,6 +26,7 @@ export function getRangeStart(timeRange, now = moment()) {
 }
 
 export function isInTimeRange(createdAt, timeRange, now = moment()) {
+    if (timeRange === 'all') return true;
     if (!createdAt) return false;
 
     const date = moment(createdAt);

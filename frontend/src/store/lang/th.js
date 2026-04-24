@@ -265,6 +265,7 @@ const th = {
         responsesOverTimeDesc: "การตอบกลับรายวันในตัวกรองที่เลือก",
         sevenDaysView: "ดูย้อนหลัง 7 วัน",
         timeRange: {
+            "all": "ทั้งหมด",
             "7d": "7 วัน",
             "30d": "30 วัน",
             "1y": "1 ปี"

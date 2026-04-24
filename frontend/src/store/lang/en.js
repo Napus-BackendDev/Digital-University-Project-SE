@@ -265,6 +265,7 @@ const en = {
         responsesOverTimeDesc: "Daily responses monitored for the selected period",
         sevenDaysView: "7 DAYS VIEW",
         timeRange: {
+            "all": "All",
             "7d": "7 Days",
             "30d": "30 Days",
             "1y": "1 Year"
@@ -278,7 +279,7 @@ const en = {
             avgResponses: "Avg Responses/Form"
         },
         submissionTrend: "Submission Activity Trend",
-        popularForms: "Top 5 Most Popular Forms",
+        popularForms: "Most Responses Form",
         today: "Today",
         oneWeek: "1 Week",
         oneMonth: "1 Month",

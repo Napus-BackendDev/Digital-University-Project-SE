@@ -49,7 +49,7 @@ exports.checkAccess = async function (request, response) {
 exports.onQuerys = async function (request, response) {
     try {
         const query = {};
-        const doc = await Form.onQuerys(query);
+        const doc = await Form.onQuerys(query, Form.formPopulate);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
         return ResMessage.sendResponse(response, 0, 40400);
@@ -115,7 +115,7 @@ exports.onQueryByUser = async (request, response, next) => {
 
 
 
-        const doc = await Form.onQuerys(query);
+        const doc = await Form.onQuerys(query, Form.formPopulate);
 
         
         return ResMessage.sendResponse(response, 0, 20000, doc);
