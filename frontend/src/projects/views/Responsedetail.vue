@@ -1,76 +1,59 @@
 <template>
-    <div class="flex-grow-1">
+        <div class="c-main">
+        <CProgress v-if="loading" indeterminate color="primary" class="mb-3" style="height: 4px;" />
+        
+        <CRow v-if="error" class="justify-content-center mt-5">
+            <CCol md="6">
+                <CCallout color="danger" class="bg-white shadow-sm border-left-4">
+                    <h5 class="text-danger font-weight-bold">Error</h5>
+                    <p>{{ error }}</p>
+                    <CButton color="primary" variant="outline" @click="fetchResponseDetail">Try Again</CButton>
+                </CCallout>
+            </CCol>
+        </CRow>
 
-        <!-- Back Button -->
-        <ButtonBack :to="backRoute" />
-
-        <!-- Loading State -->
-        <div v-if="loading" class="text-center py-5 text-muted">
-            <CSpinner color="secondary" />
-            <p class="mt-3">Loading response details...</p>
-        </div>
-
-        <!-- Error State -->
-        <div v-else-if="error" class="text-center py-5 text-danger">
-            <CIcon name="cil-warning" size="xl" class="mb-3" />
-            <p>{{ error }}</p>
-        </div>
-
-        <!-- Content -->
-        <div v-else-if="response" class="pb-5 px-3 pt-4">
-            <!-- Header Section -->
-            <Header 
-                :title="getTitle(response.form && response.form.title) || 'Response Details'" 
-                :description="getTitle(response.form && response.form.description)" 
-            />
-
-            <CRow class="mt-5">
-                <CCol lg="12">
-                    <!-- Response Information Card -->
-                    <CCard class="mb-5 border-0 shadow-sm rounded-20">
+            <div v-else-if="response" class="pb-5 px-3 pt-4">
+            <CRow class="justify-content-center">
+                <CCol lg="10" xl="9">
+                    <!-- Header Section -->
+                    <CCard class="mb-4 border-0 shadow-sm rounded-20 overflow-hidden">
                         <CCardBody class="p-4">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div>
-                                    <h4 class="m-0 font-weight-bold text-dark">Submission Overview</h4>
-                                    <p class="text-muted small mb-0">General metadata about this form submission</p>
+                                <div class="d-flex align-items-center">
+                                    <ButtonBack :to="backRoute" class="mr-3" />
+                                    <div>
+                                        <h2 class="m-0 font-weight-bold text-dark" style="letter-spacing: -0.5px;">
+                                            Response Detail
+                                        </h2>
+                                        <p class="text-muted small mb-0">Individual response details and metadata</p>
+                                    </div>
                                 </div>
                                 <div class="d-flex gap-2 align-items-center">
-                                    <CDropdown
-                                        class="mr-2 dropdown-export"
-                                        add-toggler-classes="btn-export-custom d-flex align-items-center"
-                                        :caret="false"
-                                    >
-                                        <template #toggler-content>
-                                            <CIcon name="cil-data-transfer-down" class="text-dark mr-2" style="width: 1.1rem; height: 1.1rem;" />
-                                            <span class="font-weight-medium mx-1" style="color: #0f172a; font-size: 1rem; letter-spacing: 0.3px;">Export</span>
-                                            <CIcon name="cil-chevron-bottom" class="text-dark ml-2" style="width: 0.9rem; height: 0.9rem; stroke-width: 2px;" />
-                                        </template>
-                                        <CDropdownItem @click="exportXlsx">
-                                            <CIcon name="cil-spreadsheet" class="mr-2 text-success" /> Export XLSX
-                                        </CDropdownItem>
-                                        <CDropdownItem @click="downloadJson">
-                                            <CIcon name="cil-code" class="mr-2 text-primary" /> Download JSON
-                                        </CDropdownItem>
-                                    </CDropdown>
-                                    <CButton color="danger" variant="outline" size="sm" class="px-3" style="height: 40px; border-width: 1.5px" @click="deleteResponse">
+                                    <button class="btn btn-success px-3 d-flex align-items-center shadow-sm" style="height: 40px;" @click="exportXlsx">
+                                        <CIcon name="cil-spreadsheet" class="mr-2" /> Export XLSX
+                                    </button>
+                                    <button class="btn btn-outline-primary px-3 d-flex align-items-center shadow-sm" style="height: 40px;" @click="downloadJson">
+                                        <CIcon name="cil-code" class="mr-2" /> JSON
+                                    </button>
+                                    <button class="btn btn-outline-danger px-3 d-flex align-items-center shadow-sm" style="height: 40px;" @click="deleteResponse">
                                         <CIcon name="cil-trash" class="mr-1" /> Delete
-                                    </CButton>
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <CRow class="bg-light p-3 rounded-16 mx-0">
+                        
+                            <CRow class="bg-light p-3 rounded-16 mx-0 border">
                                 <CCol md="4" class="py-2 border-right-md d-flex flex-column justify-content-center">
                                     <label class="small text-uppercase font-weight-bold text-muted d-block mb-1">Responder</label>
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-circle mr-3" style="background-color: #f1f5f9; color: #475569; min-width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                            {{ (response.responder ? (response.responder.name || response.responder.email || 'A') : (response.responderName || 'A')).charAt(0).toUpperCase() }}
+                                        <div class="avatar-circle mr-3">
+                                            {{ getAvatarChar() }}
                                         </div>
                                         <div class="d-flex flex-column overflow-hidden">
                                             <div class="font-weight-bold text-dark text-truncate" style="font-size: 0.95rem; line-height: 1.2;">
-                                                {{ response.responder ? (response.responder.name || response.responder.email.split('@')[0]) : (response.responderName || 'Anonymous') }}
+                                                {{ getResponderName() }}
                                             </div>
                                             <div class="text-muted small text-truncate" style="font-size: 0.8rem;">
-                                                {{ response.responder ? response.responder.email : '' }}
+                                                {{ getResponderEmail() }}
                                             </div>
                                         </div>
                                     </div>
@@ -88,23 +71,28 @@
                                         <CBadge :color="response.submit ? 'success' : 'warning'" class="px-3 py-2 rounded-pill mr-2 shadow-sm">
                                             {{ response.submit ? 'Completed' : 'Draft' }}
                                         </CBadge>
-                                        <span class="text-muted small font-weight-bold">{{ (response.answers || []).length }} Questions Answered</span>
+                                        <span class="text-muted small font-weight-bold" v-if="response.submit && (response.answers || []).length === 0">
+                                            Submitted (No answers)
+                                        </span>
+                                        <span class="text-muted small font-weight-bold" v-else>
+                                            {{ (response.answers || []).length }} Answered
+                                        </span>
                                     </div>
                                 </CCol>
                             </CRow>
                         </CCardBody>
                     </CCard>
 
-                    <!-- Detailed Answers Table -->
+                        <!-- Detailed Answers Table -->
                     <CCard class="mb-5 border-0 shadow-sm rounded-20 overflow-hidden">
                         <CCardHeader class="bg-white p-4 border-bottom-0 d-flex justify-content-between align-items-center">
                             <h4 class="m-0 font-weight-bold text-dark">Detailed Answers</h4>
-                            <span class="badge badge-light p-2 px-3 rounded-pill text-primary font-weight-bold">
-                                {{ (response.answers || []).length }} Submissions
+                            <span class="badge badge-light p-2 px-3 rounded-pill text-primary font-weight-bold border">
+                                {{ (enrichedAnswers || []).length }} Questions
                             </span>
                         </CCardHeader>
                         <CCardBody class="p-0">
-                            <AnswerTable :answers="response.answers || []" />
+                            <AnswerTable :answers="enrichedAnswers" />
                         </CCardBody>
                     </CCard>
 
@@ -112,318 +100,380 @@
                     <div class="mb-5">
                         <div class="mb-4">
                             <h4 class="font-weight-bold text-dark mb-1">Other Submissions</h4>
-                            <p class="text-muted">Browse through other responses for "{{ getTitle(response.form && response.form.title) }}"</p>
+                            <p class="text-muted">Browse through other responses for this form</p>
                         </div>
                         <ResponseTables :responseList="responsesList" :currentId="id" />
                     </div>
                 </CCol>
             </CRow>
         </div>
-    </div>
+        </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 import moment from 'moment';
-import * as XLSX from 'xlsx';
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue';
 import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
 import ButtonBack from '@/projects/components/Button/ButtonBack.vue';
-import Header from '@/projects/components/Util/Header.vue';
 
 export default {
-    name: 'Response',
-    components: { ResponseTables, AnswerTable, ButtonBack, Header },
+    name: 'ResponseDetail',
+    components: { ResponseTables, AnswerTable, ButtonBack },
     props: {
-        id: {
-            type: String,
-            required: true
-        }
+        id: { type: String, required: true }
     },
     data() {
         return {
             loading: false,
             error: null,
             response: null
-        }
+        };
     },
     computed: {
-        ...mapGetters('Setting', ['lang']),
-        responsesList() {
-            return (this.response && this.response.form && Array.isArray(this.response.form.responses)) 
-                ? this.response.form.responses 
-                : [];
+        ...mapGetters({
+            organizations: 'Organizations/organizations',
+            questionTypesStore: 'Setting/question_type/item'
+        }),
+        lang() {
+            var store = this.$store;
+            return (store && store.getters['Setting/lang']) || 'en';
         },
-        totalResponses() {
-            return this.responsesList.length;
+        question_type_list() {
+            var store = this.$store;
+            return (store && store.getters['Setting/question_type/item']) || [];
         },
-        currentIndex() {
-            if (!this.id) return -1;
-            // First search in list
-            let idx = this.responsesList.findIndex(r => (r._id || r.id) === this.id);
-            // If not found in list (e.g. refresh), but match current response, return 0
-            if (idx === -1 && this.response && (this.response._id || this.response.id) === this.id) {
-                return 0;
+        questionTypes() {
+            if (!this.question_type_list || !Array.isArray(this.question_type_list)) return [];
+            return this.question_type_list.map(function(type) {
+                return { _id: type._id, type: type.type };
+            });
+        },
+        enrichedAnswers() {
+            if (!this.response || !Array.isArray(this.response.answers)) return [];
+            var self = this;
+            var questionMap = {};
+            var form = this.response.form || {};
+            var formQuestions = form.questions || form.items || [];
+            
+            if (Array.isArray(formQuestions)) {
+                formQuestions.forEach(function(q) {
+                    if (!q) return;
+                    var qid = q._id || q.id;
+                    if (qid) questionMap[String(qid)] = q;
+                });
             }
-            return idx;
+
+            return this.response.answers.map(function(ans, index) {
+                var q = ans.question;
+                var qId = q && (typeof q === 'object' ? (q._id || q.id) : q);
+                var enrichedQuestion = (qId && questionMap[String(qId)]) ? Object.assign({}, questionMap[String(qId)]) : null;
+                
+                if (!enrichedQuestion && q && typeof q === 'object') enrichedQuestion = q;
+                
+                if (!enrichedQuestion) {
+                    enrichedQuestion = {
+                        _id: qId || ('q-' + index),
+                        title: [{ key: 'en', value: 'Question ' + (index + 1) }],
+                        type: 'unknown'
+                    };
+                }
+                
+                var newAns = Object.assign({}, ans);
+                newAns.id = index + 1;
+                newAns.question = enrichedQuestion;
+                return newAns;
+            });
+        },
+        responsesList() {
+            if (this.response && this.response.form && Array.isArray(this.response.form.responses)) {
+                return this.response.form.responses;
+            }
+            return [];
         },
         backRoute() {
             if (this.response && this.response.form) {
-                const formId = this.response.form._id || (typeof this.response.form === 'string' ? this.response.form : null);
-                if (formId) {
-                    return { name: 'EditorCreateForm', params: { _id: formId } };
-                }
+                const form = this.response.form;
+                const formId = form._id || form.id || (typeof form === 'string' ? form : null);
+                if (formId) return { name: 'EditorCreateForm', params: { _id: formId } };
             }
-            return null;
+            return { name: 'ManageForms' };
         }
     },
-
     watch: {
-        // Watch for ID changes to refresh data when navigating between different responses
-        id: {
-            handler: 'fetchResponseDetail',
-            immediate: false
+        id: function() {
+            this.fetchResponseDetail();
         }
     },
     created() {
         this.fetchResponseDetail();
+        if (this.$store) {
+            this.$store.dispatch('Setting/question_type/get');
+        }
     },
     methods: {
-        async fetchResponseDetail() {
-            this.loading = true;
-            this.error = null;
-            this.response = null;
+        getAvatarChar() {
+            var name = this.getResponderName();
+            return (name ? name.charAt(0) : 'A').toUpperCase();
+        },
+        getResponderName() {
+            if (!this.response) return 'Anonymous';
+            var responder = this.response.responder;
+            if (responder) return responder.fullname || responder.name || responder.email || 'Anonymous';
+            return this.response.responderName || 'Anonymous';
+        },
+        getResponderEmail() {
+            if (!this.response) return '';
+            var responder = this.response.responder;
+            return (responder && responder.email) ? responder.email : '';
+        },
+        exportXlsx() {
+            console.log("XLSX Export triggered");
             try {
-                // Dispatch 'get' action from store to fetch or retrieve the response
-                const result = await this.$store.dispatch('Responses/get', { _id: this.id });
-
-                const doc = Array.isArray(result) ? result[0] : result;
-
-                if (doc && typeof doc === 'object' && doc._id) {
-                    this.response = doc;
-                } else {
-                    this.error = "Response not found.";
+                var XLSX = require('xlsx');
+                if (!this.response || !this.enrichedAnswers.length) {
+                    alert("No data available to export.");
+                    return;
+                }
+                
+                var responderName = this.getResponderName();
+                var responderEmail = this.getResponderEmail();
+                
+                // Resolve Department Name
+                let departmentName = '-';
+                const responder = this.response.responder;
+                if (responder && responder.organization) {
+                    const orgId = responder.organization._id || responder.organization;
+                    const foundOrg = (this.organizations || []).find(o => (o._id === orgId || o.id === orgId));
+                    departmentName = foundOrg ? (this.getTitle(foundOrg.title) || foundOrg.name) : orgId;
                 }
 
-            } catch (err) {
-                console.error('[Responsedetail] Error fetching from store:', err);
-                this.error = "Failed to load response details.";
-            } finally {
-                this.loading = false;
+                var metadata = [
+                    ["Individual Response Report"],
+                    ["Responder:", responderName],
+                    ["Email:", responderEmail],
+                    ["Department:", departmentName],
+                    ["Submission Date:", this.formatDate(this.response.createdAt)],
+                    [""],
+                    ["#", "Question", "Type", "Response"]
+                ];
+
+                var self = this;
+                var rows = this.enrichedAnswers.map(function(item, index) {
+                    var questionText = self.getTitle(item.question && item.question.title) || 'Question';
+                    var type = self.getQuestionTypeLabel(item.question);
+                    const isChoice = self.isChoiceType(type);
+                    
+                    let val = item.response;
+                    
+                    // Choice Label Resolution (New)
+                    if (isChoice) {
+                        const options = (item.question.config && Array.isArray(item.question.config.choices)) 
+                            ? item.question.config.choices 
+                            : (item.question.options || []);
+                        
+                        const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
+                        const labels = choices.map(c => {
+                            let opt = options.find(o => o && (String(o.key) === String(c) || String(o._id) === String(c) || String(o.value) === String(c)));
+                            if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
+                            if (opt) return (opt.lang && Array.isArray(opt.lang)) ? self.getTitle(opt.lang) : (opt.label ? self.getTitle(opt.label) : (opt.value || c));
+                            return c;
+                        });
+                        val = labels.join(', ');
+                    } else {
+                        val = Array.isArray(val) ? val.join(', ') : (val === null || val === undefined ? '' : String(val));
+                    }
+
+                    return [index + 1, questionText, type, val];
+                });
+
+                var worksheet = XLSX.utils.aoa_to_sheet(metadata.concat(rows));
+                var workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Individual Report");
+                
+                worksheet['!cols'] = [{ wch: 5 }, { wch: 50 }, { wch: 20 }, { wch: 60 }];
+
+                var formTitle = this.getTitle(this.response.form && this.response.form.title) || 'Form';
+                var filename = (formTitle + "_Response_" + responderName).replace(/\s+/g, '_') + ".xlsx";
+
+                XLSX.writeFile(workbook, filename);
+            } catch (err) { 
+                alert("XLSX Export Error: " + err.message); 
             }
+        },
+        downloadJson() {
+            try {
+                if (!this.response) {
+                    alert("No data available.");
+                    return;
+                }
+                
+                var responderName = this.getResponderName();
+                var responderEmail = this.getResponderEmail();
+                
+                // Resolve Department Name
+                let departmentName = '-';
+                const responder = this.response.responder;
+                if (responder && responder.organization) {
+                    const orgId = responder.organization._id || responder.organization;
+                    const foundOrg = (this.organizations || []).find(o => (o._id === orgId || o.id === orgId));
+                    departmentName = foundOrg ? (this.getTitle(foundOrg.title) || foundOrg.name) : orgId;
+                }
+
+                var self = this;
+                var data = {
+                    metadata: {
+                        reportType: "Individual Response Report",
+                        responder: responderName,
+                        email: responderEmail,
+                        department: departmentName,
+                        submittedAt: this.formatDate(this.response.createdAt),
+                        exportedAt: moment().format('DD/MM/YYYY, HH:mm:ss')
+                    },
+                    answers: this.enrichedAnswers.map(function(item) {
+                        const qTitle = self.getTitle(item.question && item.question.title) || 'Question';
+                        const qTypeLabel = self.getQuestionTypeLabel(item.question);
+                        
+                        // Use the resolved label to check for choice types since the raw type might be an ID
+                        const isChoice = self.isChoiceType(qTypeLabel);
+                        
+                        let resolvedResponse = item.response;
+
+                        // Choice Label Resolution
+                        if (isChoice) {
+                            const options = (item.question.config && Array.isArray(item.question.config.choices)) 
+                                ? item.question.config.choices 
+                                : (item.question.options || []);
+                            
+                            const choices = Array.isArray(resolvedResponse) ? resolvedResponse : (resolvedResponse !== null && resolvedResponse !== undefined ? [resolvedResponse] : []);
+                            const labels = choices.map(c => {
+                                let opt = options.find(o => o && (String(o.key) === String(c) || String(o._id) === String(c) || String(o.value) === String(c)));
+                                if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
+                                if (opt) return (opt.lang && Array.isArray(opt.lang)) ? self.getTitle(opt.lang) : (opt.label ? self.getTitle(opt.label) : (opt.value || c));
+                                return c;
+                            });
+                            resolvedResponse = labels.length === 1 ? labels[0] : labels;
+                        }
+
+                        return {
+                            question: qTitle,
+                            type: qTypeLabel,
+                            response: resolvedResponse
+                        };
+                    })
+                };
+
+                var formTitle = this.getTitle(this.response.form && this.response.form.title) || 'Form';
+                var filename = (formTitle + "_Response_" + responderName).replace(/\s+/g, '_') + ".json";
+                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                var dl = document.createElement('a');
+                dl.setAttribute("href", dataStr);
+                dl.setAttribute("download", filename);
+                document.body.appendChild(dl);
+                dl.click();
+                dl.remove();
+            } catch (err) {
+                alert("JSON Export Error: " + err.message);
+            }
+        },
+        fetchResponseDetail() {
+            var self = this;
+            this.loading = true;
+            this.error = null;
+            if (!this.$store) return;
+            
+            this.$store.dispatch('Responses/get', { _id: this.id })
+                .then(function(result) {
+                    var doc = Array.isArray(result) ? result[0] : result;
+                    if (doc && (doc._id || doc.id)) {
+                        self.response = doc;
+                    } else {
+                        self.error = "Response not found.";
+                    }
+                })
+                .catch(function(err) {
+                    self.error = "Failed to load data.";
+                    console.error(err);
+                })
+                .finally(function() {
+                    self.loading = false;
+                });
         },
         getTitle(titleArr) {
             if (!titleArr || !Array.isArray(titleArr) || titleArr.length === 0) return '';
-            const currentLang = this.lang || 'en';
-            let content = titleArr.find(t => t.key && t.key.toLowerCase() === currentLang.toLowerCase());
-            if (!content) content = titleArr.find(t => t.key && t.key.toLowerCase() === 'en');
+            var currentLang = (this.lang || 'en').toLowerCase();
+            var content = titleArr.find(function(t) { return t.key && t.key.toLowerCase() === currentLang; });
+            if (!content) content = titleArr.find(function(t) { return t.key && t.key.toLowerCase() === 'en'; });
             if (!content) content = titleArr[0];
-            return content ? content.value : '';
-        },
-        isEmpty(val) {
-            if (val === null || val === undefined || val === '') return true;
-            if (Array.isArray(val) && val.length === 0) return true;
-            return false;
-        },
-        isRating(question) {
-            if (!question || !question.type) return false;
-            const t = question.type.type ? question.type.type.toLowerCase() : '';
-            return t === 'rating' || t === 'rate';
-        },
-        getRatingMax(question) {
-            if (question && question.config && question.config.maxRate) {
-                return Number(question.config.maxRate);
-            }
-            return 5;
+            return content ? String(content.value || '') : '';
         },
         formatDate(dateStr) {
-            if (!dateStr) return '-';
-            return moment(dateStr).format('D/M/YYYY, h:mm:ss');
+            return dateStr ? moment(dateStr).format('D/M/YYYY, HH:mm') : '-';
         },
-        downloadJson() {
-            if (!this.response || !this.response.answers) {
-                alert("No data available to export.");
-                return;
-            }
-            const dateStr = moment(this.response.form?.createdAt || new Date()).format('YYYYMMDD');
-            const responder = this.response.responder;
-            const responderName = responder ? (responder.name || responder.email || 'Anonymous').split('@')[0] : (this.response.responderName || 'Anonymous');
-            const filename = `response_${responderName}_${dateStr}.json`;
+        getQuestionTypeLabel(question) {
+            if (!question || !question.type) return 'Text';
             
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.response, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", filename);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        },
+            let rawType = question.type;
+            let typeStr = '';
 
-        // ── Export XLSX ───────────────────────────────────────────────────
-        exportXlsx() {
-            if (!this.response || !this.response.answers) {
-                alert("No data available to export.");
-                return;
+            // If type is an ObjectId (string), look it up in the store
+            if (typeof rawType === 'string') {
+                const found = (this.questionTypesStore || []).find(t => t._id === rawType || t.id === rawType);
+                typeStr = found ? (found.type || found.name || rawType) : rawType;
+            } else {
+                typeStr = rawType.type || rawType.name || String(rawType);
             }
 
-            // Create Rows
-            const headers = ["Question", "Response"];
-            const rows = this.response.answers.map(item => {
-                const questionText = this.getTitle(item.question && item.question.title) || 'Unknown Question';
-                
-                let responseText = '';
-                if (this.isEmpty(item.response)) {
-                    responseText = '';
-                } else if (Array.isArray(item.response)) {
-                    responseText = item.response.join(', ');
-                } else if (this.isRating(item.question)) {
-                    responseText = `${item.response} / ${this.getRatingMax(item.question)}`;
-                } else {
-                    responseText = String(item.response);
-                }
-                
-                return [questionText, responseText];
-            });
-
-            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Response Details");
-
-            // Set column widths
-            worksheet['!cols'] = [
-                { wch: 50 }, // Question
-                { wch: 60 }  // Response
-            ];
-
-            // Format filename with responder info and date
-            const dateStr = moment(this.response.form.createdAt).format('YYYYMMDD');
-            const responder = this.response.responder;
-            const responderName = responder ? (responder.name || responder.email || 'Anonymous').split('@')[0] : (this.response.responderName || 'Anonymous');
-            const filename = `response_${responderName}_${dateStr}.xlsx`;
-
-            XLSX.writeFile(workbook, filename);
+            const t = typeStr.toString().toLowerCase();
+            if (t.includes('short')) return 'Short Text';
+            if (t.includes('paragraph')) return 'Long Paragraph';
+            if (t.includes('multiple_choice') || t.includes('multiplechoice')) return 'Multiple Choice';
+            if (t.includes('checkboxes')) return 'Checkboxes';
+            if (t.includes('dropdown')) return 'Dropdown';
+            if (t.includes('rating')) return 'Rating';
+            if (t.includes('file')) return 'File Upload';
+            
+            return t.charAt(0).toUpperCase() + t.slice(1);
         },
-
-        copyApiLink() {
-            const responsesID = this.responses && this.responses._id;
-            if (!responsesID) { alert('ResponsesID not available yet.'); return; }
-            const BASE = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1';
-            const url = `${BASE}/response/download/${responsesID}`;
-
+        isChoiceType(type) {
+            const t = (type || '').toLowerCase();
+            return t.includes('choice') || t.includes('check') || t.includes('dropdown') || t.includes('select');
         },
-
-        goToResponse(index) {
-            if (index >= 0 && index < this.totalResponses) {
-                const targetId = this.responsesList[index]._id;
-                this.$router.push({ name: 'Response', params: { id: targetId } });
-            }
-        },
-
-        async deleteResponse() {
+        deleteResponse() {
             if (confirm("Are you sure you want to delete this response?")) {
+                var self = this;
                 this.loading = true;
-                try {
-                    await this.$store.dispatch('Responses/delete', { _id: this.id });
-                    alert("Response deleted successfully.");
-                    
-                    // Redirect back to the form's responses list or a fallback
-                    if (this.backRoute) {
-                        this.$router.push(this.backRoute);
-                    } else {
-                        this.$router.push('/forms');
-                    }
-                } catch (err) {
-                    console.error("Error deleting response:", err);
-                    alert("An error occurred while deleting the response.");
-                } finally {
-                    this.loading = false;
-                }
+                this.$store.dispatch('Responses/delete', { _id: this.id })
+                    .then(function() {
+                        self.$router.back();
+                    })
+                    .catch(function() {
+                        alert("Delete failed.");
+                    })
+                    .finally(function() {
+                        self.loading = false;
+                    });
             }
         }
     }
-}
+};
 </script>
 
 <style scoped>
-.rounded-20 {
-    border-radius: 20px !important;
-}
-.rounded-16 {
-    border-radius: 16px !important;
-}
-.rounded-pill {
-    border-radius: 50rem !important;
-}
-
-.bg-light {
-    background-color: #f8fafc !important;
-}
-
+.rounded-20 { border-radius: 20px !important; }
+.rounded-16 { border-radius: 16px !important; }
+.rounded-pill { border-radius: 50rem !important; }
+.bg-light { background-color: #f8fafc !important; }
 .avatar-circle {
-    width: 38px;
-    height: 38px;
-    background: #e0e7ff;
-    color: #4338ca;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1rem;
-    box-shadow: 0 2px 4px rgba(67, 56, 202, 0.1);
+    width: 38px; height: 38px; background: #e0e7ff; color: #4338ca;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem;
 }
-
-.border-right-md {
-    border-right: 1px solid #e2e8f0;
-}
-
+.border-right-md { border-right: 1px solid #e2e8f0; }
 @media (max-width: 767.98px) {
-    .border-right-md {
-        border-right: none;
-        border-bottom: 1px solid #e2e8f0;
-        margin-bottom: 1rem;
-        padding-bottom: 1rem;
-    }
+    .border-right-md { border-right: none; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem; padding-bottom: 1rem; }
 }
-
-.gap-2 {
-    gap: 0.5rem;
-}
-
-h4 {
-    letter-spacing: -0.02em;
-}
-
-::v-deep .card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-::v-deep .card:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-}
-
-.btn-export-custom {
-    background-color: #ffffff !important;
-    border: none !important;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.04) !important;
-    border-radius: 100px !important;
-    padding: 0.5rem 1.4rem !important;
-    color: #0f172a !important;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.btn-export-custom:hover {
-    background-color: #f8fafc !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.05) !important;
-    transform: translateY(-2px);
-}
-
-.dropdown-export /deep/ .dropdown-toggle::after {
-    display: none !important;
-}
-
-.font-weight-medium {
-    font-weight: 500;
-}
+.gap-2 { gap: 0.5rem; }
+::v-deep .card { transition: all 0.2s ease; }
+::v-deep .card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important; }
 </style>

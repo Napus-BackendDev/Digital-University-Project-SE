@@ -86,6 +86,7 @@ export default {
                         organizationId: orgId,
                         isAdmin: isAdmin
                     });
+                    await this.$store.dispatch('Responses/exp');
                 } catch (err) {
                     console.error("[ManageForms.vue] Error fetching forms:", err);
                 } finally {

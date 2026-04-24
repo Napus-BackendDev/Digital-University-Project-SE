@@ -189,6 +189,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import moment from 'moment'
 import * as XLSX from 'xlsx'
 import { CChartBar } from '@coreui/vue-chartjs'
@@ -214,6 +215,11 @@ export default {
             loading: false,
             error: null,
             copied: false,
+        }
+    },
+    created() {
+        if (this.$store) {
+            this.$store.dispatch('Organizations/getAll');
         }
     },
     watch: {
@@ -279,11 +285,11 @@ export default {
                 }
             });
 
-            // 2. Prepare Headers (Responder, Department, Submitted, then Others)
-            const headers = ['Responder', 'Department', 'Submitted'];
+            // 2. Prepare Headers (Email, Responder, Department, Submitted, then Others)
+            const headers = ['Email', 'Responder', 'Department', 'Submitted'];
             const questionHeaders = [];
             firstAnswers.forEach((a, i) => {
-                if (i === deptQuestionIdx) return; // Skip because it's promoted to the 2nd column
+                if (i === deptQuestionIdx) return; // Skip because it's promoted to the 3rd column
                 const title = a.question && Array.isArray(a.question.title) && a.question.title.length
                     ? this.getTitle(a.question.title)
                     : `Question ${i + 1}`;
@@ -294,22 +300,30 @@ export default {
             // 3. Prepare Rows
             const rows = this.allSubmittedResponses.map(r => {
                 let responderName = '-';
+                let responderEmail = '-';
                 let departmentValue = '-';
 
                 const getOrganizationLabel = (org) => {
                     if (!org) return '-';
-                    if (typeof org === 'string') return org;
+                    if (typeof org === 'string') {
+                        // Try to find the organization in the store by ID
+                        const found = this.allOrganizations.find(o => (o._id && o._id.toString() === org) || (o.id && o.id.toString() === org));
+                        if (found) return this.getTitle(found.title) || found.name || org;
+                        return org;
+                    }
                     if (Array.isArray(org.title)) {
                         return this.getTitle(org.title) || '-';
                     }
                     return org.name || org.title || org.organizationName || '-';
                 };
-
-                // Extract responder name
+                
+                // Extract responder name & email
                 if (r.responder && typeof r.responder === 'object') {
                     responderName = r.responder.name || r.responder.fullname || r.responder.username || r.responder.email || 'Anonymous';
+                    responderEmail = r.responder.email || '-';
                 } else if (r.responderName) {
                     responderName = r.responderName;
+                    responderEmail = r.responderEmail || '-';
                 } else if (typeof r.responder === 'string') {
                     responderName = r.responder;
                 }
@@ -317,17 +331,46 @@ export default {
                 // Extract Department value (Priority: Question answer > Responder metadata)
                 const ansList = r.answers || [];
                 if (deptQuestionIdx !== -1 && ansList[deptQuestionIdx]) {
-                    const deptAns = ansList[deptQuestionIdx].response;
-                    departmentValue = Array.isArray(deptAns) ? deptAns.join(', ') : (deptAns || '-');
+                    let deptVal = ansList[deptQuestionIdx].response;
+                    
+                    // Resolve labels if it's a choice question
+                    const deptQ = (this.responses.questions || [])[deptQuestionIdx] || ansList[deptQuestionIdx].question;
+                    const deptQType = deptQ && deptQ.type ? (deptQ.type.type || deptQ.type).toString().toLowerCase() : '';
+                    
+                    if (this.isChoiceType(deptQType)) {
+                        const opts = (deptQ.config && deptQ.config.choices) ? deptQ.config.choices : (deptQ.options || []);
+                        const choices = Array.isArray(deptVal) ? deptVal : (deptVal !== null && deptVal !== undefined ? [deptVal] : []);
+                        departmentValue = choices.map(c => {
+                            // If the choice itself is an object (sometimes happens with populated fields)
+                            if (typeof c === 'object' && c !== null) return getOrganizationLabel(c);
+                            
+                            let opt = opts.find(o => o && (String(o.key) === String(c) || String(o._id) === String(c) || String(o.value) === String(c)));
+                            if (!opt && !isNaN(c) && opts[Number(c)]) opt = opts[Number(c)];
+                            if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
+                            return c;
+                        }).join(', ');
+                    } else {
+                        if (Array.isArray(deptVal)) {
+                            departmentValue = deptVal.map(v => getOrganizationLabel(v)).join(', ');
+                        } else {
+                            departmentValue = getOrganizationLabel(deptVal);
+                        }
+                    }
                 } else {
                     if (r.responder && typeof r.responder === 'object' && r.responder.organization) {
                         departmentValue = getOrganizationLabel(r.responder.organization);
                     } else {
-                        departmentValue = r.department || r.organization || r.responderDepartment || '-';
+                        const rawFallback = r.department || r.organization || r.responderDepartment || '-';
+                        if (typeof rawFallback === 'object' && rawFallback !== null) {
+                            departmentValue = getOrganizationLabel(rawFallback);
+                        } else {
+                            departmentValue = rawFallback;
+                        }
                     }
                 }
 
                 const row = [
+                    responderEmail,
                     responderName,
                     departmentValue,
                     this.formatDate(r.createdAt)
@@ -338,18 +381,31 @@ export default {
                     if (i === deptQuestionIdx) return; // Skip promoted column
 
                     let val = a.response;
-                    const qType = a.question && a.question.type
-                        ? (a.question.type.type || a.question.type).toString().toLowerCase()
-                        : '';
+                    const qId = a.question && (a.question._id || a.question.id || a.question);
+                    
+                    // Resolve full question object first to get accurate metadata
+                    const fullQuestion = (this.responses.questions || []).find(qq => 
+                        String(qq._id || qq.id) === String(qId)
+                    ) || a.question;
 
-                    if (this.isChoiceType(qType) && a.question) {
-                        const options = (a.question.config && a.question.config.choices)
-                            ? a.question.config.choices
-                            : (a.question.options || []);
+                    const qType = fullQuestion && fullQuestion.type 
+                        ? (fullQuestion.type.type || fullQuestion.type).toString().toLowerCase() 
+                        : '';
+                    
+                    if (this.isChoiceType(qType)) {
+                        const options = (fullQuestion && fullQuestion.config && fullQuestion.config.choices) 
+                            ? fullQuestion.config.choices 
+                            : (fullQuestion && fullQuestion.options ? fullQuestion.options : []);
+
                         const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
                         const labels = choices.map(c => {
-                            let opt = options.find(o => o && (o.key === c || (o._id && o._id.toString() === c) || (o.value === c)));
+                            let opt = options.find(o => o && (
+                                String(o.key) === String(c) || 
+                                String(o._id) === String(c) || 
+                                String(o.value) === String(c)
+                            ));
                             if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
+                            
                             if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
                             return c;
                         });
@@ -384,11 +440,68 @@ export default {
                 alert(this.$t('responses.noExportData'));
                 return;
             }
-            const formTitle = this.getTitle(this.responses.title) || 'responses';
-            const timestamp = moment().format('YYYY-MM-DD');
-            const filename = `${formTitle}(${timestamp}).json`;
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.allSubmittedResponses, null, 2));
+            const formTitle = this.getTitle(this.responses.title) || 'responses';
+            const formDescription = this.getTitle(this.responses.description) || '';
+            const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+
+            // Wrap in a metadata object for better context
+            const exportData = {
+                formTitle: formTitle,
+                description: formDescription,
+                exportedAt: timestamp,
+                totalResponses: this.allSubmittedResponses.length,
+                responses: this.allSubmittedResponses.map(r => {
+                    const responseObj = {
+                        responder: r.responder?.name || r.responderName || 'Anonymous',
+                        email: r.responder?.email || '',
+                        submittedAt: this.formatDate(r.createdAt),
+                        answers: {}
+                    };
+
+                    (r.answers || []).forEach((a, i) => {
+                        const questionTitle = a.question && Array.isArray(a.question.title) 
+                            ? this.getTitle(a.question.title) 
+                            : `Question ${i + 1}`;
+                        
+                        let val = a.response;
+                        const qType = a.question && a.question.type 
+                            ? (a.question.type.type || a.question.type).toString().toLowerCase() 
+                            : '';
+                        
+                        // Robust choice label resolution
+                        if (this.isChoiceType(qType) && a.question) {
+                            const options = (a.question.config && Array.isArray(a.question.config.choices)) 
+                                ? a.question.config.choices 
+                                : (a.question.options || []);
+                            
+                            const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
+                            const labels = choices.map(c => {
+                                // Try to find the option by key, id, or value
+                                let opt = options.find(o => o && (o.key === String(c) || (o._id && o._id.toString() === String(c)) || (o.value === String(c))));
+                                if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
+                                
+                                if (opt) {
+                                    return (opt.lang && Array.isArray(opt.lang)) 
+                                        ? this.getTitle(opt.lang) 
+                                        : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
+                                }
+                                return c;
+                            });
+                            val = labels.length ? labels.join(', ') : (val || '');
+                        } else {
+                            val = Array.isArray(val) ? val.join(', ') : (val === null || val === undefined ? '' : val);
+                        }
+                        
+                        responseObj.answers[questionTitle] = val;
+                    });
+
+                    return responseObj;
+                })
+            };
+
+            const filename = `${formTitle}(${moment().format('YYYY-MM-DD')}).json`;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
             downloadAnchorNode.setAttribute("download", filename);
@@ -396,6 +509,8 @@ export default {
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
         },
+
+
 
         formatDate(dateStr) {
             return dateStr ? moment(dateStr).format('DD/MM/YYYY, HH:mm:ss') : '-';
@@ -411,7 +526,7 @@ export default {
             return ['short', 'short_answer', 'paragraph', 'text'].includes((type || '').toLowerCase());
         },
         isChoiceType(type) {
-            return ['multiple_choice', 'multiplechoice', 'checkboxes', 'checkbox'].includes((type || '').toLowerCase());
+            return ['multiple_choice', 'multiplechoice', 'checkboxes', 'checkbox', 'dropdown', 'select'].includes((type || '').toLowerCase());
         },
         isRatingType(type) {
             return ['rating', 'rating'].includes((type || '').toLowerCase());
@@ -451,6 +566,9 @@ export default {
         },
     },
     computed: {
+        ...mapGetters({
+            allOrganizations: 'Organizations/organizations'
+        }),
         allSubmittedResponses() {
             const list = (this.responses && this.responses.responses) || [];
             const unique = [];
@@ -912,7 +1030,6 @@ export default {
     color: #64748b;
     font-size: 0.9rem;
     font-weight: 600;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
 }
@@ -976,7 +1093,6 @@ export default {
     border-radius: 24px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     border: 1px solid rgba(241, 245, 249, 1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
     overflow: hidden;
 }
 
@@ -1064,7 +1180,6 @@ export default {
     background: #f8fafc;
     border-radius: 12px;
     border: 1px solid #f1f5f9;
-    transition: all 0.2s ease;
 }
 
 .text-response-item:hover {
@@ -1132,7 +1247,6 @@ export default {
     height: 100%;
     border-radius: 50rem;
     position: relative;
-    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .gloss-overlay {
@@ -1183,7 +1297,6 @@ export default {
 ::v-deep .custom-pagination-modern .page-item:not(.active):hover .page-link {
     background-color: #e2e8f0 !important;
     color: #1e293b !important;
-    transform: translateY(-2px);
 }
 
 ::v-deep .custom-pagination-modern .page-item.disabled .page-link {

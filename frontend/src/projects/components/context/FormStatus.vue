@@ -56,20 +56,35 @@ export default {
             const start = this.settings?.schedule?.startAt;
             const end = this.settings?.schedule?.endAt;
             
-            if (!start || !end) return 'draft';
+            // หากไม่มีทั้งคู่ เป็น Draft
+            if (!start && !end) return 'draft';
+            
+            // หากไม่มีวันเริ่ม แต่มีวันจบ ให้ถือว่าปิดตลอดเวลา
+            if (!start && end) return 'closed_forever';
             
             const now = new Date().getTime();
             const startTime = new Date(start).getTime();
+            
+            // หากยังไม่ถึงเวลาเริ่ม
+            if (now < startTime) return 'scheduled';
+            
+            // หากถึงเวลาเริ่มแล้ว แต่ไม่มีวันสิ้นสุด
+            if (!end) return 'open_forever';
+            
             const endTime = new Date(end).getTime();
             
-            if (now >= startTime && now <= endTime) return 'open';
-            if (now < startTime) return 'scheduled';
+            // หากอยู่ในช่วงเวลา
+            if (now <= endTime) return 'open';
+            
+            // หากเลยเวลาสิ้นสุด
             return 'closed';
         },
         currentStatusText() {
             switch(this.currentStatus) {
                 case 'draft': return this.$t('editor.settings.status.draft');
                 case 'open': return this.$t('editor.settings.status.open');
+                case 'open_forever': return this.$t('editor.settings.status.openForever');
+                case 'closed_forever': return this.$t('editor.settings.status.closedForever');
                 case 'scheduled': return this.$t('editor.settings.status.scheduled');
                 case 'closed': return this.$t('editor.settings.status.closed');
                 default: return this.$t('editor.settings.status.draft');
@@ -79,6 +94,8 @@ export default {
             switch(this.currentStatus) {
                 case 'draft': return this.$t('editor.settings.status.draftDesc');
                 case 'open': return this.$t('editor.settings.status.openDesc');
+                case 'open_forever': return this.$t('editor.settings.status.openForeverDesc');
+                case 'closed_forever': return this.$t('editor.settings.status.closedForeverDesc');
                 case 'scheduled': return this.$t('editor.settings.status.scheduledDesc');
                 case 'closed': return this.$t('editor.settings.status.closedDesc');
                 default: return "";
@@ -87,18 +104,22 @@ export default {
         statusColorClass() {
             switch(this.currentStatus) {
                 case 'draft': return 'hint-secondary';
-                case 'open': return 'hint-success';
+                case 'open':
+                case 'open_forever': return 'hint-success';
                 case 'scheduled': return 'hint-info';
-                case 'closed': return 'hint-danger';
+                case 'closed':
+                case 'closed_forever': return 'hint-danger';
                 default: return 'hint-info';
             }
         },
         statusIconColor() {
             switch(this.currentStatus) {
                 case 'draft': return 'text-secondary';
-                case 'open': return 'text-success';
+                case 'open':
+                case 'open_forever': return 'text-success';
                 case 'scheduled': return 'text-info';
-                case 'closed': return 'text-danger';
+                case 'closed':
+                case 'closed_forever': return 'text-danger';
                 default: return 'text-info';
             }
         }
