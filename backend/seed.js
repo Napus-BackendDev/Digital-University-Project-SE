@@ -4,204 +4,433 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const mongoose = require('mongoose');
 
-// Import Models
-const Form = require('./server/Project/Form/models/form.model');
-const Response = require('./server/Project/Response/models/response.model');
-const User = require('./server/Project/User/models/user.model');
-const Role = require('./server/Project/User/models/roles.model');
-const Questions = require('./server/Project/Questions/models/questions.model');
+// ─── Import Models ────────────────────────────────────────────────────────────
+const Form         = require('./server/Project/Form/models/form.model');
+const Response     = require('./server/Project/Response/models/response.model');
+const User         = require('./server/Project/User/models/user.model');
+const Role         = require('./server/Project/User/models/roles.model');
+const Questions    = require('./server/Project/Questions/models/questions.model');
 const QuestionType = require('./server/Project/Settings/models/question_type.model');
 const Organization = require('./server/Project/Organizations/models/organization.model');
 const SettingControll = require('./server/Project/Settings/models/controll.model');
 
 const mongoURI = process.env.MONGODB;
 
+// ─── Helper ───────────────────────────────────────────────────────────────────
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function daysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d;
+}
+
+// ─── Main Seed Function ───────────────────────────────────────────────────────
 async function seedDatabase() {
   try {
     console.log('Connecting to MongoDB...');
     mongoose.Promise = global.Promise;
     await mongoose.connect(mongoURI);
+    console.log('Connected.\n');
 
-    console.log('Clearing existing data...');
-    await Promise.all([
-      Organization.deleteMany({}),
-      Role.deleteMany({}),
-      User.deleteMany({}),
-      QuestionType.deleteMany({}),
-      Questions.deleteMany({}),
-      Form.deleteMany({}),
-      Response.deleteMany({}),
-      SettingControll.deleteMany({})
-    ]);
+    // ── Step 1: Clear ONLY seeded data (users, questions, forms, responses) ──
+    console.log('Clearing existing Users, Questions, Forms, and Responses...');
+    await Response.deleteMany({});
+    await Questions.deleteMany({});
+    await Form.deleteMany({});
+    await User.deleteMany({});
+    console.log('Cleared.\n');
 
-    // 1. Seed Organizations
-    console.log('Seeding Organizations...');
-    const orgTemplates = [
-      { en: 'General', th: 'ทั่วไป' },
-      { en: 'Information Technology Center', th: 'ศูนย์เทคโนโลยีสารสนเทศ' },
-      { en: 'Faculty of Engineering', th: 'คณะวิศวกรรมศาสตร์' }
-    ];
-    const orgsData = orgTemplates.map((org, index) => ({
-      _id: index === 0 ? new mongoose.Types.ObjectId('69baf8349050b9215c700b96') : new mongoose.Types.ObjectId(),
-      title: [
-        { key: 'en', value: org.en },
-        { key: 'th', value: org.th }
-      ]
-    }));
-    const createdOrgs = await Organization.insertMany(orgsData);
+    // ── Step 2: Fetch existing infrastructure data (read-only) ───────────────
+    console.log('Fetching existing infrastructure (orgs, roles, question types, collaborator settings)...');
 
-    // 2. Seed Roles
-    console.log('Seeding Roles...');
-    const rolesData = [
-      {
-        _id: new mongoose.Types.ObjectId('69aec1c73996270d703db3d7'),
-        title: [{ key: 'en', value: 'Admin' }, { key: 'th', value: 'ผู้ดูแลระบบ' }]
-      },
-      {
-        title: [{ key: 'en', value: 'User' }, { key: 'th', value: 'ผู้ใช้งานทั่วไป' }]
-      }
-    ];
-    const createdRoles = await Role.insertMany(rolesData);
+    const defaultOrg = await Organization.findOne({}) || null;
+    // Fixed role IDs
+    const ADMIN_ROLE_ID = new mongoose.Types.ObjectId('69aec1c73996270d703db3d7');
+    const USER_ROLE_ID  = new mongoose.Types.ObjectId('69e9e2226c400846810ef687');
+    const editorSetting = await SettingControll.findOne({
+      'title.value': 'Editor'
+    }) || await SettingControll.findOne({});
 
-    // 3. Seed Question Types
-    console.log('Seeding Question Types...');
-    const typeNames = ['short_answer', 'paragraph', 'multiple_choice', 'checkbox', 'rating', 'file_upload', 'image', 'title_description'];
-    const createdTypes = await QuestionType.insertMany(typeNames.map((t) => ({ type: t })));
-
-    // 4. Seed Control Types (Editor/Viewer)
-    const createdControlls = await SettingControll.insertMany([
-      { title: [{ key: 'en', value: 'Editor' }, { key: 'th', value: 'แก้ไขฟอร์ม' }] },
-      { title: [{ key: 'en', value: 'Viewer' }, { key: 'th', value: 'ดูอย่างเดียว' }] }
-    ]);
-
-    // 5. Seed 10 Users
-    console.log('Seeding 10 Users...');
-    const userList = [
-      { name: 'Sai Shang Hlang', email: '6631503129@lamduan.mfu.ac.th' }, // ONLY ADMIN
-      { name: 'Napus Samuanpho', email: '6631503016@lamduan.mfu.ac.th' },
-      { name: 'Wantana Suwannapho', email: '6631503037@lamduan.mfu.ac.th' },
-      { name: 'wasan nachai', email: '6631503038@lamduan.mfu.ac.th' },
-      { name: 'Sai Shang Hlang', email: 'saishanghlang@gmail.com' },
-      { name: 'Sai Shang Hlang', email: 'saishanghlang20122002@gmail.com' },
-      { name: 'John Doe', email: 'john.doe@demo.uni' },
-      { name: 'Jane Smith', email: 'jane.smith@demo.uni' },
-      { name: 'Alice Brown', email: 'alice.brown@demo.uni' },
-      { name: 'Bob White', email: 'bob.white@demo.uni' }
-    ];
-
-    const seededUsers = [];
-    for (let i = 0; i < userList.length; i++) {
-      const userData = userList[i];
-      const daysAgo = Math.floor(Math.random() * 30);
-      const createdAt = new Date();
-      createdAt.setDate(createdAt.getDate() - daysAgo);
-
-      // ONLY 6631503129@lamduan.mfu.ac.th is Admin
-      const isAdmin = userData.email === '6631503129@lamduan.mfu.ac.th';
-      const role = isAdmin ? createdRoles[0]._id : createdRoles[1]._id;
-      
-      // Distribute non-admins across other orgs
-      const org = isAdmin ? createdOrgs[0]._id : createdOrgs[i % createdOrgs.length]._id;
-
-      const user = await User.create({
-        name: userData.name,
-        email: userData.email,
-        password: 'password123',
-        role: role,
-        organization: org,
-        createdAt: createdAt
-      });
-      seededUsers.push(user);
+    const questionTypes = await QuestionType.find({});
+    if (questionTypes.length === 0) {
+      throw new Error(
+        'No Question_Types found in DB. Please ensure question types are seeded before running this script.'
+      );
     }
 
-    // 6. Seed 10 Forms
-    console.log('Seeding 10 Forms...');
-    const forms = [];
-    for (let i = 1; i <= 10; i++) {
-      // Creators can be anyone, but let's rotate
-      const creator = seededUsers[i % seededUsers.length];
+    // Map type name → document for easy lookup
+    const typeMap = {};
+    for (const qt of questionTypes) {
+      typeMap[qt.type] = qt;
+    }
+
+    // All 8 expected question type names used in the project
+    const ALL_QUESTION_TYPES = [
+      'short_answer',
+      'paragraph',
+      'multiple_choice',
+      'checkbox',
+      'rating',
+      'file_upload',
+      'image',
+      'title_description',
+    ];
+
+    // Validate all types exist
+    for (const typeName of ALL_QUESTION_TYPES) {
+      if (!typeMap[typeName]) {
+        throw new Error(`Question type "${typeName}" not found in DB. Cannot seed without it.`);
+      }
+    }
+
+    console.log(`Found ${questionTypes.length} question types.`);
+    console.log(`Using org:        ${defaultOrg ? defaultOrg._id : 'none'}`);
+    console.log(`Using adminRole:  ${ADMIN_ROLE_ID}`);
+    console.log(`Using userRole:   ${USER_ROLE_ID}`);
+    console.log(`Using collaborator setting: ${editorSetting ? editorSetting._id : 'none'}\n`);
+
+    // ── Step 3: Seed 15 Users ─────────────────────────────────────────────────
+    console.log('Seeding 15 Users...');
+
+    const userList = [
+      // ── Required users (by username/alias) ──
+      { name: 'Plum Thidarat',      email: 'plum@lamduan.mfu.ac.th'              },
+      { name: 'Mark Nattawut',      email: 'mark@lamduan.mfu.ac.th'              },
+      { name: 'San Parinya',        email: 'san@lamduan.mfu.ac.th'               },
+      { name: 'Leng Napus',         email: 'leng@lamduan.mfu.ac.th'              },
+      // ── Project-specific users ──
+      { name: 'Sai Shang Hlang',    email: '6631503129@lamduan.mfu.ac.th'        }, // Admin
+      { name: 'Napus Samuanpho',    email: '6631503016@lamduan.mfu.ac.th'        },
+      { name: 'Wantana Suwannapho', email: '6631503037@lamduan.mfu.ac.th'        },
+      { name: 'Wasan Nachai',       email: '6631503038@lamduan.mfu.ac.th'        },
+      { name: 'Sai Shang Hlang',    email: 'saishanghlang@gmail.com'             },
+      { name: 'Sai Shang Hlang',    email: 'saishanghlang20122002@gmail.com'     },
+      // ── 5 more realistic users ──
+      { name: 'Alice Wongkhan',     email: 'alice.wongkhan@mfu.ac.th'            },
+      { name: 'Bob Charoenwong',    email: 'bob.charoenwong@mfu.ac.th'           },
+      { name: 'Carol Srisombat',    email: 'carol.srisombat@mfu.ac.th'           },
+      { name: 'David Permpool',     email: 'david.permpool@mfu.ac.th'            },
+      { name: 'Eva Kulchaiyawong',  email: 'eva.kulchaiyawong@mfu.ac.th'         },
+    ];
+
+    const ADMIN_EMAIL = '6631503129@lamduan.mfu.ac.th';
+
+    const seededUsers = [];
+    for (const userData of userList) {
+      const isAdmin = userData.email === ADMIN_EMAIL;
+
+      const user = await User.create({
+        name:         userData.name,
+        email:        userData.email,
+        password:     'password123',
+        role:         isAdmin ? ADMIN_ROLE_ID : USER_ROLE_ID,
+        organization: defaultOrg ? defaultOrg._id : undefined,
+        createdAt:    daysAgo(randomInt(1, 60)),
+      });
+      seededUsers.push(user);
+      console.log(`  Created user: ${userData.name} <${userData.email}> [${isAdmin ? 'Admin' : 'User'}]`);
+    }
+    console.log(`\nSeeded ${seededUsers.length} users.\n`);
+
+    // ── Step 4: Seed 5 Forms with all question types ──────────────────────────
+    const formTemplates = [
+      {
+        en: 'Student Satisfaction Survey',
+        th: 'แบบสำรวจความพึงพอใจของนักศึกษา',
+        descEn: 'Please share your feedback about the university services and facilities.',
+        descTh: 'กรุณาแบ่งปันความคิดเห็นของคุณเกี่ยวกับบริการและสิ่งอำนวยความสะดวกของมหาวิทยาลัย',
+      },
+      {
+        en: 'Course Evaluation Form',
+        th: 'แบบประเมินรายวิชา',
+        descEn: 'Evaluate the quality of the course content, instructors, and learning materials.',
+        descTh: 'ประเมินคุณภาพเนื้อหาวิชา อาจารย์ผู้สอน และสื่อการเรียนรู้',
+      },
+      {
+        en: 'Campus Facilities Feedback',
+        th: 'ข้อเสนอแนะเกี่ยวกับสิ่งอำนวยความสะดวกในวิทยาเขต',
+        descEn: 'Help us improve our campus facilities by sharing your experience.',
+        descTh: 'ช่วยเราปรับปรุงสิ่งอำนวยความสะดวกในวิทยาเขตโดยแบ่งปันประสบการณ์ของคุณ',
+      },
+      {
+        en: 'Research Interest Registration',
+        th: 'แบบลงทะเบียนความสนใจด้านการวิจัย',
+        descEn: 'Register your research interests and preferred collaboration areas.',
+        descTh: 'ลงทะเบียนความสนใจด้านการวิจัยและพื้นที่ความร่วมมือที่คุณต้องการ',
+      },
+      {
+        en: 'Annual Alumni Contact Update',
+        th: 'แบบอัปเดตข้อมูลติดต่อศิษย์เก่าประจำปี',
+        descEn: 'Help us keep your contact information up to date for alumni communications.',
+        descTh: 'ช่วยให้เราอัปเดตข้อมูลติดต่อของคุณสำหรับการสื่อสารกับศิษย์เก่า',
+      },
+    ];
+
+    // Question configs per type (realistic question text per form index)
+    const questionTemplates = [
+      // Form 1 – Student Satisfaction Survey
+      [
+        { en: 'What is your student ID?',                  th: 'รหัสนักศึกษาของคุณคืออะไร?' },
+        { en: 'Describe your overall university experience.',th: 'อธิบายประสบการณ์โดยรวมของคุณที่มหาวิทยาลัย' },
+        { en: 'Which department are you enrolled in?',     th: 'คุณลงทะเบียนในแผนกใด?' },
+        { en: 'Which services did you use? (Select all that apply)', th: 'คุณใช้บริการใดบ้าง? (เลือกทั้งหมดที่ตรงกัน)' },
+        { en: 'Rate your overall satisfaction.',           th: 'ให้คะแนนความพึงพอใจโดยรวมของคุณ' },
+        { en: 'Upload your student card (optional).',      th: 'อัปโหลดบัตรนักศึกษาของคุณ (ไม่บังคับ)' },
+        { en: 'Campus Map',                                th: 'แผนที่วิทยาเขต' },
+        { en: 'Student Satisfaction Survey 2025',         th: 'แบบสำรวจความพึงพอใจของนักศึกษา ปี 2568' },
+      ],
+      // Form 2 – Course Evaluation
+      [
+        { en: 'What is the course code?',                  th: 'รหัสวิชาคืออะไร?' },
+        { en: 'Describe what you liked most about this course.', th: 'อธิบายสิ่งที่คุณชอบมากที่สุดเกี่ยวกับรายวิชานี้' },
+        { en: 'How would you rate the instructor?',        th: 'คุณจะให้คะแนนอาจารย์ผู้สอนอย่างไร?' },
+        { en: 'Which learning materials were most helpful?', th: 'สื่อการเรียนรู้ใดที่มีประโยชน์มากที่สุด?' },
+        { en: 'Rate the course difficulty.',               th: 'ให้คะแนนความยากของรายวิชา' },
+        { en: 'Upload your assignment sample.',            th: 'อัปโหลดตัวอย่างงานที่มอบหมาย' },
+        { en: 'Course Overview Image',                     th: 'รูปภาพภาพรวมรายวิชา' },
+        { en: 'Course Evaluation – Semester 2/2568',       th: 'แบบประเมินรายวิชา – ภาคการศึกษา 2/2568' },
+      ],
+      // Form 3 – Campus Facilities Feedback
+      [
+        { en: 'Your name (optional).',                     th: 'ชื่อของคุณ (ไม่บังคับ)' },
+        { en: 'Describe the issue you encountered.',       th: 'อธิบายปัญหาที่คุณพบ' },
+        { en: 'Which facility area did you visit?',        th: 'คุณไปบริเวณสิ่งอำนวยความสะดวกใด?' },
+        { en: 'Which amenities need improvement?',         th: 'สิ่งอำนวยความสะดวกใดที่ต้องการการปรับปรุง?' },
+        { en: 'Rate the cleanliness of the facility.',     th: 'ให้คะแนนความสะอาดของสิ่งอำนวยความสะดวก' },
+        { en: 'Upload a photo of the issue.',              th: 'อัปโหลดรูปถ่ายของปัญหา' },
+        { en: 'Facility Layout Reference',                 th: 'ผังการใช้งานสิ่งอำนวยความสะดวก' },
+        { en: 'Campus Facilities Feedback Form',           th: 'แบบข้อเสนอแนะสิ่งอำนวยความสะดวก' },
+      ],
+      // Form 4 – Research Interest Registration
+      [
+        { en: 'Full name of the researcher.',              th: 'ชื่อนักวิจัยเต็ม' },
+        { en: 'Briefly describe your research proposal.',  th: 'อธิบายสั้นๆ เกี่ยวกับข้อเสนอการวิจัยของคุณ' },
+        { en: 'Select your primary research area.',        th: 'เลือกพื้นที่การวิจัยหลักของคุณ' },
+        { en: 'Select all applicable collaboration types.',th: 'เลือกประเภทความร่วมมือที่ใช้ได้ทั้งหมด' },
+        { en: 'Rate your research experience level.',      th: 'ให้คะแนนระดับประสบการณ์การวิจัยของคุณ' },
+        { en: 'Upload your CV or research portfolio.',     th: 'อัปโหลด CV หรือผลงานวิจัยของคุณ' },
+        { en: 'Research Focus Areas Diagram',              th: 'แผนภาพพื้นที่การวิจัย' },
+        { en: 'Research Registration – 2025 Intake',       th: 'การลงทะเบียนวิจัย – รับปี 2568' },
+      ],
+      // Form 5 – Alumni Contact Update
+      [
+        { en: 'Your full name.',                           th: 'ชื่อนามสกุลเต็มของคุณ' },
+        { en: 'Share any notable achievements since graduation.', th: 'แบ่งปันความสำเร็จที่โดดเด่นนับตั้งแต่สำเร็จการศึกษา' },
+        { en: 'What is your current employment status?',  th: 'สถานะการจ้างงานปัจจุบันของคุณคืออะไร?' },
+        { en: 'Which industries are you working in?',     th: 'คุณทำงานในอุตสาหกรรมใดบ้าง?' },
+        { en: 'Rate how prepared you felt for the job market after graduation.', th: 'ให้คะแนนความพร้อมที่คุณรู้สึกสำหรับตลาดงานหลังสำเร็จการศึกษา' },
+        { en: 'Upload an updated photo (optional).',      th: 'อัปโหลดรูปถ่ายที่อัปเดต (ไม่บังคับ)' },
+        { en: 'Alumni Network Overview',                   th: 'ภาพรวมเครือข่ายศิษย์เก่า' },
+        { en: 'Alumni Contact Update Form 2025',           th: 'แบบอัปเดตข้อมูลติดต่อศิษย์เก่า 2568' },
+      ],
+    ];
+
+    // Choices for multiple_choice and checkbox questions
+    const multiChoiceOptions = [
+      { key: 'opt_a', en: 'Option A', th: 'ตัวเลือก ก' },
+      { key: 'opt_b', en: 'Option B', th: 'ตัวเลือก ข' },
+      { key: 'opt_c', en: 'Option C', th: 'ตัวเลือก ค' },
+      { key: 'opt_d', en: 'Option D', th: 'ตัวเลือก ง' },
+    ];
+
+    // Sample answer pools per type
+    const sampleAnswers = {
+      short_answer: [
+        'John Smith', 'CS101', 'Building A', 'Dr. Alice', 'Room 204',
+        'Jane Doe', 'IT Department', 'Lab 3', 'Student Center', 'Cafeteria',
+      ],
+      paragraph: [
+        'The university experience has been wonderful overall. The faculty members are knowledgeable and supportive.',
+        'I found the course content to be very relevant and well-structured. The practical sessions were especially helpful.',
+        'The campus facilities are generally well-maintained, though the library could use more study spaces.',
+        'My research proposal focuses on machine learning applications in healthcare, specifically for diagnostic imaging.',
+        'Since graduating, I have been working at a tech startup and recently received a promotion to senior engineer.',
+        'The online resources provided were comprehensive and easy to navigate throughout the semester.',
+        'I appreciate the diverse learning environment and the international exchange opportunities offered.',
+      ],
+      multiple_choice: ['opt_a', 'opt_b', 'opt_c', 'opt_d'],
+      checkbox: [
+        ['opt_a', 'opt_b'],
+        ['opt_b', 'opt_c'],
+        ['opt_a', 'opt_c', 'opt_d'],
+        ['opt_b', 'opt_d'],
+        ['opt_a'],
+        ['opt_c'],
+      ],
+      rating: [1, 2, 3, 4, 5],
+      file_upload: [
+        'https://storage.example.com/docs/student_card_001.jpg',
+        'https://storage.example.com/docs/assignment_sample_002.pdf',
+        'https://storage.example.com/docs/facility_photo_003.jpg',
+        'https://storage.example.com/docs/cv_researcher_004.pdf',
+        'https://storage.example.com/docs/alumni_photo_005.jpg',
+      ],
+    };
+
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function buildAnswer(typeName) {
+      switch (typeName) {
+        case 'short_answer':
+          return pickRandom(sampleAnswers.short_answer);
+        case 'paragraph':
+          return pickRandom(sampleAnswers.paragraph);
+        case 'multiple_choice':
+          return pickRandom(sampleAnswers.multiple_choice);
+        case 'checkbox':
+          return pickRandom(sampleAnswers.checkbox);
+        case 'rating':
+          return pickRandom(sampleAnswers.rating);
+        case 'file_upload':
+          return pickRandom(sampleAnswers.file_upload);
+        // image and title_description are display-only; no answer needed
+        case 'image':
+        case 'title_description':
+        default:
+          return null;
+      }
+    }
+
+    console.log('\nSeeding 5 Forms with all question types and responses...\n');
+
+    for (let fi = 0; fi < 5; fi++) {
+      const tmpl    = formTemplates[fi];
+      const qTmpls  = questionTemplates[fi];
+      const creator = seededUsers[fi % seededUsers.length];
+
+      // ── Create the Form ──────────────────────────────────────────────────
       const form = await Form.create({
         title: [
-          { key: 'en', value: `Form ${i}: Comprehensive Survey` },
-          { key: 'th', value: `แบบฟอร์มที่ ${i}: การสำรวจแบบละเอียด` }
+          { key: 'en', value: tmpl.en },
+          { key: 'th', value: tmpl.th },
         ],
         description: [
-          { key: 'en', value: `Testing all question types in form ${i}` },
-          { key: 'th', value: `ทดสอบประเภทคำถามทั้งหมดในแบบฟอร์มที่ ${i}` }
+          { key: 'en', value: tmpl.descEn },
+          { key: 'th', value: tmpl.descTh },
         ],
-        creator: creator._id,
-        organization: [createdOrgs[i % createdOrgs.length]._id],
-        status: null, // Default
-        collaborator: [{ user: creator._id, type: createdControlls[0]._id }]
+        creator:      creator._id,
+        organization: defaultOrg ? [defaultOrg._id] : [],
+        collaborator: editorSetting
+          ? [{ user: creator._id, type: editorSetting._id }]
+          : [],
+        settings: {
+          collectEmail:           false,
+          limitResponse:          false,
+          emailNotifications:     false,
+          requireResponse:        false,
+          showAnotherResponseLink: true,
+        },
       });
-      forms.push(form);
 
-      // Add all question types to each form
-      const questionsData = createdTypes.map((typeObj, index) => {
+      console.log(`  [Form ${fi + 1}] Created: "${tmpl.en}"`);
+
+      // ── Create all 8 Questions for this Form ─────────────────────────────
+      const createdQuestions = [];
+
+      for (let qi = 0; qi < ALL_QUESTION_TYPES.length; qi++) {
+        const typeName = ALL_QUESTION_TYPES[qi];
+        const typeDoc  = typeMap[typeName];
+        const qTmpl    = qTmpls[qi];
+
         const qData = {
-          form: form._id,
-          order: index + 1,
-          type: typeObj._id,
+          form:       form._id,
+          order:      qi + 1,
+          type:       typeDoc._id,
           title: [
-            { key: 'en', value: `Question ${index + 1} (${typeObj.type})` },
-            { key: 'th', value: `คำถามที่ ${index + 1} (${typeObj.type})` }
+            { key: 'en', value: qTmpl.en },
+            { key: 'th', value: qTmpl.th },
           ],
-          isRequired: index < 4 // Make first 4 required
+          isRequired: qi < 3, // first 3 required
         };
 
-        // Add config based on type
-        if (typeObj.type === 'multiple_choice' || typeObj.type === 'checkbox') {
+        // Type-specific config
+        if (typeName === 'multiple_choice') {
           qData.config = {
-            choices: [
-              { key: 'opt1', lang: [{ key: 'en', value: 'Option 1' }, { key: 'th', value: 'ตัวเลือกที่ 1' }] },
-              { key: 'opt2', lang: [{ key: 'en', value: 'Option 2' }, { key: 'th', value: 'ตัวเลือกที่ 2' }] }
-            ],
-            allowMultipleSelect: typeObj.type === 'checkbox'
+            choices: multiChoiceOptions.map(o => ({
+              key:  o.key,
+              lang: [{ key: 'en', value: o.en }, { key: 'th', value: o.th }],
+            })),
+            allowMultipleSelect: false,
           };
-        } else if (typeObj.type === 'rating') {
+        } else if (typeName === 'checkbox') {
+          qData.config = {
+            choices: multiChoiceOptions.map(o => ({
+              key:  o.key,
+              lang: [{ key: 'en', value: o.en }, { key: 'th', value: o.th }],
+            })),
+            allowMultipleSelect: true,
+          };
+        } else if (typeName === 'rating') {
           qData.config = { maxRating: 5 };
-        } else if (typeObj.type === 'file_upload') {
-          qData.config = { maxFiles: 1, maxFileSize: 10, fileTypes: ['image/jpeg', 'application/pdf'] };
-        } else if (typeObj.type === 'image') {
-          qData.config = { image: 'https://via.placeholder.com/300' };
+        } else if (typeName === 'paragraph') {
+          qData.config = { maxText: 500 };
+        } else if (typeName === 'file_upload') {
+          qData.config = {
+            maxFiles:    3,
+            maxFileSize: 10,
+            fileTypes:   ['image/jpeg', 'image/png', 'application/pdf'],
+          };
+        } else if (typeName === 'image') {
+          qData.config = {
+            image: `https://placehold.co/600x300/1a1a2e/ffffff?text=Form+${fi + 1}+Image`,
+          };
+        } else if (typeName === 'title_description') {
+          qData.config = {
+            description: [
+              { key: 'en', value: `This section covers: ${tmpl.descEn}` },
+              { key: 'th', value: `ส่วนนี้ครอบคลุม: ${tmpl.descTh}` },
+            ],
+          };
         }
 
-        return qData;
-      });
+        // insertMany triggers post-save hooks via Questions.create
+        const question = await Questions.create(qData);
+        createdQuestions.push(question);
+      }
 
-      const createdQuestions = await Questions.insertMany(questionsData);
-      await Form.findByIdAndUpdate(form._id, { questions: createdQuestions.map(q => q._id) });
+      console.log(`           Questions created: ${createdQuestions.length}`);
 
-      // 7. Random User Responses (3-5 responses per form)
-      const respCount = 3 + Math.floor(Math.random() * 3);
-      for (let r = 0; r < respCount; r++) {
-        const responder = seededUsers[Math.floor(Math.random() * seededUsers.length)];
-        const answers = createdQuestions.map(q => {
-          const type = createdTypes.find(t => String(t._id) === String(q.type)).type;
-          let responseValue = null;
+      // ── Create 6–9 Responses per Form (all submitted: true) ──────────────
+      const responseCount = randomInt(6, 9);
+      for (let ri = 0; ri < responseCount; ri++) {
+        const responder = seededUsers[randomInt(0, seededUsers.length - 1)];
 
-          if (type === 'short_answer') responseValue = 'Sample Answer';
-          else if (type === 'paragraph') responseValue = 'This is a long sample paragraph response for testing purposes.';
-          else if (type === 'multiple_choice') responseValue = 'opt1';
-          else if (type === 'checkbox') responseValue = ['opt1', 'opt2'];
-          else if (type === 'rating') responseValue = 4;
-          else if (type === 'file_upload') responseValue = 'https://example.com/file.pdf';
-          
-          return { question: q._id, response: responseValue };
-        }).filter(a => a.response !== null);
+        const answers = createdQuestions
+          .map(q => {
+            // Find the type name for this question
+            const qt = questionTypes.find(t => String(t._id) === String(q.type));
+            const typeName = qt ? qt.type : null;
+            const value = buildAnswer(typeName);
+            return { question: q._id, response: value };
+          })
+          .filter(a => a.response !== null); // exclude display-only types
 
         await Response.create({
           responder: responder._id,
-          form: form._id,
-          answers: answers,
-          submit: true
+          form:      form._id,
+          answers:   answers,
+          submit:    true,
         });
       }
+
+      console.log(`           Responses created: ${responseCount} (all submitted)\n`);
     }
 
-    console.log('Seeding completed successfully!');
+    console.log('════════════════════════════════════════════════════════');
+    console.log(' Seeding completed successfully!');
+    console.log('  • 15 users seeded');
+    console.log('  •  5 forms seeded (each with all 8 question types)');
+    console.log('  •  6–9 submitted responses per form');
+    console.log('  • Organizations, Roles, Settings, Question Types: untouched');
+    console.log('════════════════════════════════════════════════════════');
+
   } catch (error) {
-    console.error('Error during database seeding:', error);
+    console.error('\nError during database seeding:', error);
   } finally {
     await mongoose.connection.close();
     process.exit(0);

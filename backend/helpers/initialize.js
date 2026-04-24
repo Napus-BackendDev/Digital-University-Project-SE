@@ -10,11 +10,11 @@ exports.init = function (callback) {
 
     mongodb = mongoose.connect(cfg.mongoURI
         // If someone not use it, comment it dont delete
-        , {
-            useNewUrlParser: true,
-            useCreateIndex: true,
-            useUnifiedTopology: true
-        }
+        // , {
+        //     useNewUrlParser: true,
+        //     useCreateIndex: true,
+        //     useUnifiedTopology: true
+        // }
     );
     var db = mongoose.connection;
     db.on('error', function (err) {
