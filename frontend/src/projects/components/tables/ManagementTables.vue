@@ -34,7 +34,7 @@
                             <!-- Grouped Collaborators by Role -->
                             <div v-for="(collabs, role) in groupCollaboratorsByRole(item.collaborators)" :key="role" class="mb-1 mr-1">
                                 <!-- Single person in this role -->
-                                <div v-if="collabs.length === 1" class="visibility-badge" :class="getRoleClass(role)">
+                                <div v-if="collabs.length === 1" class="collaborator-badge" :class="getRoleClass(role)">
                                     <CIcon name="cil-user" size="sm" class="mr-2"/>
                                     {{ collabs[0].name }} ({{ role }})
                                 </div>
@@ -42,7 +42,7 @@
                                 <!-- Multiple people in this role -->
                                 <CDropdown v-else variant="ghost" size="sm" class="m-0 p-0 custom-dropdown" placement="bottom-start" :popper-options="{ positionFixed: true }">
                                     <template #toggler-content>
-                                        <div class="collaborator-badge cursor-pointer shadow-sm">
+                                        <div class="collaborator-badge cursor-pointer shadow-sm" :class="getRoleClass(role)">
                                             <CIcon name="cil-people" size="sm" class="mr-2"/>
                                             {{ collabs.length }} {{ role }}{{ collabs.length > 1 ? 's' : '' }}
                                         </div>
@@ -937,13 +937,11 @@ export default {
     font-weight: 600;
     white-space: nowrap;
     transition: all 0.2s ease;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: none;
 }
 
 .collaborator-badge:hover {
-    background-color: #f8fafc;
-    border-color: #cbd5e1;
+    filter: brightness(0.95);
 }
 /* Style the actual dropdown container from CoreUI */
 .custom-dropdown /deep/ .dropdown-menu {
