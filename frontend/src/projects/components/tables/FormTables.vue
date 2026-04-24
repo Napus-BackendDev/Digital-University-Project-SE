@@ -34,11 +34,57 @@
             <!-- Access Slot -->
             <template #access="{ item }">
                 <td class="align-middle">
-                    <div class="access-stack">
-                        <span v-for="(v, idx) in item.access" :key="idx" class="visibility-badge"
-                            :class="getVisibilityClass(v)">
-                            {{ v.startsWith('Personal: ') ? v.replace('Personal: ', '') : ($te('accessLabel.' + v.toLowerCase()) ? $t('accessLabel.' + v.toLowerCase()) : v) }}
-                        </span>
+                    <div v-if="!item.isEmpty" class="d-flex flex-column align-items-start gap-1" style="min-width: 150px;">
+                        <!-- Organization/Public Access -->
+                        <div v-if="orgAccessOnly(item.access).length === 1" class="mb-1">
+                            <div class="visibility-badge" :class="getVisibilityClass(orgAccessOnly(item.access)[0])">
+                                <CIcon v-if="isPublic(orgAccessOnly(item.access)[0])" name="cil-globe-alt" size="sm" class="mr-2"/>
+                                <CIcon v-else name="cil-bank" size="sm" class="mr-2"/>
+                                {{ formatAccessLabel(orgAccessOnly(item.access)[0]) }}
+                            </div>
+                        </div>
+                        
+                        <!-- Multiple Organizations -->
+                        <CDropdown v-else-if="orgAccessOnly(item.access).length > 1" variant="ghost" size="sm" class="m-0 p-0 custom-dropdown mb-1" placement="bottom-start" :popper-options="{ positionFixed: true }">
+                            <template #toggler-content>
+                                <div class="visibility-badge visi-org cursor-pointer">
+                                    <CIcon name="cil-bank" size="sm" class="mr-2"/>
+                                    {{ orgAccessOnly(item.access).length }} Orgs
+                                </div>
+                            </template>
+                            <CDropdownItem v-for="(acc, i) in orgAccessOnly(item.access)" :key="'org-'+i" class="p-0 border-bottom last-border-0">
+                                <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
+                                    <CIcon v-if="isPublic(acc)" name="cil-globe-alt" size="sm" class="mr-3 text-success"/>
+                                    <CIcon v-else name="cil-bank" size="sm" class="mr-3 text-info"/>
+                                    <span class="small font-weight-bold text-dark text-truncate">{{ formatAccessLabel(acc) }}</span>
+                                </div>
+                            </CDropdownItem>
+                        </CDropdown>
+
+                        <!-- Personal Access -->
+                        <div v-if="personalAccessOnly(item.access).length === 1" class="mb-1">
+                            <div class="visibility-badge visi-personal">
+                                <CIcon name="cil-user" size="sm" class="mr-1"/>
+                                {{ personalAccessOnly(item.access)[0].replace('Personal: ', '') }}
+                            </div>
+                        </div>
+
+                        <CDropdown v-else-if="personalAccessOnly(item.access).length > 1" variant="ghost" size="sm" class="m-0 p-0 custom-dropdown" placement="bottom-start" :popper-options="{ positionFixed: true }">
+                            <template #toggler-content>
+                                <div class="visibility-badge visi-personal cursor-pointer">
+                                    <CIcon name="cil-user" size="sm" class="mr-2"/>
+                                    {{ personalAccessOnly(item.access).length }} Access
+                                </div>
+                            </template>
+                            <CDropdownItem v-for="(acc, i) in personalAccessOnly(item.access)" :key="'pers-'+i" class="p-0 border-bottom last-border-0">
+                                <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
+                                    <CIcon name="cil-user" size="sm" class="mr-3 text-primary"/>
+                                    <span class="small font-weight-bold text-dark text-truncate">{{ acc.replace('Personal: ', '') }}</span>
+                                </div>
+                            </CDropdownItem>
+                        </CDropdown>
+
+                        <span v-if="item.access.length === 0" class="small text-muted">-</span>
                     </div>
                 </td>
             </template>
@@ -475,6 +521,23 @@ export default {
             if (v.includes('personal')) return 'visi-personal';
             return 'visi-org';
         },
+        isPublic(visibility) {
+            if (!visibility) return false;
+            const v = String(visibility).toLowerCase();
+            return v.includes('public') || v.includes('สาธารณะ') || v === 'general';
+        },
+        orgAccessOnly(access) {
+            if (!Array.isArray(access)) return [];
+            return access.filter(acc => !acc.startsWith('Personal: '));
+        },
+        personalAccessOnly(access) {
+            if (!Array.isArray(access)) return [];
+            return access.filter(acc => acc.startsWith('Personal: '));
+        },
+        formatAccessLabel(v) {
+            if (!v) return '';
+            return v.startsWith('Personal: ') ? v.replace('Personal: ', '') : (this.$te('accessLabel.' + v.toLowerCase()) ? this.$t('accessLabel.' + v.toLowerCase()) : v);
+        },
         getProgressColor(progress) {
             if (progress >= 100) return 'success';
             if (progress >= 40) return 'info';
@@ -694,36 +757,93 @@ export default {
 
 .visibility-badge {
     display: inline-flex;
-    padding: 0.25em 0.8em;
-    border-radius: 6px;
-    font-size: 0.75rem;
+    align-items: center;
+    padding: 0.4rem 1.1rem;
+    border-radius: 100px;
+    font-size: 0.85rem;
     font-weight: 600;
     white-space: nowrap;
+    transition: all 0.2s ease;
+    border: none;
 }
 
 .visi-public {
     background-color: #ecfdf5;
-    color: #059669;
+    color: #065f46;
 }
 
 .visi-private {
-    background-color: #fff1f2;
-    color: #e11d48;
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fee2e2;
 }
 
 .visi-org {
-    background-color: #fff7ed;
-    color: #8c1515;
+    background-color: #eff6ff;
+    color: #1e40af;
 }
 
 .visi-personal {
     background-color: #f5f3ff;
-    color: #7c3aed;
+    color: #5b21b6;
 }
 
 .visi-default {
     background-color: #f1f5f9;
-    color: #64748b;
+    color: #475569;
+}
+
+/* Style the actual dropdown container from CoreUI */
+.custom-dropdown ::v-deep .dropdown-menu {
+    background: white !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    margin-top: 8px !important;
+    z-index: 2000 !important;
+    border: 1px solid #edf2f7 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+    max-height: 250px;
+    overflow-y: auto;
+    min-width: 220px;
+}
+
+.custom-dropdown ::v-deep .dropdown-item {
+    padding: 0 !important;
+}
+
+.custom-dropdown ::v-deep .dropdown-toggle {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    outline: none !important;
+}
+
+.custom-dropdown ::v-deep .dropdown-toggle::after {
+    display: none !important;
+}
+
+.dropdown-item-custom {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    text-align: left;
+}
+
+.dropdown-item-custom:hover {
+    background-color: #f8fafc;
+}
+
+.last-border-0:last-child {
+    border-bottom: 0 !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
 }
 </style>
 ```

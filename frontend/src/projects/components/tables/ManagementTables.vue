@@ -42,17 +42,19 @@
                                 <!-- Multiple people in this role -->
                                 <CDropdown v-else variant="ghost" size="sm" class="m-0 p-0 custom-dropdown" placement="bottom-start" :popper-options="{ positionFixed: true }">
                                     <template #toggler-content>
-                                        <div class="visibility-badge cursor-pointer" :class="getRoleClass(role)">
+                                        <div class="collaborator-badge cursor-pointer shadow-sm">
                                             <CIcon name="cil-people" size="sm" class="mr-2"/>
                                             {{ collabs.length }} {{ role }}{{ collabs.length > 1 ? 's' : '' }}
                                         </div>
                                     </template>
-                                    <CDropdownItem v-for="(person, idx) in collabs" :key="idx" class="p-0 border-bottom last-border-0">
-                                        <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
-                                            <CIcon name="cil-user" size="sm" class="mr-3" :class="getRoleIconClass(role)"/>
-                                            <span class="small font-weight-bold text-dark text-truncate">{{ person.name }}</span>
-                                        </div>
-                                    </CDropdownItem>
+                                    <div class="dropdown-menu-scrollable">
+                                        <CDropdownItem v-for="(person, idx) in collabs" :key="idx" class="p-0 border-bottom last-border-0">
+                                            <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100" style="min-width: 220px;">
+                                                <div class="avatar-sm mr-2 text-uppercase" :class="getRoleIconClass(role)">{{ person.name ? person.name.charAt(0) : 'U' }}</div>
+                                                <span class="small font-weight-bold text-dark text-truncate">{{ person.name }}</span>
+                                            </div>
+                                        </CDropdownItem>
+                                    </div>
                                 </CDropdown>
                             </div>
                         </div>
@@ -100,13 +102,15 @@
                                     {{ orgAccessOnly(item.access).length }} Orgs
                                 </div>
                             </template>
-                            <CDropdownItem v-for="(acc, i) in orgAccessOnly(item.access)" :key="'org-list-'+i" class="p-0 border-bottom last-border-0">
-                                <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
-                                    <CIcon v-if="acc === 'Public' || acc === 'Publicly'" name="cil-globe-alt" size="sm" class="mr-3 text-success"/>
-                                    <CIcon v-else name="cil-bank" size="sm" class="mr-3 text-info"/>
-                                    <span class="small font-weight-bold text-dark text-truncate">{{ acc }}</span>
-                                </div>
-                            </CDropdownItem>
+                            <div class="dropdown-menu-scrollable">
+                                <CDropdownItem v-for="(acc, i) in orgAccessOnly(item.access)" :key="'org-list-'+i" class="p-0 border-bottom last-border-0">
+                                    <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100" style="min-width: 200px;">
+                                        <CIcon v-if="acc === 'Public' || acc === 'Publicly'" name="cil-globe-alt" size="sm" class="mr-3 text-success"/>
+                                        <CIcon v-else name="cil-bank" size="sm" class="mr-3 text-info"/>
+                                        <span class="small font-weight-bold text-dark text-truncate">{{ formatAccessLabel(acc) }}</span>
+                                    </div>
+                                </CDropdownItem>
+                            </div>
                         </CDropdown>
 
                         <!-- Personal Access (Collaborator/Allowed Users) -->
@@ -125,12 +129,14 @@
                                         {{ personalAccessOnly(item.access).length }} Access
                                     </div>
                                 </template>
-                                <CDropdownItem v-for="(acc, i) in personalAccessOnly(item.access)" :key="'pers-'+i" class="p-0 border-bottom last-border-0">
-                                    <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
-                                        <CIcon name="cil-user" size="sm" class="mr-3 text-primary"/>
-                                        <span class="small font-weight-bold text-dark text-truncate">{{ acc.replace('Personal: ', '') }}</span>
-                                    </div>
-                                </CDropdownItem>
+                                <div class="dropdown-menu-scrollable">
+                                    <CDropdownItem v-for="(acc, i) in personalAccessOnly(item.access)" :key="'pers-'+i" class="p-0 border-bottom last-border-0">
+                                        <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100" style="min-width: 180px;">
+                                            <CIcon name="cil-user" size="sm" class="mr-3 text-primary"/>
+                                            <span class="small font-weight-bold text-dark text-truncate">{{ acc.replace('Personal: ', '') }}</span>
+                                        </div>
+                                    </CDropdownItem>
+                                </div>
                             </CDropdown>
                         </div>
 
@@ -528,6 +534,10 @@ export default {
             if (!Array.isArray(responses)) return 0;
             return responses.filter(r => !(r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true')).length;
         },
+        formatAccessLabel(v) {
+            if (!v) return '';
+            return v.startsWith('Personal: ') ? v.replace('Personal: ', '') : (this.$te('accessLabel.' + v.toLowerCase()) ? this.$t('accessLabel.' + v.toLowerCase()) : v);
+        },
         calculateDaysLeft(endAt) {
             try {
                 const end = new Date(endAt);
@@ -900,15 +910,40 @@ export default {
     transform: translateY(-1px);
 }
 
-.dropdown-item-custom {
-    transition: background-color 0.2s ease;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    text-align: left;
-}
 .dropdown-item-custom:hover {
     background-color: #f8fafc;
+}
+
+.avatar-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    flex-shrink: 0;
+}
+
+.collaborator-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.9rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+.collaborator-badge:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
 }
 /* Style the actual dropdown container from CoreUI */
 .custom-dropdown /deep/ .dropdown-menu {
@@ -927,15 +962,20 @@ export default {
 .custom-dropdown /deep/ .dropdown-item {
     padding: 0 !important;
 }
-.custom-dropdown /deep/ .dropdown-toggle {
+.custom-dropdown /deep/ .dropdown-toggle, 
+.custom-dropdown ::v-deep .dropdown-toggle {
     padding: 0 !important;
     border: none !important;
     background: transparent !important;
+    background-color: transparent !important;
     box-shadow: none !important;
-    display: flex;
-    align-items: center;
+    display: flex !important;
+    align-items: center !important;
+    outline: none !important;
 }
-.custom-dropdown /deep/ .dropdown-toggle::after {
+
+.custom-dropdown /deep/ .dropdown-toggle::after,
+.custom-dropdown ::v-deep .dropdown-toggle::after {
     display: none !important;
 }
 .last-border-0:last-child {
