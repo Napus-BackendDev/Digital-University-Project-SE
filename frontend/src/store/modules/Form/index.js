@@ -7,17 +7,36 @@ const ServerModule = {
     namespaced: true,
 
     state: {
-        forms: []
+        forms: [],
+        duplicateBuffer: null
     },
 
     mutations: {
         forms(state, forms) {
             state.forms = forms;
+        },
+        clearForms(state) {
+            state.forms = [];
+        },
+        setDuplicateBuffer(state, data) {
+            state.duplicateBuffer = data;
         }
     },
     actions: {
+        clear({ commit }) {
+            commit('clearForms');
+        },
         get({ commit }, data) {
             return Service.form('exp', data, {})
+                .then(response => {
+                    commit('forms', response.data.data);
+                    return response;
+                })
+                .catch(error => { throw error; });
+        },
+        getByUser({ commit }, data) {
+            if (!data || !data.userId) return Promise.reject("userId is required");
+            return Service.form('getByUser', data, {})
                 .then(response => {
                     commit('forms', response.data.data);
                     return response;
@@ -45,17 +64,18 @@ const ServerModule = {
                 })
                 .catch(error => { throw error; });
         },
-        delete({ commit }, data) {
+        delete({ dispatch }, data) {
             return Service.form('delete', data, {})
                 .then(response => {
-                    commit('forms', response.data.data);
+                    dispatch('get');
                     return response;
                 })
                 .catch(error => { throw error; });
         }
     },
     getters: {
-        forms: (state) => state.forms
+        forms: (state) => state.forms,
+        duplicateBuffer: (state) => state.duplicateBuffer
     }
 }
 

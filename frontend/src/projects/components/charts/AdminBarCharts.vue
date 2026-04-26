@@ -3,9 +3,9 @@
         <div class="header mb-4">
             <div class="d-flex align-items-center mb-1">
                 <CIcon name="cil-chart" class="text-danger mr-2" size="lg" />
-                <h4 class="m-0 font-weight-bold">Top Performing Forms</h4>
+                <h4 class="m-0 font-weight-bold">Most Responded Form</h4>
             </div>
-            <div class="text-muted small ">Forms with the most responses</div>
+            <div class="text-muted small ">{{ $t('analytics.mostRespondedDesc') }}</div>
         </div>
 
         <div class="chart-container">
@@ -18,19 +18,28 @@
 <script>
 import { CChartHorizontalBar } from '@coreui/vue-chartjs'
 import { mapGetters } from 'vuex'
+import localeMixin from '@/mixins/localeMixin'
+import { getFilteredResponses } from '@/projects/utils/analytics'
 
 export default {
     name: 'AdminBarCharts',
     components: { CChartHorizontalBar },
+    mixins: [localeMixin],
+    props: {
+        timeRange: {
+            type: String,
+            default: '7d'
+        }
+    },
     computed: {
         ...mapGetters('Forms', ['forms']),
 
         topForms() {
             if (!this.forms) return []
-            // Sort by response count descending
+            // Sort by response count within range descending
             const sorted = [...this.forms].sort((a, b) => {
-                const countA = a.responses ? a.responses.length : 0
-                const countB = b.responses ? b.responses.length : 0
+                const countA = getFilteredResponses(a, this.timeRange).length;
+                const countB = getFilteredResponses(b, this.timeRange).length;
                 return countB - countA
             })
             // Take top 5
@@ -54,7 +63,7 @@ export default {
                 }
                 labels.push(title)
 
-                data.push(form.responses ? form.responses.length : 0)
+                data.push(getFilteredResponses(form, this.timeRange).length)
             })
 
             return { labels, data }
@@ -63,7 +72,7 @@ export default {
         defaultDatasets() {
             return [
                 {
-                    label: 'Responses',
+                    label: this.$t('table.responses'),
                     backgroundColor: '#9B1B30',
                     data: this.chartData.data,
                     barPercentage: 0.6,
@@ -118,9 +127,11 @@ export default {
 <style scoped>
 .chart-wrapper-container {
     background: white;
-    border-radius: 8px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
     padding: 20px;
     height: 100%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header h4 {

@@ -1,108 +1,176 @@
-const mongo = require("mongodb");
-const Form = require("../controller/form");
+const mongo = require('mongodb');
+const Form = require('../controller/form');
+const User = require('../../User/controller/user');
 const ResMessage = require("../../Settings/service/message");
+const { maybeSendCollaborationInvites } = require('../../Email/service/collaboration');
+const { maybeSendOrganizationInvites } = require('../../Email/service/inviteOrganization');
 
-const getApiId = function (request) {
-  return Number(request.body.apiId) || 0;
-};
+exports.checkAccess = async function (request, response) {
+    try {
+        const form_id = request.body.form_id;
+        const user_id = request.body.user_id;
 
-const getSuccessCode = function (request) {
-  return 20000 + getApiId(request);
-};
+        if (!form_id || !user_id) {
+            return ResMessage.sendResponse(response, 0, 40400, "form_id and user_id are required");
+        }
 
-exports.onQuery = async function (request, response) {
-  try {
-    let query = {};
-    query._id = new mongo.ObjectId(request.body._id);
+        const doc = await Form.onQuery({ _id: new mongo.ObjectId(form_id) }, Form.formPopulate);
+        if (!doc) {
+            return ResMessage.sendResponse(response, 0, 40400, "Form not found");
+        }
 
-    const results = await Form.onAggregate([
-      { $match: query },
-      {
-        $graphLookup: {
-          from: "Forms",
-          startWith: "$_id",
-          connectFromField: "_id",
-          connectToField: "originalFormId",
-          as: "childrenForms",
-          depthField: "depth",
-        },
-      },
-      {
-        $addFields: {
-          childrenForms: {
-            $sortArray: {
-              input: "$childrenForms",
-              sortBy: { depth: 1, createdAt: -1 },
-            },
-          },
-        },
-      },
-    ]);
+        // 1. Check if Creator
+        if (String(doc.creator?._id || doc.creator) === String(user_id)) {
+            return ResMessage.sendResponse(response, 0, 20000, { role: 'editor' });
+        }
 
-    // Use onQuery for population instead of custom onPopulate
-    const doc = await Form.onQuery({ _id: query._id }, [
-      { path: 'questions', populate: { path: 'type', select: 'type' } },
-      { 
-        path: 'responses', 
-        populate: { 
-          path: 'answers.question',
-          populate: { path: 'type', select: 'type' }
-        } 
-      },
-      { path: 'status', select: 'title' }
-    ]);
+        // 2. Check Collaborators
+        const collaborator = (doc.collaborator || []).find(c => String(c.user?._id || c.user) === String(user_id));
+        if (collaborator) {
+            const typeTitle = collaborator.type?.title || [];
+            const fullTitle = (Array.isArray(typeTitle) ? typeTitle.map(t => t.value).join('') : String(typeTitle)).toLowerCase();
+            const role = fullTitle.includes('view') ? 'viewer' : 'editor';
+            return ResMessage.sendResponse(response, 0, 20000, { role });
+        }
 
-    if (doc && results.length > 0) {
-      doc.childrenForms = results[0].childrenForms;
+        // 3. Check Allowed Users
+        const isAllowed = (doc.settings?.allowedUser || []).some(u => String(u._id || u) === String(user_id));
+        if (isAllowed) {
+            return ResMessage.sendResponse(response, 0, 20000, { role: 'viewer' });
+        }
+
+        return ResMessage.sendResponse(response, 0, 40300, "Access Denied");
+    } catch (err) {
+        console.error("[form.service.js] checkAccess Error:", err);
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
     }
-
-    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
-  } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
-  }
 };
 
 exports.onQuerys = async function (request, response) {
-  try {
-    var querys = {};
-    const doc = await Form.onQuerys(querys, [
-      { path: 'status', select: 'title' },
-      { path: 'responses', match: { submit: true } }
-    ]);
-    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
-  } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
-  }
+    try {
+        const query = {};
+        const doc = await Form.onQuerys(query, Form.formPopulate);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        return ResMessage.sendResponse(response, 0, 40400);
+    }
 };
 
+exports.onQuery = async function (request, response) {
+    try {
+        const query = {};
+        if (request.body && request.body._id) {
+            query._id = new mongo.ObjectId(request.body._id);
+        }
+        const doc = await Form.onQuery(query, Form.formPopulate);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        return ResMessage.sendResponse(response, 0, 40400);
+    }
+};
+
+exports.onQueryByUser = async (request, response, next) => {
+    try {
+        const _id = new mongo.ObjectId(request.body._id);
+
+
+        // Fetch user with role details to check for Admin privilege
+        const user = await User.onQuery({ _id: _id }, [{ path: 'role' }], "_id organization role");
+        if (!user) {
+            console.warn("[form.service.js] User not found in DB:", _id);
+            return ResMessage.onMessage_Response(0, 40400).then(resData => {
+                response.status(404).json(resData);
+            });
+        }
+
+        // Check if user is Admin (looking at role title)
+        let isAdmin = false;
+        if (user.role && user.role.title) {
+            const roleTitle = user.role.title;
+            if (Array.isArray(roleTitle)) {
+                isAdmin = roleTitle.some(t => t && t.value && t.value.toLowerCase().includes('admin'));
+            } else if (typeof roleTitle === 'string') {
+                isAdmin = roleTitle.toLowerCase().includes('admin');
+            }
+        }
+
+
+
+        let query = {};
+        if (isAdmin) {
+            // Admins can see ALL forms globally in this system
+            query = {}; 
+
+        } else {
+            // Regular user: Limited to what they own, collab on, or their organization
+            query = {
+                $or: [
+                    { creator: _id },
+                    { collaborator: { $elemMatch: { user: _id } } },
+                    { "settings.allowedUser": _id },
+                    { organization: user.organization }
+                ]
+            };
+        }
+
+
+
+        const doc = await Form.onQuerys(query, Form.formPopulate);
+
+        
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        console.error("[form.service.js] Error in onQueryByUser:", err);
+        return ResMessage.onMessage_Response(0, 40400).then(resData => {
+            response.status(404).json(resData);
+        });
+    }
+};
+
+
+
 exports.onCreate = async function (request, response) {
-  try {
-    const doc = await Form.onCreate(request.body);
-    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
-  } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
-  }
+    try {
+
+        const doc = await Form.onCreate(request.body);
+
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+
+        return ResMessage.sendResponse(response, 0, 40400);
+    }
 };
 
 exports.onUpdate = async function (request, response) {
-  try {
-    let query = {};
-    query._id = new mongo.ObjectId(request.body._id);
+    try {
+        let query = {}
+        query._id = new mongo.ObjectId(request.body._id);
 
-    const doc = await Form.onUpdate(query, request.body);
-    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
-  } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
-  }
+        // Fetch previous document to calculate "Newly Added" collaborators
+        const previousDoc = await Form.onQuery(query);
+
+        const doc = await Form.onUpdate(query, request.body);
+
+        // Trigger invitation service to diff and send emails to NEW members
+        if (previousDoc && doc) {
+            maybeSendCollaborationInvites({ previousDoc, currentDoc: doc });
+            maybeSendOrganizationInvites({ previousDoc, currentDoc: doc });
+        }
+
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        console.error(err);
+        return ResMessage.sendResponse(response, 0, 40400);
+    }
 };
 
 exports.onDelete = async function (request, response) {
-  try {
-    let query = {};
-    query._id = new mongo.ObjectId(request.body._id);
-    const doc = await Form.onDelete(query);
-    return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
-  } catch (err) {
-    return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
-  }
+    try {
+        let query = {};
+        query._id = new mongo.ObjectId(request.body._id);
+        const doc = await Form.onDelete(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        return ResMessage.sendResponse(response, 0, 40400);
+    }
 };

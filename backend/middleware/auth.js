@@ -1,39 +1,37 @@
-// const jwt=require("jsonwebtoken");
-// const User = require('../server/Project/User/models/user.model');
+const jwt = require("jsonwebtoken");
 
-// const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
-// async function requireAuth(req,res,next) {
-//     try {
-//         const token = req.cookies.token;
-//         if (!token) {
-//             return res.status(401).json({ message: "Unauthorized: No token provided. Please login." });
-//         }
+/**
+ * requireAuth – verifies the JWT cookie set by /auth/google.
+ * Attaches decoded user info to req.user.
+ */
+async function requireAuth(req, res, next) {
+    try {
+        const token = req.cookies.token;
+        if (!token) {
+            return res.status(401).json({ message: "Unauthorized: No token provided. Please login." });
+        }
 
-//         const decoded = jwt.verify(token, JWT_SECRET);
-//         if (!decoded) {
-//             return res.status(401).json({ message: "Unauthorized: Invalid token. Please login." });
-//         }
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (!decoded) {
+            return res.status(401).json({ message: "Unauthorized: Invalid token. Please login." });
+        }
 
-//         const user = await User.findById(decoded.userId).populate('roles');
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found." });
-//         }
-        
-//         // Extract role names and all permissions from user's roles
-//         const roleNames = user.roles.map(role => role.name);
-//         const permissions = user.roles.flatMap(role => role.permissions || []);
-        
-//         req.user={
-//             id:user._id,
-//             roles:roleNames,
-//             permissions
-//         };
-//         next();
-//     } catch (error) {
-//         return res.status(401).json({ message: "Unauthorized: Token verification failed. Please login.", error: error.message });
-//     }
-// }
+        // Attach Google-sourced user info from the JWT payload
+        req.user = {
+            id: decoded.userId,
+            email: decoded.email,
+            name: decoded.name,
+            picture: decoded.picture,
+        };
+        next();
+    } catch (error) {
+        return res.status(401).json({ message: "Unauthorized: Token verification failed. Please login.", error: error.message });
+    }
+}
+
+// --- Role / Permission helpers (enable when User model is ready) ---
 
 // function requirePermission(...permissions) {
 //     return (req, res, next) => {
@@ -41,10 +39,7 @@
 //             return res.status(401).json({ message: "Unauthorized: No user information found. Please login." });
 //         }
 //         const userPerms = req.user.permissions || [];
-//         console.log('User permissions:', userPerms);
-//         console.log('Required permissions:', permissions);
 //         const hasPermission = permissions.some(perm => userPerms.includes(perm));
-        
 //         if(!hasPermission){
 //             return res.status(403).json({ 
 //                 message: `Forbidden: Required permissions: ${permissions.join(", ")}`,
@@ -64,7 +59,6 @@
 //             }
 //             const userRoles = req.user.roles || [];
 //             const hasRole = roleNames.some(role => userRoles.includes(role));
-            
 //             if(!hasRole){
 //                 return res.status(403).json({ message: `Forbidden: Access requires role(s): ${roleNames.join(", ")}` });
 //             }
@@ -75,8 +69,8 @@
 //     };
 // }
 
-// module.exports = {
-//     requireAuth,
-//     requirePermission,
-//     requireRole
-// };
+module.exports = {
+    requireAuth,
+    // requirePermission,
+    // requireRole
+};

@@ -4,7 +4,17 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var objSchema = new Schema({
-    title: [{ key: { type: String, default: null }, value: { type: String, default: null } }]
+    title: [{
+        key: { type: String, default: null },
+        value: { type: String, default: null }
+    }],
+    permission: [{
+        page: { type: String, default: null },
+        access: [{
+            key: { type: String, default: null },
+            value: { type: Boolean, default: false }
+        }]
+    }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Roles', objSchema, "Roles");

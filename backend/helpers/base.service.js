@@ -78,5 +78,7 @@ module.exports = function createBaseService(objSchema, defaultPopulate = []) {
         onDelete: async (query) => {
             return objSchema.deleteMany(query);
         }
+
+        
     };
 };

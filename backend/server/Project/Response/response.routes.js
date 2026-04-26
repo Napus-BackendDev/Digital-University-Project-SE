@@ -1,47 +1,41 @@
 const express = require('express');
 const router = express.Router();
-
 const response = require('./service/response');
-const upload = require('../../../server/middleware/upload');
-
+const { upload } = require('../../../helpers/upload');
+// Get All
 router.get("/exp", function (req, res, next) {
-    req.query.apiId = 12;
+    req.query.apiId = 1;
     next();
 }, response.onQuerys);
 
-router.post("/getByFormId", function (req, res, next) {
-    req.body.apiId = 1;
-    next();
-}, response.onGetByFormId);
-
+// Get by filter (single or list)
 router.post("/get", function (req, res, next) {
-    req.body.apiId = 2;
+    req.query.apiId = 2;
     next();
-}, response.onGetById);
+}, response.onQuery);
 
+// Create
 router.post("", function (req, res, next) {
-    req.body.apiId = 3;
+    req.query.apiId = 3;
     next();
 }, upload.any(), response.onCreate);
 
+// Update
 router.put("", function (req, res, next) {
-    req.body.apiId = 4;
+    req.query.apiId = 4;
     next();
 }, upload.any(), response.onUpdate);
 
+// Delete (query/body version)
 router.delete("", function (req, res, next) {
-    req.body.apiId = 5;
+    req.query.apiId = 5;
     next();
 }, response.onDelete);
 
-router.get("/download/:form_id/response/:_id", function (req, res, next) {
-    req.body.apiId = 7;
+// Delete (path parameter version)
+router.delete("/:id", function (req, res, next) {
+    req.query.apiId = 5;
     next();
-}, response.downloadResponseJSON);
-
-router.get("/download/:form_id", function (req, res, next) {
-    req.body.apiId = 8;
-    next();
-}, response.downloadFormJSON);
+},response.onDelete);
 
 module.exports = router;

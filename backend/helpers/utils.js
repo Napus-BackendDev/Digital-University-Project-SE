@@ -152,5 +152,5 @@ exports.createNewDataFromDifferences = function(differences) {
 //
 // const differences = compareJSON(json1, json2);
 // const newData = createNewDataFromDifferences(differences);
-// console.log(newData);
+
 

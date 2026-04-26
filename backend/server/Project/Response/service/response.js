@@ -1,329 +1,207 @@
-const mongo = require("mongodb");
-const responseService = require("../controllers/response");
+const mongo = require('mongodb');
+const moment = require('moment');
+const Response = require('../controller/response');
 const ResMessage = require("../../Settings/service/message");
-const responseModel = require("../model/response.model");
-require("../../Questions/models/questions.model");
-require("express-validator/check");
+const sentMail = require("../../../../helpers/google/Mail");
+const { attachFilesToAnswers, cleanUpOrphanedFile } = require('./utils/utils');
+const { buildSubmissionConfirmationHtml, buildSubmissionConfirmationText } = require('../../Email/templates/submissionConfirmation');
 
-const getApiId = function (request) {
-    return Number(request.body.apiId) || 0;
+// Helper to extract title from localized array
+const getFormTitle = (form) => {
+    if (!form || !form.title || !Array.isArray(form.title) || form.title.length === 0) return 'Untitled Form';
+    const enTitle = form.title.find(t => t.key === 'en');
+    const thTitle = form.title.find(t => t.key === 'th');
+    return enTitle ? enTitle.value : (thTitle ? thTitle.value : form.title[0].value);
 };
 
-const getSuccessCode = function (request) {
-    return 20000 + getApiId(request);
+// Helper to parse answers from various formats (string, object, array)
+const parseAnswers = (input) => {
+    let answers = input;
+    if (typeof answers === "string") {
+        try {
+            answers = JSON.parse(answers);
+        } catch (e) {
+            answers = [];
+        }
+    }
+    if (!Array.isArray(answers)) {
+        if (answers && typeof answers === "object") {
+            answers = [answers];
+        } else {
+            answers = [];
+        }
+    }
+    return answers;
+};
+
+exports.onQuery = async function (request, response) {
+    try {
+        let query = { ...request.body };
+        if (query._id) {
+            query._id = new mongo.ObjectId(String(query._id));
+        }
+        const doc = await Response.onQuery(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
+    } catch (err) {
+        console.error("onQuery Error:", err);
+        return ResMessage.sendResponse(response, 0, 40400, err.message);
+    }
 };
 
 exports.onQuerys = async function (request, response) {
     try {
-        var querys = {};
-        const doc = await responseService.onQuerys(querys);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        let query = { ...request.body };
+        const doc = await Response.onQuerys(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
-    }
-}
-
-exports.onGetByFormId = async function (request, response) {
-    try {
-        let query = {};
-        query.form = request.body.form_id;
-        const doc = await responseService.onQuerys(query);
-        console.log(doc);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch responses by form ID", err.message);
-    }
-};
-
-exports.onGetById = async function (request, response) {
-    try {
-        let query = {};
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await responseService.onQuery(query);
-        if (!doc) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found");
-        }
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
-    } catch (err) {
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to fetch response by ID", err.message);
+        return ResMessage.sendResponse(response, 0, 40400);
     }
 };
 
 exports.onCreate = async function (request, response) {
     try {
-        let answers = request.body.answers || request.body['answers'];
+        let answers = parseAnswers(request.body.answers);
 
-        if (typeof answers === 'string') {
-            try { answers = JSON.parse(answers); } catch (e) { }
-        }
-
-        if (!Array.isArray(answers)) {
-            const singleQ = request.body['answers[question]'] || request.body['answers[0][question]'];
-            const singleR = request.body['answers[response]'] || request.body['answers[0][response]'];
-            if (singleQ || singleR) {
-                answers = [{ question: singleQ || null, response: singleR || null }];
-            } else if (answers && typeof answers === 'object') {
-                answers = [answers];
-            } else {
-                answers = [];
-            }
-        }
-
-        if (request.files && request.files.length) {
-            let fileQuestions = request.body['answers[question]'] || request.body['answers[0][question]'];
-            if (fileQuestions === undefined) fileQuestions = [];
-            if (!Array.isArray(fileQuestions)) fileQuestions = [fileQuestions];
-
-            for (let i = 0; i < request.files.length; i++) {
-                const file = request.files[i];
-                const questionForFile = fileQuestions[i] || null;
-                let attached = false;
-
-                if (questionForFile) {
-                    for (let ans of answers) {
-                        if (ans && String(ans.question) === String(questionForFile)) {
-                            ans.response = file.path;
-                            attached = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!attached) {
-                    for (let ans of answers) {
-                        if (!ans || ans.response === null || ans.response === undefined || ans.response === '') {
-                            ans.response = file.path;
-                            attached = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!attached) {
-                    answers.push({ question: questionForFile || null, response: file.path });
-                }
-            }
-        }
+        // Attach files if any
+        attachFilesToAnswers(answers, request.files, request.body);
 
         request.body.answers = answers;
-        const doc = await responseService.onCreate(request.body);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+
+        // Ensure responder ID is ObjectId if provided
+        if (request.body.responder && typeof request.body.responder === 'string') {
+            request.body.responder = new mongo.ObjectId(request.body.responder);
+        }
+
+        const doc = await Response.onCreate(request.body);
+        
+        const isSubmitting = String(request.body.submit) === 'true';
+        
+        // Use professional template for email notification if submitted immediately
+        if (isSubmitting && doc.responder && doc.responder.email) {
+            const formTitle = getFormTitle(doc.form);
+            const emailMessage = doc.form?.settings?.emailMessage || '';
+            const responderName = doc.responder.name || 'Student';
+            const submittedAt = moment(doc.createdAt).format('DD MMM YYYY, HH:mm');
+
+            const emailHtml = buildSubmissionConfirmationHtml({
+                name: responderName,
+                formTitle: formTitle,
+                submittedAt: submittedAt,
+                referenceNo: String(doc._id),
+                emailMessage: emailMessage
+            });
+
+            const emailText = buildSubmissionConfirmationText({
+                name: responderName,
+                formTitle: formTitle,
+                submittedAt: submittedAt,
+                referenceNo: String(doc._id),
+                emailMessage: emailMessage
+            });
+
+            sentMail.sendMail(
+                doc.responder.email, 
+                `Submission Confirmation: ${formTitle}`, 
+                emailText, 
+                emailHtml
+            ).catch(e => console.error("Email send failed:", e));
+        }
+
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        console.error("Create response error:", err);
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to create response", err.message);
+        console.error("[response.service.js] onCreate Error:", err);
+        return ResMessage.sendResponse(response, 0, 40400);
     }
 };
 
 exports.onUpdate = async function (request, response) {
     try {
-        let query = {}
-        query._id = new mongo.ObjectId(request.body._id);
-        
-        // Fetch existing response to merge answers instead of replacing
-        const existingResponse = await responseService.onQuery(query);
+        if (!request.body._id) {
+            return ResMessage.sendResponse(response, 0, 40400, "Response ID is required");
+        }
+
+        let query = { _id: new mongo.ObjectId(request.body._id) };
+
+        // Fetch existing response to merge answers
+        const existingResponse = await Response.onQuery(query);
         if (!existingResponse) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found");
+            return ResMessage.sendResponse(response, 0, 40400, "Response not found");
         }
 
-        let answers = request.body.answers || request.body['answers'];
-        if (typeof answers === 'string') {
-            try { answers = JSON.parse(answers); } catch (e) { answers = []; }
-        }
-        if (!Array.isArray(answers)) answers = answers && typeof answers === 'object' ? [answers] : [];
-
-        // Attach uploaded files to answers
-        if (request.files && request.files.length) {
-            let fileQuestions = request.body['answers[question]'] || request.body['answers[0][question]'];
-            if (fileQuestions === undefined) fileQuestions = [];
-            if (!Array.isArray(fileQuestions)) fileQuestions = [fileQuestions];
-
-            for (let i = 0; i < request.files.length; i++) {
-                const file = request.files[i];
-                const questionForFile = fileQuestions[i] || null;
-                let attached = false;
-
-                if (questionForFile) {
-                    for (let ans of answers) {
-                        if (ans && String(ans.question) === String(questionForFile)) {
-                            ans.response = file.path;
-                            attached = true;
-                            break;
-                        }
+        let answers = parseAnswers(request.body.answers);
+        attachFilesToAnswers(answers, request.files, request.body);
+        if (existingResponse && Array.isArray(existingResponse.answers)) {
+            existingResponse.answers.forEach(oldAns => {
+                const oldUrl = oldAns?.response;
+                if (oldUrl && typeof oldUrl === 'string' && oldUrl.includes('/uploads/')) {
+                    const stillExists = answers.some(newAns => newAns.response === oldUrl);
+                    if (!stillExists) {
+                        cleanUpOrphanedFile(oldUrl);
                     }
                 }
-
-                if (!attached) {
-                    for (let ans of answers) {
-                        if (!ans || ans.response === null || ans.response === undefined || ans.response === '') {
-                            ans.response = file.path;
-                            attached = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!attached) {
-                    answers.push({ question: questionForFile || null, response: file.path });
-                }
-            }
+            });
         }
 
-        // Merge answers: update existing answers or add new ones
-        const existingAnswers = existingResponse.answers || [];
-        const mergedAnswers = [...existingAnswers];
+        // Directly overwrite answers because the frontend sends the complete list on every save
+        request.body.answers = answers;
 
-        answers.forEach(newAns => {
-            const existingIndex = mergedAnswers.findIndex(
-                oldAns => oldAns.question && newAns.question && String(oldAns.question._id || oldAns.question) === String(newAns.question)
-            );
+        const doc = await Response.onUpdate(query, request.body);
 
-            if (existingIndex !== -1) {
-                // Update existing answer
-                mergedAnswers[existingIndex].response = newAns.response;
-            } else {
-                // Add new answer
-                mergedAnswers.push({ question: newAns.question, response: newAns.response });
-            }
-        });
+        const isSubmitting = String(request.body.submit) === 'true';
+        
+        // Use professional template for email notification if freshly submitted
+        if (isSubmitting && !existingResponse.submit && doc.responder && doc.responder.email) {
+            const formTitle = getFormTitle(doc.form);
+            const emailMessage = doc.form?.settings?.emailMessage || '';
+            const responderName = doc.responder.name || 'Student';
+            const submittedAt = moment(doc.updatedAt || doc.createdAt).format('DD MMM YYYY, HH:mm');
 
-        request.body.answers = mergedAnswers;
+            const emailHtml = buildSubmissionConfirmationHtml({
+                name: responderName,
+                formTitle: formTitle,
+                submittedAt: submittedAt,
+                referenceNo: String(doc._id),
+                emailMessage: emailMessage
+            });
 
-        const doc = await responseService.onUpdate(query, request.body);
-        if (!doc) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "Response not found after update");
+            const emailText = buildSubmissionConfirmationText({
+                name: responderName,
+                formTitle: formTitle,
+                submittedAt: submittedAt,
+                referenceNo: String(doc._id),
+                emailMessage: emailMessage
+            });
+
+            sentMail.sendMail(
+                doc.responder.email, 
+                `Submission Confirmation: ${formTitle}`, 
+                emailText, 
+                emailHtml
+            ).catch(e => console.error("Email send failed:", e));
         }
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        console.error("Update response error:", err);
-
-        return ResMessage.sendResponse(response, request.body.apiId, 50000, "Failed to update response", err.message);
+        console.error("[response.service.js] onUpdate Error:", err);
+        return ResMessage.sendResponse(response, 0, 40400);
     }
 };
 
 exports.onDelete = async function (request, response) {
     try {
-        let query = {}
+        let query = {};
         query._id = new mongo.ObjectId(request.body._id);
-        const doc = await responseService.onDelete(query);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+
+        const existingResponse = await Response.onQuery(query);
+        const doc = await Response.onDelete(query);
+
+        // Wipe all files associated with this response since it was completely deleted
+        if (existingResponse && Array.isArray(existingResponse.answers)) {
+            existingResponse.answers.forEach(ans => cleanUpOrphanedFile(ans?.response));
+        }
+
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
-    }
-};
-
-exports.generateExportLinkByFormAndUser = async function (request, response) {
-    try {
-        const { formId, userId } = request.body;
-        if (!formId || !mongo.ObjectId.isValid(formId)) {
-            return ResMessage.sendResponse(response, request.body.apiId, 40000, "Invalid form ID");
-        }
-        //Need to uncomment for production
-        if (userId && !mongo.ObjectId.isValid(userId)) {
-            return ResMessage.sendResponse(response, request.body.apiId, 40000, "Invalid user ID");
-        }
-        let exportLink = `${request.protocol}://${request.get('host')}/api/v1/response/export/${formId}/user/${userId}`;
-        return ResMessage.sendResponse(response, request.body.apiId, 20000, {
-            downloadLink: exportLink,
-            formId: formId,
-            userId: userId
-        });
-    } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 50000, err.message);
-    }
-};
-
-exports.downloadResponseJSON = async function (request, response) {
-    try {
-        const { form_id, _id } = request.params;
-
-        if (!form_id || !mongo.ObjectId.isValid(form_id)) {
-            return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid form ID");
-        }
-        if (_id && !mongo.ObjectId.isValid(_id)) {
-            return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid response ID");
-        }
-
-        const query = { form: form_id };
-        if (_id) {
-            query._id = _id;
-        }
-
-        const responses = await responseModel.find(query)
-            .populate('form', 'title')
-            .populate('answers.question', 'title type config order');
-
-        if (!responses || responses.length === 0) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "No responses found for the specified criteria");
-        }
-
-        const formattedData = {
-            formId: form_id,
-            formTitle: responses[0]?.form?.title || [],
-            totalResponses: responses.length,
-            exportedAt: new Date(),
-            responses: responses.map(resp => ({
-                responseId: resp._id,
-                responderId: resp.responder,
-                submittedAt: resp.getTimestamp(),
-                answers: resp.answers.map(answer => ({
-                    question: {
-                        id: answer.question?._id,
-                        title: answer.question?.title,
-                        type: answer.question?.type,
-                        order: answer.question?.order
-                    },
-                    response: answer.response
-                }))
-            }))
-        };
-
-        response.setHeader('Content-Type', 'application/json');
-        response.setHeader('Content-Disposition', `attachment; filename="responses_${form_id}_${_id || 'all'}_${Date.now()}.json"`);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), formattedData);
-    } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 50000, "Failed to download responses", err.message);
-    }
-}
-exports.downloadFormJSON = async function (request, response) {
-    try {
-        const { form_id } = request.params;
-
-        if (!form_id || !mongo.ObjectId.isValid(form_id)) {
-            return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid form ID");
-        }
-
-        const responses = await responseModel.find({ form: form_id })
-            .populate('form', 'title')
-            .populate('answers.question', 'title type config order');
-
-        if (!responses || responses.length === 0) {
-            return ResMessage.sendResponse(response, getApiId(request), 40400, "No responses found for the specified form ID");
-        }
-
-        const formattedData = {
-            formId: form_id,
-            formTitle: responses[0]?.form?.title || [],
-            totalResponses: responses.length,
-            exportedAt: new Date(),
-            responses: responses.map(resp => ({
-                responseId: resp._id,
-                responderId: resp.responder || null,
-                submittedAt: resp.createdAt,
-                answers: resp.answers.map(answer => ({
-                    question: {
-                        id: answer.question?._id,
-                        title: answer.question?.title,
-                        type: answer.question?.type,
-                        order: answer.question?.order
-                    },
-                    response: answer.response
-                }))
-            }))
-        };
-        response.setHeader('Content-Type', 'application/json');
-        response.setHeader('Content-Disposition', `attachment; filename="responses_${form_id}_${Date.now()}.json"`);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), formattedData);
-    } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 50000, "Failed to download responses", err.message);
+        return ResMessage.sendResponse(response, 0, 40400);
     }
 };

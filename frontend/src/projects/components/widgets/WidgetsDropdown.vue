@@ -4,58 +4,58 @@
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-danger-light text-danger">
-                        <CIcon name="cil-description" size="xl" />
+                    <div class="icon-box bg-primary-light text-primary">
+                        <CIcon name="cil-file" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.totalForms }}</h2>
-                    <div class="stat-label">Total Forms</div>
+                    <div class="stat-label">{{ $t('widget.total') }}</div>
                 </div>
             </div>
         </CCol>
 
-        <!-- Card 2: Total Responses -->
+        <!-- Card 2: Active Forms -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box bg-success-light text-success">
-                        <CIcon name="cil-people" size="xl" />
-                    </div>
-                </div>
-                <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.totalResponses }}</h2>
-                    <div class="stat-label">Total Responses</div>
-                </div>
-            </div>
-        </CCol>
-
-        <!-- Card 3: Active Forms -->
-        <CCol sm="6" lg="3">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="icon-box bg-warning-light text-warning">
                         <CIcon name="cil-chart-line" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.activeForms }}</h2>
-                    <div class="stat-label">Active Forms</div>
+                    <div class="stat-label">{{ $t('widget.active') }}</div>
                 </div>
             </div>
         </CCol>
 
-        <!-- Card 4: Avg Responses/Form -->
+        <!-- Card 3: Total Responses -->
         <CCol sm="6" lg="3">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="icon-box bg-dark-light text-dark">
-                        <CIcon name="cil-chart" size="xl" />
+                    <div class="icon-box bg-warning-light text-warning">
+                        <CIcon name="cil-envelope-closed" size="xl" />
                     </div>
                 </div>
                 <div class="stat-content">
-                    <h2 class="stat-value">{{ stats.avgResponses }}</h2>
-                    <div class="stat-label">Avg Responses/Form</div>
+                    <h2 class="stat-value">{{ stats.totalResponses }}</h2>
+                    <div class="stat-label">{{ $t('widget.totalResponses') }}</div>
+                </div>
+            </div>
+        </CCol>
+
+        <!-- Card 4: Active Users -->
+        <CCol sm="6" lg="3">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="icon-box bg-info-light text-info">
+                        <CIcon name="cil-people" size="xl" />
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <h2 class="stat-value">{{ stats.totalUsers }}</h2>
+                    <div class="stat-label">{{ $t('widget.activeUsers') }}</div>
                 </div>
             </div>
         </CCol>
@@ -64,58 +64,55 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import moment from 'moment';
+import { getFilteredResponses, getTableStatusLabel } from '@/projects/utils/analytics';
 
 export default {
     name: 'WidgetsDropdown',
+    props: {
+        timeRange: {
+            type: String,
+            default: '7d'
+        }
+    },
     computed: {
         ...mapGetters('Forms', ['forms']),
+        ...mapGetters('User', ['users']),
 
         stats() {
-            if (!this.forms) return {
+            if (!this.forms || !Array.isArray(this.forms)) return {
                 totalForms: 0,
                 totalResponses: 0,
-                activeForms: 0,
-                avgResponses: 0
+                totalUsers: 0,
+                activeForms: 0
             };
 
-            const totalForms = this.forms.length;
-            let totalResponses = 0;
+            let totalForms = this.forms.length;
             let activeForms = 0;
+            let totalResponses = 0;
+            let totalUsers = (this.users && Array.isArray(this.users)) ? this.users.length : 0;
+
+            const now = moment();
 
             this.forms.forEach(form => {
-                // Count responses
-                if (form.responses) {
-                    totalResponses += form.responses.length;
+                // Count active forms using the standardized utility
+                const status = getTableStatusLabel(form, now);
+                if (status === 'Active') {
+                    activeForms++;
                 }
 
-                // Count active forms
-                let isActive = false;
-
-                let statusRaw = '';
-                if (form.status && form.status.title) {
-                    if (Array.isArray(form.status.title)) {
-                        const enItem = form.status.title.find(item => item.key === 'en');
-                        statusRaw = enItem ? enItem.value : (form.status.title[0]?.value || '');
-                    } else {
-                        statusRaw = form.status.title;
-                    }
+                // Count responses using optimized utility
+                if (form.responses && form.responses.length > 0) {
+                    const filteredResponses = getFilteredResponses(form, this.timeRange, now);
+                    totalResponses += filteredResponses.length;
                 }
-                statusRaw = statusRaw.toLowerCase();
-
-                if (statusRaw.includes('open')) {
-                    isActive = true;
-                }
-
-                if (isActive) activeForms++;
             });
-
-            const avgResponses = totalForms > 0 ? (totalResponses / totalForms).toFixed(1) : 0;
 
             return {
                 totalForms,
                 totalResponses,
-                activeForms,
-                avgResponses
+                totalUsers,
+                activeForms
             };
         }
     }
@@ -156,35 +153,41 @@ export default {
 }
 
 /* Custom light backgrounds for icons */
+.bg-primary-light {
+    background-color: rgba(140, 21, 21, 0.1);
+}
+.bg-info-light {
+    background-color: rgba(57, 181, 255, 0.1);
+}
 .bg-danger-light {
     background-color: rgba(229, 83, 83, 0.1);
 }
-
 .bg-success-light {
     background-color: rgba(46, 184, 92, 0.1);
 }
-
 .bg-warning-light {
     background-color: rgba(249, 177, 21, 0.1);
 }
-
 .bg-dark-light {
     background-color: rgba(50, 50, 50, 0.05);
 }
 
-/* Text colors override if needed, using CoreUI utility classes usually works but explicit here for safety */
+/* Text colors override */
+.text-primary {
+    color: #8c1515 !important;
+}
+.text-info {
+    color: #39b5ff !important;
+}
 .text-danger {
     color: #e55353 !important;
 }
-
 .text-success {
     color: #2eb85c !important;
 }
-
 .text-warning {
     color: #f9b115 !important;
 }
-
 .text-dark {
     color: #3c4b64 !important;
 }

@@ -1,10 +1,10 @@
 <template>
-    <CCard class="mb-4 border-0 shadow-sm">
+    <CCard class="mb-4 border-0 shadow-sm rounded-20">
         <CCardBody class="p-4">
-            <h5 class="mb-4 font-weight-bold text-dark">Form Status</h5>
+            <h5 class="mb-4 font-weight-bold text-dark">{{ $t('editor.settings.status.title') }}</h5>
             <CRow class="mb-4 align-items-center">
                 <CCol md="3">
-                    <label class="mb-0 font-weight-bold text-muted-dark">Start date time</label>
+                    <label class="mb-0 font-weight-bold text-muted-dark">{{ $t('editor.settings.status.startAt') }}</label>
                 </CCol>
                 <CCol md="9">
                     <CInput type="datetime-local" class="mb-0"
@@ -14,7 +14,7 @@
             </CRow>
             <CRow class="align-items-center">
                 <CCol md="3">
-                    <label class="mb-0 font-weight-bold text-muted-dark">End date time</label>
+                    <label class="mb-0 font-weight-bold text-muted-dark">{{ $t('editor.settings.status.endAt') }}</label>
                 </CCol>
                 <CCol md="9">
                     <CInput type="datetime-local" class="mb-0"
@@ -22,6 +22,14 @@
                         :value="formattedEnd" @input="updateEnd" @change="triggerAutoSave" />
                 </CCol>
             </CRow>
+
+            <div class="info-hint mb-0 mt-4" :class="statusColorClass">
+                <CIcon name="cil-info" size="xl" class="mr-3" :class="statusIconColor" />
+                <div>
+                    <h6 class="mb-1 font-weight-bold">{{ $t('editor.settings.status.statusLabel') }}: {{ currentStatusText }}</h6>
+                    <p class="mb-0 small" style="line-height: 1.4;">{{ currentStatusDescription }}</p>
+                </div>
+            </div>
         </CCardBody>
     </CCard>
 </template>
@@ -43,6 +51,77 @@ export default {
         formattedEnd() {
             if (!this.settings || !this.settings.schedule || !this.settings.schedule.endAt) return '';
             return this.formatDateForInput(this.settings.schedule.endAt);
+        },
+        currentStatus() {
+            const start = this.settings?.schedule?.startAt;
+            const end = this.settings?.schedule?.endAt;
+            
+            // หากไม่มีทั้งคู่ เป็น Draft
+            if (!start && !end) return 'draft';
+            
+            // หากไม่มีวันเริ่ม แต่มีวันจบ ให้ถือว่าปิดตลอดเวลา
+            if (!start && end) return 'closed_forever';
+            
+            const now = new Date().getTime();
+            const startTime = new Date(start).getTime();
+            
+            // หากยังไม่ถึงเวลาเริ่ม
+            if (now < startTime) return 'scheduled';
+            
+            // หากถึงเวลาเริ่มแล้ว แต่ไม่มีวันสิ้นสุด
+            if (!end) return 'open_forever';
+            
+            const endTime = new Date(end).getTime();
+            
+            // หากอยู่ในช่วงเวลา
+            if (now <= endTime) return 'open';
+            
+            // หากเลยเวลาสิ้นสุด
+            return 'closed';
+        },
+        currentStatusText() {
+            switch(this.currentStatus) {
+                case 'draft': return this.$t('editor.settings.status.draft');
+                case 'open': return this.$t('editor.settings.status.open');
+                case 'open_forever': return this.$t('editor.settings.status.openForever');
+                case 'closed_forever': return this.$t('editor.settings.status.closedForever');
+                case 'scheduled': return this.$t('editor.settings.status.scheduled');
+                case 'closed': return this.$t('editor.settings.status.closed');
+                default: return this.$t('editor.settings.status.draft');
+            }
+        },
+        currentStatusDescription() {
+            switch(this.currentStatus) {
+                case 'draft': return this.$t('editor.settings.status.draftDesc');
+                case 'open': return this.$t('editor.settings.status.openDesc');
+                case 'open_forever': return this.$t('editor.settings.status.openForeverDesc');
+                case 'closed_forever': return this.$t('editor.settings.status.closedForeverDesc');
+                case 'scheduled': return this.$t('editor.settings.status.scheduledDesc');
+                case 'closed': return this.$t('editor.settings.status.closedDesc');
+                default: return "";
+            }
+        },
+        statusColorClass() {
+            switch(this.currentStatus) {
+                case 'draft': return 'hint-secondary';
+                case 'open':
+                case 'open_forever': return 'hint-success';
+                case 'scheduled': return 'hint-info';
+                case 'closed':
+                case 'closed_forever': return 'hint-danger';
+                default: return 'hint-info';
+            }
+        },
+        statusIconColor() {
+            switch(this.currentStatus) {
+                case 'draft': return 'text-secondary';
+                case 'open':
+                case 'open_forever': return 'text-success';
+                case 'scheduled': return 'text-info';
+                case 'closed':
+                case 'closed_forever': return 'text-danger';
+                default: return 'text-info';
+            }
         }
     },
     methods: {
@@ -73,3 +152,37 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.rounded-20 {
+    border-radius: 20px !important;
+    overflow: hidden;
+}
+.info-hint {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+.hint-secondary {
+    background-color: #f8fafc;
+    border-left: 4px solid #94a3b8;
+    color: #475569;
+}
+.hint-success {
+    background-color: #f0fdf4;
+    border-left: 4px solid #22c55e;
+    color: #166534;
+}
+.hint-info {
+    background-color: #f0f9ff;
+    border-left: 4px solid #3b82f6;
+    color: #1e40af;
+}
+.hint-danger {
+    background-color: #fef2f2;
+    border-left: 4px solid #ef4444;
+    color: #991b1b;
+}
+</style>

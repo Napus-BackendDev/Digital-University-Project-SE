@@ -1,9 +1,23 @@
-var express = require('./config/express');
-var app = express();
+var expressApp = require('./config/express');
+var express = require('express');
+var app = expressApp();
+app.use(express.static('public'));
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var cfg = require('./config/config');
+
+
+// Load demo ejs for test Oauth
+app.set('view engine', 'ejs');
+
+app.get('/', (req, res) => {
+    res.render('index');
+});
+app.get('/oauth', (req, res) => {
+    res.render('login');
+});
+
 
 /**
  * Get port from environment and store in Express.
@@ -15,7 +29,7 @@ var port = cfg.host.port;
 // var options = {
 //     key : fs.readFileSync('/etc/letsencrypt/live/finnext.io/privkey.pem'),
 //     cert : fs.readFileSync('/etc/letsencrypt/live/finnext.io/fullchain.pem'),
-    // passphrase : cfg.passphrase
+// passphrase : cfg.passphrase
 // };
 
 /**
@@ -31,10 +45,10 @@ var server = http.createServer(app);
 //     /* Add a newly connected socket */
 //     var socketId = nextSocketId++;
 //     //sockets[socketId] = socket;
-//     //console.log('socket', socketId, 'opened');
+// 
 //     /* Remove the socket when it closes */
 //     socket.on('close', function () {
-//         //console.log('socket', socketId, 'closed');
+// 
 //         delete sockets[socketId];
 //     });
 //
@@ -63,17 +77,19 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 
+const mongoose = require('mongoose');
+
 // Graceful shutdown function
 const shutdown = () => {
-    console.log('Gracefully shutting down...');
+
 
     // Stop accepting new requests
     server.close(async () => {
-        console.log('Closed all HTTP connections');
+
 
         // Close MongoDB connection
         await mongoose.connection.close();
-        console.log('Closed MongoDB connection');
+
 
         process.exit(0); // Exit process
     });
@@ -126,4 +142,5 @@ function onListening() {
     var bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
+
 }

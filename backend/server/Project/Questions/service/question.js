@@ -1,64 +1,83 @@
 const mongo = require('mongodb');
-const Questions = require('../controller/questions');
+const Question = require('../controller/questions');
 const ResMessage = require("../../Settings/service/message");
-
-const getApiId = function (request) {
-    return Number(request.body.apiId) || 0;
-};
-
-const getSuccessCode = function (request) {
-    return 20000 + getApiId(request);
-};
+const { getUploadUrl } = require('../../../../helpers/upload');
 
 exports.onQuery = async function (request, response) {
     try {
-        var query = {};
-        query._id = new mongo.ObjectId(request.body._id);
-
-        const doc = await Questions.onQuery(query);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        let query = {};
+        const doc = await Question.onQuery(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+        return ResMessage.sendResponse(response, 0, 40400);
     }
 };
 
 exports.onQuerys = async function (request, response) {
     try {
-        var querys = {};
-        const doc = await Questions.onQuerys(querys);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        let query = {};
+        const doc = await Question.onQuerys(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+        return ResMessage.sendResponse(response, 0, 40400);
     }
 };
 
 exports.onCreate = async function (request, response) {
     try {
-        const doc = await Questions.onCreate(request.body);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        let body = request.body || {};
+        if (body.payload && typeof body.payload === 'string') {
+            try { body = { ...body, ...JSON.parse(body.payload) }; } catch (e) { /* keep original body */ }
+        }
+
+        if (request.file) {
+            const imagePath = getUploadUrl(request.file);
+            if (imagePath) {
+                if (!body.config || typeof body.config !== 'object') body.config = {};
+                body.config.image = imagePath;
+            }
+        }
+
+        const doc = await Question.onCreate(body);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+        return ResMessage.sendResponse(response, 0, 40400);
     }
 };
 
 exports.onUpdate = async function (request, response) {
     try {
-        var query = {};
-        query._id = new mongo.ObjectId(request.body._id);
-        const doc = await Questions.onUpdate(query, request.body);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        let body = request.body || {};
+        if (body.payload && typeof body.payload === 'string') {
+            try { body = { ...body, ...JSON.parse(body.payload) }; } catch (e) { /* keep original body */ }
+        }
+
+        let query = {};
+        query._id = new mongo.ObjectId(body._id);
+
+        if (request.file) {
+            const imagePath = getUploadUrl(request.file);
+            if (imagePath) {
+                if (!body.config || typeof body.config !== 'object') body.config = {};
+                body.config.image = imagePath;
+            }
+        }
+
+        const doc = await Question.onUpdate(query, body);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+        console.error(err);
+        return ResMessage.sendResponse(response, 0, 40400);
     }
 };
 
 exports.onDelete = async function (request, response) {
     try {
-        var query = {};
+        let query = {};
         query._id = new mongo.ObjectId(request.body._id);
-        const doc = await Questions.onDelete(query);
-        return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), doc);
+        const doc = await Question.onDelete(query);
+        return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
-        return ResMessage.sendResponse(response, getApiId(request), 40400, err.message);
+        return ResMessage.sendResponse(response, 0, 40400);
     }
 };

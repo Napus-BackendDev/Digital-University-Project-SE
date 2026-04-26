@@ -10,7 +10,7 @@ const logger = winston.createLogger({
         winston.format.json()  // บันทึก log ในรูปแบบ JSON
     ),
     transports: [
-        new winston.transports.Console(), //I write this for view erron in console in testing api
+        new winston.transports.Console(),  // แสดง log ใน console
         // new winston.transports.MongoDB({
         //     db: 'mongodb://localhost:27017/logs',  // URL ของ MongoDB
         //     collection: 'logs',  // ชื่อ collection ที่จะเก็บ log
@@ -40,6 +40,7 @@ function logSuccessData(req, res, body) {
     logger.info(`Request Success: ${req.url}`, logData);
 }
 
+
 // ฟังก์ชันสำหรับบันทึกข้อมูลที่เกี่ยวข้องกับ error
 function logErrorData(req, res, body) {
     const logData = {
@@ -59,6 +60,7 @@ function logErrorData(req, res, body) {
     logger.error(`Request Error: ${req.url}`, logData);
 }
 
+
 // ฟังก์ชันสำหรับลบ log เก่ากว่า 120 วัน (background)
 async function deleteOldLogs() {
     const cutoffDate = new Date();
@@ -69,14 +71,14 @@ async function deleteOldLogs() {
         await mongoose.connection.db.collection('logs').deleteMany({
             timestamp: { $lt: cutoffDate }
         });
-        console.log('Old logs deleted successfully.');
+
     } catch (error) {
         console.error('Error deleting old logs:', error);
     }
 }
 
 // สร้าง middleware เพื่อดักจับข้อมูล response
-function loggerMiddleware (req, res, next){
+function loggerMiddleware(req, res, next) {
     const originalJson = res.json;
     const originalStatusJson = res.status().json;
 
@@ -109,5 +111,4 @@ function loggerMiddleware (req, res, next){
     next();
 }
 
-module.exports = loggerMiddleware ;
-
+module.exports = loggerMiddleware;

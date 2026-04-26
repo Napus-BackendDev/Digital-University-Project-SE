@@ -1,10 +1,19 @@
-var mongo = require('mongodb');
-var objSchema = require('../models/questions.model');
+const objSchema = require('../models/questions.model');
 const createBaseService = require('../../../../helpers/base.service');
 
 const defaultPopulate = [
     { path: "form", select: '_id title' },
-    { path: "type"},
+    { path: "type" },
+    { path: "nextQuestion" },
 ];
 
-module.exports = createBaseService(objSchema, defaultPopulate);
+const baseService = createBaseService(objSchema, defaultPopulate);
+
+module.exports = {
+    baseService,
+    onQuerys: baseService.onQuerys,
+    onQuery: baseService.onQuery,
+    onCreate: baseService.onCreate,
+    onUpdate: baseService.onUpdate,
+    onDelete: baseService.onDelete
+};
