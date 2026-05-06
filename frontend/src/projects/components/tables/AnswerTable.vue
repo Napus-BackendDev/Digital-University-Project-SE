@@ -1,7 +1,7 @@
 <template>
     <div class="answer-table-premium">
         <CDataTable :items="pagedAnswers" :fields="answerFields" hover class="mb-0 custom-premium-table">
-            
+
             <!-- ID / Index Column -->
             <template #id="{ item, index }">
                 <td class="align-middle pl-4 shadow-none border-0">
@@ -45,15 +45,30 @@
                                 <template v-for="(val, i) in resolveResponse(item)">
                                     <!-- Image in Array -->
                                     <template v-if="isImagePath(val)">
-                                        <a :key="i" :href="resolveFileUrl(val)" target="_blank" rel="noopener noreferrer" class="file-response-link p-1 border-0 bg-transparent shadow-none">
-                                            <img :src="resolveFileUrl(val)" class="answer-image-preview sm" loading="lazy" />
+                                        <a :key="i" :href="resolveFileUrl(val)" target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="file-response-link p-1 border-0 bg-transparent shadow-none">
+                                            <img v-if="!imgErrors[val]" :src="resolveFileUrl(val)"
+                                                class="answer-image-preview sm" loading="lazy"
+                                                @error="$set(imgErrors, val, true)" />
+                                            <div v-else
+                                                class="file-response-link p-1 d-inline-flex align-items-center bg-light rounded shadow-sm"
+                                                style="font-size: 0.75rem;">
+                                                <CIcon name="cil-image1" class="mr-1 text-muted" style="width: 14px" />
+                                                <span class="text-truncate" style="max-width: 100px">{{ getFileName(val)
+                                                    }}</span>
+                                            </div>
                                         </a>
                                     </template>
                                     <!-- File in Array -->
                                     <template v-else-if="isFilePath(val)">
-                                        <a :key="i" :href="resolveFileUrl(val)" target="_blank" rel="noopener noreferrer" class="file-response-link">
-                                            <CIcon name="cil-file" class="mr-1" style="width: 14px" />
-                                            <span class="text-truncate" style="max-width: 120px">{{ getFileName(val) }}</span>
+                                        <a :key="i" :href="resolveFileUrl(val)" target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="file-response-link p-1 d-inline-flex align-items-center bg-light rounded shadow-sm"
+                                            style="font-size: 0.75rem;">
+                                            <CIcon name="cil-paperclip" class="mr-1 text-primary" style="width: 14px" />
+                                            <span class="text-truncate" style="max-width: 100px">{{ getFileName(val)
+                                                }}</span>
                                         </a>
                                     </template>
                                     <!-- Standard Pill -->
@@ -68,7 +83,9 @@
                         <template v-else-if="isRating(item.question)">
                             <div class="rating-display">
                                 <div class="rating-bar-bg mr-3">
-                                    <div class="rating-bar-fill" :style="{ width: (Number(item.response) / getRatingMax(item.question) * 100) + '%' }"></div>
+                                    <div class="rating-bar-fill"
+                                        :style="{ width: (Number(item.response) / getRatingMax(item.question) * 100) + '%' }">
+                                    </div>
                                 </div>
                                 <span class="rating-values">
                                     <strong class="text-primary">{{ item.response }}</strong>
@@ -79,16 +96,25 @@
 
                         <!-- Image Preview -->
                         <template v-else-if="isImagePath(item.response)">
-                            <a :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer" class="file-response-link">
-                                <img :src="resolveFileUrl(item.response)" class="answer-image-preview" loading="lazy" />
+                            <a :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer"
+                                class="file-response-link">
+                                <img v-if="!imgErrors[item.response]" :src="resolveFileUrl(item.response)"
+                                    class="answer-image-preview" loading="lazy"
+                                    @error="$set(imgErrors, item.response, true)" />
+                                <div v-else
+                                    class="file-response-link bg-light p-2 rounded shadow-sm d-flex align-items-center">
+                                    <CIcon name="cil-camera" class="mr-2 text-muted" />
+                                    <span class="small">{{ getFileName(item.response) }}</span>
+                                </div>
                             </a>
                         </template>
 
                         <!-- File / Link -->
                         <template v-else-if="isFilePath(item.response)">
-                            <a :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer" class="file-response-link">
-                                <CIcon name="cil-file" class="mr-2" />
-                                <span>{{ getFileName(item.response) }}</span>
+                            <a :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer"
+                                class="file-response-link bg-light p-2 rounded shadow-sm d-flex align-items-center">
+                                <CIcon name="cil-paperclip" class="mr-2 text-primary" />
+                                <span class="small">{{ getFileName(item.response) }}</span>
                             </a>
                         </template>
 
@@ -132,7 +158,8 @@ export default {
                 { key: 'response', label: 'SUBMITTED ANSWER' }
             ],
             activePage: 1,
-            perPage: 20
+            perPage: 20,
+            imgErrors: {}
         }
     },
     created() {
@@ -193,8 +220,11 @@ export default {
         isImagePath(val) {
             if (typeof val !== 'string') return false;
             const lower = val.toLowerCase();
-            if (lower.startsWith('data:image/')) return true;
-            return /\.(png|jpe?g|gif|webp|svg)$/i.test(lower);
+            let isImg = false;
+            if (lower.startsWith('data:image/')) isImg = true;
+            else isImg = /\.(png|jpe?g|gif|webp|svg)$/i.test(lower);
+
+            return isImg;
         },
         resolveFileUrl(value) {
             if (!value || typeof value !== 'string') return '#';
@@ -204,11 +234,11 @@ export default {
 
             const apiBase = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1/';
             const backendOrigin = apiBase.replace(/\/api\/v1\/?$/, '');
-            if (value.startsWith('/')) {
-                return `${backendOrigin}${value}`;
-            }
 
-            return `${backendOrigin}/${value}`;
+            // Clean up double slashes
+            const cleanValue = value.startsWith('/') ? value.slice(1) : value;
+            const url = `${backendOrigin}/${cleanValue}`;
+            return url;
         },
         getFileName(path) {
             if (!path) return 'File';
@@ -317,8 +347,15 @@ export default {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 ::v-deep .custom-premium-table table {

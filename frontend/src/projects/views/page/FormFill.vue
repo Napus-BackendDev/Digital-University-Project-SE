@@ -142,15 +142,15 @@
                                             :class="{ 'has-file': getAnswerAsArray(question._id)[n - 1] }"
                                             @click="!isPreviewMode && !isAlreadySubmitted && triggerUpload(question._id)">
 
-                                            <template
-                                                v-if="getAnswerAsArray(question._id)[n - 1]">
+                                            <template v-if="getAnswerAsArray(question._id)[n - 1]">
                                                 <div
                                                     class="file-slot-preview w-100 h-100 d-flex flex-column align-items-center justify-content-center position-relative">
-                                                    
+
                                                     <div class="remove-btn bg-danger rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm"
-                                                         style="width: 22px; height: 22px; position: absolute; top: 6px; right: 6px; cursor: pointer; z-index: 2;"
-                                                         @click.stop="removeFile(question._id, n - 1)">
-                                                         <span style="font-size: 14px; font-weight: bold; line-height: 1;">&times;</span>
+                                                        style="width: 22px; height: 22px; position: absolute; top: 6px; right: 6px; cursor: pointer; z-index: 2;"
+                                                        @click.stop="removeFile(question._id, n - 1)">
+                                                        <span
+                                                            style="font-size: 14px; font-weight: bold; line-height: 1;">&times;</span>
                                                     </div>
                                                     <template
                                                         v-if="isPreviewableImage(getAnswerAsArray(question._id)[n - 1])">
@@ -163,14 +163,14 @@
                                                             class="text-danger mb-1" />
                                                         <span class="small text-truncate w-100 px-2 text-center">{{
                                                             getAnswerFileName(getAnswerAsArray(question._id)[n - 1])
-                                                        }}</span>
+                                                            }}</span>
                                                     </template>
                                                     <template v-else>
                                                         <CIcon name="cil-paperclip" height="40"
                                                             class="text-primary mb-1" />
                                                         <span class="small text-truncate w-100 px-2 text-center">{{
                                                             getAnswerFileName(getAnswerAsArray(question._id)[n - 1])
-                                                        }}</span>
+                                                            }}</span>
                                                     </template>
                                                 </div>
                                             </template>
@@ -220,10 +220,10 @@
                 </transition-group>
 
                 <!-- Submit / Duplicate Button -->
-                <div v-if="!isPreviewMode && !isAlreadySubmitted && visibleQuestions && visibleQuestions.length > 0" id="submit-section"
-                    class="p-3 d-flex justify-content-end mb-3">
-                    <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm"
-                        :disabled="submitting" class="px-5">
+                <div v-if="!isPreviewMode && !isAlreadySubmitted && visibleQuestions && visibleQuestions.length > 0"
+                    id="submit-section" class="p-3 d-flex justify-content-end mb-3">
+                    <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm" :disabled="submitting"
+                        class="px-5">
                         <CSpinner v-if="submitting" size="sm" class="mr-1" />
                         {{ submitting ? $t('common.submitting') : $t('form.submit') }}
                     </CButton>
@@ -965,7 +965,7 @@ export default {
             const qIdStr = this.convertIdToStr(questionId);
 
             const currentFiles = [...this.getAnswerAsArray(questionId)];
-            
+
             for (let f of validFiles) {
                 if (currentFiles.length < max) {
                     currentFiles.push(f);
@@ -1498,15 +1498,20 @@ export default {
     width: 100%;
 }
 
+.rating-container {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
 .star-btn {
     background: none;
     border: none;
-    font-size: 1.9rem;
+    font-size: 2.2rem;
     cursor: pointer;
     color: #dadce0;
-    padding: 0;
+    padding: 0 50px;
     line-height: 1;
-    flex: 1;
     text-align: center;
     transition: color 0.15s, transform 0.1s;
 }

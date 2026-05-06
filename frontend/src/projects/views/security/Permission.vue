@@ -1,7 +1,7 @@
 <template>
     <div class="security-page">
-        <Header title="Permissions"
-            description="Review group-to-menu rules, tune access switches, and keep the permission grid controlled." />
+        <Header :title="$t('security.title') || 'Permissions'"
+            :description="$t('security.description') || 'Review group-to-menu rules, tune access switches, and keep the permission grid controlled.'" />
         <CRow>
             <CCol col="12">
                 <PermissionTable :items="filteredPermissionRows" :fields="fields"
@@ -21,12 +21,12 @@ export default {
     data() {
         return {
             fields: [
-                { key: 'role', label: 'Role', _style: 'width: 150px; text-align: left;' },
-                { key: 'page', label: 'Page' },
-                { key: 'read', label: 'Read', _style: 'width: 100px; text-align: center;' },
-                { key: 'create', label: 'Create', _style: 'width: 100px; text-align: center;' },
-                { key: 'update', label: 'Update', _style: 'width: 100px; text-align: center;' },
-                { key: 'delete', label: 'Delete', _style: 'width: 100px; text-align: center;' }
+                { key: 'role', label: this.$t('security.role') || 'Role', _style: 'width: 150px; text-align: left;' },
+                { key: 'page', label: this.$t('security.page') || 'Page' },
+                { key: 'read', label: this.$t('security.read') || 'Read', _style: 'width: 100px; text-align: center;' },
+                { key: 'create', label: this.$t('security.create') || 'Create', _style: 'width: 100px; text-align: center;' },
+                { key: 'update', label: this.$t('security.update') || 'Update', _style: 'width: 100px; text-align: center;' },
+                { key: 'delete', label: this.$t('security.delete') || 'Delete', _style: 'width: 100px; text-align: center;' }
             ],
             roles: [],
             pages: [],
@@ -37,7 +37,7 @@ export default {
     computed: {
         roleOptions() {
             return [
-                { value: 'all', label: 'All Roles' },
+                { value: 'all', label: this.$t('security.allRoles') || 'All Roles' },
                 ...this.roles.map(role => ({
                     value: role._id,
                     label: this.getText(role.title) || role.name
@@ -85,18 +85,19 @@ export default {
             if (!titleArray) return ''
             if (typeof titleArray === 'string') return titleArray
             if (Array.isArray(titleArray)) {
-                const en = titleArray.find(t => t && t.key === 'en')
-                return en ? en.value : (titleArray[0] ? titleArray[0].value : '')
+                const currentLang = (this.$store.getters['Setting/lang'] || 'en').toLowerCase();
+                const match = titleArray.find(t => t && String(t.key).toLowerCase() === currentLang);
+                return match ? match.value : (titleArray[0] ? titleArray[0].value : '')
             }
             return ''
         },
         async loadData() {
             try {
                 this.pages = [
-                    { _id: 'Forms', name: 'Forms', title: [{ key: 'en', value: 'Forms' }] },
-                    { _id: 'Manage Forms', name: 'Manage Forms', title: [{ key: 'en', value: 'Manage Forms' }] },
-                    { _id: 'Analytics', name: 'Analytics', title: [{ key: 'en', value: 'Analytics' }] },
-                    { _id: 'Permissions', name: 'Permissions', title: [{ key: 'en', value: 'Permissions' }] },
+                    { _id: 'Forms', name: 'Forms', title: [{ key: 'en', value: 'Forms' }, { key: 'th', value: 'ฟอร์ม' }] },
+                    { _id: 'Manage Forms', name: 'Manage Forms', title: [{ key: 'en', value: 'Manage Forms' }, { key: 'th', value: 'จัดการฟอร์ม' }] },
+                    { _id: 'Analytics', name: 'Analytics', title: [{ key: 'en', value: 'Analytics' }, { key: 'th', value: 'การวิเคราะห์' }] },
+                    { _id: 'Permissions', name: 'Permissions', title: [{ key: 'en', value: 'Permissions' }, { key: 'th', value: 'สิทธิ์การใช้งาน' }] },
                 ]
 
                 const roles = await this.$store.dispatch('Roles/getAll')

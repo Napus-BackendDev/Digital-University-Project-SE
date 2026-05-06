@@ -1,15 +1,15 @@
 'use strict';
 
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '.env.dev') });
 const mongoose = require('mongoose');
 
 // ─── Import Models ────────────────────────────────────────────────────────────
-const Form         = require('./server/Project/Form/models/form.model');
-const Response     = require('./server/Project/Response/models/response.model');
-const User         = require('./server/Project/User/models/user.model');
-const Role         = require('./server/Project/User/models/roles.model');
-const Questions    = require('./server/Project/Questions/models/questions.model');
+const Form = require('./server/Project/Form/models/form.model');
+const Response = require('./server/Project/Response/models/response.model');
+const User = require('./server/Project/User/models/user.model');
+const Role = require('./server/Project/User/models/roles.model');
+const Questions = require('./server/Project/Questions/models/questions.model');
 const QuestionType = require('./server/Project/Settings/models/question_type.model');
 const Organization = require('./server/Project/Organizations/models/organization.model');
 const SettingControll = require('./server/Project/Settings/models/controll.model');
@@ -51,7 +51,7 @@ async function seedDatabase() {
     const defaultOrg = await Organization.findOne({}) || null;
     // Fixed role IDs
     const ADMIN_ROLE_ID = new mongoose.Types.ObjectId('69aec1c73996270d703db3d7');
-    const USER_ROLE_ID  = new mongoose.Types.ObjectId('69e9e2226c400846810ef687');
+    const USER_ROLE_ID = new mongoose.Types.ObjectId('69e9e2226c400846810ef687');
     const editorSetting = await SettingControll.findOne({
       'title.value': 'Editor'
     }) || await SettingControll.findOne({});
@@ -99,23 +99,23 @@ async function seedDatabase() {
 
     const userList = [
       // ── Required users (by username/alias) ──
-      { name: 'Plum Thidarat',      email: 'plum@lamduan.mfu.ac.th'              },
-      { name: 'Mark Nattawut',      email: 'mark@lamduan.mfu.ac.th'              },
-      { name: 'San Parinya',        email: 'san@lamduan.mfu.ac.th'               },
-      { name: 'Leng Napus',         email: 'leng@lamduan.mfu.ac.th'              },
+      { name: 'Plum Thidarat', email: 'plum@lamduan.mfu.ac.th' },
+      { name: 'Mark Nattawut', email: 'mark@lamduan.mfu.ac.th' },
+      { name: 'San Parinya', email: 'san@lamduan.mfu.ac.th' },
+      { name: 'Leng Napus', email: 'leng@lamduan.mfu.ac.th' },
       // ── Project-specific users ──
-      { name: 'Sai Shang Hlang',    email: '6631503129@lamduan.mfu.ac.th'        }, // Admin
-      { name: 'Napus Samuanpho',    email: '6631503016@lamduan.mfu.ac.th'        },
-      { name: 'Wantana Suwannapho', email: '6631503037@lamduan.mfu.ac.th'        },
-      { name: 'Wasan Nachai',       email: '6631503038@lamduan.mfu.ac.th'        },
-      { name: 'Sai Shang Hlang',    email: 'saishanghlang@gmail.com'             },
-      { name: 'Sai Shang Hlang',    email: 'saishanghlang20122002@gmail.com'     },
+      { name: 'Sai Shang Hlang', email: '6631503129@lamduan.mfu.ac.th' }, // Admin
+      { name: 'Napus Samuanpho', email: '6631503016@lamduan.mfu.ac.th' },
+      { name: 'Wantana Suwannapho', email: '6631503037@lamduan.mfu.ac.th' },
+      { name: 'Wasan Nachai', email: '6631503038@lamduan.mfu.ac.th' },
+      { name: 'Sai Shang Hlang', email: 'saishanghlang@gmail.com' },
+      { name: 'Sai Shang Hlang', email: 'saishanghlang20122002@gmail.com' },
       // ── 5 more realistic users ──
-      { name: 'Alice Wongkhan',     email: 'alice.wongkhan@mfu.ac.th'            },
-      { name: 'Bob Charoenwong',    email: 'bob.charoenwong@mfu.ac.th'           },
-      { name: 'Carol Srisombat',    email: 'carol.srisombat@mfu.ac.th'           },
-      { name: 'David Permpool',     email: 'david.permpool@mfu.ac.th'            },
-      { name: 'Eva Kulchaiyawong',  email: 'eva.kulchaiyawong@mfu.ac.th'         },
+      { name: 'Alice Wongkhan', email: 'alice.wongkhan@mfu.ac.th' },
+      { name: 'Bob Charoenwong', email: 'bob.charoenwong@mfu.ac.th' },
+      { name: 'Carol Srisombat', email: 'carol.srisombat@mfu.ac.th' },
+      { name: 'David Permpool', email: 'david.permpool@mfu.ac.th' },
+      { name: 'Eva Kulchaiyawong', email: 'eva.kulchaiyawong@mfu.ac.th' },
     ];
 
     const ADMIN_EMAIL = '6631503129@lamduan.mfu.ac.th';
@@ -125,12 +125,12 @@ async function seedDatabase() {
       const isAdmin = userData.email === ADMIN_EMAIL;
 
       const user = await User.create({
-        name:         userData.name,
-        email:        userData.email,
-        password:     'password123',
-        role:         isAdmin ? ADMIN_ROLE_ID : USER_ROLE_ID,
+        name: userData.name,
+        email: userData.email,
+        password: 'password123',
+        role: isAdmin ? ADMIN_ROLE_ID : USER_ROLE_ID,
         organization: defaultOrg ? defaultOrg._id : undefined,
-        createdAt:    daysAgo(randomInt(1, 60)),
+        createdAt: daysAgo(randomInt(1, 60)),
       });
       seededUsers.push(user);
       console.log(`  Created user: ${userData.name} <${userData.email}> [${isAdmin ? 'Admin' : 'User'}]`);
@@ -175,58 +175,58 @@ async function seedDatabase() {
     const questionTemplates = [
       // Form 1 – Student Satisfaction Survey
       [
-        { en: 'What is your student ID?',                  th: 'รหัสนักศึกษาของคุณคืออะไร?' },
-        { en: 'Describe your overall university experience.',th: 'อธิบายประสบการณ์โดยรวมของคุณที่มหาวิทยาลัย' },
-        { en: 'Which department are you enrolled in?',     th: 'คุณลงทะเบียนในแผนกใด?' },
+        { en: 'What is your student ID?', th: 'รหัสนักศึกษาของคุณคืออะไร?' },
+        { en: 'Describe your overall university experience.', th: 'อธิบายประสบการณ์โดยรวมของคุณที่มหาวิทยาลัย' },
+        { en: 'Which department are you enrolled in?', th: 'คุณลงทะเบียนในแผนกใด?' },
         { en: 'Which services did you use? (Select all that apply)', th: 'คุณใช้บริการใดบ้าง? (เลือกทั้งหมดที่ตรงกัน)' },
-        { en: 'Rate your overall satisfaction.',           th: 'ให้คะแนนความพึงพอใจโดยรวมของคุณ' },
-        { en: 'Upload your student card (optional).',      th: 'อัปโหลดบัตรนักศึกษาของคุณ (ไม่บังคับ)' },
-        { en: 'Campus Map',                                th: 'แผนที่วิทยาเขต' },
-        { en: 'Student Satisfaction Survey 2025',         th: 'แบบสำรวจความพึงพอใจของนักศึกษา ปี 2568' },
+        { en: 'Rate your overall satisfaction.', th: 'ให้คะแนนความพึงพอใจโดยรวมของคุณ' },
+        { en: 'Upload your student card (optional).', th: 'อัปโหลดบัตรนักศึกษาของคุณ (ไม่บังคับ)' },
+        { en: 'Campus Map', th: 'แผนที่วิทยาเขต' },
+        { en: 'Student Satisfaction Survey 2025', th: 'แบบสำรวจความพึงพอใจของนักศึกษา ปี 2568' },
       ],
       // Form 2 – Course Evaluation
       [
-        { en: 'What is the course code?',                  th: 'รหัสวิชาคืออะไร?' },
+        { en: 'What is the course code?', th: 'รหัสวิชาคืออะไร?' },
         { en: 'Describe what you liked most about this course.', th: 'อธิบายสิ่งที่คุณชอบมากที่สุดเกี่ยวกับรายวิชานี้' },
-        { en: 'How would you rate the instructor?',        th: 'คุณจะให้คะแนนอาจารย์ผู้สอนอย่างไร?' },
+        { en: 'How would you rate the instructor?', th: 'คุณจะให้คะแนนอาจารย์ผู้สอนอย่างไร?' },
         { en: 'Which learning materials were most helpful?', th: 'สื่อการเรียนรู้ใดที่มีประโยชน์มากที่สุด?' },
-        { en: 'Rate the course difficulty.',               th: 'ให้คะแนนความยากของรายวิชา' },
-        { en: 'Upload your assignment sample.',            th: 'อัปโหลดตัวอย่างงานที่มอบหมาย' },
-        { en: 'Course Overview Image',                     th: 'รูปภาพภาพรวมรายวิชา' },
-        { en: 'Course Evaluation – Semester 2/2568',       th: 'แบบประเมินรายวิชา – ภาคการศึกษา 2/2568' },
+        { en: 'Rate the course difficulty.', th: 'ให้คะแนนความยากของรายวิชา' },
+        { en: 'Upload your assignment sample.', th: 'อัปโหลดตัวอย่างงานที่มอบหมาย' },
+        { en: 'Course Overview Image', th: 'รูปภาพภาพรวมรายวิชา' },
+        { en: 'Course Evaluation – Semester 2/2568', th: 'แบบประเมินรายวิชา – ภาคการศึกษา 2/2568' },
       ],
       // Form 3 – Campus Facilities Feedback
       [
-        { en: 'Your name (optional).',                     th: 'ชื่อของคุณ (ไม่บังคับ)' },
-        { en: 'Describe the issue you encountered.',       th: 'อธิบายปัญหาที่คุณพบ' },
-        { en: 'Which facility area did you visit?',        th: 'คุณไปบริเวณสิ่งอำนวยความสะดวกใด?' },
-        { en: 'Which amenities need improvement?',         th: 'สิ่งอำนวยความสะดวกใดที่ต้องการการปรับปรุง?' },
-        { en: 'Rate the cleanliness of the facility.',     th: 'ให้คะแนนความสะอาดของสิ่งอำนวยความสะดวก' },
-        { en: 'Upload a photo of the issue.',              th: 'อัปโหลดรูปถ่ายของปัญหา' },
-        { en: 'Facility Layout Reference',                 th: 'ผังการใช้งานสิ่งอำนวยความสะดวก' },
-        { en: 'Campus Facilities Feedback Form',           th: 'แบบข้อเสนอแนะสิ่งอำนวยความสะดวก' },
+        { en: 'Your name (optional).', th: 'ชื่อของคุณ (ไม่บังคับ)' },
+        { en: 'Describe the issue you encountered.', th: 'อธิบายปัญหาที่คุณพบ' },
+        { en: 'Which facility area did you visit?', th: 'คุณไปบริเวณสิ่งอำนวยความสะดวกใด?' },
+        { en: 'Which amenities need improvement?', th: 'สิ่งอำนวยความสะดวกใดที่ต้องการการปรับปรุง?' },
+        { en: 'Rate the cleanliness of the facility.', th: 'ให้คะแนนความสะอาดของสิ่งอำนวยความสะดวก' },
+        { en: 'Upload a photo of the issue.', th: 'อัปโหลดรูปถ่ายของปัญหา' },
+        { en: 'Facility Layout Reference', th: 'ผังการใช้งานสิ่งอำนวยความสะดวก' },
+        { en: 'Campus Facilities Feedback Form', th: 'แบบข้อเสนอแนะสิ่งอำนวยความสะดวก' },
       ],
       // Form 4 – Research Interest Registration
       [
-        { en: 'Full name of the researcher.',              th: 'ชื่อนักวิจัยเต็ม' },
-        { en: 'Briefly describe your research proposal.',  th: 'อธิบายสั้นๆ เกี่ยวกับข้อเสนอการวิจัยของคุณ' },
-        { en: 'Select your primary research area.',        th: 'เลือกพื้นที่การวิจัยหลักของคุณ' },
-        { en: 'Select all applicable collaboration types.',th: 'เลือกประเภทความร่วมมือที่ใช้ได้ทั้งหมด' },
-        { en: 'Rate your research experience level.',      th: 'ให้คะแนนระดับประสบการณ์การวิจัยของคุณ' },
-        { en: 'Upload your CV or research portfolio.',     th: 'อัปโหลด CV หรือผลงานวิจัยของคุณ' },
-        { en: 'Research Focus Areas Diagram',              th: 'แผนภาพพื้นที่การวิจัย' },
-        { en: 'Research Registration – 2025 Intake',       th: 'การลงทะเบียนวิจัย – รับปี 2568' },
+        { en: 'Full name of the researcher.', th: 'ชื่อนักวิจัยเต็ม' },
+        { en: 'Briefly describe your research proposal.', th: 'อธิบายสั้นๆ เกี่ยวกับข้อเสนอการวิจัยของคุณ' },
+        { en: 'Select your primary research area.', th: 'เลือกพื้นที่การวิจัยหลักของคุณ' },
+        { en: 'Select all applicable collaboration types.', th: 'เลือกประเภทความร่วมมือที่ใช้ได้ทั้งหมด' },
+        { en: 'Rate your research experience level.', th: 'ให้คะแนนระดับประสบการณ์การวิจัยของคุณ' },
+        { en: 'Upload your CV or research portfolio.', th: 'อัปโหลด CV หรือผลงานวิจัยของคุณ' },
+        { en: 'Research Focus Areas Diagram', th: 'แผนภาพพื้นที่การวิจัย' },
+        { en: 'Research Registration – 2025 Intake', th: 'การลงทะเบียนวิจัย – รับปี 2568' },
       ],
       // Form 5 – Alumni Contact Update
       [
-        { en: 'Your full name.',                           th: 'ชื่อนามสกุลเต็มของคุณ' },
+        { en: 'Your full name.', th: 'ชื่อนามสกุลเต็มของคุณ' },
         { en: 'Share any notable achievements since graduation.', th: 'แบ่งปันความสำเร็จที่โดดเด่นนับตั้งแต่สำเร็จการศึกษา' },
-        { en: 'What is your current employment status?',  th: 'สถานะการจ้างงานปัจจุบันของคุณคืออะไร?' },
-        { en: 'Which industries are you working in?',     th: 'คุณทำงานในอุตสาหกรรมใดบ้าง?' },
+        { en: 'What is your current employment status?', th: 'สถานะการจ้างงานปัจจุบันของคุณคืออะไร?' },
+        { en: 'Which industries are you working in?', th: 'คุณทำงานในอุตสาหกรรมใดบ้าง?' },
         { en: 'Rate how prepared you felt for the job market after graduation.', th: 'ให้คะแนนความพร้อมที่คุณรู้สึกสำหรับตลาดงานหลังสำเร็จการศึกษา' },
-        { en: 'Upload an updated photo (optional).',      th: 'อัปโหลดรูปถ่ายที่อัปเดต (ไม่บังคับ)' },
-        { en: 'Alumni Network Overview',                   th: 'ภาพรวมเครือข่ายศิษย์เก่า' },
-        { en: 'Alumni Contact Update Form 2025',           th: 'แบบอัปเดตข้อมูลติดต่อศิษย์เก่า 2568' },
+        { en: 'Upload an updated photo (optional).', th: 'อัปโหลดรูปถ่ายที่อัปเดต (ไม่บังคับ)' },
+        { en: 'Alumni Network Overview', th: 'ภาพรวมเครือข่ายศิษย์เก่า' },
+        { en: 'Alumni Contact Update Form 2025', th: 'แบบอัปเดตข้อมูลติดต่อศิษย์เก่า 2568' },
       ],
     ];
 
@@ -301,8 +301,8 @@ async function seedDatabase() {
     console.log('\nSeeding 5 Forms with all question types and responses...\n');
 
     for (let fi = 0; fi < 5; fi++) {
-      const tmpl    = formTemplates[fi];
-      const qTmpls  = questionTemplates[fi];
+      const tmpl = formTemplates[fi];
+      const qTmpls = questionTemplates[fi];
       const creator = seededUsers[fi % seededUsers.length];
 
       // ── Create the Form ──────────────────────────────────────────────────
@@ -315,16 +315,16 @@ async function seedDatabase() {
           { key: 'en', value: tmpl.descEn },
           { key: 'th', value: tmpl.descTh },
         ],
-        creator:      creator._id,
+        creator: creator._id,
         organization: defaultOrg ? [defaultOrg._id] : [],
         collaborator: editorSetting
           ? [{ user: creator._id, type: editorSetting._id }]
           : [],
         settings: {
-          collectEmail:           false,
-          limitResponse:          false,
-          emailNotifications:     false,
-          requireResponse:        false,
+          collectEmail: false,
+          limitResponse: false,
+          emailNotifications: false,
+          requireResponse: false,
           showAnotherResponseLink: true,
         },
       });
@@ -336,13 +336,13 @@ async function seedDatabase() {
 
       for (let qi = 0; qi < ALL_QUESTION_TYPES.length; qi++) {
         const typeName = ALL_QUESTION_TYPES[qi];
-        const typeDoc  = typeMap[typeName];
-        const qTmpl    = qTmpls[qi];
+        const typeDoc = typeMap[typeName];
+        const qTmpl = qTmpls[qi];
 
         const qData = {
-          form:       form._id,
-          order:      qi + 1,
-          type:       typeDoc._id,
+          form: form._id,
+          order: qi + 1,
+          type: typeDoc._id,
           title: [
             { key: 'en', value: qTmpl.en },
             { key: 'th', value: qTmpl.th },
@@ -354,7 +354,7 @@ async function seedDatabase() {
         if (typeName === 'multiple_choice') {
           qData.config = {
             choices: multiChoiceOptions.map(o => ({
-              key:  o.key,
+              key: o.key,
               lang: [{ key: 'en', value: o.en }, { key: 'th', value: o.th }],
             })),
             allowMultipleSelect: false,
@@ -362,7 +362,7 @@ async function seedDatabase() {
         } else if (typeName === 'checkbox') {
           qData.config = {
             choices: multiChoiceOptions.map(o => ({
-              key:  o.key,
+              key: o.key,
               lang: [{ key: 'en', value: o.en }, { key: 'th', value: o.th }],
             })),
             allowMultipleSelect: true,
@@ -373,9 +373,9 @@ async function seedDatabase() {
           qData.config = { maxText: 500 };
         } else if (typeName === 'file_upload') {
           qData.config = {
-            maxFiles:    3,
+            maxFiles: 3,
             maxFileSize: 10,
-            fileTypes:   ['image/jpeg', 'image/png', 'application/pdf'],
+            fileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
           };
         } else if (typeName === 'image') {
           qData.config = {
@@ -414,9 +414,9 @@ async function seedDatabase() {
 
         await Response.create({
           responder: responder._id,
-          form:      form._id,
-          answers:   answers,
-          submit:    true,
+          form: form._id,
+          answers: answers,
+          submit: true,
         });
       }
 
@@ -427,28 +427,28 @@ async function seedDatabase() {
     console.log('Seeding Email Templates...');
     const emailTemplatesData = [
       {
-        name: [ { key: 'en', value: 'Invitation Collaboration' }, { key: 'th', value: 'คำเชิญทำงานร่วมกัน' } ],
+        name: [{ key: 'en', value: 'Invitation Collaboration' }, { key: 'th', value: 'คำเชิญทำงานร่วมกัน' }],
         code: 'invitationCollaboration',
         subject: 'You have been invited to collaborate',
         content: '<p>Hello, you have been invited to collaborate.</p>',
         variables: ['name', 'formTitle']
       },
       {
-        name: [ { key: 'en', value: 'Invitation Organization' }, { key: 'th', value: 'คำเชิญเข้าร่วมองค์กร' } ],
+        name: [{ key: 'en', value: 'Invitation Organization' }, { key: 'th', value: 'คำเชิญเข้าร่วมองค์กร' }],
         code: 'invitationOrganization',
         subject: 'You have been invited to join an organization',
         content: '<p>Hello, you have been invited to join an organization.</p>',
         variables: ['name', 'orgName']
       },
       {
-        name: [ { key: 'en', value: 'Submission Confirmation' }, { key: 'th', value: 'ยืนยันการส่งข้อมูล' } ],
+        name: [{ key: 'en', value: 'Submission Confirmation' }, { key: 'th', value: 'ยืนยันการส่งข้อมูล' }],
         code: 'submissionConfirmation',
         subject: 'Your submission has been received',
         content: '<p>Hello, we have received your submission.</p>',
         variables: ['name', 'formTitle']
       },
       {
-        name: [ { key: 'en', value: 'Response Notification' }, { key: 'th', value: 'แจ้งเตือนการตอบกลับ' } ],
+        name: [{ key: 'en', value: 'Response Notification' }, { key: 'th', value: 'แจ้งเตือนการตอบกลับ' }],
         code: 'ResponseNotification',
         subject: 'New response received',
         content: '<p>A new response has been submitted.</p>',

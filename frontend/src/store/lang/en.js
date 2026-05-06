@@ -333,6 +333,17 @@ const en = {
         nextQuestion: "Next Question",
         submitForm: "Submit Form",
         questionLabel: "Question"
+    },
+    security: {
+        title: "Permissions",
+        description: "Review group-to-menu rules, tune access switches, and keep the permission grid controlled.",
+        role: "Role",
+        page: "Page",
+        read: "Read",
+        create: "Create",
+        update: "Update",
+        delete: "Delete",
+        allRoles: "All Roles"
     }
 }
 export default en
