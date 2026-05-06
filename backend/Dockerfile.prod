@@ -1,12 +1,24 @@
-FROM node:14-alpine as builder
+FROM node:20-alpine as builder
+WORKDIR /app
+
 ## Install build toolchain, install node deps and compile native add-ons
 RUN apk add --no-cache python3 make g++
-COPY ./package.json .
+
+## Copy package files and install dependencies
+COPY package*.json ./
 RUN npm install
+
+## Copy the rest of the application code
 COPY . .
-FROM node:16 as app
-## Copy built node modules and binaries without including the toolchain
-COPY --from=builder . .
+
+FROM node:20-alpine as app
+WORKDIR /app
+
+## Copy built application from the builder stage
+COPY --from=builder /app .
+
+## Clean up npm cache to reduce image size
 RUN npm cache clean -f
-EXPOSE 7002
-ENTRYPOINT npm run serve:prod
+
+EXPOSE 8081
+ENTRYPOINT ["npm", "start"]
