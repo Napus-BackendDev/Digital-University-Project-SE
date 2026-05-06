@@ -13,6 +13,7 @@ const Questions    = require('./server/Project/Questions/models/questions.model'
 const QuestionType = require('./server/Project/Settings/models/question_type.model');
 const Organization = require('./server/Project/Organizations/models/organization.model');
 const SettingControll = require('./server/Project/Settings/models/controll.model');
+const EmailTemplate = require('./server/Project/Settings/models/emailTemplate.model');
 
 const mongoURI = process.env.MONGODB;
 
@@ -41,6 +42,7 @@ async function seedDatabase() {
     await Questions.deleteMany({});
     await Form.deleteMany({});
     await User.deleteMany({});
+    await EmailTemplate.deleteMany({});
     console.log('Cleared.\n');
 
     // ── Step 2: Fetch existing infrastructure data (read-only) ───────────────
@@ -421,11 +423,47 @@ async function seedDatabase() {
       console.log(`           Responses created: ${responseCount} (all submitted)\n`);
     }
 
+    // ── Step 6: Seed Email Templates ──────────────────────────────────────────
+    console.log('Seeding Email Templates...');
+    const emailTemplatesData = [
+      {
+        name: [ { key: 'en', value: 'Invitation Collaboration' }, { key: 'th', value: 'คำเชิญทำงานร่วมกัน' } ],
+        code: 'invitationCollaboration',
+        subject: 'You have been invited to collaborate',
+        content: '<p>Hello, you have been invited to collaborate.</p>',
+        variables: ['name', 'formTitle']
+      },
+      {
+        name: [ { key: 'en', value: 'Invitation Organization' }, { key: 'th', value: 'คำเชิญเข้าร่วมองค์กร' } ],
+        code: 'invitationOrganization',
+        subject: 'You have been invited to join an organization',
+        content: '<p>Hello, you have been invited to join an organization.</p>',
+        variables: ['name', 'orgName']
+      },
+      {
+        name: [ { key: 'en', value: 'Submission Confirmation' }, { key: 'th', value: 'ยืนยันการส่งข้อมูล' } ],
+        code: 'submissionConfirmation',
+        subject: 'Your submission has been received',
+        content: '<p>Hello, we have received your submission.</p>',
+        variables: ['name', 'formTitle']
+      },
+      {
+        name: [ { key: 'en', value: 'Response Notification' }, { key: 'th', value: 'แจ้งเตือนการตอบกลับ' } ],
+        code: 'ResponseNotification',
+        subject: 'New response received',
+        content: '<p>A new response has been submitted.</p>',
+        variables: ['formTitle']
+      }
+    ];
+    await EmailTemplate.insertMany(emailTemplatesData);
+    console.log(`Seeded ${emailTemplatesData.length} email templates.\n`);
+
     console.log('════════════════════════════════════════════════════════');
     console.log(' Seeding completed successfully!');
     console.log('  • 15 users seeded');
     console.log('  •  5 forms seeded (each with all 8 question types)');
     console.log('  •  6–9 submitted responses per form');
+    console.log('  •  4 email templates seeded');
     console.log('  • Organizations, Roles, Settings, Question Types: untouched');
     console.log('════════════════════════════════════════════════════════');
 

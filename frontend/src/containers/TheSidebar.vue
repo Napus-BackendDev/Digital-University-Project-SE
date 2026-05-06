@@ -192,6 +192,12 @@ export default {
                         to: '/permissions',
                         icon: 'cil-lock-locked',
                     },
+                    {
+                        _name: 'CSidebarNavItem',
+                        name: this.$t('nav.email'),
+                        to: '/email',
+                        icon: 'cil-envelope-open',
+                    },
                 ]
             }];
         },

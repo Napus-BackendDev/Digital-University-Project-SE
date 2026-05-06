@@ -11,6 +11,7 @@ const en = {
         manage: "Manage Forms",
         analytics: "Analytics",
         permissions: "Permissions",
+        email: "Email",
         logout: "Logout",
         selectUser: "Select User",
         welcome: "Welcome to E-Questionnaires"

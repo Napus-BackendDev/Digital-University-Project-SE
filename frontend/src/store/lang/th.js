@@ -11,6 +11,7 @@ const th = {
         manage: "จัดการฟอร์ม",
         analytics: "การวิเคราะห์",
         permissions: "สิทธิ์การเข้าถึง",
+        email: "อีเมล",
         logout: "ออกจากระบบ",
         selectUser: "เลือกผู้ใช้งาน",
         welcome: "ยินดีต้อนรับสู่ระบบแบบสอบถาม"
