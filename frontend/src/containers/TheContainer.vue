@@ -14,8 +14,8 @@
     </CWrapper>
     <CenterLoading />
     <DialogMessage />
-    <SignIn />
-    <TwoFA />
+    <!-- <SignIn /> -->
+    <!-- <TwoFA /> -->
 
   </div>
 </template>
@@ -26,14 +26,14 @@ import TheHeader from './TheHeader'
 import { mapGetters } from "vuex";
 import DialogMessage from "@/projects/components/dialog/DialogMessage.vue";
 import CenterLoading from "@/projects/components/dialog/CenterLoading.vue";
-import SignIn from "@/projects/components/dialog/SignIn.vue";
-import TwoFA from "@/projects/components/dialog/TwoFA.vue";
+// import SignIn from "@/projects/components/dialog/SignIn.vue";
+// import TwoFA from "@/projects/components/dialog/TwoFA.vue";
 
 export default {
   name: 'TheContainer',
   components: {
-    TwoFA,
-    SignIn,
+    // TwoFA,
+    // SignIn,
     CenterLoading,
     DialogMessage,
     TheSidebar,

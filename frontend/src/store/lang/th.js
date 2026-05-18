@@ -11,6 +11,7 @@ const th = {
         manage: "จัดการฟอร์ม",
         analytics: "การวิเคราะห์",
         permissions: "สิทธิ์การเข้าถึง",
+        email: "อีเมล",
         logout: "ออกจากระบบ",
         selectUser: "เลือกผู้ใช้งาน",
         welcome: "ยินดีต้อนรับสู่ระบบแบบสอบถาม"
@@ -332,6 +333,17 @@ const th = {
         nextQuestion: "คำถามถัดไป",
         submitForm: "ส่งแบบสอบถาม",
         questionLabel: "ข้อที่"
+    },
+    security: {
+        title: "สิทธิ์การใช้งาน",
+        description: "ตรวจสอบกฎการเชื่อมโยงกลุ่มกับเมนู ปรับเปลี่ยนสิทธิ์การเข้าถึง และจัดการตารางสิทธิ์ให้เป็นระเบียบ",
+        role: "บทบาท",
+        page: "หน้า",
+        read: "อ่าน",
+        create: "สร้าง",
+        update: "แก้ไข",
+        delete: "ลบ",
+        allRoles: "ทุกบทบาท"
     }
 }
 export default th

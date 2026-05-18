@@ -362,11 +362,12 @@ export default {
                     timeRange = f.timeRange;
                 }
 
-                // Status: derive from schedule if available (Pending / Active / Closed)
-                let status = 'Pending';
+                // Status: derive from schedule if available
+                let status = 'Draft';
                 const now = new Date();
                 const hasStart = f.schedule && f.schedule.startAt;
                 const hasEnd = f.schedule && f.schedule.endAt;
+
                 if (hasStart || hasEnd) {
                     const start = hasStart ? new Date(f.schedule.startAt) : null;
                     const end = hasEnd ? new Date(f.schedule.endAt) : null;
@@ -379,12 +380,16 @@ export default {
                     }
                 } else if (f.status) {
                     // fallback to existing status field if schedule not present
-                    if (typeof f.status === 'string') status = f.status;
-                    else if (typeof f.status === 'object') status = f.status.type || f.status.name || 'Pending';
+                    if (typeof f.status === 'string') {
+                        status = f.status === 'Pending' ? 'Draft' : f.status;
+                    }
+                    else if (typeof f.status === 'object') {
+                        status = f.status.type || f.status.name || 'Draft';
+                    }
                 }
                 else {
-                    // no schedule or explicit status -> default to Pending
-                    status = 'Pending';
+                    // no schedule or explicit status -> default to Draft
+                    status = 'Draft';
                 }
 
                 // Extract Collaborators
@@ -568,6 +573,7 @@ export default {
             const s = status ? status.toLowerCase() : '';
             if (s === 'active') return 'status-active';
             if (s === 'closed') return 'status-closed';
+            if (s === 'draft') return 'status-draft';
             return 'status-pending';
         },
         getVisibilityClass(acc) {
@@ -742,6 +748,15 @@ export default {
 
 .status-closed .status-dot {
     background-color: #dc2626;
+}
+
+.status-draft {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+.status-draft .status-dot {
+    background-color: #94a3b8;
 }
 
 .access-stack {

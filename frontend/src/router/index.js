@@ -21,6 +21,8 @@ const Response = () => import('@/projects/views/Responsedetail.vue')
 // Admin
 const Analytics = () => import('@/projects/views/Analytics.vue')
 const Permission = () => import('@/projects/views/security/Permission.vue')
+const Email = () => import('@/projects/views/email/index.vue')
+const EmailDetail = () => import('@/projects/views/email/detail.vue')
 
 Vue.use(Router)
 
@@ -77,6 +79,17 @@ export default new Router({
                     path: 'permissions',
                     name: 'Permissions',
                     component: Permission
+                },
+                {
+                    path: 'email',
+                    name: 'Email',
+                    component: Email
+                },
+                {
+                    path: 'email/:id',
+                    name: 'EmailDetail',
+                    component: EmailDetail,
+                    props: true
                 }
             ]
         },

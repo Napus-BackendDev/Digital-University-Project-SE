@@ -140,6 +140,16 @@ export default {
       case 'collaborator-delete':
         return instance.delete('settings/collaborator', { data })
 
+      // EmailTemplate settings
+      case 'email-template-get':
+        return instance.get('settings/emailTemplate', { params: data })
+      case 'email-template-create':
+        return instance.post('settings/emailTemplate', data)
+      case 'email-template-update':
+        return instance.put('settings/emailTemplate', data)
+      case 'email-template-delete':
+        return instance.delete('settings/emailTemplate', { data })
+
       default:
         break
     }

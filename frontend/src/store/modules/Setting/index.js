@@ -4,6 +4,7 @@ import verification from "@/store/modules/Setting/verification/index";
 import authen from "@/store/modules/Setting/authen/index";
 import question_type from "@/store/modules/Setting/question_type/index";
 import collaborator from "@/store/modules/Setting/controll/index";
+import emailTemplate from "@/store/modules/Setting/emailTemplate/index";
 
 
 const module = {
@@ -14,7 +15,8 @@ const module = {
         verification,
         authen,
         question_type,
-        collaborator
+        collaborator,
+        emailTemplate
     },
     state: {
         lang: localStorage.getItem("lang") || "en",

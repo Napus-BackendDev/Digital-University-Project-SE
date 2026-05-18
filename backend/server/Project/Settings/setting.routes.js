@@ -7,6 +7,7 @@ const status = require("./service/status");
 const verification = require("./service/verification");
 const question = require("./service/question_type");
 const collaborator = require("./service/controll");
+const emailTemplate = require("./service/emailTemplate");
 // const auth_message = require("./service/auth_message");
 // const Role = require("../Accounts/service/role");
 // const Authen_Type = require("../Accounts/service/authen_type");
@@ -65,5 +66,11 @@ router.get("/collaborator", collaborator.onQuerys);
 router.post("/collaborator", collaborator.onCreate);
 router.put("/collaborator", collaborator.onUpdate);
 router.delete("/collaborator", collaborator.onDelete);
+
+router.get("/emailTemplate", emailTemplate.onQuerys);
+router.get("/emailTemplate/:id", emailTemplate.onQuery);
+router.post("/emailTemplate", emailTemplate.onCreate);
+router.put("/emailTemplate", emailTemplate.onUpdate);
+router.delete("/emailTemplate", emailTemplate.onDelete);
 
 module.exports = router;
