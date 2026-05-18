@@ -1,43 +1,2340 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-        "title": "Digital University Project API",
-        "version": "1.0.0",
-        "description": "API Documentation for Digital University Project"
-    },
-    "servers": [
-        {
-            "url": "/api/v1",
-            "description": "V1 API Server"
-        }
-    ],
-    "paths": {},
-    "tags": [],
-    "components": {
-        "schemas": {
-            "ApiResponse": {
-                "type": "object",
-                "properties": {
-                    "code": { "type": "integer", "description": "Internal application code (e.g. 20021)", "example": 20021 },
-                    "httpcode": { "type": "integer", "description": "Standard HTTP status code", "example": 200 },
-                    "message": {
-                        "type": "array",
-                        "items": { "$ref": "#/components/schemas/Message" }
-                    },
-                    "data": { "type": "object", "description": "The actual data payload" },
-                    "status": { "type": "string", "example": "success" },
-                    "statusCode": { "type": "integer", "example": 200 },
-                    "timestamp": { "type": "string", "format": "date-time", "example": "2026-04-02T03:00:46.498Z" },
-                    "url": { "type": "string", "example": "/api/v1/form/exp" }
-                }
-            },
-            "Message": {
-                "type": "object",
-                "properties": {
-                    "key": { "type": "string", "description": "Language key (en, th)", "example": "en" },
-                    "value": { "type": "string", "description": "Localized message text", "example": "Success" }
-                }
-            }
-        }
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Digital University Project API",
+    "version": "1.0.0",
+    "description": "Premium API documentation for the Digital University survey and form platform. Supports dynamic form building, survey submissions, user management, and configuration lookup tables."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Base Server"
     }
+  ],
+  "tags": [
+    { "name": "System Health", "description": "Liveness, readiness, and system performance telemetry endpoints." },
+    { "name": "Users", "description": "API for Managing System Users and Accounts." },
+    { "name": "Roles", "description": "API for Managing User Roles and Permissions." },
+    { "name": "Forms", "description": "API for Managing Multilingual Form Lifecycles, Collaborators, and Visibility." },
+    { "name": "Questions", "description": "API for Managing Question Configs, Types, and Optional Image Uploads." },
+    { "name": "Responses", "description": "API for Submitting, Querying, and Deleting Form Responses." },
+    { "name": "Organizations", "description": "API for Managing Academic and Business Units." },
+    { "name": "Settings - Groups", "description": "Lookup configurations for student and collaborator groups." },
+    { "name": "Settings - Messages", "description": "System response message mappings." },
+    { "name": "Settings - Statuses", "description": "Statuses for workflows, active state, and visibility." },
+    { "name": "Settings - Verification", "description": "Verification configuration and explorers." },
+    { "name": "Settings - Question Types", "description": "Allowed answer formats and question kinds." },
+    { "name": "Settings - Collaborators", "description": "Collaborator role definitions." },
+    { "name": "Settings - Email Templates", "description": "Dynamic HTML notification templates." }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": ["System Health"],
+        "summary": "Application readiness probe",
+        "description": "Returns 200 OK when the app is ready and 503 while it is still warming up.",
+        "responses": {
+          "200": { "description": "Application is ready to handle requests." },
+          "503": { "description": "Application is still warming up." }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": ["System Health"],
+        "summary": "Detailed system health report",
+        "description": "Reports app liveness, process uptime, memory usage, and MongoDB connection state.",
+        "responses": {
+          "200": {
+            "description": "Telemetry status retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "healthy" },
+                    "uptime": { "type": "number", "example": 14.52 },
+                    "memoryUsage": { "type": "object" },
+                    "mongodb": {
+                      "type": "object",
+                      "properties": {
+                        "state": { "type": "string", "example": "connected" },
+                        "connected": { "type": "boolean", "example": true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user/exp": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all users (apiId: 21)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user/get": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Get user by ID (apiId: 22)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 22 },
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1a111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/User" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create user (apiId: 23)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 23 },
+                  "name": { "type": "string", "example": "John Doe" },
+                  "email": { "type": "string", "format": "email", "example": "john@example.com" },
+                  "password": { "type": "string", "example": "securepassword123" },
+                  "role": { "type": "string", "description": "Role ObjectId", "example": "64aec1c73996270d703db3d7" },
+                  "organization": { "type": "string", "description": "Organization ObjectId", "example": "64e1f9f32a6d1c0013a1f111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/User" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update user (apiId: 24)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 24 },
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1a111" },
+                  "name": { "type": "string", "example": "John Doe Updated" },
+                  "email": { "type": "string", "format": "email", "example": "john.updated@example.com" },
+                  "role": { "type": "string", "description": "Role ObjectId", "example": "64aec1c73996270d703db3d7" },
+                  "organization": { "type": "string", "description": "Organization ObjectId", "example": "64e1f9f32a6d1c0013a1f111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/User" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete user (apiId: 25)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 25 },
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1a111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "object" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user/role/exp": {
+      "get": {
+        "tags": ["Roles"],
+        "summary": "Get all roles (apiId: 21)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Role" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user/role/get": {
+      "post": {
+        "tags": ["Roles"],
+        "summary": "Get role by ID (apiId: 22)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 22 },
+                  "_id": { "type": "string", "example": "64aec1c73996270d703db3d7" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Role" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user/role": {
+      "post": {
+        "tags": ["Roles"],
+        "summary": "Create role (apiId: 23)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 23 },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "permission": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "page": { "type": "string" },
+                        "access": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": { "type": "string" },
+                              "value": { "type": "boolean" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Role" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Roles"],
+        "summary": "Update role (apiId: 24)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 24 },
+                  "_id": { "type": "string", "example": "64aec1c73996270d703db3d7" },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "permission": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "page": { "type": "string" },
+                        "access": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": { "type": "string" },
+                              "value": { "type": "boolean" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Role" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Roles"],
+        "summary": "Delete role (apiId: 25)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 25 },
+                  "_id": { "type": "string", "example": "64aec1c73996270d703db3d7" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "object" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/form/exp": {
+      "get": {
+        "tags": ["Forms"],
+        "summary": "Get all forms (apiId: 21)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Form" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/form/user": {
+      "post": {
+        "tags": ["Forms"],
+        "summary": "Get forms by user ID (apiId: 26)",
+        "description": "Returns a list of forms that a user has access to (creator, collaborator, allowed user, or organization-matched). Admins receive all forms.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 26 },
+                  "_id": { "type": "string", "description": "The user ID", "example": "64e1f9f32a6d1c0013a1a111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Form" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/form/get": {
+      "post": {
+        "tags": ["Forms"],
+        "summary": "Get a single form by ID (apiId: 22)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 22 },
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1b111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Form" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/form": {
+      "post": {
+        "tags": ["Forms"],
+        "summary": "Create form (apiId: 23)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 23 },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "schedule": {
+                    "type": "object",
+                    "properties": {
+                      "startAt": { "type": "string", "format": "date-time" },
+                      "endAt": { "type": "string", "format": "date-time" }
+                    }
+                  },
+                  "organization": { "type": "array", "items": { "type": "string" } },
+                  "collaborator": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "user": { "type": "string" },
+                        "type": { "type": "string" }
+                      }
+                    }
+                  },
+                  "settings": {
+                    "type": "object",
+                    "properties": {
+                      "collectEmail": { "type": "boolean" },
+                      "limitResponse": { "type": "boolean" },
+                      "emailNotifications": { "type": "boolean" },
+                      "emailMessage": { "type": "string" },
+                      "requireResponse": { "type": "boolean" },
+                      "confirmMessage": { "type": "string" },
+                      "showAnotherResponseLink": { "type": "boolean" },
+                      "allowedUser": { "type": "array", "items": { "type": "string" } }
+                    }
+                  },
+                  "creator": { "type": "string" },
+                  "status": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Form" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Forms"],
+        "summary": "Update form (apiId: 24)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 24 },
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1b111" },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "schedule": {
+                    "type": "object",
+                    "properties": {
+                      "startAt": { "type": "string", "format": "date-time" },
+                      "endAt": { "type": "string", "format": "date-time" }
+                    }
+                  },
+                  "organization": { "type": "array", "items": { "type": "string" } },
+                  "collaborator": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "user": { "type": "string" },
+                        "type": { "type": "string" }
+                      }
+                    }
+                  },
+                  "settings": {
+                    "type": "object",
+                    "properties": {
+                      "collectEmail": { "type": "boolean" },
+                      "limitResponse": { "type": "boolean" },
+                      "emailNotifications": { "type": "boolean" },
+                      "emailMessage": { "type": "string" },
+                      "requireResponse": { "type": "boolean" },
+                      "confirmMessage": { "type": "string" },
+                      "showAnotherResponseLink": { "type": "boolean" },
+                      "allowedUser": { "type": "array", "items": { "type": "string" } }
+                    }
+                  },
+                  "status": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Form" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Forms"],
+        "summary": "Delete form (apiId: 25)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 25 },
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1b111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "object" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/question/exp": {
+      "get": {
+        "tags": ["Questions"],
+        "summary": "Get all questions (apiId: 12)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Question" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/question/get": {
+      "post": {
+        "tags": ["Questions"],
+        "summary": "Get a single question by ID (apiId: 11)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 11 },
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1c111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Question" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/question": {
+      "post": {
+        "tags": ["Questions"],
+        "summary": "Create question (apiId: 13)",
+        "description": "Creates a question and automatically pushes its ID to the parent form's questions array.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["form", "type"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 13 },
+                  "form": { "type": "string", "description": "Form ObjectId" },
+                  "order": { "type": "integer", "default": 1 },
+                  "title": { "type": "string", "description": "JSON serialized string of multilingual title" },
+                  "description": { "type": "string", "description": "JSON serialized string of description" },
+                  "type": { "type": "string", "description": "Question type ObjectId" },
+                  "isRequired": { "type": "boolean" },
+                  "config": { "type": "string", "description": "JSON serialized string of config object" },
+                  "image": { "type": "string", "format": "binary", "description": "Optional image upload" }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["form", "type"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 13 },
+                  "form": { "type": "string" },
+                  "order": { "type": "integer" },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "type": { "type": "string" },
+                  "isRequired": { "type": "boolean" },
+                  "config": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Question" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Questions"],
+        "summary": "Update question (apiId: 14)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 14 },
+                  "_id": { "type": "string" },
+                  "order": { "type": "integer" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "type": { "type": "string" },
+                  "isRequired": { "type": "boolean" },
+                  "config": { "type": "string" },
+                  "image": { "type": "string", "format": "binary" }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 14 },
+                  "_id": { "type": "string" },
+                  "order": { "type": "integer" },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "type": { "type": "string" },
+                  "isRequired": { "type": "boolean" },
+                  "config": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Question" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Questions"],
+        "summary": "Delete question (apiId: 15)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 15 },
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/v1/response/exp": {
+      "get": {
+        "tags": ["Responses"],
+        "summary": "Get all responses (apiId: 1)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Response" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/response/get": {
+      "post": {
+        "tags": ["Responses"],
+        "summary": "Query responses (apiId: 2)",
+        "description": "Query responses by Response ID (`_id`) or Form ID (`form_id`).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiId": { "type": "integer", "example": 2 },
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1e111" },
+                  "form_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1b111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "oneOf": [
+                            { "$ref": "#/components/schemas/Response" },
+                            { "type": "array", "items": { "$ref": "#/components/schemas/Response" } }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/response": {
+      "post": {
+        "tags": ["Responses"],
+        "summary": "Submit response (apiId: 3)",
+        "description": "Submit a form response, supporting both JSON answers and multiple binary files upload.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["form", "responder"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 3 },
+                  "form": { "type": "string", "description": "Form ObjectId" },
+                  "responder": { "type": "string", "description": "User ObjectId" },
+                  "answers": { "type": "string", "description": "JSON string representing answer payload" },
+                  "files": { "type": "array", "items": { "type": "string", "format": "binary" }, "description": "Binary answer files upload" }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["form", "responder"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 3 },
+                  "form": { "type": "string" },
+                  "responder": { "type": "string" },
+                  "answers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "question": { "type": "string" },
+                        "response": { "type": "object" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Responses"],
+        "summary": "Update response (apiId: 4)",
+        "description": "Updates answers or submitted files for a response.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 4 },
+                  "_id": { "type": "string" },
+                  "answers": { "type": "string" },
+                  "files": { "type": "array", "items": { "type": "string", "format": "binary" } }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 4 },
+                  "_id": { "type": "string" },
+                  "answers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "question": { "type": "string" },
+                        "response": { "type": "object" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Responses"],
+        "summary": "Delete response (apiId: 5)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "apiId": { "type": "integer", "example": 5 },
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/response/{id}": {
+      "delete": {
+        "tags": ["Responses"],
+        "summary": "Delete response by path parameter (apiId: 5)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "The response ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organization/exp": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "Get all organizations (apiId: 31)",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Organization" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organization/get": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Get single organization (apiId: 32)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1f111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Organization" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/organization": {
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Create organization (apiId: 33)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Organization" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Organizations"],
+        "summary": "Update organization (apiId: 34)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1f111" },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Organization" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Organizations"],
+        "summary": "Delete organization (apiId: 35)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1f111" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "object" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/group": {
+      "get": {
+        "tags": ["Settings - Groups"],
+        "summary": "Get all setting groups",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/SettingGroup" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Settings - Groups"],
+        "summary": "Create setting group",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created successfully" }
+        }
+      },
+      "put": {
+        "tags": ["Settings - Groups"],
+        "summary": "Update setting group",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated successfully" }
+        }
+      },
+      "delete": {
+        "tags": ["Settings - Groups"],
+        "summary": "Delete setting group",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted successfully" }
+        }
+      }
+    },
+    "/api/v1/settings/message": {
+      "get": {
+        "tags": ["Settings - Messages"],
+        "summary": "Get all setting messages",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/SettingMessage" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Settings - Messages"],
+        "summary": "Create setting message",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["number", "code", "message"],
+                "properties": {
+                  "number": { "type": "integer" },
+                  "code": { "type": "integer" },
+                  "message": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "status": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created successfully" }
+        }
+      },
+      "put": {
+        "tags": ["Settings - Messages"],
+        "summary": "Update setting message",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" },
+                  "number": { "type": "integer" },
+                  "code": { "type": "integer" },
+                  "message": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "status": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated successfully" }
+        }
+      },
+      "delete": {
+        "tags": ["Settings - Messages"],
+        "summary": "Delete setting message",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted successfully" }
+        }
+      }
+    },
+    "/api/v1/settings/status": {
+      "get": {
+        "tags": ["Settings - Statuses"],
+        "summary": "Get all statuses",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/SettingStatus" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Settings - Statuses"],
+        "summary": "Create status setting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "group": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created successfully" }
+        }
+      },
+      "put": {
+        "tags": ["Settings - Statuses"],
+        "summary": "Update status setting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "group": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated successfully" }
+        }
+      },
+      "delete": {
+        "tags": ["Settings - Statuses"],
+        "summary": "Delete status setting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted successfully" }
+        }
+      }
+    },
+    "/api/v1/settings/verification": {
+      "get": {
+        "tags": ["Settings - Verification"],
+        "summary": "Get all verifications",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/SettingVerification" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Settings - Verification"],
+        "summary": "Create verification setting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "status": { "type": "string" },
+                  "group": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created successfully" }
+        }
+      },
+      "put": {
+        "tags": ["Settings - Verification"],
+        "summary": "Update verification setting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "status": { "type": "string" },
+                  "group": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated successfully" }
+        }
+      },
+      "delete": {
+        "tags": ["Settings - Verification"],
+        "summary": "Delete verification setting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted successfully" }
+        }
+      }
+    },
+    "/api/v1/settings/verification/explorers": {
+      "post": {
+        "tags": ["Settings - Verification"],
+        "summary": "Create verification explorer record",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created successfully" }
+        }
+      }
+    },
+    "/api/v1/settings/question_type": {
+      "get": {
+        "tags": ["Settings - Question Types"],
+        "summary": "Get all question types",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/QuestionType" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Settings - Question Types"],
+        "summary": "Create question type",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": { "type": "string", "example": "text" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created successfully" }
+        }
+      },
+      "put": {
+        "tags": ["Settings - Question Types"],
+        "summary": "Update question type",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id", "type"],
+                "properties": {
+                  "_id": { "type": "string" },
+                  "type": { "type": "string", "example": "paragraph" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated successfully" }
+        }
+      },
+      "delete": {
+        "tags": ["Settings - Question Types"],
+        "summary": "Delete question type",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted successfully" }
+        }
+      }
+    },
+    "/api/v1/settings/collaborator": {
+      "get": {
+        "tags": ["Settings - Collaborators"],
+        "summary": "Get all collaborator settings",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/SettingCollaborator" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Settings - Collaborators"],
+        "summary": "Create collaborator setting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created successfully" }
+        }
+      },
+      "put": {
+        "tags": ["Settings - Collaborators"],
+        "summary": "Update collaborator setting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id", "title"],
+                "properties": {
+                  "_id": { "type": "string" },
+                  "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated successfully" }
+        }
+      },
+      "delete": {
+        "tags": ["Settings - Collaborators"],
+        "summary": "Delete collaborator setting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted successfully" }
+        }
+      }
+    },
+    "/api/v1/settings/emailTemplate": {
+      "get": {
+        "tags": ["Settings - Email Templates"],
+        "summary": "Get all email templates",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/EmailTemplate" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Settings - Email Templates"],
+        "summary": "Create email template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["code", "subject", "content"],
+                "properties": {
+                  "name": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "code": { "type": "string", "example": "invitationCollaboration" },
+                  "subject": { "type": "string" },
+                  "content": { "type": "string", "description": "HTML template body" },
+                  "variables": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Created successfully" }
+        }
+      },
+      "put": {
+        "tags": ["Settings - Email Templates"],
+        "summary": "Update email template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["_id"],
+                "properties": {
+                  "_id": { "type": "string" },
+                  "name": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                  "code": { "type": "string" },
+                  "subject": { "type": "string" },
+                  "content": { "type": "string" },
+                  "variables": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated successfully" }
+        }
+      },
+      "delete": {
+        "tags": ["Settings - Email Templates"],
+        "summary": "Delete email template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted successfully" }
+        }
+      }
+    },
+    "/api/v1/settings/emailTemplate/{id}": {
+      "get": {
+        "tags": ["Settings - Email Templates"],
+        "summary": "Get email template by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/EmailTemplate" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "description": "Internal success or error code", "example": 20021 },
+          "httpcode": { "type": "integer", "description": "Standard HTTP status code", "example": 200 },
+          "message": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Message" }
+          },
+          "data": { "type": "object", "description": "Payload data" },
+          "status": { "type": "string", "example": "success" },
+          "statusCode": { "type": "integer", "example": 200 },
+          "timestamp": { "type": "string", "format": "date-time", "example": "2026-04-02T03:00:46.498Z" },
+          "url": { "type": "string", "example": "/api/v1/form/exp" }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "string", "description": "Language identifier", "example": "en" },
+          "value": { "type": "string", "description": "Message string", "example": "Success" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1a111" },
+          "name": { "type": "string", "example": "John Doe" },
+          "email": { "type": "string", "format": "email", "example": "john@example.com" },
+          "role": { "oneOf": [{ "type": "string" }, { "$ref": "#/components/schemas/Role" }] },
+          "organization": { "oneOf": [{ "type": "string" }, { "$ref": "#/components/schemas/Organization" }] },
+          "response": { "type": "array", "items": { "type": "string" } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "64aec1c73996270d703db3d7" },
+          "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "permission": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "page": { "type": "string", "example": "dashboard" },
+                "access": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": { "type": "string", "example": "read" },
+                      "value": { "type": "boolean", "example": true }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Organization": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1f111" },
+          "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Form": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1b111" },
+          "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "questions": { "type": "array", "items": { "type": "string" } },
+          "schedule": {
+            "type": "object",
+            "properties": {
+              "startAt": { "type": "string", "format": "date-time" },
+              "endAt": { "type": "string", "format": "date-time" }
+            }
+          },
+          "organization": { "type": "array", "items": { "type": "string" } },
+          "collaborator": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "user": { "type": "string" },
+                "type": { "type": "string" }
+              }
+            }
+          },
+          "settings": {
+            "type": "object",
+            "properties": {
+              "collectEmail": { "type": "boolean", "example": false },
+              "limitResponse": { "type": "boolean", "example": false },
+              "emailNotifications": { "type": "boolean", "example": false },
+              "emailMessage": { "type": "string" },
+              "requireResponse": { "type": "boolean", "example": false },
+              "confirmMessage": { "type": "string" },
+              "showAnotherResponseLink": { "type": "boolean", "example": true },
+              "allowedUser": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "responses": { "type": "array", "items": { "type": "string" } },
+          "originalFormId": { "type": "string" },
+          "creator": { "type": "string" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Question": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1c111" },
+          "form": { "type": "string" },
+          "order": { "type": "integer" },
+          "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "type": { "type": "string" },
+          "config": {
+            "type": "object",
+            "properties": {
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": { "type": "string" },
+                    "lang": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+                    "nextQuestion": { "type": "string" }
+                  }
+                }
+              },
+              "allowMultipleSelect": { "type": "boolean" },
+              "maxRating": { "type": "integer" },
+              "maxText": { "type": "integer" },
+              "maxFiles": { "type": "integer" },
+              "maxFileSize": { "type": "integer" },
+              "fileTypes": { "type": "array", "items": { "type": "string" } },
+              "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+              "image": { "type": "string" }
+            }
+          },
+          "isRequired": { "type": "boolean" },
+          "nextQuestion": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Response": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "64e1f9f32a6d1c0013a1e111" },
+          "responder": { "oneOf": [{ "type": "string" }, { "$ref": "#/components/schemas/User" }] },
+          "form": { "oneOf": [{ "type": "string" }, { "$ref": "#/components/schemas/Form" }] },
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "question": { "type": "string" },
+                "response": { "type": "object" }
+              }
+            }
+          },
+          "submit": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SettingGroup": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "create": {
+            "type": "object",
+            "properties": {
+              "by": { "type": "string" },
+              "datetime": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "SettingMessage": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "number": { "type": "integer" },
+          "code": { "type": "integer" },
+          "message": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "status": { "type": "string" },
+          "create": {
+            "type": "object",
+            "properties": {
+              "by": { "type": "string" },
+              "datetime": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "SettingStatus": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "group": { "type": "string" },
+          "create": {
+            "type": "object",
+            "properties": {
+              "by": { "type": "string" },
+              "datetime": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "SettingVerification": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "description": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "status": { "type": "string" },
+          "group": { "type": "string" },
+          "create": {
+            "type": "object",
+            "properties": {
+              "by": { "type": "string" },
+              "datetime": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "QuestionType": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "type": { "type": "string", "example": "text" }
+        }
+      },
+      "SettingCollaborator": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "title": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "create": {
+            "type": "object",
+            "properties": {
+              "by": { "type": "string" },
+              "datetime": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "EmailTemplate": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "name": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } },
+          "code": { "type": "string", "example": "invitationCollaboration" },
+          "subject": { "type": "string" },
+          "content": { "type": "string" },
+          "variables": { "type": "array", "items": { "type": "string" } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
 }

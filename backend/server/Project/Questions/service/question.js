@@ -6,6 +6,9 @@ const { getUploadUrl } = require('../../../../helpers/upload');
 exports.onQuery = async function (request, response) {
     try {
         let query = {};
+        if (request.body && request.body._id) {
+            query._id = new mongo.ObjectId(request.body._id);
+        }
         const doc = await Question.onQuery(query);
         return ResMessage.sendResponse(response, 0, 20000, doc);
     } catch (err) {
