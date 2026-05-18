@@ -48,22 +48,22 @@ async function seedDatabase() {
     // ── Step 2: Fetch existing infrastructure data (read-only) ───────────────
     console.log('Fetching existing infrastructure (orgs, roles, question types, collaborator settings)...');
 
-    const defaultOrg = await Organization.findOne({}) || null;
+    let defaultOrg = await Organization.findOne({});
+    if (!defaultOrg) {
+      console.log('No Organization found in DB. Seeding default organizations...');
+      const orgsToSeed = [
+        { title: [{ key: 'en', value: 'School of IT' }, { key: 'th', value: 'สำนักวิชาเทคโนโลยีสารสนเทศ' }] },
+        { title: [{ key: 'en', value: 'School of Science' }, { key: 'th', value: 'สำนักวิชาวิทยาศาสตร์' }] },
+        { title: [{ key: 'en', value: 'General' }, { key: 'th', value: 'ทั่วไป' }] },
+      ];
+      const createdOrgs = await Organization.insertMany(orgsToSeed);
+      defaultOrg = createdOrgs[0]; // Use School of IT as the default for generating mock forms
+    }
     const ADMIN_ROLE_ID = new mongoose.Types.ObjectId('69aec1c73996270d703db3d7');
     const USER_ROLE_ID = new mongoose.Types.ObjectId('69e9e2226c400846810ef687');
     const editorSetting = await SettingControll.findOne({
       'title.value': 'Editor'
     }) || await SettingControll.findOne({});
-
-    const questionTypes = await QuestionType.find({});
-    if (questionTypes.length === 0) {
-      throw new Error('No Question_Types found in DB.');
-    }
-
-    const typeMap = {};
-    for (const qt of questionTypes) {
-      typeMap[qt.type] = qt;
-    }
 
     // All 8 expected question type names used in the project
     const ALL_QUESTION_TYPES = [
@@ -76,6 +76,18 @@ async function seedDatabase() {
       'image',
       'title_description',
     ];
+
+    let questionTypes = await QuestionType.find({});
+    if (questionTypes.length === 0) {
+      console.log('No Question_Types found in DB. Seeding default question types...');
+      const defaultTypes = ALL_QUESTION_TYPES.map(type => ({ type }));
+      questionTypes = await QuestionType.insertMany(defaultTypes);
+    }
+
+    const typeMap = {};
+    for (const qt of questionTypes) {
+      typeMap[qt.type] = qt;
+    }
 
     // Validate all types exist
     for (const typeName of ALL_QUESTION_TYPES) {
@@ -98,20 +110,11 @@ async function seedDatabase() {
       { name: 'Plum Thidarat', email: 'plum@lamduan.mfu.ac.th' },
       { name: 'Mark Nattawut', email: 'mark@lamduan.mfu.ac.th' },
       { name: 'San Parinya', email: 'san@lamduan.mfu.ac.th' },
-      { name: 'Leng Napus', email: 'leng@lamduan.mfu.ac.th' },
       // ── Project-specific users ──
       { name: 'Sai Shang Hlang', email: '6631503129@lamduan.mfu.ac.th' }, // Admin
       { name: 'Napus Samuanpho', email: '6631503016@lamduan.mfu.ac.th' },
       { name: 'Wantana Suwannapho', email: '6631503037@lamduan.mfu.ac.th' },
       { name: 'Wasan Nachai', email: '6631503038@lamduan.mfu.ac.th' },
-      { name: 'Sai Shang Hlang', email: 'saishanghlang@gmail.com' },
-      { name: 'Sai Shang Hlang', email: 'saishanghlang20122002@gmail.com' },
-      // ── 5 more realistic users ──
-      { name: 'Alice Wongkhan', email: 'alice.wongkhan@mfu.ac.th' },
-      { name: 'Bob Charoenwong', email: 'bob.charoenwong@mfu.ac.th' },
-      { name: 'Carol Srisombat', email: 'carol.srisombat@mfu.ac.th' },
-      { name: 'David Permpool', email: 'david.permpool@mfu.ac.th' },
-      { name: 'Eva Kulchaiyawong', email: 'eva.kulchaiyawong@mfu.ac.th' },
     ];
 
     const ADMIN_EMAIL = '6631503129@lamduan.mfu.ac.th';
@@ -481,7 +484,7 @@ async function seedDatabase() {
 
     console.log('════════════════════════════════════════════════════════');
     console.log(' Seeding completed successfully!');
-    console.log('  • 15 users seeded');
+    console.log(`  • ${seededUsers.length} users seeded`);
     console.log('  •  5 forms seeded (each with all 8 question types)');
     console.log('  •  6–9 submitted responses per form');
     console.log('  •  4 email templates seeded');
