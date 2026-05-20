@@ -9,3 +9,10 @@ services:
     ports:
       - "80:80"
     restart: unless-stopped
+    networks:
+      - default
+      - backend_default
+
+networks:
+  backend_default:
+    external: true
