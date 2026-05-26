@@ -138,11 +138,18 @@
                                         <a :href="resolveImageUrl(file)" target="_blank" rel="noopener noreferrer"
                                             class="file-link">
                                             <div v-if="isImageResponse(file)" class="image-wrapper">
-                                                <img :src="resolveImageUrl(file)" class="file-image-preview" />
+                                                <img v-if="!imgErrors[file]" :src="resolveImageUrl(file)"
+                                                    class="file-image-preview" @error="$set(imgErrors, file, true)" />
+                                                <div v-else class="file-placeholder fallback">
+                                                    <CIcon name="cil-image1" height="32" class="text-muted mb-2" />
+                                                    <span class="file-name text-muted small px-2">{{
+                                                        fileNameFromPath(file) }}</span>
+                                                </div>
                                             </div>
                                             <div v-else class="file-placeholder">
-                                                <CIcon name="cil-file" size="xl" class="mb-2" />
-                                                <span class="item-text text-truncate px-2 w-100">{{ fileNameFromPath(file) }}</span>
+                                                <CIcon name="cil-paperclip" height="32" class="text-primary mb-2" />
+                                                <span class="file-name text-truncate px-2 w-100 small">{{
+                                                    fileNameFromPath(file) }}</span>
                                             </div>
                                         </a>
                                     </div>
@@ -180,7 +187,7 @@
                     </div>
                     <h3 class="mb-0 font-weight-bold section-title-inner" style="color: #0f172a;">{{
                         $t('responses.individual')
-                        }}</h3>
+                    }}</h3>
                 </div>
                 <ResponseTables :responseList="allSubmittedResponses" />
             </div>
@@ -208,6 +215,7 @@ export default {
     data() {
         return {
             currentView: 'summary',
+            imgErrors: {},
             currentPageMap: {}, // Track current page per question { qId: 1 }
             activePage: 1,
             activePageParagraph: 1,
@@ -248,7 +256,10 @@ export default {
                     flattened.push(r);
                 }
             });
-            return flattened;
+            return [...new Set(flattened)].filter(f => {
+                if (typeof f !== 'string') return false;
+                return f.includes('/') || f.includes('\\') || f.startsWith('data:');
+            });
         },
         getTypeIcon(type) {
             const t = (type || '').toLowerCase();
@@ -316,7 +327,7 @@ export default {
                     }
                     return org.name || org.title || org.organizationName || '-';
                 };
-                
+
                 // Extract responder name & email
                 if (r.responder && typeof r.responder === 'object') {
                     responderName = r.responder.name || r.responder.fullname || r.responder.username || r.responder.email || 'Anonymous';
@@ -332,18 +343,18 @@ export default {
                 const ansList = r.answers || [];
                 if (deptQuestionIdx !== -1 && ansList[deptQuestionIdx]) {
                     let deptVal = ansList[deptQuestionIdx].response;
-                    
+
                     // Resolve labels if it's a choice question
                     const deptQ = (this.responses.questions || [])[deptQuestionIdx] || ansList[deptQuestionIdx].question;
                     const deptQType = deptQ && deptQ.type ? (deptQ.type.type || deptQ.type).toString().toLowerCase() : '';
-                    
+
                     if (this.isChoiceType(deptQType)) {
                         const opts = (deptQ.config && deptQ.config.choices) ? deptQ.config.choices : (deptQ.options || []);
                         const choices = Array.isArray(deptVal) ? deptVal : (deptVal !== null && deptVal !== undefined ? [deptVal] : []);
                         departmentValue = choices.map(c => {
                             // If the choice itself is an object (sometimes happens with populated fields)
                             if (typeof c === 'object' && c !== null) return getOrganizationLabel(c);
-                            
+
                             let opt = opts.find(o => o && (String(o.key) === String(c) || String(o._id) === String(c) || String(o.value) === String(c)));
                             if (!opt && !isNaN(c) && opts[Number(c)]) opt = opts[Number(c)];
                             if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
@@ -382,30 +393,30 @@ export default {
 
                     let val = a.response;
                     const qId = a.question && (a.question._id || a.question.id || a.question);
-                    
+
                     // Resolve full question object first to get accurate metadata
-                    const fullQuestion = (this.responses.questions || []).find(qq => 
+                    const fullQuestion = (this.responses.questions || []).find(qq =>
                         String(qq._id || qq.id) === String(qId)
                     ) || a.question;
 
-                    const qType = fullQuestion && fullQuestion.type 
-                        ? (fullQuestion.type.type || fullQuestion.type).toString().toLowerCase() 
+                    const qType = fullQuestion && fullQuestion.type
+                        ? (fullQuestion.type.type || fullQuestion.type).toString().toLowerCase()
                         : '';
-                    
+
                     if (this.isChoiceType(qType)) {
-                        const options = (fullQuestion && fullQuestion.config && fullQuestion.config.choices) 
-                            ? fullQuestion.config.choices 
+                        const options = (fullQuestion && fullQuestion.config && fullQuestion.config.choices)
+                            ? fullQuestion.config.choices
                             : (fullQuestion && fullQuestion.options ? fullQuestion.options : []);
 
                         const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
                         const labels = choices.map(c => {
                             let opt = options.find(o => o && (
-                                String(o.key) === String(c) || 
-                                String(o._id) === String(c) || 
+                                String(o.key) === String(c) ||
+                                String(o._id) === String(c) ||
                                 String(o.value) === String(c)
                             ));
                             if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
-                            
+
                             if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
                             return c;
                         });
@@ -460,30 +471,30 @@ export default {
                     };
 
                     (r.answers || []).forEach((a, i) => {
-                        const questionTitle = a.question && Array.isArray(a.question.title) 
-                            ? this.getTitle(a.question.title) 
+                        const questionTitle = a.question && Array.isArray(a.question.title)
+                            ? this.getTitle(a.question.title)
                             : `Question ${i + 1}`;
-                        
+
                         let val = a.response;
-                        const qType = a.question && a.question.type 
-                            ? (a.question.type.type || a.question.type).toString().toLowerCase() 
+                        const qType = a.question && a.question.type
+                            ? (a.question.type.type || a.question.type).toString().toLowerCase()
                             : '';
-                        
+
                         // Robust choice label resolution
                         if (this.isChoiceType(qType) && a.question) {
-                            const options = (a.question.config && Array.isArray(a.question.config.choices)) 
-                                ? a.question.config.choices 
+                            const options = (a.question.config && Array.isArray(a.question.config.choices))
+                                ? a.question.config.choices
                                 : (a.question.options || []);
-                            
+
                             const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
                             const labels = choices.map(c => {
                                 // Try to find the option by key, id, or value
                                 let opt = options.find(o => o && (o.key === String(c) || (o._id && o._id.toString() === String(c)) || (o.value === String(c))));
                                 if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
-                                
+
                                 if (opt) {
-                                    return (opt.lang && Array.isArray(opt.lang)) 
-                                        ? this.getTitle(opt.lang) 
+                                    return (opt.lang && Array.isArray(opt.lang))
+                                        ? this.getTitle(opt.lang)
                                         : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
                                 }
                                 return c;
@@ -492,7 +503,7 @@ export default {
                         } else {
                             val = Array.isArray(val) ? val.join(', ') : (val === null || val === undefined ? '' : val);
                         }
-                        
+
                         responseObj.answers[questionTitle] = val;
                     });
 
@@ -538,7 +549,8 @@ export default {
         isImageResponse(value) {
             if (!value || typeof value !== 'string') return false;
             const lower = value.toLowerCase();
-            return lower.startsWith('data:image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(lower);
+            const isImg = lower.startsWith('data:image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(lower);
+            return isImg;
         },
         resolveImageUrl(value) {
             if (!value || typeof value !== 'string') return '#';
@@ -548,11 +560,11 @@ export default {
 
             const apiBase = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api/v1/';
             const backendOrigin = apiBase.replace(/\/api\/v1\/?$/, '');
-            if (value.startsWith('/')) {
-                return `${backendOrigin}${value}`;
-            }
 
-            return `${backendOrigin}/${value}`;
+            // Clean up double slashes
+            const cleanValue = value.startsWith('/') ? value.slice(1) : value;
+            const url = `${backendOrigin}/${cleanValue}`;
+            return url;
         },
         fileNameFromPath(value) {
             if (!value || typeof value !== 'string') return 'Attachment';
@@ -686,7 +698,18 @@ export default {
                         order.push(qId);
                     }
 
-                    const val = ans.response;
+                    let val = ans.response;
+
+                    // Parse JSON strings if they look like arrays/objects (common for multi-select/file-upload)
+                    if (typeof val === 'string' && (val.startsWith('[') || val.startsWith('{'))) {
+                        try {
+                            const parsed = JSON.parse(val);
+                            val = parsed;
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
+
                     map[qId].responses.push(val);
 
                     if (this.isChoiceType(map[qId].type)) {

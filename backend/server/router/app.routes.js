@@ -5,6 +5,7 @@ const settingsRoutes = require("../Project/Settings/setting.routes");
 // const authRoutes = require("../Project/Auth/auth.routes");
 const userRoutes = require("../Project/User/user.routes");
 const organizationRoutes = require("../Project/Organizations/organization.routes");
+const healthRoutes = require("./health.routes");
 
 module.exports = function (app) {
 
@@ -16,5 +17,6 @@ module.exports = function (app) {
   app.use(path + '/user', userRoutes)
   app.use(path + '/settings', settingsRoutes);
   app.use(path + '/organization', organizationRoutes);
+  app.use("/", healthRoutes);
 
 };

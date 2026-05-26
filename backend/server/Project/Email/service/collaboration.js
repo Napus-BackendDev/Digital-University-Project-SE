@@ -3,28 +3,9 @@
 const mongo = require("mongodb");
 const FormModel = require("../../Form/models/form.model");
 const UserModel = require("../../User/models/user.model");
-const mailer = require("../../../../helpers/google/Mail");
-const {
-  buildInvitationCollaborationHtml,
-  buildInvitationCollaborationText,
-} = require("../templates/invitationCollaboration");
+const dynamicEmail = require('../service/dynamicEmail');
 
-// Helper to extract title from localized array
-const getFormTitle = (form) => {
-    if (!form || !form.title || !Array.isArray(form.title) || form.title.length === 0) return 'Untitled Form';
-    const enTitle = form.title.find(t => t.key === 'en');
-    const thTitle = form.title.find(t => t.key === 'th');
-    return enTitle ? enTitle.value : (thTitle ? thTitle.value : form.title[0].value);
-};
-
-// Helper to normalize IDs to strings
-const toIdString = (id) => String(id?._id || id || '').trim();
-
-const isValidEmail = (email) => {
-  if (!email || typeof email !== 'string') return false;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email);
-};
+const { getFormTitle, toIdString, isValidEmail, buildFormLink } = require("./email.utils");
 
 const sendInvitationToUser = async ({
   userId,
@@ -39,27 +20,21 @@ const sendInvitationToUser = async ({
   if (!user || !isValidEmail(user.email)) return false;
 
   const permissionLabel = permission === 'edit' ? 'Editor' : 'Viewer';
-  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
-  
-  // Build professional link
-  const invitationLink = permission === 'edit' 
-    ? `${baseUrl}/manage/${formId}` 
-    : `${baseUrl}/forms/${formId}?mode=preview&source=invite`;
+  const invitationLink = buildFormLink(formId, permission === 'edit' ? 'manage' : 'preview');
 
-  const subject = `Invitation: ${formTitle} (${permissionLabel})`;
-  const params = {
-    inviterName,
-    collaboratorName: user.name || 'Collaborator',
-    formTitle,
-    permission: permissionLabel,
-    invitationLink,
+  const variables = {
+    UserName: user.name || 'Collaborator',
+    CollaboratorName: user.name || 'Collaborator',
+    FormName: formTitle,
+    FormTitle: formTitle,
+    FormURL: invitationLink,
+    InvitationLink: invitationLink,
+    InviterName: inviterName,
+    Permission: permissionLabel,
+    Organization: 'Digital University', // Fallback or fetch if available
   };
 
-  const textContent = buildInvitationCollaborationText(params);
-
-  const htmlContent = buildInvitationCollaborationHtml(params);
-
-  const sent = await mailer.sendMail(user.email, subject, textContent, htmlContent);
+  const sent = await dynamicEmail.sendDynamicEmail('invitationCollaboration', variables, user.email);
   return sent.success;
 };
 

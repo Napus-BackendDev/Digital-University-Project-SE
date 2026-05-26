@@ -1,147 +1,113 @@
-# CoreUI Pro Vue Bootstrap Admin Template
+# 💻 MFU E-Questionnaires Frontend Client
 
-[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=CoreUI%20-%20Free%20Vue%20Admin%20Template%20&url=http://coreui.io/vue/&hashtags=bootstrap,admin,template,dashboard,panel,free,angular,react,vue)
-[![NPM][npm-coreui-vue-badge-latest]][npm-coreui-vue]
-[![Downloads](https://img.shields.io/npm/dm/@coreui/vue.svg?style=flat-square)][coreui]
-[![Vue](https://img.shields.io/badge/Vue-^2.6.11-brightgreen.svg?style=flat-square)][coreui]
+This is the premium frontend client for the **Digital University E-Questionnaires Platform**. Built on top of **Vue 2** and styled using the **CoreUI Pro Bootstrap Admin Template**, it delivers a highly responsive, modern, and multilingual survey experience.
 
-[npm-coreui-vue]: https://www.npmjs.com/package/@coreui/vue
-[npm-coreui-vue-badge-latest]: https://img.shields.io/npm/v/@coreui/vue/latest?style=flat-square&color=brightgreen  
-[coreui]: https://coreui.io/vue
+---
 
-![Template](https://coreui.io/images/github/vue-free-template-3.gif)
+## ✨ Core Features
 
-## Description
+* 📋 **Dynamic Questionnaire Filler**: Multilingual form renderer supporting diverse question formats (Short answer, Paragraphs, Multiple choice, Checkboxes, Star ratings, File uploads, Images).
+* 🛠️ **Form Builder & Manager**: A complete administrative control board to create, update, delete, schedule, and assign collaborators (Editors, Viewers) to specific forms.
+* 📊 **Interactive Analytics**: Real-time response telemetry displaying visual bar charts, pie charts, and completion stats via Chart.js integration.
+* 👥 **User Role Sandbox Switcher**: A development-helper utility in the sidebar allowing developers and QA engineers to instantly switch between active mock users and test different academic permission levels.
+* 🌐 **Full Multilingual Localization**: Supports instant switching between English (`en`) and Thai (`th`) throughout the app.
 
-Why we decided to create CoreUI? Please read this article: [Jack of all trades, master of none. Why Boostrap Admin Templates suck.](https://medium.com/@lukaszholeczek/jack-of-all-trades-master-of-none-5ea53ef8a1f#.7eqx1bcd8)
+---
 
-**This is not just another Admin Template.** It goes way beyond hitherto admin templates thanks to:
+## 🛠️ Tech Stack & Dependencies
 
-- Wonderful styling delivered by bootstrap compatible css library [CoreUI](https://coreui.io/docs),
-- Dedicated [component library](https://coreui.io/vue/docs/),
-- Dedicated vue tooling libraries ([coreui-vue-chartjs](https://coreui.io/vue/docs/components/charts), [coreui-icons-vue](https://github.com/coreui/coreui-icons-vue)),
-- Over 500 [free svg icons](https://coreui.io/icons) consistent with our styling,
-- Transparent code and file structure
-- Possibility of extension to [pro version](https://coreui.io/vue) which offers even more! 
+* **Framework**: Vue.js `^2.6.11`
+* **Admin Layout Template**: CoreUI Pro Bootstrap Vue template
+* **State Management**: Vuex Store (highly modularized structure)
+* **Routing**: Vue Router
+* **HTTP Client**: Axios (configured with customized API interceptors)
+* **Custom Dropdowns**: Vue-select (utilized in user switching and dynamic lookups)
+* **Icons**: CoreUI Icons (SVG-driven)
 
-CoreUI is meant to be the UX game changer. Pure & transparent code is devoid of redundant components, so the app is light enough to offer ultimate user experience. This means mobile devices also, where the navigation is just as easy and intuitive as on a desktop or laptop. The CoreUI Layout API lets you customize your project for almost any device – be it Mobile, Web or WebApp – CoreUI covers them all!
+---
 
-**NOTE:** Please remember to star this project to get new versions updates of this template.
+## 📁 Source Code Directory Structure
 
-### Demo
+The frontend application code is clean and highly modularized:
 
-A fully functional demo is available at [CoreUI](http://coreui.io/vue/)
-
-### Table of Contents
-
-- [Installation](#installation)
-- [Usage](#usage)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [Versioning](#versioning)
-- [Our other products](#our-other-products)
-- [Community](#community)
-- [Community Projects](#community-projects)
-- [License](#copyright-and-license)
-- [Support CoreUI Development](#support-coreui-development)
-
-### Installation
-
-#### Clone repo
-
-``` bash
-# clone the repo
-$ git clone https://github.com/coreui/coreui-pro-vue-admin-template.git CoreUI-Vue
-
-# go into app's directory
-$ cd CoreUI-Vue
-
-# install app's dependencies
-$ npm install
+```text
+frontend/
+├── public/                 # Static public resources (index.html, icons, manifest)
+└── src/
+    ├── assets/             # Brand logos, global stylesheets, and SCSS variables
+    ├── containers/         # CoreUI layout wrappers (Sidebar, Header, Main Container)
+    ├── projects/           # Custom survey platform business features
+    │   ├── components/     # Reusable UI widgets (Answer tables, tab navigation)
+    │   ├── service/        # Axios API client definition (`api.js`)
+    │   ├── styles/         # Custom styling for forms and grids
+    │   └── views/          # Primary feature pages
+    │       ├── Forms.vue         # Main user dashboard showing active surveys
+    │       ├── ManageForms.vue   # Administrative panel to build/manage forms
+    │       ├── Responsedetail.vue# Visual detail page for review of submissions
+    │       ├── Analytics.vue     # Analytical graphs and statistical telemetry
+    │       └── page/             # Sub-pages (FormFill.vue dynamic renderer)
+    ├── router/             # URL path routing configuration maps
+    ├── store/              # Modularized Vuex stores for robust state caching
+    │   ├── modules/        # Separate modules (User, Form, Questions, Responses, Settings)
+    │   └── store.js        # Vuex store bootstrap config
+    └── main.js             # Vue app bootstrap entry point
 ```
 
-#### Usage
+---
 
-``` bash
-# serve with hot reload at localhost:8080
+## ⚙️ Vuex Store Modules (State Architecture)
+
+The global state in `src/store/modules/` is separated cleanly to maintain state synchronization with backend database collections:
+
+1. **`User`**: Tracks the current active logged-in user, their roles, permissions, and organization.
+2. **`Form`**: Manages the loaded forms list, visibility states, and creator permissions.
+3. **`Questions`**: Manages form questions list, ordering, configurations, and dynamic file upload states.
+4. **`Responses`**: Stores and processes survey submission records.
+5. **`Organizations`**: Caches academic units (e.g. School of IT, School of Science) used to restrict form access.
+6. **`Roles`**: Holds permission sets linked to respective admin, teacher, or student accounts.
+7. **`Setting`**: Stores dynamic settings (Message templates, email settings, status configurations).
+
+---
+
+## 🚀 Installation & Local Development
+
+To run the Vue frontend client locally on your computer:
+
+### 1. Prerequisites
+Ensure you have **Node.js** (version 18 or newer recommended) and **npm** installed.
+
+### 2. Configure Environment Variables
+Create a `.env` file in the `frontend` folder:
+```env
+# Define the API endpoint of your backend
+VUE_APP_API_BASE_URL=http://localhost:8081/api/v1/
+
+# Enable or disable the dropdown testing user-switcher in the sidebar
+VUE_APP_ENABLE_USER_SWITCHER=true
+
+VUE_APP_TITLE=MFU E-Questionnaires
+VUE_APP_VERSION=1.0.0
+```
+
+### 3. Install Dependencies
+Install all required npm libraries using the standard CoreUI conflict resolver flag:
+```bash
+npm install --legacy-peer-deps
+```
+
+### 4. Start Development Server
+Boot up the local hot-reload web server:
+```bash
 npm run serve
-
-# build for production with minification
-npm run build
-
-# run linter
-npm run lint
-
-# run unit tests
-npm run test:unit
-
-# run e2e tests
-npm run test:e2e
-
 ```
+Open [http://localhost:8080](http://localhost:8080) in your browser to interact with the application.
 
-For a detailed explanation on how things work, check out the [Vue CLI Guide](https://cli.vuejs.org/guide/).
+---
 
-### Documentation
+## 📦 Production Deployment
 
-CoreUI tools documentation:
-
-- Components documentation: [CoreUI Vue library](https://coreui.io/vue/docs)
-- Styles documentation: [CoreUI styles](https://coreui.io/docs)
-- Icons documentation: [CoreUI Icons](http://coreui.io/icons)
-
-### Bugs and feature requests
-
-Have a bug or a feature request? [Please open a new issue](https://github.com/coreui/coreui-pro-vue-admin-template/issues).
-
-### Contributing
-
-Please read through our [contributing guidelines](https://github.com/coreui/coreui-free-vue-admin-template/blob/master/.github/CONTRIBUTING.md). Included are directions for opening issues, coding standards, and notes on development.
-
-### Versioning
-
-For transparency into our release cycle and in striving to maintain backward compatibility,CoreUI Free Admin Template is maintained under [the Semantic Versioning guidelines](http://semver.org/).
-
-See [the Releases section of our project](https://github.com/coreui/coreui-pro-vue-admin-template/releases) for changelogs for each release version.
-
-### Our other products
-
-CoreUI is built on top of Bootstrap 4 and supports popular frameworks.
-
-#### Free version products
-
-- [CoreUI Free Vue Laravel Admin Template](https://github.com/coreui/coreui-free-vue-laravel-admin-template)
-
-- [CoreUI Free Laravel Admin Template](https://github.com/coreui/coreui-free-laravel-admin-template)
-
-- [CoreUI Free Bootstrap Admin Template](https://github.com/coreui/coreui-free-bootstrap-admin-template)
-
-- [CoreUI Free Angular 2+ Admin Template](https://github.com/coreui/coreui-free-angular-admin-template)
-
-- [CoreUI Free React.js Admin Template](https://github.com/coreui/coreui-free-react-admin-template)
-
-#### Pro version products
-
-- 💪  [CoreUI Pro Laravel Vue Admin Template](https://coreui.io/pro/laravel)
-- 💪  [CoreUI Pro Laravel Admin Template](https://coreui.io/pro/laravel)
-- 💪  [CoreUI Pro Bootstrap Admin Template](https://coreui.io/pro/)
-- 💪  [CoreUI Pro Angular Admin Template](https://coreui.io/pro/angular)
-- 💪  [CoreUI Pro React Admin Template](https://coreui.io/pro/react)
-
-## Community
-
-Get updates on CoreUI's development and chat with the project maintainers and community members.
-
-- Follow [@core_ui on Twitter](https://twitter.com/core_ui).
-- Read and subscribe to [CoreUI Blog](https://coreui.ui/blog/).
-
-### Community Projects
-
-Some of projects created by community but not maintained by CoreUI team.
-
-- [NuxtJS + Vue CoreUI](https://github.com/muhibbudins/nuxt-coreui)
-- [Colmena](https://github.com/colmena/colmena)
-
-## Support CoreUI Development
-
-If you are a business that is building core products using CoreUI, we are open to conversations regarding custom sponsorship / consulting arrangements. Get in touch on [Twitter](https://twitter.com/lukaszholeczek).
+To package the frontend into minified production assets ready to be served by Nginx:
+```bash
+npm run build
+```
+This generates a static `/dist` directory. Serve this `/dist` folder with Nginx using the static configuration provided in `nginx.conf`.

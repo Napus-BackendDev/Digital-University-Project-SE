@@ -5,30 +5,24 @@ var cfg = require('../config/config');
 var resMsg = require('../config/message');
 var mongodb = null;
 
-exports.init = function (callback) {
-    mongoose.Promise = global.Promise;
+exports.init = async function (callback) {
+    try {
+        mongoose.Promise = global.Promise;
 
-    mongodb = mongoose.connect(cfg.mongoURI
-        // If someone not use it, comment it dont delete
-        // , {
-        //     useNewUrlParser: true,
-        //     useCreateIndex: true,
-        //     useUnifiedTopology: true
-        // }
-    );
-    var db = mongoose.connection;
-    db.on('error', function (err) {
+        console.log("MongoURI:", cfg.mongoURI);
 
-        return callback(true);
-    });
+        await mongoose.connect(cfg.mongoURI);
 
-    db.once('open', function () {
-        // we're connected!
+        console.log("✅ MongoDB connected");
+
+        const db = mongoose.connection;
         global.mongodb = db;
 
         return callback(true);
-    });
 
-    db.on('connected', console.info.bind(console, "MongoDB connection is connected:"))
+    } catch (err) {
+        console.error("❌ MongoDB error:", err);
+        return callback(false);
+    }
 };
 //db.createUser({user:"securitys",pwd:"Zk8K3BE3k8ASEr4A",roles:[{role:"readWrite",db:"securitys"}]})

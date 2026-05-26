@@ -1,12 +1,39 @@
-version: "3.9"
-
 services:
   app:
-    build: .
-    container_name: my-node-app
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: equestionaire-app
+    depends_on:
+      - db
+      - redis
     ports:
       - "8081:8081"
     env_file:
       - .env
     restart: unless-stopped
     command: [ "node", "-r", "dotenv/config", "server.js" ]
+
+  db:
+    image: mongo:7.0
+    container_name: equestionaire-db
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    volumes:
+      - equestionaire-db:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    env_file:
+      - .env
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: equestionaire-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  equestionaire-db:

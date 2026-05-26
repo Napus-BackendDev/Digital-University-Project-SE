@@ -3,19 +3,9 @@
 const FormModel = require("../../Form/models/form.model");
 const UserModel = require("../../User/models/user.model");
 const OrganizationModel = require("../../Organizations/models/organization.model");
-const mailer = require("../../../../helpers/google/Mail");
-const {
-  buildOrganizationInvitationHtml,
-  buildOrganizationInvitationText,
-} = require("../templates/invitationOrganization");
+const dynamicEmail = require('../service/dynamicEmail');
 
-// Helper to extract title from localized array
-const getFormTitle = (form) => {
-    if (!form || !form.title || !Array.isArray(form.title) || form.title.length === 0) return 'Untitled Form';
-    const enTitle = form.title.find(t => t.key === 'en');
-    const thTitle = form.title.find(t => t.key === 'th');
-    return enTitle ? enTitle.value : (thTitle ? thTitle.value : form.title[0].value);
-};
+const { getFormTitle, buildFormLink } = require("./email.utils");
 
 const getOrganizationName = (org) => {
     if (!org || !org.title || !Array.isArray(org.title) || org.title.length === 0) return 'Your Organization';
@@ -37,8 +27,7 @@ const sendInvitationToOrganizationUsers = async ({
     if (!org) return;
 
     const organizationName = getOrganizationName(org);
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
-    const invitationLink = `${baseUrl}/forms/${formId}`;
+    const invitationLink = buildFormLink(formId);
 
     const users = await UserModel.find({ organization: orgId }).select('name email').lean();
     if (users.length === 0) return;
@@ -48,18 +37,18 @@ const sendInvitationToOrganizationUsers = async ({
     const invitationTasks = users.map(user => {
         if (!user.email) return Promise.resolve();
 
-        const params = {
-          organizationName,
-          responderName: user.name || 'Member',
-          formTitle,
-          invitationLink,
+        const variables = {
+          UserName: user.name || 'Member',
+          ResponderName: user.name || 'Member',
+          FormName: formTitle,
+          FormTitle: formTitle,
+          FormURL: invitationLink,
+          InvitationLink: invitationLink,
+          Organization: organizationName,
+          OrganizationName: organizationName,
         };
 
-        const subject = `New Form Invitation: ${formTitle} (${organizationName})`;
-        const textContent = buildOrganizationInvitationText(params);
-        const htmlContent = buildOrganizationInvitationHtml(params);
-
-        return mailer.sendMail(user.email, subject, textContent, htmlContent);
+        return dynamicEmail.sendDynamicEmail('invitationOrganization', variables, user.email);
     });
 
     await Promise.all(invitationTasks);
