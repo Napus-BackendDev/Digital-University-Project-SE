@@ -449,61 +449,117 @@ async function seedDatabase() {
       {
         name: [{ key: 'en', value: 'Invitation Collaboration' }, { key: 'th', value: 'คำเชิญทำงานร่วมกัน' }],
         code: 'invitationCollaboration',
-        subject: 'Invitation to collaborate on: {{FormTitle}}',
-        content: `
-          <p>Hello <strong>{{CollaboratorName}}</strong>,</p>
-          <p><strong>{{InviterName}}</strong> has invited you to collaborate on the form <strong>{{FormTitle}}</strong> with <strong>{{Permission}}</strong> access.</p>
-          <p>Collaborating allows you to view responses and manage form settings together.</p>
-          <div style="margin: 30px 0; text-align: center;">
-            <a href="{{InvitationLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">Open Form</a>
-          </div>
-        `,
+        subject: [
+          { key: 'en', value: 'Invitation to collaborate on: {{FormTitle}}' },
+          { key: 'th', value: 'คำเชิญเข้าร่วมจัดการแบบสอบถาม: {{FormTitle}}' }
+        ],
+        content: [
+          { key: 'en', value: `
+            <p>Hello <strong>{{CollaboratorName}}</strong>,</p>
+            <p><strong>{{InviterName}}</strong> has invited you to collaborate on the form <strong>{{FormTitle}}</strong> with <strong>{{Permission}}</strong> access.</p>
+            <p>Collaborating allows you to view responses and manage form settings together.</p>
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="{{InvitationLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">Open Form</a>
+            </div>
+          ` },
+          { key: 'th', value: `
+            <p>สวัสดีคุณ <strong>{{CollaboratorName}}</strong>,</p>
+            <p>คุณ <strong>{{InviterName}}</strong> ได้เชิญคุณมาร่วมแก้ไขและจัดการแบบฟอร์ม <strong>{{FormTitle}}</strong> โดยมีสิทธิ์ระดับ <strong>{{Permission}}</strong></p>
+            <p>การร่วมมือช่วยให้คุณสามารถเข้าถึงการตั้งค่าและสรุปผลแบบสอบถามร่วมกันได้</p>
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="{{InvitationLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">เปิดแบบสอบถาม</a>
+            </div>
+          ` }
+        ],
         variables: ['InviterName', 'CollaboratorName', 'FormTitle', 'Permission', 'InvitationLink']
       },
       {
         name: [{ key: 'en', value: 'Invitation Organization' }, { key: 'th', value: 'คำเชิญเข้าร่วมองค์กร' }],
         code: 'invitationOrganization',
-        subject: 'New Form Invitation: {{FormTitle}}',
-        content: `
-          <p>Hello <strong>{{ResponderName}}</strong>,</p>
-          <p>An official form from <strong>{{OrganizationName}}</strong> has been shared with you.</p>
-          <div style="padding: 20px; background-color: #f7fafc; border-left: 4px solid #ac1515; border-radius: 8px; margin: 25px 0;">
-            <p style="margin: 0; font-size: 14px; color: #ac1515; font-weight: bold; text-transform: uppercase;">New Form</p>
-            <p style="margin: 5px 0 0; font-size: 18px; font-weight: bold;">{{FormTitle}}</p>
-          </div>
-          <p>Your participation is valuable and helps us improve our university services.</p>
-          <div style="margin: 30px 0; text-align: center;">
-            <a href="{{InvitationLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">Start Response</a>
-          </div>
-        `,
+        subject: [
+          { key: 'en', value: 'New Form Invitation: {{FormTitle}}' },
+          { key: 'th', value: 'แบบสอบถามใหม่สำหรับคุณ: {{FormTitle}}' }
+        ],
+        content: [
+          { key: 'en', value: `
+            <p>Hello <strong>{{ResponderName}}</strong>,</p>
+            <p>An official form from <strong>{{OrganizationName}}</strong> has been shared with you.</p>
+            <div style="padding: 20px; background-color: #f7fafc; border-left: 4px solid #ac1515; border-radius: 8px; margin: 25px 0;">
+              <p style="margin: 0; font-size: 14px; color: #ac1515; font-weight: bold; text-transform: uppercase;">New Form</p>
+              <p style="margin: 5px 0 0; font-size: 18px; font-weight: bold;">{{FormTitle}}</p>
+            </div>
+            <p>Your participation is valuable and helps us improve our university services.</p>
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="{{InvitationLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">Start Response</a>
+            </div>
+          ` },
+          { key: 'th', value: `
+            <p>สวัสดีคุณ <strong>{{ResponderName}}</strong>,</p>
+            <p>มีแบบฟอร์มอย่างเป็นทางการจาก <strong>{{OrganizationName}}</strong> ต้องการให้คุณมีส่วนร่วม</p>
+            <div style="padding: 20px; background-color: #f7fafc; border-left: 4px solid #ac1515; border-radius: 8px; margin: 25px 0;">
+              <p style="margin: 0; font-size: 14px; color: #ac1515; font-weight: bold; text-transform: uppercase;">แบบสอบถามใหม่</p>
+              <p style="margin: 5px 0 0; font-size: 18px; font-weight: bold;">{{FormTitle}}</p>
+            </div>
+            <p>ความเห็นและการมีส่วนร่วมของคุณมีความสำคัญอย่างยิ่งต่อการปรับปรุงบริการของมหาวิทยาลัยเรา</p>
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="{{InvitationLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">เริ่มทำแบบสอบถาม</a>
+            </div>
+          ` }
+        ],
         variables: ['OrganizationName', 'ResponderName', 'FormTitle', 'InvitationLink']
       },
       {
         name: [{ key: 'en', value: 'Submission Confirmation' }, { key: 'th', value: 'ยืนยันการส่งข้อมูล' }],
         code: 'submissionConfirmation',
-        subject: 'Submission Confirmation: {{FormName}}',
-        content: `
-          <p>Dear <strong>{{Responder}}</strong>,</p>
-          <p>Your response has been successfully submitted to <strong>{{FormName}}</strong>. This email confirms that our system has received your data.</p>
-          <div style="padding: 20px; background-color: #f7fafc; border-radius: 8px; margin: 25px 0; border: 1px solid #e2e8f0;">
-             <p style="margin: 5px 0; font-size: 14px;"><strong>Reference No:</strong> {{ReferenceNo}}</p>
-             <p style="margin: 5px 0; font-size: 14px;"><strong>Submitted At:</strong> {{SubmittedAt}}</p>
-          </div>
-          <p>Please keep this email for your records. Thank you for your participation!</p>
-        `,
+        subject: [
+          { key: 'en', value: 'Submission Confirmation: {{FormName}}' },
+          { key: 'th', value: 'ยืนยันการส่งข้อมูล: {{FormName}}' }
+        ],
+        content: [
+          { key: 'en', value: `
+            <p>Dear <strong>{{Responder}}</strong>,</p>
+            <p>Your response has been successfully submitted to <strong>{{FormName}}</strong>. This email confirms that our system has received your data.</p>
+            <div style="padding: 20px; background-color: #f7fafc; border-radius: 8px; margin: 25px 0; border: 1px solid #e2e8f0;">
+               <p style="margin: 5px 0; font-size: 14px;"><strong>Reference No:</strong> {{ReferenceNo}}</p>
+               <p style="margin: 5px 0; font-size: 14px;"><strong>Submitted At:</strong> {{SubmittedAt}}</p>
+            </div>
+            <p>Please keep this email for your records. Thank you for your participation!</p>
+          ` },
+          { key: 'th', value: `
+            <p>เรียนคุณ <strong>{{Responder}}</strong>,</p>
+            <p>ระบบได้รับคำตอบของคุณสำหรับแบบฟอร์ม <strong>{{FormName}}</strong> เรียบร้อยแล้ว อีเมลฉบับนี้เป็นสิ่งยืนยันว่าข้อมูลส่งเรียบร้อยแล้ว</p>
+            <div style="padding: 20px; background-color: #f7fafc; border-radius: 8px; margin: 25px 0; border: 1px solid #e2e8f0;">
+               <p style="margin: 5px 0; font-size: 14px;"><strong>หมายเลขอ้างอิง:</strong> {{ReferenceNo}}</p>
+               <p style="margin: 5px 0; font-size: 14px;"><strong>เวลาที่ส่ง:</strong> {{SubmittedAt}}</p>
+            </div>
+            <p>โปรดเก็บรักษาจดหมายอิเล็กทรอนิกส์นี้ไว้เพื่อการอ้างอิง ขอขอบพระคุณเป็นอย่างยิ่งในการมีส่วนร่วม!</p>
+          ` }
+        ],
         variables: ['Responder', 'FormName', 'SubmittedAt', 'ReferenceNo']
       },
       {
         name: [{ key: 'en', value: 'Response Notification' }, { key: 'th', value: 'แจ้งเตือนการตอบกลับ' }],
         code: 'ResponseNotification',
-        subject: 'New response received for: {{FormTitle}}',
-        content: `
-          <p>Hello,</p>
-          <p>A new response has been submitted for your form <strong>{{FormTitle}}</strong>.</p>
-          <div style="margin: 30px 0; text-align: center;">
-            <a href="{{DashboardLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">View in Dashboard</a>
-          </div>
-        `,
+        subject: [
+          { key: 'en', value: 'New response received for: {{FormTitle}}' },
+          { key: 'th', value: 'ได้รับผลตอบกลับใหม่สำหรับ: {{FormTitle}}' }
+        ],
+        content: [
+          { key: 'en', value: `
+            <p>Hello,</p>
+            <p>A new response has been submitted for your form <strong>{{FormTitle}}</strong>.</p>
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="{{DashboardLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">View in Dashboard</a>
+            </div>
+          ` },
+          { key: 'th', value: `
+            <p>สวัสดี,</p>
+            <p>มีการตอบกลับใหม่ส่งเข้ามาในแบบฟอร์ม <strong>{{FormTitle}}</strong> ของคุณ</p>
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="{{DashboardLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">ดูในหน้าแดชบอร์ด</a>
+            </div>
+          ` }
+        ],
         variables: ['FormTitle', 'DashboardLink']
       }
     ];

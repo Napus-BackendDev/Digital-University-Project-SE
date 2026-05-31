@@ -344,6 +344,39 @@ const en = {
         update: "Update",
         delete: "Delete",
         allRoles: "All Roles"
+    },
+    email: {
+        title: "My Email Template",
+        description: "Manage and deploy your high-performance email responses.",
+        lastModified: "Last Modified",
+        edit: "Edit",
+        back: "Back",
+        emailSubject: "Email Subject",
+        dynamicVariables: "Dynamic Variables",
+        shortcut: "ShortCut",
+        switchTemplate: "Switch to other templates",
+        helpText: "Click a variable to insert it at your current cursor position in the editor body.",
+        subjectPlaceholder: "Type an eye-catching subject here...",
+        editorPlaceholder: "Hi {{Responder}}, ...",
+        saveStatus: {
+            saving: "Saving...",
+            savedAt: "Last saved at {time}",
+            draftSaved: "Draft saved"
+        },
+        templates: {
+            invitationCollaboration: {
+                desc: "Send an email invitation to invite other users to collaborate and edit questionnaires together."
+            },
+            invitationOrganization: {
+                desc: "Send a questionnaire notification email to members within the organization or specified users."
+            },
+            submissionConfirmation: {
+                desc: "Send a confirmation email to the respondent automatically after they submit a questionnaire."
+            },
+            ResponseNotification: {
+                desc: "Send a notification email to form creators/collaborators when a new response is submitted."
+            }
+        }
     }
 }
 export default en

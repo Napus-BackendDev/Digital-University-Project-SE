@@ -1,8 +1,8 @@
 <template>
   <div class="email-templates-container">
     <Header 
-      title="My Email Template" 
-      description="Manage and deploy your high-performance email responses." 
+      :title="$t('email.title')" 
+      :description="$t('email.description')" 
     />
     <div>
       <CRow>
@@ -22,12 +22,12 @@
                 <hr class="divider mb-4" />
                 <div class="d-flex justify-content-between align-items-center">
                   <div class="modified-info">
-                    <div class="label text-uppercase text-muted">Last Modified</div>
+                    <div class="label text-uppercase text-muted">{{ $t('email.lastModified') }}</div>
                     <div class="date font-weight-bold">{{ template.lastModified }}</div>
                   </div>
                   <CButton variant="outline" class="edit-btn px-3 py-2" @click="editTemplate(template)">
                     <CIcon name="cil-pencil" class="mr-2" />
-                    <span class="font-weight-bold">Edit</span>
+                    <span class="font-weight-bold">{{ $t('email.edit') }}</span>
                   </CButton>
                 </div>
               </div>
@@ -62,16 +62,22 @@ export default {
     ...mapGetters('Setting/emailTemplate', ['item']),
     templates() {
       if (!this.item) return [];
+      const currentLang = this.$i18n.locale || 'en';
       return this.item.map(t => {
-        let nameObjEn = t.name.find(n => n.key === 'en') || {};
-        let nameObjTh = t.name.find(n => n.key === 'th') || {};
+        let nameObj = t.name.find(n => n.key === currentLang) || t.name.find(n => n.key === 'en') || t.name[0] || {};
+        let displayTitle = nameObj.value || t.code;
         
-        let displayTitle = nameObjEn.value || t.code;
-        let displayDesc = nameObjTh.value || '';
+        let displayDesc = '';
+        if (t.code && this.$te(`email.templates.${t.code}.desc`)) {
+          displayDesc = this.$t(`email.templates.${t.code}.desc`);
+        } else {
+          let nameObjTh = t.name.find(n => n.key === 'th') || {};
+          displayDesc = nameObjTh.value || '';
+        }
 
         // Simple formatting for date
         let date = new Date(t.updatedAt || t.createdAt);
-        let dateString = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        let dateString = date.toLocaleDateString(currentLang === 'th' ? 'th-TH' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
         return {
           _id: t._id,

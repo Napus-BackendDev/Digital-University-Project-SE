@@ -1,8 +1,8 @@
 <template>
     <div>
         <Header 
-            :title="`Email Edit : ${displayTitle}`" 
-            :description="currentDescription || 'Customize your email template content and settings.'" 
+            :title="`${$t('email.edit')} : ${displayTitle}`" 
+            :description="currentDescription || $t('email.description')" 
             :isSaving="isSaving"
             :isSaved="!!lastSaved"
         >
@@ -12,7 +12,7 @@
                     @click="$router.push({ name: 'Email' })"
                 >
                     <CIcon name="cil-arrow-left" size="sm" class="mr-2" />
-                    Back
+                    {{ $t('email.back') }}
                 </CButton>
             </template>
         </Header>
@@ -24,13 +24,18 @@
                         <CCardBody class="p-4 d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center mb-1">
-                                    <div class="text-uppercase font-weight-bold text-muted" style="font-size: 0.75rem; letter-spacing: 1px;">Email Subject</div>
+                                    <div class="text-uppercase font-weight-bold text-muted d-flex align-items-center" style="font-size: 0.75rem; letter-spacing: 1px;">
+                                        <span>{{ $t('email.emailSubject') }}</span>
+                                        <span class="badge ml-2 px-2 py-1 text-uppercase text-white" style="font-size: 0.65rem; border-radius: 4px; background-color: #ac1515;">
+                                            {{ $i18n.locale }}
+                                        </span>
+                                    </div>
                                     <CIcon name="cil-pencil" size="sm" class="ml-2 text-muted" style="opacity: 0.6; width: 12px;" />
                                 </div>
                                 <input 
                                     type="text" 
                                     class="w-100 bg-transparent subject-input" 
-                                    placeholder="Type an eye-catching subject here..."
+                                    :placeholder="$t('email.subjectPlaceholder')"
                                     v-model="subjectBody"
                                     @input="handleInput"
                                 >
@@ -55,7 +60,7 @@
                     <!-- Dynamic Variables -->
                     <CCard class="dynamic-vars-card shadow-sm border-0 mb-4 h-auto">
                         <CCardBody class="p-4">
-                            <h6 class="font-weight-bold text-uppercase mb-4" style="letter-spacing: 0.5px;">Dynamic Variables</h6>
+                            <h6 class="font-weight-bold text-uppercase mb-4" style="letter-spacing: 0.5px;">{{ $t('email.dynamicVariables') }}</h6>
                             
                             <div class="d-flex flex-column">
                                 <CButton 
@@ -69,7 +74,7 @@
                             </div>
 
                             <p class="help-text small text-muted mt-4 mb-0">
-                                Click a variable to insert it at your current cursor position in the editor body.
+                                {{ $t('email.helpText') }}
                             </p>
                         </CCardBody>
                     </CCard>
@@ -77,9 +82,9 @@
                     <!-- ShortCut -->
                     <CCard class="shortcut-card shadow-sm border-0 h-auto">
                         <CCardBody class="p-4">
-                            <h6 class="font-weight-bold text-uppercase mb-4" style="letter-spacing: 0.5px;">ShortCut</h6>
-                            <p class="small text-muted mb-4">Switch to other templates</p>
-                                    <div class="list-group list-group-flush">
+                            <h6 class="font-weight-bold text-uppercase mb-4" style="letter-spacing: 0.5px;">{{ $t('email.shortcut') }}</h6>
+                            <p class="small text-muted mb-4">{{ $t('email.switchTemplate') }}</p>
+                            <div class="list-group list-group-flush">
                                 <a 
                                     v-for="temp in otherTemplates" 
                                     :key="temp._id"
@@ -128,6 +133,8 @@ export default {
         return {
             subjectBody: '',
             messageBody: '',
+            subjects: { en: '', th: '' },
+            contents: { en: '', th: '' },
             editorOption: {
                 placeholder: 'สวัสดีคุณ {{Responder}}, ...',
                 modules: {
@@ -158,29 +165,37 @@ export default {
         },
         displayTitle() {
             if (!this.currentDoc || !this.currentDoc.name) return '';
-            const n = this.currentDoc.name.find(x => x.key === 'en') || this.currentDoc.name[0];
+            const currentLang = this.$i18n.locale || 'en';
+            const n = this.currentDoc.name.find(x => x.key === currentLang) || this.currentDoc.name.find(x => x.key === 'en') || this.currentDoc.name[0];
             return n ? n.value : this.currentDoc.code;
         },
         currentDescription() {
-            if (!this.currentDoc || !this.currentDoc.name) return '';
-            const n = this.currentDoc.name.find(x => x.key === 'th') || this.currentDoc.name[1];
+            if (!this.currentDoc) return '';
+            if (this.currentDoc.code && this.$te(`email.templates.${this.currentDoc.code}.desc`)) {
+                return this.$t(`email.templates.${this.currentDoc.code}.desc`);
+            }
+            if (!this.currentDoc.name) return '';
+            const currentLang = this.$i18n.locale || 'en';
+            const fallbackLang = currentLang === 'en' ? 'th' : 'en';
+            const n = this.currentDoc.name.find(x => x.key === fallbackLang) || this.currentDoc.name[1];
             return n ? n.value : '';
         },
         otherTemplates() {
             if (!this.item) return [];
+            const currentLang = this.$i18n.locale || 'en';
             return this.item.filter(t => t._id !== this.id).map(t => {
-                let nameObjEn = t.name.find(n => n.key === 'en') || {};
+                let nameObj = t.name.find(n => n.key === currentLang) || t.name.find(n => n.key === 'en') || t.name[0] || {};
                 return {
                     _id: t._id,
-                    name: nameObjEn.value || t.code,
+                    name: nameObj.value || t.code,
                     icon: this.iconMap[t.code] || 'cil-envelope-closed'
                 }
             });
         },
         saveStatus() {
-            if (this.isSaving) return 'Saving...'
-            if (this.lastSaved) return `Last saved at ${this.lastSaved}`
-            return 'Draft saved'
+            if (this.isSaving) return this.$t('email.saveStatus.saving')
+            if (this.lastSaved) return this.$t('email.saveStatus.savedAt', { time: this.lastSaved })
+            return this.$t('email.saveStatus.draftSaved')
         }
     },
     watch: {
@@ -189,6 +204,18 @@ export default {
             handler(newId) {
                 if(newId) this.loadData();
             }
+        },
+        '$i18n.locale'(newLocale, oldLocale) {
+            if (oldLocale) {
+                this.subjects[oldLocale] = this.subjectBody;
+                this.contents[oldLocale] = this.messageBody;
+                if (this.saveTimeout) {
+                    clearTimeout(this.saveTimeout);
+                    this.performSave();
+                }
+            }
+            this.subjectBody = this.subjects[newLocale] || '';
+            this.messageBody = this.contents[newLocale] || '';
         }
     },
     methods: {
@@ -200,14 +227,47 @@ export default {
                 }
                 const doc = this.item.find(t => t._id === this.id);
                 if (doc) {
-                    this.subjectBody = doc.subject || '';
-                    this.messageBody = doc.content || '';
+                    const getLangVal = (arr, preferredLang) => {
+                        if (!Array.isArray(arr)) return arr || '';
+                        const found = arr.find(item => item.key === preferredLang);
+                        if (found) return found.value;
+                        const fallback = arr.find(item => item.key === 'en') || arr[0];
+                        return fallback ? fallback.value : '';
+                    };
+
+                    this.subjects = {
+                        en: getLangVal(doc.subject, 'en'),
+                        th: getLangVal(doc.subject, 'th')
+                    };
+                    this.contents = {
+                        en: getLangVal(doc.content, 'en'),
+                        th: getLangVal(doc.content, 'th')
+                    };
+
+                    const currentLang = this.$i18n.locale || 'en';
+                    this.subjectBody = this.subjects[currentLang] || '';
+                    this.messageBody = this.contents[currentLang] || '';
+                    
+                    if (!this.subjectBody && typeof doc.subject === 'string') {
+                        this.subjectBody = doc.subject;
+                        this.subjects.en = doc.subject;
+                        this.subjects.th = doc.subject;
+                    }
+                    if (!this.messageBody && typeof doc.content === 'string') {
+                        this.messageBody = doc.content;
+                        this.contents.en = doc.content;
+                        this.contents.th = doc.content;
+                    }
                 }
             } catch (error) {
                 console.error("Failed to load template", error);
             }
         },
         handleInput() {
+            const currentLang = this.$i18n.locale || 'en';
+            this.subjects[currentLang] = this.subjectBody;
+            this.contents[currentLang] = this.messageBody;
+
             this.isSaving = true
             if (this.saveTimeout) clearTimeout(this.saveTimeout)
             this.saveTimeout = setTimeout(() => {
@@ -218,10 +278,19 @@ export default {
             try {
                 if(!this.currentDoc) return;
                 
+                const updatedSubject = [
+                    { key: 'en', value: this.subjects.en },
+                    { key: 'th', value: this.subjects.th }
+                ];
+                const updatedContent = [
+                    { key: 'en', value: this.contents.en },
+                    { key: 'th', value: this.contents.th }
+                ];
+
                 await this.put({ 
                     _id: this.id, 
-                    subject: this.subjectBody,
-                    content: this.messageBody,
+                    subject: updatedSubject,
+                    content: updatedContent,
                     variables: this.variables
                 });
                 

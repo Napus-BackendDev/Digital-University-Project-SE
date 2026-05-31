@@ -101,13 +101,26 @@ exports.sendDynamicEmail = async function (code, variables, to) {
             htmlContent = fallback.html;
             textContent = fallback.text;
         } else {
+            // Helper to get translated value or fallback
+            const getLangVal = (arr, preferredLang) => {
+                if (!Array.isArray(arr)) return arr || '';
+                const found = arr.find(item => item.key === preferredLang);
+                if (found) return found.value;
+                const fallback = arr.find(item => item.key === 'en') || arr[0];
+                return fallback ? fallback.value : '';
+            };
+
+            const lang = (variables && variables.lang) || 'en';
+            const rawSubject = getLangVal(template.subject, lang);
+            const rawContent = getLangVal(template.content, lang);
+
             // 2. Process Dynamic Template
-            subject = processor.processTemplate(template.subject, variables);
-            htmlContent = processor.processWithLayout(template.content, variables, baseLayout.wrapInLayout, {
+            subject = processor.processTemplate(rawSubject, variables);
+            htmlContent = processor.processWithLayout(rawContent, variables, baseLayout.wrapInLayout, {
                 title: subject
             });
             
-            textContent = processor.processTemplate(template.content, variables)
+            textContent = processor.processTemplate(rawContent, variables)
                 .replace(/<[^>]*>?/gm, '') // Strip HTML tags
                 .replace(/&nbsp;/g, ' ')
                 .trim();

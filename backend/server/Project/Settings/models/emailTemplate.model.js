@@ -9,8 +9,8 @@ var objsSchema = new Schema({
         value          : {type: String, default: null},
     }],
     code            : {type: String, required: true, unique: true}, // e.g., invitationCollaboration, ResponseNotification
-    subject         : {type: String, required: true},
-    content         : {type: String, required: true}, // HTML template string
+    subject         : {type: Schema.Types.Mixed, required: true},
+    content         : {type: Schema.Types.Mixed, required: true}, // HTML template string or array of [{key, value}]
     variables       : [{type: String}] // Available dynamic variables, e.g., ['firstName', 'lastName', 'artworkTitle']
 }, { timestamps: true });
 
