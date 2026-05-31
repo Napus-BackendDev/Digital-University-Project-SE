@@ -163,14 +163,14 @@
                                                             class="text-danger mb-1" />
                                                         <span class="small text-truncate w-100 px-2 text-center">{{
                                                             getAnswerFileName(getAnswerAsArray(question._id)[n - 1])
-                                                            }}</span>
+                                                        }}</span>
                                                     </template>
                                                     <template v-else>
                                                         <CIcon name="cil-paperclip" height="40"
                                                             class="text-primary mb-1" />
                                                         <span class="small text-truncate w-100 px-2 text-center">{{
                                                             getAnswerFileName(getAnswerAsArray(question._id)[n - 1])
-                                                            }}</span>
+                                                        }}</span>
                                                     </template>
                                                 </div>
                                             </template>

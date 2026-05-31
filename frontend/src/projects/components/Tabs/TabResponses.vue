@@ -187,7 +187,7 @@
                     </div>
                     <h3 class="mb-0 font-weight-bold section-title-inner" style="color: #0f172a;">{{
                         $t('responses.individual')
-                    }}</h3>
+                        }}</h3>
                 </div>
                 <ResponseTables :responseList="allSubmittedResponses" />
             </div>
