@@ -114,6 +114,39 @@ export default {
             const currentPath = this.$route.path.split('/')
             return currentPath.includes(path)
         },
+        getRoleTitle(role) {
+            if (!role || !role.title) return '';
+            if (typeof role.title === 'string') return role.title;
+            if (Array.isArray(role.title)) {
+                const en = role.title.find(item => item && String(item.key).toLowerCase() === 'en');
+                return en ? en.value : (role.title[0] ? role.title[0].value : '');
+            }
+            return '';
+        },
+        getPagePermission(pageName) {
+            const role = this.user.role;
+            if (!role || !Array.isArray(role.permission)) return null;
+            return role.permission.find(permission => String(permission.page) === String(pageName)) || null;
+        },
+        canReadPage(pageName) {
+            const role = this.user.role;
+            const permission = this.getPagePermission(pageName);
+            const roleTitle = this.getRoleTitle(role).toLowerCase();
+
+            if (!permission) {
+                return roleTitle === 'admin' || !role || !Array.isArray(role.permission) || role.permission.length === 0;
+            }
+
+            if (roleTitle === 'admin') {
+                return true;
+            }
+
+            const readAccess = Array.isArray(permission.access)
+                ? permission.access.find(access => String(access.key).toLowerCase() === 'read')
+                : null;
+
+            return !!(readAccess && readAccess.value);
+        },
         forms() {
             this.$router.push('/forms')
         },
@@ -165,40 +198,49 @@ export default {
     },
     computed: {
         navs() {
+            const navItems = [
+                {
+                    name: this.$t('nav.forms'),
+                    to: '/forms',
+                    icon: 'cil-description',
+                    page: 'Forms',
+                },
+                {
+                    name: this.$t('nav.manage'),
+                    to: '/manage',
+                    icon: 'cib-ghost',
+                    page: 'Manage Forms',
+                },
+                {
+                    name: this.$t('nav.analytics'),
+                    to: '/analytics',
+                    icon: 'cil-chart',
+                    page: 'Analytics',
+                },
+                {
+                    name: this.$t('nav.permissions'),
+                    to: '/permissions',
+                    icon: 'cil-lock-locked',
+                    page: 'Permissions',
+                },
+                {
+                    name: this.$t('nav.email'),
+                    to: '/email',
+                    icon: 'cil-envelope-open',
+                    page: 'Email',
+                },
+            ];
+
             return [{
                 _name: 'CSidebarNav',
-                _children: [
-                    {
+                _children: navItems
+                    .filter(item => this.canReadPage(item.page))
+                    .map(item => ({
                         _name: 'CSidebarNavItem',
-                        name: this.$t('nav.forms'),
-                        to: '/forms',
-                        icon: 'cil-description',
-                    },
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: this.$t('nav.manage'),
-                        to: '/manage',
-                        icon: 'cib-ghost',
-                    },
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: this.$t('nav.analytics'),
-                        to: '/analytics',
-                        icon: 'cil-chart',
-                    },
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: this.$t('nav.permissions'),
-                        to: '/permissions',
-                        icon: 'cil-lock-locked',
-                    },
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: this.$t('nav.email'),
-                        to: '/email',
-                        icon: 'cil-envelope-open',
-                    },
-                ]
+                        name: item.name,
+                        to: item.to,
+                        icon: item.icon,
+                    }))
             }];
         },
         show() {

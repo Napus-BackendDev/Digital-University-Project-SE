@@ -9,6 +9,7 @@ import Responses from "@/store/modules/Responses/index.js";
 import User from "@/store/modules/User";
 import Organizations from "@/store/modules/Organizations";
 import Roles from "@/store/modules/Roles";
+import Security from "@/store/modules/security";
 import dialog from "@/store/modules/dialog";
 
 const state = {
@@ -19,18 +20,18 @@ const state = {
 }
 
 const mutations = {
-  toggleSidebarDesktop (state) {
+  toggleSidebarDesktop(state) {
     const sidebarOpened = [true, 'responsive'].includes(state.sidebarShow)
     state.sidebarShow = sidebarOpened ? false : 'responsive'
   },
-  toggleSidebarMobile (state) {
+  toggleSidebarMobile(state) {
     const sidebarClosed = [false, 'responsive'].includes(state.sidebarShow)
     state.sidebarShow = sidebarClosed ? true : 'responsive'
   },
-  set (state, [variable, value]) {
+  set(state, [variable, value]) {
     state[variable] = value
   },
-  toggle (state, variable) {
+  toggle(state, variable) {
     state[variable] = !state[variable]
   }
 }
@@ -46,6 +47,7 @@ export default new Vuex.Store({
     User: User,
     Organizations: Organizations,
     Roles: Roles,
+    security: Security,
     dialog: dialog
   }
 });

@@ -539,6 +539,9 @@ export default {
         isChoiceType(type) {
             return ['multiple_choice', 'multiplechoice', 'checkboxes', 'checkbox', 'dropdown', 'select'].includes((type || '').toLowerCase());
         },
+        isCheckboxType(type) {
+            return ['checkboxes', 'checkbox'].includes((type || '').toLowerCase());
+        },
         isRatingType(type) {
             return ['rating', 'rating'].includes((type || '').toLowerCase());
         },
@@ -723,10 +726,12 @@ export default {
 
             return order.map(id => {
                 const q = map[id];
-                const total = q.responses.length;
+                const totalResponses = q.responses.length;
+                const totalSelections = Object.values(q._rawChoices).reduce((sum, count) => sum + count, 0);
+                const denominator = this.isCheckboxType(q.type) ? totalSelections : totalResponses;
 
                 if (this.isChoiceType(q.type)) {
-                    q.optionCounts = Object.entries(q._rawChoices).map(([respKey, count], i) => {
+                    const optionCounts = Object.entries(q._rawChoices).map(([respKey, count], i) => {
                         let label = respKey;
                         // Map key to option label if possible
                         if (q.options && q.options.length > 0) {
@@ -749,10 +754,23 @@ export default {
                         return {
                             label,
                             count,
-                            pct: total > 0 ? Math.round((count / total) * 100) : 0,
+                            pct: denominator > 0 ? Number(((count / denominator) * 100).toFixed(2)) : 0,
                             color: PALETTE[i % PALETTE.length]
                         };
                     });
+
+                    if (optionCounts.length > 0 && denominator > 0) {
+                        let pctSum = 0;
+                        optionCounts.forEach((opt, idx) => {
+                            if (idx < optionCounts.length - 1) {
+                                pctSum += opt.pct;
+                            } else {
+                                opt.pct = Number((100 - pctSum).toFixed(2));
+                            }
+                        });
+                    }
+
+                    q.optionCounts = optionCounts;
                 }
 
                 if (this.isRatingType(q.type)) {
@@ -1203,6 +1221,7 @@ export default {
     background: #f8fafc;
     border-radius: 12px;
     border: 1px solid #f1f5f9;
+    align-items: flex-start;
 }
 
 .text-response-item:hover {
@@ -1217,12 +1236,18 @@ export default {
     font-weight: 700;
     font-size: 0.85rem;
     min-width: 24px;
+    flex: 0 0 auto;
 }
 
 .item-text {
     color: #1e293b;
     font-weight: 500;
     line-height: 1.5;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
 }
 
 /* Custom Progress Visualization Elite */

@@ -48,43 +48,8 @@ export function saveGridLayout(form, gridLayout) {
  * Returns an array of layout items { i, x, y, w, h }
  */
 export function buildGridLayoutFromQuestions(localQuestions = [], storedLayout = null, getQuestionType = (t) => t, isFollowUp = (q) => false) {
-    const calculateHeight = (q, type) => {
-        if (!q) return 6;
-        let h = 6;
-
-        if (isFollowUp(q)) {
-            h += 1;
-        }
-
-        const titleLangs = Array.isArray(q.title) ? q.title.length : 1;
-        h += (titleLangs * 2.2) + 2;
-
-        const safeType = (type || '').toLowerCase();
-        if (safeType === 'short_answer') h += 2.5;
-        else if (safeType === 'paragraph') h += 4.8;
-        else if (safeType === 'multiple_choice' || safeType === 'checkbox') {
-            const choices = (q.config && Array.isArray(q.config.choices)) ? q.config.choices : [{}];
-            for (const c of choices) {
-                const langs = Array.isArray(c.lang) ? c.lang.length : 1;
-                if (safeType === 'multiple_choice') {
-                    h += (langs * 2.2) + 2.8;
-                } else if (safeType === 'checkbox') {
-                    h += (langs * 2.2) + 2.5;
-                }
-            }
-            h += 2;
-        }
-        else if (safeType === 'rating') h += 3;
-        else if (safeType === 'file_upload') h += 7;
-        else if (safeType === 'title_description') {
-            const descLangs = (q.config && Array.isArray(q.config.description)) ? q.config.description.length : 1;
-            h += (descLangs * 4) + 2.5;
-        }
-        else if (safeType === 'image') h += 60;
-        else h += 3;
-
-        return Math.ceil(h);
-    };
+    // Set to 1 to avoid artificial vertical gaps between blocks
+    const QUESTION_BLOCK_ROWS = 1;
 
     // determine order based on stored layout if available
     let orderedQuestions = [...(localQuestions || [])];
@@ -105,11 +70,10 @@ export function buildGridLayoutFromQuestions(localQuestions = [], storedLayout =
     let yCursor = 0;
     for (let i = 0; i < orderedQuestions.length; i++) {
         const q = orderedQuestions[i];
-        const typeStr = getQuestionType(q && q.type);
-        const h = calculateHeight(q, typeStr);
         const qId = String(q && (q._id != null ? q._id : i));
+        const h = QUESTION_BLOCK_ROWS;
         l.push({ i: qId, x: 0, y: yCursor, w: 12, h });
-        yCursor += h + 1;
+        yCursor += h;
     }
     return l;
 }
@@ -121,7 +85,7 @@ export function getLayoutItem(gridLayout = [], question, qIndex) {
     const id = String(question && (question._id != null ? question._id : qIndex));
     const item = (gridLayout || []).find(x => String(x.i) === id);
     if (item) return item;
-    return { i: id, x: 0, y: qIndex * 8, w: 12, h: 8 };
+    return { i: id, x: 0, y: qIndex * QUESTION_BLOCK_ROWS, w: 12, h: QUESTION_BLOCK_ROWS };
 }
 
 /**

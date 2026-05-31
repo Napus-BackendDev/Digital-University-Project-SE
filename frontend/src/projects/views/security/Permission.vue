@@ -98,6 +98,7 @@ export default {
                     { _id: 'Manage Forms', name: 'Manage Forms', title: [{ key: 'en', value: 'Manage Forms' }, { key: 'th', value: 'จัดการฟอร์ม' }] },
                     { _id: 'Analytics', name: 'Analytics', title: [{ key: 'en', value: 'Analytics' }, { key: 'th', value: 'การวิเคราะห์' }] },
                     { _id: 'Permissions', name: 'Permissions', title: [{ key: 'en', value: 'Permissions' }, { key: 'th', value: 'สิทธิ์การใช้งาน' }] },
+                        { _id: 'Email', name: 'Email', title: [{ key: 'en', value: 'Email' }, { key: 'th', value: 'อีเมล' }] },
                 ]
 
                 const roles = await this.$store.dispatch('Roles/getAll')

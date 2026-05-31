@@ -18,6 +18,12 @@ export default {
     },
     methods: {
         handleBack() {
+            const currentRouteName = this.$route?.name;
+            if (currentRouteName === 'CreateForm' || currentRouteName === 'EditorCreateForm') {
+                this.$router.push({ name: 'ManageForms' });
+                return;
+            }
+
             if (this.to) {
                 this.$router.push(this.to);
             } else {

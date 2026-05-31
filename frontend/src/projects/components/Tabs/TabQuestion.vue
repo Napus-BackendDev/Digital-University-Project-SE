@@ -94,12 +94,11 @@
             </CCardBody>
         </CCard>
 
-        <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }"
-            :row-height="10" :is-draggable="true" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
-            <GridItem v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)"
-                v-bind="getLayoutItem(question, qIndex)">
+        <draggable class="questions-list" v-model="localQuestions" v-bind="dragOptions" :move="onDragMove"
+            @start="onDragStart" @end="onDragEnd">
+            <div v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)">
                 <CCard :id="'question-' + (question._id || qIndex)"
-                    class="mb-3 position-relative rounded-20 shadow-sm border">
+                    class="question-card mb position-relative rounded-20 shadow-sm border">
                     <CCardBody class="p-4">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div class="number-question" v-if="isCounted(question)">
@@ -238,49 +237,56 @@
                                     </CButton>
 
                                     <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
-                                        class="d-flex align-items-center ml-2 flex-shrink-0">
-                                        <CDropdown color="light" size="sm">
-                                            <template #toggler>
-                                                <CButton size="sm"
-                                                    class="border shadow-none d-flex align-items-center next-action-btn"
-                                                    v-c-tooltip="$t('builder.goTo')">
-                                                    <CIcon
-                                                        :name="!choice.nextQuestion ? 'cil-ban' : (choice.nextQuestion === 'submit' ? 'cil-check-alt' : 'cil-list-low-priority')"
-                                                        class="mr-1" />
-                                                    <span>
-                                                        {{
-                                                            choice.nextQuestion
-                                                                ? (choice.nextQuestion === 'submit' ? $t('builder.submitForm') :
-                                                                    (function () {
-                                                                        const target = localQuestions.find(q => convertIdToStr(q._id)
-                                                                            === convertIdToStr(choice.nextQuestion));
-                                                                        return target ? (isCounted(target) ? getDisplayNumber(target) +
-                                                                            '. ' : '') + getQuestionTitle(target) : '';
-                                                                    })())
-                                                                : $t('builder.noAction')
-                                                        }}
-                                                    </span>
-                                                </CButton>
-                                            </template>
-                                            <CDropdownItem
-                                                @click="$set(choice, 'nextQuestion', null); putQuestion(question)">
-                                                <CIcon name="cil-ban" class="mr-2" />
-                                                <span>{{ $t('builder.noAction') }}</span>
-                                            </CDropdownItem>
-                                            <CDropdownDivider />
-                                            <CDropdownItem v-for="q in getAvailableNextQuestions(question)" :key="q._id"
-                                                @click="$set(choice, 'nextQuestion', q._id); putQuestion(question)">
-                                                <CIcon name="cil-list-low-priority" class="mr-2" />
-                                                <span>{{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
-                                                    getQuestionTitle(q)
-                                                }}</span>
-                                            </CDropdownItem>
-                                            <CDropdownItem
-                                                @click="$set(choice, 'nextQuestion', 'submit'); putQuestion(question)">
-                                                <CIcon name="cil-check-alt" class="mr-2" />
-                                                <span>{{ $t('builder.submitForm') }}</span>
-                                            </CDropdownItem>
-                                        </CDropdown>
+                                        class="d-flex align-items-center ml-2 flex-grow-1 next-action-row"
+                                        style="min-width: 0;">
+                                        <div class="next-action-wrapper position-relative">
+                                            <CButton size="sm"
+                                                :class="['border shadow-none d-flex align-items-center next-action-btn btn-sm', !choice.nextQuestion ? 'next-action-noaction' : '']"
+                                                v-c-tooltip="$t('builder.goTo')"
+                                                @click.stop="toggleNextActionMenu(getNextActionMenuKey(question, choiceIndex), $event, question)">
+                                                <CIcon
+                                                    :name="!choice.nextQuestion ? 'cil-ban' : (choice.nextQuestion === 'submit' ? 'cil-check-alt' : 'cil-list-low-priority')"
+                                                    class="mr-1" />
+                                                <span :class="{ 'no-action-label': !choice.nextQuestion }">
+                                                    {{
+                                                        choice.nextQuestion
+                                                            ? (choice.nextQuestion === 'submit' ? $t('builder.submitForm') :
+                                                                (function () {
+                                                                    const target = localQuestions.find(q => convertIdToStr(q._id)
+                                                                        === convertIdToStr(choice.nextQuestion));
+                                                                    return target ? (isCounted(target) ? getDisplayNumber(target) +
+                                                                        '. ' : '') + getQuestionTitle(target, false) : '';
+                                                                })())
+                                                            : $t('builder.noAction')
+                                                    }}
+                                                </span>
+                                            </CButton>
+
+                                            <div v-if="nextActionOpenKey === getNextActionMenuKey(question, choiceIndex)"
+                                                :style="{ minWidth: nextActionMenuWidths[getNextActionMenuKey(question, choiceIndex)] || '240px' }"
+                                                class="next-action-menu dropdown-menu show shadow-sm">
+                                                <button type="button" class="dropdown-item d-flex align-items-center"
+                                                    @click="$set(choice, 'nextQuestion', null); putQuestion(question); nextActionOpenKey = null">
+                                                    <CIcon name="cil-ban" class="mr-2" />
+                                                    <span>{{ $t('builder.noAction') }}</span>
+                                                </button>
+                                                <div class="dropdown-divider" />
+                                                <button type="button" class="dropdown-item d-flex align-items-center"
+                                                    v-for="q in getAvailableNextQuestions(question)" :key="q._id"
+                                                    :class="{ 'next-action-item--wrapped': isLongNextActionLabel(q) }"
+                                                    @click="$set(choice, 'nextQuestion', q._id); putQuestion(question); nextActionOpenKey = null">
+                                                    <CIcon name="cil-list-low-priority" class="mr-2" />
+                                                    <span>{{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
+                                                        getQuestionTitle(q, false)
+                                                    }}</span>
+                                                </button>
+                                                <button type="button" class="dropdown-item d-flex align-items-center"
+                                                    @click="$set(choice, 'nextQuestion', 'submit'); putQuestion(question); nextActionOpenKey = null">
+                                                    <CIcon name="cil-check-alt" class="mr-2" />
+                                                    <span>{{ $t('builder.submitForm') }}</span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -342,7 +348,8 @@
                                 <CDropdown color="secondary" variant="outline">
                                     <template #toggler>
                                         <button class="btn btn-sm border">
-                                            {{ (question.config && question.config.maxFileSize) ? question.config.maxFileSize + 'MB'
+                                            {{ (question.config && question.config.maxFileSize) ?
+                                                question.config.maxFileSize + 'MB'
                                                 : '1MB'
                                             }}
                                         </button>
@@ -360,8 +367,8 @@
                                 {{ $t('builder.description') }}
                             </small>
 
-                            <div v-for="(descItem, dIdx) in (question.config && question.config.description || [])" :key="'qd-' + dIdx"
-                                class="d-flex align-items-start">
+                            <div v-for="(descItem, dIdx) in (question.config && question.config.description || [])"
+                                :key="'qd-' + dIdx" class="d-flex align-items-start">
                                 <div class="lang-key-wrapper flex-shrink-0 mr-2">
                                     <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
                                         size="sm" class="lang-key-dropdown">
@@ -427,7 +434,8 @@
                             <div class="d-flex align-items-center mb-2 mb-md-0 flex-shrink-0">
                                 <div class="d-flex align-items-center">
                                     <span class="text-muted font-weight-bold mr-2">{{ $t('builder.type') }}</span>
-                                    <CDropdown color="light" variant="outline">
+                                    <CDropdown color="light" variant="outline" placement="bottom-start"
+                                        :popper-options="{ positionFixed: true }">
                                         <template #toggler>
                                             <button class="btn d-flex align-items-center text-muted border bg-white"
                                                 style="border-radius: 6px;">
@@ -455,9 +463,11 @@
                                 <!-- Question Navigation Dropdown -->
                                 <div class="d-flex align-items-center mr-3 mb-2 mb-md-0">
                                     <span class="text-muted font-weight-bold mr-2">{{ $t('builder.goTo') }}</span>
-                                    <CDropdown color="light" variant="outline">
+                                    <CDropdown color="light" variant="outline" placement="bottom-start"
+                                        :popper-options="{ positionFixed: true }">
                                         <template #toggler>
-                                            <button class="btn d-flex align-items-center text-muted border bg-white"
+                                            <CButton
+                                                class="d-flex align-items-center text-muted border bg-white next-action-toggle-btn"
                                                 style="border-radius: 6px;">
                                                 <CIcon
                                                     :name="!question.nextQuestion ? 'cil-check-alt' : 'cil-list-low-priority'"
@@ -473,18 +483,19 @@
                                                             })()
                                                     }}
                                                 </span>
-                                            </button>
+                                            </CButton>
                                         </template>
                                         <CDropdownItem v-for="q in getAvailableNextQuestions(question)"
-                                            :key="'nav_' + q._id"
+                                            :key="'nav_' + q._id" class="next-action-list-item"
                                             @click="setCombinedNavigationValue(question, 'question:' + convertIdToStr(q._id))">
                                             <CIcon name="cil-list-low-priority" class="mr-2" />
                                             <span>
                                                 {{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
-                                                    getQuestionTitle(q) }}
+                                                    getQuestionTitle(q, false) }}
                                             </span>
                                         </CDropdownItem>
-                                        <CDropdownItem @click="setCombinedNavigationValue(question, 'submit')">
+                                        <CDropdownItem class="next-action-list-item"
+                                            @click="setCombinedNavigationValue(question, 'submit')">
                                             <CIcon name="cil-check-alt" class="mr-2" />
                                             <span>{{ $t('builder.submitForm') }}</span>
                                         </CDropdownItem>
@@ -502,8 +513,8 @@
                         </div>
                     </CCardBody>
                 </CCard>
-            </GridItem>
-        </GridLayout>
+            </div>
+        </draggable>
 
         <!-- Empty state -->
         <div v-if="!localQuestions || localQuestions.length === 0"
@@ -553,8 +564,8 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import { GridLayout, GridItem } from 'vue-grid-layout'
-import { loadStoredLayout, saveGridLayout, buildGridLayoutFromQuestions, getLayoutItem as svcGetLayoutItem, onDragStop as svcOnDragStop } from '../../service/draggable'
+import draggable from 'vuedraggable'
+import { loadStoredLayout, saveGridLayout, buildGridLayoutFromQuestions } from '../../service/draggable'
 
 export default {
     name: 'TabQuestion',
@@ -562,8 +573,7 @@ export default {
         form: { type: Object, required: true }
     },
     components: {
-        GridLayout,
-        GridItem
+        draggable
     },
     data() {
         return {
@@ -589,6 +599,10 @@ export default {
                 { value: 'en', label: 'EN' },
             ],
             isImageUpdating: false,
+            isDraggingQuestions: false,
+            dragSpeedMode: 'fast',
+            nextActionOpenKey: null,
+            nextActionMenuWidths: {},
         };
     },
     watch: {
@@ -638,6 +652,7 @@ export default {
         },
         localQuestions: {
             handler() {
+                if (this.isDraggingQuestions) return;
                 try {
                     this.buildGridLayoutFromQuestions();
                 } catch (e) {
@@ -655,6 +670,7 @@ export default {
     mounted() {
         try {
             console.warn('TabQuestion mounted — debug hook installed');
+            document.addEventListener('click', this.closeNextActionMenu);
             window.__TABQUESTION_INVOKE_ONDRAG = () => {
                 try {
                     console.warn('Invoking onDragStop via window.__TABQUESTION_INVOKE_ONDRAG');
@@ -667,6 +683,9 @@ export default {
             /* ignore */
         }
     },
+    beforeDestroy() {
+        document.removeEventListener('click', this.closeNextActionMenu);
+    },
     computed: {
         ...mapGetters('Setting/question_type', { question_type: 'item' }),
         questionTypes() {
@@ -678,6 +697,38 @@ export default {
         },
         typesAll() {
             return [...this.questionTypes];
+        },
+        dragOptions() {
+            const presets = {
+                normal: {
+                    scrollSensitivity: 30,
+                    scrollSpeed: 10,
+                    swapThreshold: 0.25,
+                    invertSwapThreshold: 0.25,
+                },
+                fast: {
+                    scrollSensitivity: 60,
+                    scrollSpeed: 25,
+                    swapThreshold: 0.15,
+                    invertSwapThreshold: 0.15,
+                }
+            };
+
+            return {
+                animation: 200,
+                direction: 'vertical',
+                fallbackOnBody: true,
+                forceFallback: true,
+                filter: 'input, textarea, button, a, select, option, [contenteditable="true"]',
+                preventOnFilter: false,
+                invertSwap: true,
+                scroll: true,
+                dragoverBubble: true,
+                ghostClass: 'drag-ghost',
+                chosenClass: 'drag-chosen',
+                dragClass: 'drag-dragging',
+                ...presets[this.dragSpeedMode || 'normal']
+            };
         },
         formTitleEn: {
             get() {
@@ -790,26 +841,105 @@ export default {
         },
 
         getLayoutItem(question, qIndex) {
-            return svcGetLayoutItem(this.layout, question, qIndex);
+            // Deprecated for list mode — return a simple fallback
+            const id = String(question && (question._id != null ? question._id : qIndex));
+            const found = (this.layout || []).find(x => String(x.i) === id);
+            if (found) return found;
+            return { i: id, x: 0, y: qIndex, w: 12, h: 1 };
         },
 
         async onDragStop(newLayout) {
             try {
-                let reordered = await svcOnDragStop(newLayout, this.localQuestions, this.convertIdToStr);
-                if (!Array.isArray(reordered)) return;
+                if (!Array.isArray(newLayout)) return;
+                const sorted = newLayout.slice().sort((a, b) => (a.y - b.y) || (a.x - b.x));
+                const idOrder = sorted.map(s => String(s.i));
+                const reordered = [];
+                for (const id of idOrder) {
+                    const found = this.localQuestions.find(q => this.convertIdToStr(q && (q._id != null ? q._id : '')) === id);
+                    if (found) reordered.push(found);
+                }
+                for (const q of this.localQuestions) if (!reordered.includes(q)) reordered.push(q);
 
                 const oldIds = (this.localQuestions || []).map(q => this.convertIdToStr(q._id || ''));
                 const newIds = (reordered || []).map(q => this.convertIdToStr(q._id || ''));
                 if (oldIds.join(',') === newIds.join(',')) return;
+
                 if (Array.isArray(reordered)) {
                     this.localQuestions = reordered;
                     try {
                         await this.updateOrdersAndPersist(reordered);
                     } catch (e) { console.error(e); }
+                    this.layout = newLayout;
+                    this.saveGrid();
                 }
             } catch (e) {
                 console.error('onDragStop error', e);
             }
+        },
+
+        async onDragEnd(evt) {
+            try {
+                this.isDraggingQuestions = false;
+                this.dragSpeedMode = 'fast';
+                // `localQuestions` is already updated by v-model from vuedraggable
+                if (Array.isArray(this.localQuestions)) {
+                    await this.updateOrdersAndPersist(this.localQuestions);
+
+                    // Build a stored layout compatible with older grid storage (items with `i`)
+                    const stored = (this.localQuestions || []).map((q, idx) => {
+                        const id = this.convertIdToStr(q && q._id ? q._id : idx);
+                        return { i: id, x: 0, y: idx, w: 12, h: 1 };
+                    });
+                    this.layout = stored;
+                    this.saveGrid();
+                }
+            } catch (e) {
+                console.error('onDragEnd failed', e);
+            }
+        },
+
+        onDragStart() {
+            this.isDraggingQuestions = true;
+            this.dragSpeedMode = 'fast';
+        },
+
+        onDragMove(evt) {
+            this.dragSpeedMode = 'fast';
+            return true;
+        },
+
+        getNextActionMenuKey(question, choiceIndex) {
+            return `${this.convertIdToStr(question && question._id)}:${choiceIndex}`;
+        },
+
+        toggleNextActionMenu(menuKey, ev, question) {
+            const opening = this.nextActionOpenKey !== menuKey;
+            if (opening) {
+                // measure width of question content (prefer the main flexible column)
+                try {
+                    const qId = String(menuKey).split(':')[0];
+                    const cardEl = document.getElementById('question-' + qId);
+                    let measured = 0;
+                    if (cardEl) {
+                        // prefer the main content column which usually has class flex-grow-1
+                        const content = cardEl.querySelector('.flex-grow-1') || cardEl.querySelector('.card-body') || cardEl;
+                        if (content && content.getBoundingClientRect) measured = Math.round(content.getBoundingClientRect().width);
+                    }
+                    // fallback to event target width or default
+                    if (!measured && ev && ev.currentTarget && ev.currentTarget.getBoundingClientRect) measured = Math.round(ev.currentTarget.getBoundingClientRect().width);
+                    if (!measured) measured = 240;
+                    this.$set(this.nextActionMenuWidths, menuKey, measured + 'px');
+                } catch (e) {
+                    // ignore measurement errors
+                }
+                this.nextActionOpenKey = menuKey;
+            } else {
+                this.nextActionOpenKey = null;
+            }
+        },
+
+        closeNextActionMenu() {
+            this.nextActionOpenKey = null;
         },
 
         triggerAutoSave() {
@@ -1373,13 +1503,21 @@ export default {
                 q && this.convertIdToStr(q._id) !== myId && this.isCounted(q)
             );
         },
-        getQuestionTitle(q) {
+        isLongNextActionLabel(question) {
+            const title = this.getQuestionTitle(question, false) || '';
+            const numberPrefix = this.isCounted(question) ? `${this.getDisplayNumber(question)}. ` : '';
+            return (numberPrefix + title).length > 24;
+        },
+        getQuestionTitle(q, truncate = true) {
             if (!q || !Array.isArray(q.title) || q.title.length === 0) return 'Untitled';
             const enTitle = q.title.find(t => t.key && t.key.toLowerCase() === 'en');
             if (enTitle && enTitle.value) {
+                if (!truncate) return enTitle.value;
                 return enTitle.value.length > 50 ? enTitle.value.substring(0, 50) + '...' : enTitle.value;
             }
-            return q.title[0].value ? (q.title[0].value.length > 50 ? q.title[0].value.substring(0, 50) + '...' : q.title[0].value) : 'Untitled';
+            if (!q.title[0].value) return 'Untitled';
+            if (!truncate) return q.title[0].value;
+            return q.title[0].value.length > 50 ? q.title[0].value.substring(0, 50) + '...' : q.title[0].value;
         },
         getCombinedNavigationValue(question) {
             if (!question.nextQuestion) return 'submit';
@@ -1493,6 +1631,9 @@ export default {
     justify-content: center;
     padding: 0;
     border-radius: 6px;
+    /* Prevent shrinking when inside flex containers */
+    flex: 0 0 auto;
+    flex-shrink: 0;
 }
 
 .add-lang-btn {
@@ -1519,6 +1660,167 @@ export default {
     color: #92400e;
     border: 1px solid #fcd34d;
     font-weight: 600;
+    display: grid;
+    grid-template-columns: 1rem minmax(0, 1fr);
+    column-gap: 0.5rem;
+    width: auto;
+    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-align: left;
+    text-overflow: ellipsis;
+    line-height: 1.25;
+}
+
+::v-deep .next-action-btn .c-icon {
+    grid-column: 1;
+    align-self: start;
+    margin-top: 0.15rem;
+}
+
+::v-deep .next-action-btn span {
+    grid-column: 2;
+    min-width: 0;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Do not truncate the short "No Action" label */
+::v-deep .next-action-btn .no-action-label {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+}
+
+/* Visible pill style when the button shows No Action (per-choice) */
+.next-action-noaction {
+    display: inline-flex !important;
+    /* override grid */
+    align-items: center !important;
+    padding: 0.25rem 0.6rem !important;
+    min-width: 96px !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    background-color: #fff8e1 !important;
+    /* slightly different shade to stand out */
+    border-radius: 6px !important;
+}
+
+::v-deep .next-action-noaction .c-icon {
+    margin-right: 0.45rem;
+}
+
+::v-deep .next-action-noaction .no-action-label {
+    overflow: visible !important;
+    text-overflow: unset !important;
+}
+
+/* Footer toggler: single-line display with ellipsis (do not wrap) */
+.next-action-toggle-btn {
+    display: inline-flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start;
+    padding: 0.25rem 0.8rem !important;
+    height: 36.6px !important;
+    width: auto;
+    max-width: min(320px, calc(100vw - 64px));
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+    font-size: 0.95rem;
+    border-radius: 8px !important;
+}
+
+::v-deep .next-action-toggle-btn .c-icon {
+    flex: 0 0 auto;
+    margin-top: 0;
+    width: 18px;
+    height: 18px;
+}
+
+::v-deep .next-action-toggle-btn .c-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+::v-deep .next-action-toggle-btn span {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Ensure svg icons (.c-icon svg) do not shrink anywhere */
+::v-deep .c-icon {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto !important;
+}
+
+::v-deep .c-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+}
+
+/* Custom short-hand margin-bottom class used by templates */
+.mb {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Use flex gap on the list container so Sortable handles reflow correctly */
+.questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+
+.question-card {
+    user-select: none;
+}
+
+.question-card input,
+.question-card textarea,
+.question-card [contenteditable="true"] {
+    user-select: text;
+}
+
+/* Drag helper visuals */
+.drag-ghost {
+    opacity: 0.6;
+    transform: scale(0.98);
+}
+
+.drag-chosen {
+    outline: 2px dashed rgba(0, 0, 0, 0.08);
+}
+
+.drag-dragging {
+    opacity: 0.95;
+}
+
+/* Make each direct draggable child take full width so the placeholder can reflow immediately */
+.questions-list>div {
+    width: 100%;
+}
+
+/* Sortable placeholder styling */
+.questions-list :deep(.sortable-ghost) {
+    opacity: 0.35;
 }
 
 ::v-deep .vue-grid-item {
@@ -1538,5 +1840,102 @@ export default {
 
 ::v-deep .dropdown-menu.show {
     z-index: 9999;
+    max-height: calc(100vh - 200px);
+    width: min(400px, calc(100vw - 32px));
+    max-width: min(500px, calc(100vw - 32px));
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+::v-deep .next-action-wrapper {
+    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: visible;
+}
+
+::v-deep .next-action-row {
+    min-width: 0;
+}
+
+::v-deep .next-action-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 2000;
+    min-width: 280px;
+    width: min(260px, calc(100vw - 32px));
+    max-width: min(260px, calc(100vw - 32px));
+    max-height: min(320px, calc(100vh - 260px));
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.5rem;
+}
+
+::v-deep .next-action-dropdown {
+    width: auto;
+}
+
+::v-deep .next-action-menu .next-action-item--wrapped {
+    display: grid !important;
+    width: 100%;
+    grid-template-columns: 1rem minmax(0, 1fr);
+    column-gap: 0.5rem;
+    align-items: start;
+    white-space: normal;
+}
+
+::v-deep .next-action-menu .dropdown-item {
+    white-space: normal !important;
+    align-items: flex-start !important;
+}
+
+::v-deep .next-action-menu .dropdown-item span {
+    display: block;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.35;
+}
+
+::v-deep .next-action-menu .next-action-item--wrapped .c-icon {
+    grid-column: 1;
+    align-self: start;
+    margin-top: 0;
+}
+
+::v-deep .next-action-menu .next-action-item--wrapped span {
+    grid-column: 2;
+    min-width: 0;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.35;
+}
+
+/* Footer CDropdown (question navigation) list items: force wrapping only for these items */
+::v-deep .dropdown-menu.show .next-action-list-item {
+    display: grid !important;
+    grid-template-columns: 1rem minmax(0, 1fr);
+    column-gap: 0.5rem;
+    align-items: start !important;
+    white-space: normal !important;
+}
+
+::v-deep .dropdown-menu.show .next-action-list-item .c-icon {
+    grid-column: 1;
+    align-self: start;
+    margin-top: 0;
+}
+
+::v-deep .dropdown-menu.show .next-action-list-item span {
+    grid-column: 2;
+    display: block;
+    min-width: 0;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.35;
 }
 </style>

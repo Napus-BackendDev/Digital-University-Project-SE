@@ -59,11 +59,42 @@ async function seedDatabase() {
       const createdOrgs = await Organization.insertMany(orgsToSeed);
       defaultOrg = createdOrgs[0]; // Use School of IT as the default for generating mock forms
     }
-    const ADMIN_ROLE_ID = new mongoose.Types.ObjectId('69aec1c73996270d703db3d7');
-    const USER_ROLE_ID = new mongoose.Types.ObjectId('69e9e2226c400846810ef687');
-    const editorSetting = await SettingControll.findOne({
-      'title.value': 'Editor'
-    }) || await SettingControll.findOne({});
+    const ROLE_NAMES = ['Admin', 'Staff', 'User'];
+    const roleDocs = {};
+    for (const roleName of ROLE_NAMES) {
+      let roleDoc = await Role.findOne({ 'title.value': roleName });
+      if (!roleDoc) {
+        roleDoc = await Role.create({
+          title: [
+            { key: 'en', value: roleName },
+            { key: 'th', value: roleName },
+          ],
+          permission: [],
+        });
+        console.log(`Created role: ${roleName}`);
+      }
+      roleDocs[roleName] = roleDoc;
+    }
+    const ADMIN_ROLE_ID = roleDocs.Admin._id;
+    const STAFF_ROLE_ID = roleDocs.Staff._id;
+    const USER_ROLE_ID = roleDocs.User._id;
+
+    const ensureCollaboratorSetting = async (label) => {
+      let setting = await SettingControll.findOne({ 'title.value': label });
+      if (!setting) {
+        setting = await SettingControll.create({
+          title: [
+            { key: 'en', value: label },
+            { key: 'th', value: label },
+          ],
+        });
+        console.log(`Created collaborator setting: ${label}`);
+      }
+      return setting;
+    };
+
+    const editorSetting = await ensureCollaboratorSetting('Editor');
+    await ensureCollaboratorSetting('Viewer');
 
     // All 8 expected question type names used in the project
     const ALL_QUESTION_TYPES = [
@@ -99,6 +130,7 @@ async function seedDatabase() {
     console.log(`Found ${questionTypes.length} question types.`);
     console.log(`Using org:        ${defaultOrg ? defaultOrg._id : 'none'}`);
     console.log(`Using adminRole:  ${ADMIN_ROLE_ID}`);
+    console.log(`Using staffRole:  ${STAFF_ROLE_ID}`);
     console.log(`Using userRole:   ${USER_ROLE_ID}`);
     console.log(`Using collaborator setting: ${editorSetting ? editorSetting._id : 'none'}\n`);
 
@@ -107,32 +139,29 @@ async function seedDatabase() {
 
     const userList = [
       // ── Required users (by username/alias) ──
-      { name: 'Plum Thidarat', email: 'plum@lamduan.mfu.ac.th' },
-      { name: 'Mark Nattawut', email: 'mark@lamduan.mfu.ac.th' },
-      { name: 'San Parinya', email: 'san@lamduan.mfu.ac.th' },
+      { name: 'Plum Thidarat', email: 'plum@lamduan.mfu.ac.th', role: USER_ROLE_ID },
+      { name: 'Mark Nattawut', email: 'mark@lamduan.mfu.ac.th', role: STAFF_ROLE_ID },
+      { name: 'San Parinya', email: 'san@lamduan.mfu.ac.th', role: STAFF_ROLE_ID },
       // ── Project-specific users ──
-      { name: 'Sai Shang Hlang', email: '6631503129@lamduan.mfu.ac.th' }, // Admin
-      { name: 'Napus Samuanpho', email: '6631503016@lamduan.mfu.ac.th' },
-      { name: 'Wantana Suwannapho', email: '6631503037@lamduan.mfu.ac.th' },
-      { name: 'Wasan Nachai', email: '6631503038@lamduan.mfu.ac.th' },
+      { name: 'Sai Shang Hlang', email: '6631503129@lamduan.mfu.ac.th', role: ADMIN_ROLE_ID }, // Admin
+      { name: 'Napus Samuanpho', email: '6631503016@lamduan.mfu.ac.th', role: USER_ROLE_ID },
+      { name: 'Wantana Suwannapho', email: '6631503037@lamduan.mfu.ac.th', role: USER_ROLE_ID },
+      { name: 'Wasan Nachai', email: '6631503038@lamduan.mfu.ac.th', role: USER_ROLE_ID },
     ];
-
-    const ADMIN_EMAIL = '6631503129@lamduan.mfu.ac.th';
 
     const seededUsers = [];
     for (const userData of userList) {
-      const isAdmin = userData.email === ADMIN_EMAIL;
-
       const user = await User.create({
         name: userData.name,
         email: userData.email,
         password: 'password123',
-        role: isAdmin ? ADMIN_ROLE_ID : USER_ROLE_ID,
+        role: userData.role,
         organization: defaultOrg ? defaultOrg._id : undefined,
         createdAt: daysAgo(randomInt(1, 60)),
       });
       seededUsers.push(user);
-      console.log(`  Created user: ${userData.name} <${userData.email}> [${isAdmin ? 'Admin' : 'User'}]`);
+      const roleName = ROLE_NAMES.find(name => String(roleDocs[name]._id) === String(userData.role));
+      console.log(`  Created user: ${userData.name} <${userData.email}> [${roleName || 'Unknown'}]`);
     }
     console.log(`\nSeeded ${seededUsers.length} users.\n`);
 
@@ -488,7 +517,8 @@ async function seedDatabase() {
     console.log('  •  5 forms seeded (each with all 8 question types)');
     console.log('  •  6–9 submitted responses per form');
     console.log('  •  4 email templates seeded');
-    console.log('  • Organizations, Roles, Settings, Question Types: untouched');
+    console.log('  •  3 roles seeded (Admin, Staff, User)');
+    console.log('  • Organizations, Settings, Question Types: untouched');
     console.log('════════════════════════════════════════════════════════');
 
   } catch (error) {
