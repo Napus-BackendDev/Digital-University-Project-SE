@@ -18,6 +18,18 @@ module.exports = function () {
 
   initialize.init(function (status) {
     if (status) {
+      // Handle double slashes or missing /api prefix if Nginx mangles it
+      app.use((req, res, next) => {
+        if (req.url.startsWith('//')) {
+          req.url = req.url.replace(/^\/+/, '/');
+        }
+        // If the request is /v1/... but should be /api/v1/...
+        if (req.url.startsWith('/v1') && !req.url.startsWith('/api/v1')) {
+          req.url = '/api' + req.url;
+        }
+        next();
+      });
+
       // Middlewares must be added before routes
       middlewares(app);
       
