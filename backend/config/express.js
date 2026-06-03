@@ -10,6 +10,9 @@ let isReady = false;
 module.exports = function () {
   const app = express();
 
+  // Trust proxy for rate limiting behind Nginx
+  app.set('trust proxy', 1);
+
   // Swagger setup
   swagger(app);
 
