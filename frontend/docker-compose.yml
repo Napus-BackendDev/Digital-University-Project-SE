@@ -1,18 +1,18 @@
 version: "3.9"
 
 services:
-  vue-app:
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: vue-app
+    container_name: uniform-frontend
     ports:
-      - "8010:80"
+      - "80:80"
+      - "443:443"
     restart: unless-stopped
     networks:
-      - default
-      - backend_default
+      - uniform-network
 
 networks:
-  backend_default:
+  uniform-network:
     external: true

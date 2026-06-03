@@ -1,39 +1,50 @@
 services:
-  app:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    container_name: equestionaire-app
+    container_name: uniform-backend
     depends_on:
       - db
       - redis
     ports:
-      - "8020:8081"
+      - "8081:8081"
     env_file:
       - .env
     restart: unless-stopped
     command: [ "node", "-r", "dotenv/config", "server.js" ]
+    networks:
+      - uniform-network
 
   db:
     image: mongo:7.0
-    container_name: equestionaire-db
+    container_name: uniform-db
     ports:
       - "27017:27017"
     restart: unless-stopped
     volumes:
-      - equestionaire-db:/data/db
+      - uniform-db-data:/data/db
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME:-leng2002}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-20122002}
     env_file:
       - .env
+    networks:
+      - uniform-network
 
   redis:
     image: redis:7.0-alpine
-    container_name: equestionaire-redis
+    container_name: uniform-redis
     ports:
       - "6379:6379"
     restart: unless-stopped
+    networks:
+      - uniform-network
 
 volumes:
-  equestionaire-db:
+  uniform-db-data:
+
+networks:
+  uniform-network:
+    name: uniform-network
+    driver: bridge
