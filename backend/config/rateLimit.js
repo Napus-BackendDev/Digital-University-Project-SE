@@ -36,6 +36,7 @@ const limiter = rateLimit({
 const blockMiddleware = (req, res, next) => {
     const ip = req.ip; // ดึง IP ของผู้ใช้
     if (isBlocked(ip)) {
+        console.log(`[RateLimit] Blocked request from ${ip}`);
         res.status(403).json({
             message: 'Access denied. Your IP has been temporarily blocked.',
         });

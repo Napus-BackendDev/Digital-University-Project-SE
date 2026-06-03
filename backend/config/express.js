@@ -13,6 +13,11 @@ module.exports = function () {
   // Trust proxy for rate limiting behind Nginx
   app.set('trust proxy', 1);
 
+  // 1. Move global CORS to the very top, before any other logic
+  const cors = require('cors');
+  const { corsOptions } = require('./corsAndIP');
+  app.use(cors(corsOptions));
+
   // Swagger setup
   swagger(app);
 

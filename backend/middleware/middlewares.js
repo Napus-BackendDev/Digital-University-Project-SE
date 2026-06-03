@@ -30,8 +30,9 @@ module.exports = function (app) {
 
         app.use(blockMiddleware); // ตรวจสอบ IP ก่อน
         app.use(limiter); // ใช้ rate limiter หลังจากตรวจสอบ IP
-        // ใช้ CORS Middleware
-        app.use(cors(corsOptions));
+        
+        // CORS is handled in express.js now to ensure it covers all requests early
+
         // การตรวจสอบ IP ที่อนุญาต
         app.use(ipCheckMiddleware);
 
