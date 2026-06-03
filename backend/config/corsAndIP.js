@@ -2,7 +2,11 @@
 const cors = require('cors');
 
 // กำหนดโดเมนและ IP ที่อนุญาต
-const allowedDomains = [ 'https://uniform.mfu.ac.th', 'https://anotherdomain.com'];
+const allowedDomains = [ 
+    'https://uniform.mfu.ac.th', 
+    'http://uniform.mfu.ac.th',
+    'https://anotherdomain.com'
+];
 const allowedIPs = ['192.168.11.102', '127.0.0.1', '::1'];
 
 // การตั้งค่า CORS
@@ -11,6 +15,7 @@ const corsOptions = {
         if (!origin || allowedDomains.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
+            console.log("CORS Rejected Origin:", origin);
             callback(new Error('Not allowed by CORS'));
         }
     }
