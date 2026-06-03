@@ -9,7 +9,21 @@ const allowedDomains = [
     'http://localhost:8080',
     'http://localhost:3000'
 ];
+
+// Add environment variables if present
+if (process.env.FRONTEND_URL) {
+    allowedDomains.push(process.env.FRONTEND_URL);
+}
+if (process.env.BASE_SERVER_URL) {
+    allowedDomains.push(process.env.BASE_SERVER_URL);
+}
+if (process.env.ALLOWED_ORIGINS) {
+    const customOrigins = process.env.ALLOWED_ORIGINS.split(',').map(item => item.trim());
+    allowedDomains.push(...customOrigins);
+}
+
 const allowedIPs = ['192.168.11.102', '127.0.0.1', '::1'];
+
 
 // การตั้งค่า CORS
 const corsOptions = {
