@@ -3,7 +3,7 @@ import store from '@/store/store'
 
 const instance = axios.create();
 
-instance.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'api/v1/';
+instance.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || '/api/v1/';
 
 
 // Do not force Content-Type globally so axios can set multipart/form-data when sending FormData
