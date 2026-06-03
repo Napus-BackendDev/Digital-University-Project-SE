@@ -18,7 +18,10 @@ module.exports = function () {
 
   initialize.init(function (status) {
     if (status) {
+      // Middlewares must be added before routes
       middlewares(app);
+      
+      // CORS and custom headers after standard middlewares
       app.use(function (req, res, next) {
         if (req.method === "OPTIONS") {
           const headers = {
@@ -38,6 +41,8 @@ module.exports = function () {
       // Load routes
       routes(app);
 
+      console.log("🚀 API Routes loaded");
+
       app.get("/healthz", (req, res) => {
         if (isReady) {
           res.status(200).send("OK");
@@ -49,6 +54,8 @@ module.exports = function () {
       setTimeout(() => {
         isReady = true;
       }, 10000);
+    } else {
+      console.error("❌ Failed to initialize database connection. API routes not loaded.");
     }
   });
 
