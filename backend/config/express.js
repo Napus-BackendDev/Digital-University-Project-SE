@@ -21,27 +21,15 @@ module.exports = function () {
       // Middlewares must be added before routes
       middlewares(app);
       
-      // CORS and custom headers after standard middlewares
-      app.use(function (req, res, next) {
-        if (req.method === "OPTIONS") {
-          const headers = {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, GET, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers":
-              "X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Headers, X-Access-Token",
-          };
-          res.writeHead(200, headers);
-          res.end();
-        } else {
-          res.header("Access-Control-Allow-Origin", "*");
-          next();
-        }
-      });
-
       // Load routes
       routes(app);
 
       console.log("🚀 API Routes loaded");
+
+      app.all('*', (req, res, next) => {
+        console.log(`[Backend Debug] Request received: ${req.method} ${req.originalUrl}`);
+        next();
+      });
 
       app.get("/healthz", (req, res) => {
         if (isReady) {
