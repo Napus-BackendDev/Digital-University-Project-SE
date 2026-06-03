@@ -4,9 +4,6 @@ const initialize = require("../helpers/initialize");
 const middlewares = require('../middleware/middlewares');
 const swagger = require("../swagger/swagger");
 const routes = require("../server/router/app.routes");
-
-let isReady = false;
-
 module.exports = function () {
   const app = express();
 
@@ -49,16 +46,8 @@ module.exports = function () {
       });
 
       app.get("/healthz", (req, res) => {
-        if (isReady) {
-          res.status(200).send("OK");
-        } else {
-          res.status(503).send("Service Unavailable");
-        }
+        res.status(200).send("OK");
       });
-
-      setTimeout(() => {
-        isReady = true;
-      }, 10000);
     } else {
       console.error("❌ Failed to initialize database connection. API routes not loaded.");
     }

@@ -2,25 +2,38 @@
 const cors = require('cors');
 
 // กำหนดโดเมนและ IP ที่อนุญาต
-const allowedDomains = [ 
-    'https://uniform.mfu.ac.th', 
+const allowedDomains = [
+    'https://uniform.mfu.ac.th',
     'http://uniform.mfu.ac.th',
-    'https://anotherdomain.com'
+    'https://anotherdomain.com',
+    'http://localhost:8080',
+    'http://localhost:3000'
 ];
 const allowedIPs = ['192.168.11.102', '127.0.0.1', '::1'];
 
 // การตั้งค่า CORS
 const corsOptions = {
     origin: function (origin, callback) {
-        // If there is no origin (like mobile apps, curl, or same-origin requests)
-        // or if the origin is in our allowed list
-        if (!origin || allowedDomains.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+        // Log all origins during debug
+        console.log("[CORS Debug] Request Origin:", origin);
+
+        // Allow requests with no origin (like mobile apps, Postman)
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        // Normalize origin by removing trailing slash
+        const normalizedOrigin = origin.replace(/\/$/, "");
+
+        // Check if the origin is in the allowed domains list
+        const isAllowed = allowedDomains.some(domain => domain.replace(/\/$/, "") === normalizedOrigin);
+
+        if (isAllowed) {
+            console.log("[CORS Debug] Allowed Origin:", origin);
             callback(null, true);
         } else {
-            console.log("CORS Rejected Origin:", origin);
-            // Instead of blocking with an error, we allow it but log it for now
-            // to prevent the "403 Forbidden" from breaking the app while we debug
-            callback(null, true); 
+            console.log("[CORS Debug] Rejected Origin:", origin);
+            callback(new Error('Not allowed by CORS'));
         }
     },
     credentials: true,
@@ -31,15 +44,8 @@ const corsOptions = {
 // ฟังก์ชัน middleware สำหรับการตรวจสอบ IP ที่อนุญาต
 const ipCheckMiddleware = (req, res, next) => {
     // bypass IP check for now to fix 403 errors
+    console.log(`[IP Check Debug] Bypassing IP check for ${req.ip}`);
     next(); 
-    /*
-    const userIP = req.ip.replace('::ffff:', '') || req.connection.remoteAddress;
-    if (allowedIPs.includes(userIP)) {
-        next();
-    } else {
-        res.status(403).send('Access Denied');
-    }
-    */
 };
 
 module.exports = { corsOptions, ipCheckMiddleware };

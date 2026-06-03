@@ -14,6 +14,7 @@ module.exports = function (app) {
   app.use(path + '/form', formRoutes);
   app.use(path + '/question', questionRoutes);
   app.use(path + '/response', responseRoutes);
+    // app.use(path + '/auth', authRoutes);
   app.use(path + '/user', userRoutes)
   app.use(path + '/settings', settingsRoutes);
   app.use(path + '/organization', organizationRoutes);

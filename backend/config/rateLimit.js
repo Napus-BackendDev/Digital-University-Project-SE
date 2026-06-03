@@ -21,13 +21,14 @@ const isBlocked = (ip) => {
 
 // การตั้งค่า Rate Limiter
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // กำหนดเวลาต่อรอบ 15 นาที
-    max: 100, // จำกัดจำนวน request ที่อนุญาต
+    windowMs: 1 * 60 * 1000, // Reduced to 1 minute
+    max: 1000, // Increased to 1000 requests per minute
     handler: (req, res) => {
         const ip = req.ip; // ดึง IP ของผู้ใช้
-        blockIP(ip, 15 * 60 * 1000); // บล็อก IP เป็นเวลา 15 นาที
+        console.log(`[RateLimit] Limit reached for IP: ${ip}`);
+        // blockIP(ip, 15 * 60 * 1000); // Disabled the automatic 15-minute block for now
         res.status(429).json({
-            message: 'Too many requests from this IP. You have been temporarily blocked.',
+            message: 'Too many requests from this IP. Please wait a moment.',
         });
     },
 });
@@ -36,9 +37,9 @@ const limiter = rateLimit({
 const blockMiddleware = (req, res, next) => {
     const ip = req.ip; // ดึง IP ของผู้ใช้
     if (isBlocked(ip)) {
-        console.log(`[RateLimit] Blocked request from ${ip}`);
+        console.log(`[RateLimit] BLOCKED request from ${ip} to ${req.originalUrl}`);
         res.status(403).json({
-            message: 'Access denied. Your IP has been temporarily blocked.',
+            message: 'Access denied. Your IP has been temporarily blocked by Rate Limiter.',
         });
     } else {
         next(); // หาก IP ไม่ถูกบล็อก ให้ทำงานต่อไป
