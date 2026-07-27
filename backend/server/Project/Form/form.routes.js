@@ -1,18 +1,19 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth } = require('../../../middleware/auth');
+const { cacheMiddleware } = require('../../../middleware/cacheMiddleware');
+const { invalidateFormCache } = require('../../../helpers/cacheInvalidator');
 
 const form = require('./service/form');
 
-
-// Get All form might don't need.
-// Get All forms with response trends
-router.get("/exp", function (req, res, next) {
+// Get All forms with response trends (Cached 5 mins)
+router.get("/exp", requireAuth, cacheMiddleware(300), function (req, res, next) {
     req.query.apiId = 21;
     next();
 }, form.onQuerys);
 
-// // Get Forms by User ID
-router.post("/user", function (req, res, next) {
+// Get Forms by User ID
+router.post("/user", requireAuth, function (req, res, next) {
     req.query.apiId = 26;
     next();
 }, form.onQueryByUser);
@@ -24,20 +25,23 @@ router.post("/get", function (req, res, next) {
 }, form.onQuery);
 
 // Create
-router.post("", function (req, res, next) {
+router.post("", requireAuth, async function (req, res, next) {
     req.query.apiId = 23;
+    await invalidateFormCache();
     next();
 }, form.onCreate);
 
 // Update
-router.put("", function (req, res, next) {
+router.put("", requireAuth, async function (req, res, next) {
     req.query.apiId = 24;
+    await invalidateFormCache(req.body && req.body._id);
     next();
 }, form.onUpdate);
 
 // Delete
-router.delete("", function (req, res, next) {
+router.delete("", requireAuth, async function (req, res, next) {
     req.query.apiId = 25;
+    await invalidateFormCache(req.body && req.body._id);
     next();
 }, form.onDelete);
 

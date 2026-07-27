@@ -6,6 +6,8 @@ const allowedDomains = [
     'https://uniform.mfu.ac.th',
     'http://uniform.mfu.ac.th',
     'https://anotherdomain.com',
+    'http://localhost',
+    'http://localhost:8010',
     'http://localhost:8080',
     'http://localhost:3000'
 ];
@@ -23,13 +25,15 @@ if (process.env.ALLOWED_ORIGINS) {
 }
 
 const allowedIPs = ['192.168.11.102', '127.0.0.1', '::1'];
+const debugCors = process.env.DEBUG_CORS === 'true';
 
 
 // การตั้งค่า CORS
 const corsOptions = {
     origin: function (origin, callback) {
-        // Log all origins during debug
-        console.log("[CORS Debug] Request Origin:", origin);
+        if (debugCors) {
+            console.log("[CORS Debug] Request Origin:", origin);
+        }
 
         // Allow requests with no origin (like mobile apps, Postman)
         if (!origin) {
@@ -43,10 +47,14 @@ const corsOptions = {
         const isAllowed = allowedDomains.some(domain => domain.replace(/\/$/, "") === normalizedOrigin);
 
         if (isAllowed) {
-            console.log("[CORS Debug] Allowed Origin:", origin);
+            if (debugCors) {
+                console.log("[CORS Debug] Allowed Origin:", origin);
+            }
             callback(null, true);
         } else {
-            console.log("[CORS Debug] Rejected Origin:", origin);
+            if (debugCors) {
+                console.log("[CORS Debug] Rejected Origin:", origin);
+            }
             callback(new Error('Not allowed by CORS'));
         }
     },

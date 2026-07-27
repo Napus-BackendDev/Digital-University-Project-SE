@@ -49,6 +49,15 @@
                         </div>
                     </template>
                 </v-select>
+                <CButton
+                    v-else
+                    color="link"
+                    class="p-0 text-white"
+                    :title="$t('nav.logout')"
+                    @click="logout"
+                >
+                    <CIcon name="cil-account-logout" />
+                </CButton>
             </div>
         </CSidebarFooter>
     </CSidebar>
@@ -71,7 +80,11 @@ export default {
         }
     },
     async created() {
-        if (!this.isUserSwitcherEnabled) return;
+        if (!this.isUserSwitcherEnabled) {
+            await this.loadCurrentProfile();
+            return;
+        }
+
         try {
             const res = await api.user('exp');
             const data = res && res.data && res.data.data;
@@ -110,6 +123,23 @@ export default {
         }
     },
     methods: {
+        async loadCurrentProfile() {
+            try {
+                const res = await api.auth('me');
+                const user = res && res.data && res.data.user;
+                if (user) {
+                    this.$store.commit('User/user', user);
+                    window.localStorage.setItem('user', JSON.stringify(user));
+                }
+            } catch (e) {
+                this.$store.commit('User/user', null);
+                window.localStorage.removeItem('user');
+                window.localStorage.removeItem('activeUserId');
+                if (this.$route.path !== '/pages/login') {
+                    this.$router.push('/pages/login');
+                }
+            }
+        },
         isActive(path) {
             const currentPath = this.$route.path.split('/')
             return currentPath.includes(path)
@@ -191,7 +221,14 @@ export default {
                 });
             }
         },
-        logout() {
+        async logout() {
+            try {
+                await api.auth('logout');
+            } catch (e) {
+                // Continue local cleanup even if the session was already gone.
+            }
+            this.$store.commit('User/user', null);
+            window.localStorage.removeItem('user');
             window.localStorage.removeItem('activeUserId');
             this.$router.push('/pages/login')
         },

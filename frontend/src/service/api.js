@@ -4,6 +4,7 @@ import store from '@/store/store'
 const instance = axios.create();
 
 instance.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || '/api/v1/';
+instance.defaults.withCredentials = true;
 
 
 // Do not force Content-Type globally so axios can set multipart/form-data when sending FormData
@@ -12,6 +13,18 @@ instance.defaults.headers = {
 }
 
 export default {
+  auth(method, data) {
+    switch (method) {
+      case 'google':
+        return instance.post('auth/google', data)
+      case 'me':
+        return instance.get('auth/me')
+      case 'logout':
+        return instance.post('auth/logout')
+      default:
+        break
+    }
+  },
 
   form(method, data, configs) {
     switch (method) {

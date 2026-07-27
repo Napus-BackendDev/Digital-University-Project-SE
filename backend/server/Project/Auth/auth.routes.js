@@ -2,11 +2,44 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
+const User = require('../User/models/user.model');
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const JWT_SECRET = process.env.JWT_SECRET || process.env.KEY || 'dev-secret-change-me';
 const JWT_EXPIRES_IN = '7d';
+const ALLOWED_EMAIL_DOMAINS = (process.env.AUTH_ALLOWED_EMAIL_DOMAINS || '')
+  .split(',')
+  .map(domain => domain.trim().toLowerCase())
+  .filter(Boolean);
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+function getCookieSecure() {
+  if (process.env.COOKIE_SECURE !== undefined) {
+    return process.env.COOKIE_SECURE === 'true';
+  }
+  return process.env.NODE_ENV === 'production';
+}
+
+function serializeUser(user) {
+  return {
+    _id: user._id,
+    googleId: user.googleId,
+    email: user.email,
+    name: user.name,
+    picture: user.picture,
+    role: user.role || null,
+    organization: user.organization || null,
+  };
+}
+
+function getEmailDomain(email) {
+  return String(email || '').split('@').pop().toLowerCase();
+}
+
+function isAllowedEmailDomain(email) {
+  return ALLOWED_EMAIL_DOMAINS.length === 0 || ALLOWED_EMAIL_DOMAINS.includes(getEmailDomain(email));
+}
 
 /**
  * POST /auth/google
@@ -17,6 +50,10 @@ const client = new OAuth2Client(GOOGLE_CLIENT_ID);
  */
 router.post('/google', async (req, res) => {
   try {
+    if (!GOOGLE_CLIENT_ID) {
+      return res.status(500).json({ message: 'Google OAuth client ID is not configured' });
+    }
+
     const { credential } = req.body;
 
     if (!credential) {
@@ -31,18 +68,53 @@ router.post('/google', async (req, res) => {
 
     const payload = ticket.getPayload();
 
-    const user = {
-      googleId: payload.sub,
-      email: payload.email,
-      name: payload.name,
-      givenName: payload.given_name,
-      familyName: payload.family_name,
-      picture: payload.picture,
-    };
+    if (!payload.email || payload.email_verified === false) {
+      return res.status(401).json({ message: 'Google account email is not verified' });
+    }
+
+    const email = payload.email.toLowerCase();
+    if (!isAllowedEmailDomain(email)) {
+      return res.status(403).json({ message: 'This Google account is not allowed to sign in' });
+    }
+
+    let user = await User.findOne({
+      $or: [
+        { googleId: payload.sub },
+        { email },
+      ],
+    })
+      .populate('role')
+      .populate('organization', 'title');
+
+    if (user) {
+      user.googleId = payload.sub;
+      user.name = user.name || payload.name;
+      user.picture = payload.picture;
+      await user.save();
+      user = await User.findById(user._id)
+        .populate('role')
+        .populate('organization', 'title');
+    } else {
+      user = await User.create({
+        googleId: payload.sub,
+        email,
+        name: payload.name,
+        picture: payload.picture,
+      });
+      user = await User.findById(user._id)
+        .populate('role')
+        .populate('organization', 'title');
+    }
 
     // Create a session JWT
     const token = jwt.sign(
-      { userId: user.googleId, email: user.email, name: user.name, picture: user.picture },
+      {
+        userId: String(user._id),
+        googleId: user.googleId,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+      },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -50,18 +122,18 @@ router.post('/google', async (req, res) => {
     // Set httpOnly cookie
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: getCookieSecure(),
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     return res.status(200).json({
       message: 'Login successful',
-      user,
+      user: serializeUser(user),
     });
   } catch (error) {
-    console.error('Google auth error:', error.message);
-    return res.status(401).json({ message: 'Invalid credential', error: error.message });
+    console.error('Google auth error');
+    return res.status(401).json({ message: 'Invalid Google credential' });
   }
 });
 
@@ -70,7 +142,11 @@ router.post('/google', async (req, res) => {
  * Clears the session cookie.
  */
 router.post('/logout', (req, res) => {
-  res.clearCookie('token');
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: getCookieSecure(),
+    sameSite: 'lax',
+  });
   return res.status(200).json({ message: 'Logged out' });
 });
 
@@ -78,7 +154,7 @@ router.post('/logout', (req, res) => {
  * GET /auth/me
  * Returns the current user from the JWT cookie (if valid).
  */
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
   try {
     const token = req.cookies && req.cookies.token;
     if (!token) {
@@ -86,9 +162,20 @@ router.get('/me', (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(decoded.userId)
+      .populate('role')
+      .populate('organization', 'title');
+
+    if (user) {
+      return res.status(200).json({
+        user: serializeUser(user),
+      });
+    }
+
     return res.status(200).json({
       user: {
-        googleId: decoded.userId,
+        _id: decoded.userId,
+        googleId: decoded.googleId,
         email: decoded.email,
         name: decoded.name,
         picture: decoded.picture,

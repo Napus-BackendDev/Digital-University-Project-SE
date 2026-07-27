@@ -18,38 +18,40 @@ module.exports = function () {
   // Swagger setup
   swagger(app);
 
+  // Set Cross-Origin-Opener-Policy to allow Google OAuth popups and postMessage
+  app.use((req, res, next) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    next();
+  });
+
+  // Handle double slashes or missing /api prefix if Nginx mangles it
+  app.use((req, res, next) => {
+    if (req.url.startsWith('//')) {
+      req.url = req.url.replace(/^\/+/, '/');
+    }
+    // If the request is /v1/... but should be /api/v1/...
+    if (req.url.startsWith('/v1') && !req.url.startsWith('/api/v1')) {
+      req.url = '/api' + req.url;
+    }
+    next();
+  });
+
+  // Middlewares must be added before routes
+  middlewares(app);
+
+  // Load routes
+  routes(app);
+  console.log("🚀 API Routes loaded");
+
+  app.get("/healthz", (req, res) => {
+    res.status(200).send("OK");
+  });
+
   initialize.init(function (status) {
     if (status) {
-      // Handle double slashes or missing /api prefix if Nginx mangles it
-      app.use((req, res, next) => {
-        if (req.url.startsWith('//')) {
-          req.url = req.url.replace(/^\/+/, '/');
-        }
-        // If the request is /v1/... but should be /api/v1/...
-        if (req.url.startsWith('/v1') && !req.url.startsWith('/api/v1')) {
-          req.url = '/api' + req.url;
-        }
-        next();
-      });
-
-      // Middlewares must be added before routes
-      middlewares(app);
-      
-      // Load routes
-      routes(app);
-
-      console.log("🚀 API Routes loaded");
-
-      app.all('*', (req, res, next) => {
-        console.log(`[Backend Debug] Request received: ${req.method} ${req.originalUrl}`);
-        next();
-      });
-
-      app.get("/healthz", (req, res) => {
-        res.status(200).send("OK");
-      });
+      console.log("✅ Database connection initialized successfully");
     } else {
-      console.error("❌ Failed to initialize database connection. API routes not loaded.");
+      console.error("❌ Failed to initialize database connection.");
     }
   });
 

@@ -21,18 +21,54 @@ const logger = winston.createLogger({
     ]
 });
 
+const REDACTED = '[REDACTED]';
+const SENSITIVE_KEYS = new Set([
+    'authorization',
+    'cookie',
+    'set-cookie',
+    'x-access-token',
+    'token',
+    'access_token',
+    'refresh_token',
+    'id_token',
+    'credential',
+    'password',
+    'pass',
+    'secret',
+    'client_secret',
+    'google_client_secret',
+    'jwt_secret',
+    'smtp_pass'
+]);
+
+function sanitize(value) {
+    if (Array.isArray(value)) {
+        return value.map(sanitize);
+    }
+
+    if (!value || typeof value !== 'object') {
+        return value;
+    }
+
+    return Object.keys(value).reduce((safeValue, key) => {
+        const normalizedKey = key.toLowerCase();
+        safeValue[key] = SENSITIVE_KEYS.has(normalizedKey) ? REDACTED : sanitize(value[key]);
+        return safeValue;
+    }, {});
+}
+
 // ฟังก์ชันสำหรับบันทึกข้อมูลที่เกี่ยวข้องกับ success
 function logSuccessData(req, res, body) {
     const logData = {
         level: 'info',
         method: req.method,
         url: req.originalUrl,
-        body: req.body,
-        headers: req.headers,
-        query: req.query,
+        body: sanitize(req.body),
+        headers: sanitize(req.headers),
+        query: sanitize(req.query),
         ip: req.ip,
         status: 'success',
-        response: JSON.parse(JSON.stringify(body, null, 2)),
+        response: sanitize(JSON.parse(JSON.stringify(body, null, 2))),
         statusCode: res.statusCode,
         timestamp: new Date() // เก็บ timestamp
     };
@@ -47,12 +83,12 @@ function logErrorData(req, res, body) {
         level: 'error',
         method: req.method,
         url: req.originalUrl,
-        body: req.body,
-        headers: req.headers,
-        query: req.query,
+        body: sanitize(req.body),
+        headers: sanitize(req.headers),
+        query: sanitize(req.query),
         ip: req.ip,
         status: 'error',
-        response: JSON.parse(JSON.stringify(body, null, 2)),
+        response: sanitize(JSON.parse(JSON.stringify(body, null, 2))),
         statusCode: res.statusCode,
         timestamp: new Date() // เก็บ timestamp
     };

@@ -1,14 +1,15 @@
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+const JWT_SECRET = process.env.JWT_SECRET || process.env.KEY || 'dev-secret-change-me';
 
 /**
- * requireAuth – verifies the JWT cookie set by /auth/google.
+ * requireAuth – verifies the JWT cookie set by /auth/google or Bearer token header.
  * Attaches decoded user info to req.user.
  */
 async function requireAuth(req, res, next) {
     try {
-        const token = req.cookies.token;
+        const token = (req.cookies && req.cookies.token) ||
+            (req.headers.authorization && req.headers.authorization.startsWith('Bearer ') && req.headers.authorization.split(' ')[1]);
         if (!token) {
             return res.status(401).json({ message: "Unauthorized: No token provided. Please login." });
         }
