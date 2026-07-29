@@ -11,6 +11,9 @@ const emailTemplate = require("./service/emailTemplate");
 // const auth_message = require("./service/auth_message");
 // const Role = require("../Accounts/service/role");
 // const Authen_Type = require("../Accounts/service/authen_type");
+const { requireAuth } = require('../../../middleware/auth');
+
+router.use(requireAuth);
 
 router.get("/group", group.onQuerys);
 router.post("/group", group.onCreate);

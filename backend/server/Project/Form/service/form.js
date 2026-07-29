@@ -4,6 +4,7 @@ const User = require('../../User/controller/user');
 const ResMessage = require("../../Settings/service/message");
 const { maybeSendCollaborationInvites } = require('../../Email/service/collaboration');
 const { maybeSendOrganizationInvites } = require('../../Email/service/inviteOrganization');
+const { isAdminUser } = require('../../../../middleware/auth');
 
 exports.checkAccess = async function (request, response) {
     try {
@@ -71,6 +72,17 @@ exports.onQuery = async function (request, response) {
 
 exports.onQueryByUser = async (request, response, next) => {
     try {
+        const reqUserId = request.user && request.user.id;
+        if (!reqUserId) {
+            return ResMessage.sendResponse(response, 0, 40100, "Unauthorized: No user session found");
+        }
+
+        const requesterIsAdmin = isAdminUser(request.user);
+
+        if (String(reqUserId) !== String(request.body._id) && !requesterIsAdmin) {
+            return ResMessage.sendResponse(response, 0, 40300, "Forbidden: You can only query your own forms unless you are an admin.");
+        }
+
         const _id = new mongo.ObjectId(request.body._id);
 
 

@@ -2,7 +2,13 @@ module.exports = {
   lintOnSave: false,
   runtimeCompiler: true,
   devServer: {
-    disableHostCheck: true
+    disableHostCheck: true,
+    proxy: {
+      '^/api': {
+        target: process.env.VUE_APP_DEV_API_TARGET || 'http://localhost:8081',
+        changeOrigin: true
+      }
+    }
   },
   configureWebpack: {
     // Necessary to run npm link https://webpack.js.org/configuration/resolve/#resolve-symlinks

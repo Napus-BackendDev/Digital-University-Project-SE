@@ -156,7 +156,7 @@ export default {
 
         async renderGoogleButton() {
             try {
-                const clientId = process.env.VUE_APP_CLIENTID
+                const clientId = process.env.VUE_APP_GOOGLE_CLIENT_ID
                 if (!clientId) {
                     throw new Error('Google client ID is not configured')
                 }

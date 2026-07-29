@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../User/models/user.model');
+const Role = require('../User/models/roles.model');
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const JWT_SECRET = process.env.JWT_SECRET || process.env.KEY || 'dev-secret-change-me';
@@ -95,11 +96,13 @@ router.post('/google', async (req, res) => {
         .populate('role')
         .populate('organization', 'title');
     } else {
+      const defaultRole = await Role.findOne({ 'title.value': 'User' });
       user = await User.create({
         googleId: payload.sub,
         email,
         name: payload.name,
         picture: payload.picture,
+        role: defaultRole ? defaultRole._id : undefined,
       });
       user = await User.findById(user._id)
         .populate('role')

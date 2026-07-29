@@ -1,10 +1,26 @@
 const jwt = require("jsonwebtoken");
+const User = require("../server/Project/User/models/user.model");
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.KEY || 'dev-secret-change-me';
 
+function getRoleTitle(role) {
+    if (!role || !role.title) return '';
+    if (typeof role.title === 'string') return role.title;
+    if (Array.isArray(role.title)) {
+        const enTitle = role.title.find(item => item && String(item.key).toLowerCase() === 'en');
+        const title = enTitle || role.title[0];
+        return title && title.value ? String(title.value) : '';
+    }
+    return '';
+}
+
+function isAdminUser(user) {
+    return getRoleTitle(user && user.role).toLowerCase() === 'admin';
+}
+
 /**
  * requireAuth – verifies the JWT cookie set by /auth/google or Bearer token header.
- * Attaches decoded user info to req.user.
+ * Attaches the current database user, role, and organization to req.user.
  */
 async function requireAuth(req, res, next) {
     try {
@@ -19,12 +35,24 @@ async function requireAuth(req, res, next) {
             return res.status(401).json({ message: "Unauthorized: Invalid token. Please login." });
         }
 
-        // Attach Google-sourced user info from the JWT payload
+        const dbUser = await User.findById(decoded.userId)
+            .populate('role')
+            .populate('organization', 'title');
+
+        if (!dbUser) {
+            return res.status(401).json({ message: "Unauthorized: User no longer exists. Please login again." });
+        }
+
         req.user = {
-            id: decoded.userId,
-            email: decoded.email,
-            name: decoded.name,
-            picture: decoded.picture,
+            id: String(dbUser._id),
+            _id: dbUser._id,
+            googleId: dbUser.googleId,
+            email: dbUser.email,
+            name: dbUser.name,
+            picture: dbUser.picture,
+            role: dbUser.role || null,
+            organization: dbUser.organization || null,
+            roleTitle: getRoleTitle(dbUser.role),
         };
         next();
     } catch (error) {
@@ -72,6 +100,8 @@ async function requireAuth(req, res, next) {
 
 module.exports = {
     requireAuth,
+    getRoleTitle,
+    isAdminUser,
     // requirePermission,
     // requireRole
 };

@@ -21,4 +21,4 @@ COPY --from=builder /app .
 RUN npm cache clean -f
 
 EXPOSE 8081
-ENTRYPOINT ["npm", "start"]
+CMD ["node", "-r", "dotenv/config", "server.js"]

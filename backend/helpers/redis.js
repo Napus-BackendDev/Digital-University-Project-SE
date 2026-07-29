@@ -74,8 +74,11 @@ class RedisClient {
     async delPattern(pattern) {
         if (!this.isConnected) return;
         try {
-            const keys = await this.client.keys(pattern);
-            if (keys && keys.length > 0) {
+            const keys = [];
+            for await (const key of this.client.scanIterator({ MATCH: pattern })) {
+                keys.push(key);
+            }
+            if (keys.length > 0) {
                 await this.client.del(keys);
                 console.log(`[Redis] Invalidated ${keys.length} keys matching pattern: ${pattern}`);
             }

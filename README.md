@@ -73,20 +73,13 @@ flowchart TD
    git clone https://github.com/Napus-BackendDev/Digital-University-Project-SE.git
    cd Digital-University-Project-SE
    ```
-2. **รันระบบส่วนหลังบ้าน (Backend):**
+2. **รันระบบด้วย Docker Compose ที่ root project:**
    ```bash
-   cd backend
-   docker-compose up -d --build
+   docker compose --env-file backend/.env up -d --build
    ```
-3. **รันระบบส่วนหน้าบ้าน (Frontend):**
-   *(เปิดหน้าต่าง Terminal/PowerShell แท็บใหม่)*
+3. **สร้างข้อมูลตัวอย่างสำหรับการทดสอบ (Seed Data):**
    ```bash
-   cd ../frontend
-   docker-compose up -d --build
-   ```
-4. **สร้างข้อมูลตัวอย่างสำหรับการทดสอบ (Seed Data):**
-   ```bash
-   docker exec -it equestionaire-app npm run seed
+   docker exec -it uniform-backend node seed.js
    ```
 
 ---
@@ -95,6 +88,6 @@ flowchart TD
 
 เมื่อเปิดรันบริการทั้งหมดสำเร็จแล้ว สามารถทดสอบใช้งานผ่านช่องทางต่าง ๆ ดังนี้:
 
-- **Frontend Web UI:** [http://localhost:8080](http://localhost:8080) *(สามารถกดสลับสิทธิ์ของผู้ทดสอบได้ที่หัวมุมบนขวา)*
-- **API Documentation (Swagger UI):** [http://localhost:8081/api-docs](http://localhost:8081/api-docs)
-- **สถานะระบบหลังบ้าน (Health Status):** [http://localhost:8081/api/v1/health](http://localhost:8081/api/v1/health)
+- **Frontend Web UI:** [http://localhost:8010](http://localhost:8010)
+- **API Documentation (Swagger UI):** [http://localhost:8010/api-docs](http://localhost:8010/api-docs)
+- **สถานะระบบหลังบ้าน (Health Status):** [http://localhost:8010/api/v1/health](http://localhost:8010/api/v1/health)

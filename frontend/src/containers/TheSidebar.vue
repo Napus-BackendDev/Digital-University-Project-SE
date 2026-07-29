@@ -160,15 +160,22 @@ export default {
         },
         canReadPage(pageName) {
             const role = this.user.role;
-            const permission = this.getPagePermission(pageName);
             const roleTitle = this.getRoleTitle(role).toLowerCase();
 
-            if (!permission) {
-                return roleTitle === 'admin' || !role || !Array.isArray(role.permission) || role.permission.length === 0;
-            }
-
+            // Admin always has full access
             if (roleTitle === 'admin') {
                 return true;
+            }
+
+            // Everyone should be able to see the Forms page by default
+            if (pageName === 'Forms') {
+                return true;
+            }
+
+            // Otherwise, check explicit permissions
+            const permission = this.getPagePermission(pageName);
+            if (!permission) {
+                return false;
             }
 
             const readAccess = Array.isArray(permission.access)

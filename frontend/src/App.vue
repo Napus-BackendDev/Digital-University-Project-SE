@@ -4,21 +4,7 @@
 
 <script>
 export default {
-    name: "App",
-    async created() {
-        await this.initGlobalData();
-    },
-    methods: {
-        async initGlobalData() {
-            try {
-                await this.$store.dispatch("Organizations/getAll");
-
-
-            } catch (err) {
-                console.error("Critical error during application initialization:", err);
-            }
-        }
-    }
+    name: "App"
 }
 </script>
 
