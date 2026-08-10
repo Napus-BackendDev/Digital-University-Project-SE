@@ -28,12 +28,14 @@ module.exports = function (app) {
     app.use(compression());
     if (process.env.NODE_ENV === 'production') {
 
-        app.use(blockMiddleware); // ตรวจสอบ IP ก่อน
-        app.use(limiter); // ใช้ rate limiter หลังจากตรวจสอบ IP
-        // ใช้ CORS Middleware
-        app.use(cors(corsOptions));
+        // Temporarily bypass Rate limiting and IP blocking to resolve production 403s
+        // app.use(blockMiddleware); 
+        // app.use(limiter); 
+        
+        // CORS is handled in express.js now to ensure it covers all requests early
+
         // การตรวจสอบ IP ที่อนุญาต
-        app.use(ipCheckMiddleware);
+        // app.use(ipCheckMiddleware);
 
         app.use(morgan('combined')); // ใช้ log format ที่เหมาะสม
     } else {
@@ -49,7 +51,7 @@ module.exports = function (app) {
     app.use(xssFilter());
 
     app.use(sass({ src: "./sass", dest: "./public/css", debug: true, outputStyle: "compressed" }));
-    app.use(express.static(path.join(__dirname, "./public")));
+    app.use(express.static(path.join(__dirname, "../public")));
     app.use(express.static(path.join(__dirname, "../node_modules/bootstrap/dist")));
 
     // การใช้งาน logger ใน Express
