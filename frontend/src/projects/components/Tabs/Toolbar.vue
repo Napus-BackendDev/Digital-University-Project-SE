@@ -103,7 +103,7 @@
                         </div>
                         {{ $t('toolbar.qr.share') }}
                     </h5>
-                    <CButton class="text-secondary p-0 shadow-none border-0" @click="showQRModal = false">
+                    <CButton class="text-secondary p-0 shadow-none border-0" style="border-radius: 8px;" @click="showQRModal = false">
                         <CIcon name="cil-x" size="lg" />
                     </CButton>
                 </div>
@@ -119,7 +119,7 @@
             </div>
             <template #footer>
                 <div class="w-100 d-flex justify-content-center border-top-0 pt-0 pb-2">
-                    <CButton color="primary" variant="outline" shape="pill" class="px-5 font-weight-bold btn-done shadow-sm" @click="showQRModal = false">
+                    <CButton color="primary" variant="outline" class="px-5 font-weight-bold btn-done shadow-sm" style="border-radius: 8px;" @click="showQRModal = false">
                         {{ $t('toolbar.qr.done') }}
                     </CButton>
                 </div>
@@ -262,14 +262,14 @@ export default {
 }
 
 .nav-btn {
-    border-radius: 12px !important;
+    border-radius: 8px !important;
     padding: 10px 16px !important;
     font-weight: 600 !important;
     transition: all 0.2s ease;
 }
 
 .type-btn {
-    border-radius: 12px !important;
+    border-radius: 8px !important;
     padding: 8px 12px !important;
     color: #475569 !important;
     transition: all 0.2s ease;

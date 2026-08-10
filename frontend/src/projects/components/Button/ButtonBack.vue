@@ -39,7 +39,7 @@ export default {
     display: inline-flex;
     align-items: center;
     padding: 0.5rem 1.25rem;
-    border-radius: 50px;
+    border-radius: 8px;
     background-color: #8B1A1A;
     color: #ffffff;
     cursor: pointer;

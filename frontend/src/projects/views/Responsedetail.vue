@@ -7,7 +7,7 @@
                 <CCallout color="danger" class="bg-white shadow-sm border-left-4">
                     <h5 class="text-danger font-weight-bold">Error</h5>
                     <p>{{ error }}</p>
-                    <CButton color="primary" variant="outline" @click="fetchResponseDetail">Try Again</CButton>
+                    <CButton color="primary" variant="outline" style="border-radius: 8px;" @click="fetchResponseDetail">Try Again</CButton>
                 </CCallout>
             </CCol>
         </CRow>

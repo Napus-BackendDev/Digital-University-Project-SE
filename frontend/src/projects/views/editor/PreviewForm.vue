@@ -23,7 +23,7 @@
                 <div class="text-muted small mb-3"><span class="text-danger">*</span> Required field</div>
 
                 <div class="text-right">
-                    <CButton color="secondary">Submit (Preview Mode)</CButton>
+                    <CButton color="secondary" style="border-radius: 8px;">Submit (Preview Mode)</CButton>
                 </div>
             </CCardBody>
         </CCard>

@@ -8,18 +8,22 @@
                         <CButton 
                             :color="timeRange === 'all' ? 'primary' : 'secondary'"
                             :variant="timeRange === 'all' ? null : 'outline'"
+                            style="border-radius: 8px;"
                             @click="timeRange = 'all'">{{ $t('table.quickDate.all') }}</CButton>
                         <CButton 
                             :color="timeRange === '1d' ? 'primary' : 'secondary'"
                             :variant="timeRange === '1d' ? null : 'outline'"
+                            style="border-radius: 8px;"
                             @click="timeRange = '1d'">{{ $t('table.quickDate.today') }}</CButton>
                         <CButton 
                             :color="timeRange === '7d' ? 'primary' : 'secondary'"
                             :variant="timeRange === '7d' ? null : 'outline'"
+                            style="border-radius: 8px;"
                             @click="timeRange = '7d'">{{ $t('table.quickDate.last7Days') }}</CButton>
                         <CButton 
                             :color="timeRange === '30d' ? 'primary' : 'secondary'"
                             :variant="timeRange === '30d' ? null : 'outline'"
+                            style="border-radius: 8px;"
                             @click="timeRange = '30d'">{{ $t('table.quickDate.last30Days') }}</CButton>
                     </CButtonGroup>
                 </template>

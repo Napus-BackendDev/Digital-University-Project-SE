@@ -27,7 +27,7 @@
                             <h4 class="font-weight-bold">{{ $t('form.loginRequired') }}</h4>
                             <p class="text-muted">{{ $t('form.collectEmail') }}</p>
                         </div>
-                        <CButton color="primary" block size="lg" style="border-radius: 12px; font-weight: 600;"
+                        <CButton color="primary" block size="lg" style="font-weight: 600; border-radius: 8px;"
                             @click="onAuthenGoogle">
                             {{ $t('form.signInWithGoogle') }}
                         </CButton>
@@ -223,12 +223,12 @@
                 <div v-if="!isPreviewMode && !isAlreadySubmitted && visibleQuestions && visibleQuestions.length > 0"
                     id="submit-section" class="p-3 d-flex justify-content-end mb-3">
                     <CButton v-if="!isDuplicateMode" color="primary" @click="submitForm" :disabled="submitting"
-                        class="px-5">
+                        class="px-5" style="border-radius: 8px;">
                         <CSpinner v-if="submitting" size="sm" class="mr-1" />
                         {{ submitting ? $t('common.submitting') : $t('form.submit') }}
                     </CButton>
                     <CButton v-else color="info" @click="duplicateForm" :disabled="submitting"
-                        class="px-5 text-white font-weight-bold">
+                        class="px-5 text-white font-weight-bold" style="border-radius: 8px;">
                         <CSpinner v-if="submitting" size="sm" class="mr-1" />
                         <CIcon name="cil-copy" class="mr-2" />
                         {{ submitting ? $t('common.submitting') : $t('form.copyForm') }}
@@ -251,7 +251,7 @@
                         <p class="success-message">{{ modalMessage }}</p>
 
                         <div class="success-actions">
-                            <CButton color="success" class="success-ok-button" @click="onModalOk">{{ $t('common.ok') }}
+                            <CButton color="success" class="success-ok-button" style="border-radius: 8px;" @click="onModalOk">{{ $t('common.ok') }}
                             </CButton>
                         </div>
                     </div>

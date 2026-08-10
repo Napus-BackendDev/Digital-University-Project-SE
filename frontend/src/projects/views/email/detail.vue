@@ -9,6 +9,7 @@
             <template #actions>
                 <CButton 
                     class="d-flex align-items-center px-3 py-2 mr-3 btn-back"
+                    style="border-radius: 8px;"
                     @click="$router.push({ name: 'Email' })"
                 >
                     <CIcon name="cil-arrow-left" size="sm" class="mr-2" />
@@ -67,6 +68,7 @@
                                     v-for="v in variables" 
                                     :key="v"
                                     class="variable-btn mb-3 text-left shadow-sm d-flex align-items-center"
+                                    style="border-radius: 8px;"
                                     @click="insertVariable(v)"
                                     v-text="'{{' + v + '}}'"
                                 >

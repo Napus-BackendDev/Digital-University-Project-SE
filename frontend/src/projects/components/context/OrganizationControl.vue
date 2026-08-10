@@ -17,7 +17,7 @@
                             placeholder="Choose a department" class="form-select-custom" @update:value="selectDepartment" />
                     </CCol>
                     <CCol md="2" class="mb-3">
-                        <CButton color="primary" block class="btn-custom font-weight-bold mt-4"
+                        <CButton color="primary" block class="btn-custom font-weight-bold mt-4" style="border-radius: 8px;"
                             @click="addSelectedDepartment">
                             Add
                         </CButton>

@@ -915,7 +915,7 @@ export default {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    border-radius: 50% !important;
+    border-radius: 8px !important;
     transition: all 0.2s ease;
 }
 

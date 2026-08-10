@@ -25,7 +25,7 @@
                     <div class="label text-uppercase text-muted">{{ $t('email.lastModified') }}</div>
                     <div class="date font-weight-bold">{{ template.lastModified }}</div>
                   </div>
-                  <CButton variant="outline" class="edit-btn px-3 py-2" @click="editTemplate(template)">
+                  <CButton variant="outline" class="edit-btn px-3 py-2" style="border-radius: 8px;" @click="editTemplate(template)">
                     <CIcon name="cil-pencil" class="mr-2" />
                     <span class="font-weight-bold">{{ $t('email.edit') }}</span>
                   </CButton>

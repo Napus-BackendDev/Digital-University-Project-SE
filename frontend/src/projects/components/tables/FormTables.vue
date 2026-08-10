@@ -733,7 +733,7 @@ export default {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: 8px;
 }
 
 .action-icon-btn:hover {

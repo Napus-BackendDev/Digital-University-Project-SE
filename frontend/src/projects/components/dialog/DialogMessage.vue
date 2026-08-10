@@ -30,7 +30,7 @@
             <CRow class="text-right mt-3">
               <CCol>
 
-                <CButton class="ml-2" size="sm" :color="objs.color" shape="pill" variant="outline" @click="onSubmit(objs.code)"  v-for="objs in message.button" :key="objs.code">
+                <CButton class="ml-2" size="sm" :color="objs.color" variant="outline" style="border-radius: 8px;" @click="onSubmit(objs.code)"  v-for="objs in message.button" :key="objs.code">
                   <span class="font-weight-bold pr-1 pl-1">
                     <CIcon :name="objs.icon" size="lg"/> {{objs.label}}
                   </span>

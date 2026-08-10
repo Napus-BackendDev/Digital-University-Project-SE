@@ -66,7 +66,7 @@
                         <CButton v-for="shortcut in dateShortcuts" :key="shortcut.id"
                             :color="currentShortcut === shortcut.id ? 'primary' : 'secondary'"
                             :variant="currentShortcut === shortcut.id ? null : 'outline'"
-                            style="height: 38px; flex: 1;" @click="applyQuickDate(shortcut.id)">
+                            style="height: 38px; flex: 1; border-radius: 8px;" @click="applyQuickDate(shortcut.id)">
                             {{ shortcut.label || $t('table.quickDate.' + shortcut.id) }}
                         </CButton>
                     </CButtonGroup>
