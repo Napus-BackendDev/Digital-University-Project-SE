@@ -4,6 +4,10 @@
         <FilterTable :searchQuery.sync="searchQuery" :selectedStatus.sync="selectedStatus" :startDate.sync="startDate"
             :endDate.sync="endDate" />
 
+        <div class="table-page-size-toolbar">
+            <TablePageSize v-model="itemsPerPage" />
+        </div>
+
         <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
             :pagination="false" hover class="mb-0 tables-container" :no-items-view="{ noItems: $t('table.noForms') }">
 
@@ -143,7 +147,6 @@
             </template>
         </CDataTable>
 
-        <!-- Pagination -->
         <Pagination :activePage.sync="activePage" :pages="totalPages" />
     </div>
 </template>
@@ -151,12 +154,13 @@
 <script>
 import { mapGetters } from 'vuex'
 import Pagination from '@/projects/components/Util/Pagination.vue'
+import TablePageSize from '@/projects/components/Util/TablePageSize.vue'
 import FilterTable from '@/projects/components/Filter/FilterTable.vue'
 import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'UserTables',
-    components: { Pagination, FilterTable },
+    components: { Pagination, TablePageSize, FilterTable },
     mixins: [localeMixin],
     data() {
         return {
@@ -498,6 +502,9 @@ export default {
             handler(newVal) {
                 this.$emit('update-stats', newVal);
             }
+        },
+        itemsPerPage() {
+            this.activePage = 1;
         }
     },
     methods: {
@@ -591,7 +598,7 @@ export default {
                     const localTitle = orgRef.title.find(t => t && t.key && t.key.toLowerCase() === locale);
                     return localTitle ? localTitle.value : (orgRef.title[0] ? orgRef.title[0].value : null);
                 }
-                return orgRef.name || orgRef.value || orgRef.title || (orgRef._id ? String(orgRef._id) : null);
+                return orgRef.name || orgRef.value || orgRef.title || null;
             }
 
             const orgId = String(orgRef);
@@ -607,13 +614,27 @@ export default {
                 return found.name || found.value || found.title || orgId;
             }
 
-            return orgId;
+            return null;
         }
     }
 }
 </script>
 
 <style scoped>
+.table-page-size-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 0 0.75rem;
+    background: transparent;
+}
+
+@media (max-width: 575.98px) {
+    .table-page-size-toolbar {
+        justify-content: flex-start;
+    }
+}
+
 .tables-container {
     background: white;
     border-radius: 1rem;

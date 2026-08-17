@@ -9,6 +9,8 @@ import { iconsSet as icons } from './assets/icons/icons.js'
 import i18n from './i18n.js'
 import store from "@/store/store";
 
+document.documentElement.setAttribute('lang', i18n.locale)
+
 import OtpInput from "@bachdgvn/vue-otp-input";
 Vue.component("v-otp-input", OtpInput);
 
@@ -48,4 +50,3 @@ new Vue({
   //   this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
   // }
 })
-    

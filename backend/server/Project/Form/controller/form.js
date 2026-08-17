@@ -4,6 +4,7 @@ const createBaseService = require("../../../../helpers/base.service");
 
 const defaultPopulate = [
   { path: 'creator', select: '-password' },
+  { path: 'organization', select: 'title' },
   {
     path: 'collaborator',
     populate: [
@@ -23,6 +24,7 @@ const formPopulate = [
   },
   { path: "status" },
   { path: "creator", select: "-password" },
+  { path: "organization", select: "title" },
   { path: "settings.allowedUser", select: "-password" },
   {
     path: "collaborator",

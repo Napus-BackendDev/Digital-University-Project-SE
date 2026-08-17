@@ -1,7 +1,8 @@
 <template>
     <div class="flex-grow-1">
         <Header :title="headerTitle" :description="headerDescription" :isSaving="isSaving" :isSaved="isSaved" />
-        <Tab :form="formData" :activeTab.sync="activeTab" @auto-save="triggerAutoSave" />
+        <Tab :form="formData" :activeTab.sync="activeTab" :sequentialFlow="isSequentialFlow"
+            @auto-save="triggerAutoSave" @flow-complete="completeFlow" />
     </div>
 </template>
 
@@ -19,7 +20,10 @@ export default {
     data() {
         return {
             formData: {},
-            activeTab: 'question',
+            activeTab: ['language', 'response'].includes(this.$route.query.step)
+                ? this.$route.query.step
+                : 'question',
+            isSequentialFlow: this.$route.query.flow === 'new',
             isNewDuplication: false,
             isSaving: false,
             isSaved: false,
@@ -40,6 +44,10 @@ export default {
         }
     },
     methods: {
+        completeFlow() {
+            this.isSequentialFlow = false;
+            this.$router.replace({ name: 'EditorCreateForm', params: { _id: this.formData._id } });
+        },
         async onInit() {
             // Check if we have duplicated data from the buffer
             if (this.duplicateBuffer) {
@@ -156,28 +164,10 @@ export default {
         ...mapGetters('User', ['user']),
         ...mapGetters('Forms', ['duplicateBuffer']),
         headerTitle() {
-            if (this.activeTab === 'question') return this.$t('editor.header.questionTitle');
-            if (this.activeTab === 'response') return this.$t('editor.header.responseTitle');
-            if (this.activeTab === 'setting') return this.$t('editor.header.settingTitle');
-            
-            // Default: show form title for 'question' tab
-            if (!this.formData || !this.formData.title) return this.$t('common.loading');
-            if (Array.isArray(this.formData.title)) {
-                return this.formData.title[0]?.value || this.$t('common.untitled');
-            }
-            return this.formData.title || this.$t('common.untitled');
+            return this.activeTab === 'response' ? this.$t('responses.title') : this.$t('flow.createTitle');
         },
         headerDescription() {
-            if (this.activeTab === 'question') return this.$t('editor.header.questionDesc');
-            if (this.activeTab === 'response') return this.$t('editor.header.responseDesc');
-            if (this.activeTab === 'setting') return this.$t('editor.header.settingDesc');
-
-            // Default: show form description for 'question' tab
-            if (!this.formData || !this.formData.description) return "";
-            if (Array.isArray(this.formData.description)) {
-                return this.formData.description[0]?.value || "";
-            }
-            return this.formData.description || "";
+            return this.activeTab === 'response' ? this.$t('responses.description') : this.$t('flow.createDescription');
         }
     }
 }

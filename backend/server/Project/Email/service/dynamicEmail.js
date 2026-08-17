@@ -23,13 +23,15 @@ const fallbackHandlers = {
             name: vars.Responder,
             formTitle: vars.FormName,
             submittedAt: vars.SubmittedAt,
-            referenceNo: vars.ReferenceNo
+            referenceNo: vars.ReferenceNo,
+            emailMessage: vars.EmailMessage
         }),
         text: fallbackTemplates.submissionConfirmation.buildSubmissionConfirmationText({
             name: vars.Responder,
             formTitle: vars.FormName,
             submittedAt: vars.SubmittedAt,
-            referenceNo: vars.ReferenceNo
+            referenceNo: vars.ReferenceNo,
+            emailMessage: vars.EmailMessage
         })
     }),
     invitationCollaboration: (vars) => ({

@@ -15,6 +15,26 @@ const module = {
         }
     },
     actions: {
+        async login({ commit }, credentials) {
+            const res = await api.auth('login', credentials);
+            const user = res?.data?.user;
+            if (user) commit('user', user);
+            return user;
+        },
+        async restoreSession({ commit }) {
+            try {
+                const res = await api.auth('me');
+                const user = res?.data?.user;
+                commit('user', user || null);
+                return user || null;
+            } catch (error) {
+                commit('user', null);
+                return null;
+            }
+        },
+        async logout({ commit }) {
+            try { await api.auth('logout'); } finally { commit('user', null); }
+        },
         async get({ commit }, payload) {
             try {
                 const res = await api.user('get', payload);

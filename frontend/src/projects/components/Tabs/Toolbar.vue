@@ -2,30 +2,9 @@
     <CCol md="3">
         <CCard class="tab-card shadow-sm border">
             <CCardBody class="p-4 d-flex flex-column h-100">
-                <!-- Navigation Buttons -->
-                <div class="d-flex justify-content-between mb-4 align-items-center">
-                    <ButtonBack />
+                <!-- Preview Bar -->
+                <div class="mb-4">
                     <ButtonPreview />
-                </div>
-
-                <!-- Tab Selectors -->
-                <div class="tab-buttons mb-4">
-                    <label class="small text-uppercase font-weight-bold text-muted mb-2 d-block">{{ $t('toolbar.mainNav') }}</label>
-                    <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
-                        :variant="activeTab === 'question' ? null : 'ghost'"
-                        @click="$emit('update:activeTab', 'question')">
-                        <CIcon name="cil-description" class="mr-2" /> {{ $t('toolbar.questions') }}
-                    </CButton>
-                    <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
-                        :variant="activeTab === 'response' ? null : 'ghost'"
-                        @click="$emit('update:activeTab', 'response')">
-                        <CIcon name="cil-chart-pie" class="mr-2" /> {{ $t('toolbar.responses') }}
-                    </CButton>
-                    <CButton class="w-100 mb-2 text-left nav-btn" color="primary"
-                        :variant="activeTab === 'setting' ? null : 'ghost'"
-                        @click="$emit('update:activeTab', 'setting')">
-                        <CIcon name="cil-settings" class="mr-2" /> {{ $t('toolbar.settings') }}
-                    </CButton>
                 </div>
 
                 <!-- Sharing Section (New) -->
@@ -129,15 +108,12 @@
 </template>
 
 <script>
-import ButtonBack from '../../components/Button/ButtonBack.vue';
 import ButtonPreview from '../../components/Button/ButtonPreview.vue';
 
 
 export default {
     name: 'Toolbar',
     components: {
-        ButtonBack,
-        ButtonPreview,
         ButtonPreview
     },
     props: {
@@ -163,7 +139,7 @@ export default {
     computed: {
         formUrl() {
             if (!this.form || !this.form._id) return '';
-            return `${window.location.origin}/forms/${this.form._id}?mode=public`;
+            return `${window.location.origin}/public/forms/${this.form._id}`;
         },
         formTitle() {
             return this.getTitle(this.form.title) || 'Form';
@@ -197,7 +173,7 @@ export default {
         },
         copyLink() {
             if (!this.form || !this.form._id) return;
-            const url = `${window.location.origin}/forms/${this.form._id}?mode=public`;
+            const url = `${window.location.origin}/public/forms/${this.form._id}`;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(() => this.showCopied());
@@ -217,7 +193,7 @@ export default {
         },
         sendEmail() {
             if (!this.form || !this.form._id) return;
-            const url = `${window.location.origin}/forms/${this.form._id}?mode=public`;
+            const url = `${window.location.origin}/public/forms/${this.form._id}`;
             const title = this.getTitle(this.form.title) || 'Form';
             const subject = encodeURIComponent(`Please fill out this form: ${title}`);
             const body = encodeURIComponent(`You can access the form here:\n${url}`);
@@ -272,6 +248,8 @@ export default {
     border-radius: 8px !important;
     padding: 8px 12px !important;
     color: #475569 !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
     transition: all 0.2s ease;
 }
 
@@ -287,6 +265,7 @@ export default {
 .icon-circle {
     width: 32px;
     height: 32px;
+    flex: 0 0 32px;
     border-radius: 8px;
     background: #f8fafc;
     display: flex;

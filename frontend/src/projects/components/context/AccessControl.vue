@@ -126,6 +126,7 @@ export default {
         ...mapGetters('Setting/collaborator', { collaboratorItems: 'item' }),
         ...mapGetters('User', ['users']),
 
+
         userOptions() {
             if (!this.users || !Array.isArray(this.users)) return [];
             return this.users.map(u => ({

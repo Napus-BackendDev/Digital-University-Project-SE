@@ -42,6 +42,10 @@
                         <CIcon name="cil-code" size="sm" class="mr-2 text-primary" />
                         {{ $t('responses.json') }}
                     </CDropdownItem>
+                    <CDropdownItem @click="openApiExport" class="dropdown-item-modern">
+                        <CIcon name="cil-link" size="sm" class="mr-2 text-info" />
+                        API Link
+                    </CDropdownItem>
                 </CDropdown>
             </div>
         </div>
@@ -192,6 +196,26 @@
                 <ResponseTables :responseList="allSubmittedResponses" />
             </div>
         </div>
+
+        <CModal title="Export API Link" :show.sync="showApiExportModal" :closeOnBackdrop="false">
+            <p class="text-muted mb-3">ลิงก์นี้ใช้ดึงผลตอบกลับ JSON ได้โดยตรง และมีผลเพียงลิงก์เดียวต่อฟอร์ม</p>
+            <div v-if="apiExportUrl" class="api-link-box mb-3">
+                <code>{{ apiExportUrl }}</code>
+            </div>
+            <div v-else class="alert alert-info mb-3">
+                กดสร้างลิงก์เพื่อใช้งาน API หากสร้างใหม่ ลิงก์เดิมจะใช้ไม่ได้ทันที
+            </div>
+            <div v-if="apiExportError" class="alert alert-danger mb-3">{{ apiExportError }}</div>
+            <template #footer>
+                <CButton color="secondary" @click="showApiExportModal = false">ปิด</CButton>
+                <CButton v-if="apiExportUrl" color="info" :disabled="apiExportLoading" @click="copyApiExportUrl">
+                    {{ copied ? 'คัดลอกแล้ว' : 'คัดลอกลิงก์' }}
+                </CButton>
+                <CButton color="primary" :disabled="apiExportLoading" @click="rotateApiExportUrl">
+                    {{ apiExportLoading ? 'กำลังสร้าง...' : (apiExportUrl ? 'สุ่มลิงก์ใหม่' : 'สร้างลิงก์ API') }}
+                </CButton>
+            </template>
+        </CModal>
     </div>
 </template>
 
@@ -202,6 +226,7 @@ import * as XLSX from 'xlsx'
 import { CChartBar } from '@coreui/vue-chartjs'
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue'
 import Pagination from '@/projects/components/Util/Pagination.vue'
+import Service from '@/service/api.js'
 
 export default {
     name: 'TabResponses',
@@ -223,6 +248,10 @@ export default {
             loading: false,
             error: null,
             copied: false,
+            showApiExportModal: false,
+            apiExportUrl: '',
+            apiExportLoading: false,
+            apiExportError: '',
         }
     },
     created() {
@@ -233,6 +262,40 @@ export default {
     watch: {
     },
     methods: {
+        openApiExport() {
+            this.showApiExportModal = true;
+            this.apiExportError = '';
+            this.copied = false;
+        },
+        async rotateApiExportUrl() {
+            const formId = this.responses && (this.responses._id || this.responses.id);
+            if (!formId || this.apiExportLoading) return;
+            if (this.apiExportUrl && !window.confirm('เมื่อสุ่มใหม่ ลิงก์ API เดิมจะใช้ไม่ได้ทันที ต้องการดำเนินการต่อหรือไม่?')) return;
+
+            this.apiExportLoading = true;
+            this.apiExportError = '';
+            this.copied = false;
+            try {
+                const result = await Service.response('rotate-export-api', { formId });
+                const token = result && result.data && result.data.data && result.data.data.token;
+                if (!token) throw new Error('Missing export token');
+                const apiBase = process.env.VUE_APP_API_BASE_URL || `${window.location.origin}/api/v1/`;
+                this.apiExportUrl = `${apiBase.replace(/\/$/, '')}/response/export-api/${token}`;
+            } catch (err) {
+                this.apiExportError = 'สร้างลิงก์ API ไม่สำเร็จ กรุณาลองใหม่';
+            } finally {
+                this.apiExportLoading = false;
+            }
+        },
+        async copyApiExportUrl() {
+            if (!this.apiExportUrl) return;
+            try {
+                await navigator.clipboard.writeText(this.apiExportUrl);
+                this.copied = true;
+            } catch (err) {
+                this.apiExportError = 'คัดลอกอัตโนมัติไม่สำเร็จ กรุณาเลือกลิงก์แล้วคัดลอก';
+            }
+        },
         handlePageChange(qId, page) {
             this.$set(this.currentPageMap, qId, page);
         },
@@ -803,6 +866,19 @@ export default {
 </script>
 
 <style scoped>
+.api-link-box {
+    padding: 12px 14px;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.api-link-box code {
+    color: #334155;
+}
+
 .gap-2 {
     gap: 0.5rem;
 }

@@ -3,8 +3,13 @@
     <CToggler in-header class="d-md-down-none" @click="$store.commit('toggle', 'sidebarMinimize')" />
 
     <div class="d-flex align-items-center">
-      <CButton  class="d-flex align-items-center" @click="toggleLang">
-        <CIcon :name="label === 'EN' ? 'cif-gb' : 'cif-th'" class="mr-2"/>
+      <CButton
+        color="light"
+        class="d-flex align-items-center px-3"
+        :aria-label="languageButtonLabel"
+        @click="toggleLanguage"
+      >
+        <CIcon :name="lang === 'en' ? 'cif-gb' : 'cif-th'" class="mr-2" />
         <strong>{{ label }}</strong>
       </CButton>
     </div>
@@ -24,11 +29,11 @@ export default {
     }
   },
   methods: {
-    toggleLang() {
-      const next = this.$i18n.locale === 'en' ? 'th' : 'en'
-      this.$i18n.locale = next
-      localStorage.setItem('lang', next)
-      this.$store.commit('Setting/lang', next)
+    toggleLanguage() {
+      const nextLanguage = this.lang === 'th' ? 'en' : 'th'
+      this.$i18n.locale = nextLanguage
+      this.$store.commit('Setting/lang', nextLanguage)
+      document.documentElement.setAttribute('lang', nextLanguage)
     },
   },
   computed: {
@@ -37,6 +42,9 @@ export default {
     },
     label() {
       return this.lang === 'th' ? 'ไทย' : 'EN'
+    },
+    languageButtonLabel() {
+      return this.lang === 'th' ? 'เปลี่ยนภาษาเป็นอังกฤษ' : 'Switch language to Thai'
     },
   },
 }

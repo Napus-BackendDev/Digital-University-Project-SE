@@ -13,7 +13,7 @@ var objSchema = new Schema({
     },
     organization: {
         type: [{ type: Schema.Types.ObjectId, ref: 'Organizations' }],
-        default: ["69baf8349050b9215c700b96"]
+        default: []
     },
     collaborator: [{
         user: { type: Schema.Types.ObjectId, ref: 'Users' },
@@ -21,6 +21,8 @@ var objSchema = new Schema({
     }],
     settings: {
         collectEmail: { type: Boolean, default: false },
+        languages: { type: [String], default: ['en'] },
+        allowPublicResponses: { type: Boolean, default: false },
         limitResponse: { type: Boolean, default: false },
         emailNotifications: { type: Boolean, default: false },
         emailMessage: { type: String, default: '' },
@@ -30,6 +32,8 @@ var objSchema = new Schema({
         allowedUser: { type: [{ type: Schema.Types.ObjectId, ref: 'Users' }], default: [] }
     },
     responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
+    exportApiTokenHash: { type: String, default: null, select: false, index: true },
+    exportApiTokenCreatedAt: { type: Date, default: null },
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null, index: true },
     creator: { type: Schema.Types.ObjectId, ref: 'Users' },
     status: { type: Schema.Types.ObjectId, ref: 'Setting_Status' },

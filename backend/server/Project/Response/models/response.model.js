@@ -9,7 +9,10 @@ require("../../User/models/user.model");
 
 var objSchema = new Schema(
   {
-    responder: { type: Schema.Types.ObjectId, ref: "Users", required: true },
+    responder: { type: Schema.Types.ObjectId, ref: "Users", default: null },
+    responderEmail: { type: String, default: null, trim: true, lowercase: true },
+    responderName: { type: String, default: null, trim: true },
+    submissionKey: { type: String, default: null },
     form: { type: Schema.Types.ObjectId, ref: "Forms", required: true, index: true },
     answers: [
       {
@@ -22,6 +25,12 @@ var objSchema = new Schema(
   { timestamps: true }
 );
 
+// Atomic protection against concurrent duplicate submissions when a form limits responses.
+objSchema.index(
+  { submissionKey: 1 },
+  { unique: true, partialFilterExpression: { submissionKey: { $type: "string" } } }
+);
+
 // Auto-update Form and User arrays when a new Response is created
 objSchema.post("save", async function (doc, next) {
   try {
@@ -32,7 +41,7 @@ objSchema.post("save", async function (doc, next) {
     await Form.findByIdAndUpdate(doc.form, { $push: { responses: doc._id } });
 
     // Update User's response array
-    await User.findByIdAndUpdate(doc.responder, { $push: { response: doc._id } });
+    if (doc.responder) await User.findByIdAndUpdate(doc.responder, { $push: { response: doc._id } });
 
     next();
   } catch (err) {

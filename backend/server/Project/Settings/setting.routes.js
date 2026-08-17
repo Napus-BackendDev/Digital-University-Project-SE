@@ -8,24 +8,27 @@ const verification = require("./service/verification");
 const question = require("./service/question_type");
 const collaborator = require("./service/controll");
 const emailTemplate = require("./service/emailTemplate");
+const { authenticate, authorize } = require('../../../middleware/authorization');
+
+router.use(authenticate);
 // const auth_message = require("./service/auth_message");
 // const Role = require("../Accounts/service/role");
 // const Authen_Type = require("../Accounts/service/authen_type");
 
-router.get("/group", group.onQuerys);
-router.post("/group", group.onCreate);
-router.put("/group", group.onUpdate);
-router.delete("/group", group.onDelete);
+router.get("/group", authorize('Manage Forms', 'read'), group.onQuerys);
+router.post("/group", authorize('Manage Forms', 'create'), group.onCreate);
+router.put("/group", authorize('Manage Forms', 'update'), group.onUpdate);
+router.delete("/group", authorize('Manage Forms', 'delete'), group.onDelete);
 
-router.get("/message", message.onQuerys);
-router.post("/message", message.onCreate);
-router.put("/message", message.onUpdate);
-router.delete("/message", message.onDelete);
+router.get("/message", authorize('Manage Forms', 'read'), message.onQuerys);
+router.post("/message", authorize('Manage Forms', 'create'), message.onCreate);
+router.put("/message", authorize('Manage Forms', 'update'), message.onUpdate);
+router.delete("/message", authorize('Manage Forms', 'delete'), message.onDelete);
 
-router.get("/status", status.onQuerys);
-router.post("/status", status.onCreate);
-router.put("/status", status.onUpdate);
-router.delete("/status", status.onDelete);
+router.get("/status", authorize('Manage Forms', 'read'), status.onQuerys);
+router.post("/status", authorize('Manage Forms', 'create'), status.onCreate);
+router.put("/status", authorize('Manage Forms', 'update'), status.onUpdate);
+router.delete("/status", authorize('Manage Forms', 'delete'), status.onDelete);
 
 // router.get("/levels", level.onQuerys);
 // router.post("/levels/explorers", level.onCreate);
@@ -33,11 +36,11 @@ router.delete("/status", status.onDelete);
 // router.put("/levels", level.onUpdate);
 // router.delete("/levels", level.onDelete);
 
-router.get("/verification", verification.onQuerys);
-router.post("/verification/explorers", verification.onCreate);
-router.post("/verification", verification.onCreate);
-router.put("/verification", verification.onUpdate);
-router.delete("/verification", verification.onDelete);
+router.get("/verification", authorize('Manage Forms', 'read'), verification.onQuerys);
+router.post("/verification/explorers", authorize('Manage Forms', 'create'), verification.onCreate);
+router.post("/verification", authorize('Manage Forms', 'create'), verification.onCreate);
+router.put("/verification", authorize('Manage Forms', 'update'), verification.onUpdate);
+router.delete("/verification", authorize('Manage Forms', 'delete'), verification.onDelete);
 
 // authen service
 
@@ -57,20 +60,20 @@ router.delete("/verification", verification.onDelete);
 // router.put("/authen/type", Authen_Type.onUpdate);
 // router.delete("/authen/type", Authen_Type.onDelete);
 
-router.get("/question_type", question.onQuerys);
-router.post("/question_type", question.onCreate);
-router.put("/question_type", question.onUpdate);
-router.delete("/question_type", question.onDelete);
+router.get("/question_type", authorize('Manage Forms', 'read'), question.onQuerys);
+router.post("/question_type", authorize('Manage Forms', 'create'), question.onCreate);
+router.put("/question_type", authorize('Manage Forms', 'update'), question.onUpdate);
+router.delete("/question_type", authorize('Manage Forms', 'delete'), question.onDelete);
 
-router.get("/collaborator", collaborator.onQuerys);
-router.post("/collaborator", collaborator.onCreate);
-router.put("/collaborator", collaborator.onUpdate);
-router.delete("/collaborator", collaborator.onDelete);
+router.get("/collaborator", authorize('Manage Forms', 'read'), collaborator.onQuerys);
+router.post("/collaborator", authorize('Manage Forms', 'create'), collaborator.onCreate);
+router.put("/collaborator", authorize('Manage Forms', 'update'), collaborator.onUpdate);
+router.delete("/collaborator", authorize('Manage Forms', 'delete'), collaborator.onDelete);
 
-router.get("/emailTemplate", emailTemplate.onQuerys);
-router.get("/emailTemplate/:id", emailTemplate.onQuery);
-router.post("/emailTemplate", emailTemplate.onCreate);
-router.put("/emailTemplate", emailTemplate.onUpdate);
-router.delete("/emailTemplate", emailTemplate.onDelete);
+router.get("/emailTemplate", authorize('Email', 'read'), emailTemplate.onQuerys);
+router.get("/emailTemplate/:id", authorize('Email', 'read'), emailTemplate.onQuery);
+router.post("/emailTemplate", authorize('Email', 'create'), emailTemplate.onCreate);
+router.put("/emailTemplate", authorize('Email', 'update'), emailTemplate.onUpdate);
+router.delete("/emailTemplate", authorize('Email', 'delete'), emailTemplate.onDelete);
 
 module.exports = router;

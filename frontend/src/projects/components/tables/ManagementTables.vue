@@ -3,6 +3,10 @@
         <FilterTable :searchQuery.sync="searchQuery" :selectedStatus.sync="selectedStatus" :startDate.sync="startDate"
             :endDate.sync="endDate" :managementMode="true" />
 
+        <div class="table-page-size-toolbar">
+            <TablePageSize v-model="itemsPerPage" />
+        </div>
+
         <!-- Table -->
         <CDataTable class="user-tables-container mb-0" :items="tableData" :fields="fields"
             :items-per-page="itemsPerPage" :pagination="false" hover :activePage.sync="activePage"
@@ -174,12 +178,17 @@
             <template #actions="{ item }">
                 <td class="align-middle text-right pr-4">
                     <div class="d-flex align-items-center justify-content-end">
+                        <CButton size="sm" color="dark" variant="ghost" class="p-2 mr-2 action-icon-btn summary-action-btn"
+                            @click.stop="goToResults(item)" v-c-tooltip="$t('table.viewSummary')"
+                            :aria-label="$t('table.viewSummary')">
+                            <CIcon name="cil-chart-line" />
+                        </CButton>
                         <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn"
                             @click.stop="goToPreviewForm(item)" v-c-tooltip="$t('button.preview')" aria-label="Preview">
                             <CIcon name="cil-magnifying-glass" />
                         </CButton>
                         <template v-if="item.canEdit">
-                            <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn"
+                            <CButton size="sm" color="success" variant="ghost" class="p-2 mr-2 action-icon-btn"
                                 @click.stop="goToDuplicationForm(item)" v-c-tooltip="$t('table.duplicate')"
                                 aria-label="Duplicate">
                                 <CIcon name="cil-copy" />
@@ -208,7 +217,6 @@
             </template>
         </CDataTable>
 
-        <!-- Pagination -->
         <Pagination :activePage.sync="activePage" :pages="totalPages" />
     </div>
 </template>
@@ -217,12 +225,13 @@
 import { mapGetters } from 'vuex'
 import moment from 'moment'
 import Pagination from '@/projects/components/Util/Pagination.vue'
+import TablePageSize from '@/projects/components/Util/TablePageSize.vue'
 import FilterTable from '@/projects/components/Filter/FilterTable.vue'
 import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'ManagementTables',
-    components: { Pagination, FilterTable },
+    components: { Pagination, TablePageSize, FilterTable },
     mixins: [localeMixin],
     props: {
         items: {
@@ -254,7 +263,7 @@ export default {
                 { key: 'status', label: this.$t('table.status'), _style: 'width:10%' },
                 { key: 'responses', label: this.$t('table.responses'), _style: 'width:15%' },
                 { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:10%' },
-                { key: 'collaborators', label: 'Collaborators', _style: 'width:12%' },
+                { key: 'collaborators', label: this.$t('editor.settings.access.collaborators'), _style: 'width:12%' },
                 { key: 'actions', label: this.$t('table.actions'), _style: 'width:10%; text-align:right' }
             ]
         },
@@ -592,7 +601,7 @@ export default {
                     const localOrgTitle = orgRef.title.find(t => t && t.key && t.key.toLowerCase() === locale);
                     return localOrgTitle ? localOrgTitle.value : (orgRef.title[0] ? orgRef.title[0].value : null);
                 }
-                return orgRef.name || orgRef.title || orgRef.value || (orgRef._id ? String(orgRef._id) : null);
+                return orgRef.name || orgRef.title || orgRef.value || null;
             }
 
             const orgId = String(orgRef);
@@ -608,7 +617,7 @@ export default {
                 return found.name || found.title || found.value || orgId;
             }
 
-            return orgId;
+            return null;
         },
         getUserName(userRef) {
             if (!userRef) return 'Unknown';
@@ -619,6 +628,13 @@ export default {
         },
         goToEditForm(item) {
             this.$router.push({ name: 'EditorCreateForm', params: { _id: item._id } });
+        },
+        goToResults(item) {
+            this.$router.push({
+                name: 'EditorCreateForm',
+                params: { _id: item._id },
+                query: { step: 'response' }
+            });
         },
         goToDuplicationForm(item) {
             this.$router.push({ name: 'FormFill', params: { id: item._id }, query: { mode: 'duplicate', source: 'internal' } });
@@ -688,12 +704,29 @@ export default {
                 this.deleteForm(this.deleteItem);
                 this.deleteItem = null;
             }
+        },
+        itemsPerPage() {
+            this.activePage = 1;
         }
     }
 }
 </script>
 
 <style scoped>
+.table-page-size-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 0 0.75rem;
+    background: transparent;
+}
+
+@media (max-width: 575.98px) {
+    .table-page-size-toolbar {
+        justify-content: flex-start;
+    }
+}
+
 .user-tables-container {
     background: white;
     border-radius: 1rem;
@@ -923,6 +956,17 @@ export default {
     background-color: #f1f5f9 !important;
     color: #3c4b64 !important;
     transform: translateY(-1px);
+}
+
+.summary-action-btn,
+.summary-action-btn:hover,
+.summary-action-btn:focus {
+    color: #111827 !important;
+}
+
+.summary-action-btn:hover,
+.summary-action-btn:focus {
+    background-color: #e5e7eb !important;
 }
 
 .dropdown-item-custom:hover {

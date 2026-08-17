@@ -19,7 +19,7 @@ const module = {
         emailTemplate
     },
     state: {
-        lang: localStorage.getItem("lang") || "en",
+        lang: getInitialLanguage(),
     },
 
     mutations: {
@@ -49,3 +49,13 @@ const module = {
     },
 };
 export default module;
+
+function getMachineLanguage() {
+    const locale = (navigator.languages?.[0] || navigator.language || 'en').split(/[-_]/)[0].toLowerCase();
+    return ['th', 'en'].includes(locale) ? locale : 'en';
+}
+
+function getInitialLanguage() {
+    const savedLanguage = localStorage.getItem('lang');
+    return ['th', 'en'].includes(savedLanguage) ? savedLanguage : getMachineLanguage();
+}

@@ -146,20 +146,9 @@ export default {
             this.showAlert = false
 
             try {
-                const result = await mockLogin(this.email, this.password)
-
-                // Store authentication data
-                localStorage.setItem('token', result.data.token)
-                localStorage.setItem('user', JSON.stringify(result.data.user))
-
-                // Role-based redirection
-                if (result.data.user.role === 'editor' || result.data.user.role === 'staff') {
-                    this.$router.push('/dashboard/editor/dashboard')
-                } else if (result.data.user.role === 'admin') {
-                    this.$router.push('/dashboard/admin/dashboard')
-                } else {
-                    this.$router.push('/dashboard/user/dashboard')
-                }
+                const result = await this.$store.dispatch('User/login', { email: this.email, password: this.password })
+                if (!result) throw new Error(this.$t('auth.invalidCredentials'))
+                this.$router.push('/forms')
 
             } catch (error) {
                 // Show error notification

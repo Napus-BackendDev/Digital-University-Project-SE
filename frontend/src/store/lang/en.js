@@ -23,6 +23,7 @@ const en = {
     },
 
     table: {
+        itemsPerPage: "Forms per page",
         title: "All Forms",
         access: "Access",
         noForms: "No questionnaires yet. Create one to get started.",
@@ -94,6 +95,9 @@ const en = {
     },
 
     form: {
+        responderEmail: "Email address",
+        responderEmailPlaceholder: "Enter your email address",
+        validEmailRequired: "Please enter a valid email address.",
         yourAnswer: "Your answer",
         submit: "Submit",
         copyForm: "Copy Form",
@@ -129,6 +133,7 @@ const en = {
         save: "Save",
         cancel: "Cancel",
         back: "Back",
+        backToTop: "Back to top",
         preview: "Preview"
     },
 
@@ -298,6 +303,7 @@ const en = {
         image: "Image"
     },
     responses: {
+        description: "View form response summaries and individual results.",
         title: "Response Summary",
         total: "Total Responses",
         summary: "Summary",
@@ -310,6 +316,10 @@ const en = {
         noExportData: "No responses to export."
     },
     builder: {
+        formTitle: "Form title",
+        formTitlePlaceholder: "Enter form title",
+        formDescription: "Form description",
+        formDescriptionPlaceholder: "Enter form description",
         addLanguage: "Add Language",
         shortAnswerPlaceholder: "Short Paragraph Text",
         paragraphPlaceholder: "Long Answer Text",
@@ -377,6 +387,18 @@ const en = {
                 desc: "Send a notification email to form creators/collaborators when a new response is submitted."
             }
         }
+    },
+    flow: {
+        routeLocked: "Locked by answer path",
+        createTitle: "Create Form",
+        createDescription: "Configure, build, and publish the form",
+        steps: { language: "Languages", question: "Build Questions", access: "Access", formSetting: "Form Settings", publish: "Publish" },
+        next: "Next", back: "Back", finish: "Finish", saving: "Saving...", saved: "All changes saved",
+        actionRequired: "Complete at least one action in this step.",
+        languageRequired: "Add at least one language.",
+        questionRequired: "Create at least one question.",
+        language: { title: "Form languages", description: "Select Thai or English instantly, and add unlimited additional languages.", otherLanguages: "Other languages", placeholder: "Language code, e.g. zh, ja", add: "Add language", empty: "Enter a language code.", duplicate: "This language already exists.", minimum: "At least one language is required.", removeConfirm: "Remove {language} from every field in this form?", remove: "Remove language", generic: "Language {language}" },
+        publish: { title: "Publish", description: "Choose who can open and answer this form.", internal: "Internal organization", internalDesc: "Use the user and organization rules configured in Access.", public: "Public", publicDesc: "Anyone with the link can answer without signing in.", copy: "Copy link", copied: "Copied", generateQr: "Generate QR", qrTitle: "Form QR Code", qrDescription: "Scan this QR Code to open and answer the form.", downloadQr: "Download PNG" }
     }
 }
 export default en

@@ -32,8 +32,8 @@
                                     <button class="btn btn-success px-3 d-flex align-items-center shadow-sm" style="height: 40px;" @click="exportXlsx">
                                         <CIcon name="cil-spreadsheet" class="mr-2" /> Export XLSX
                                     </button>
-                                    <button class="btn btn-outline-primary px-3 d-flex align-items-center shadow-sm" style="height: 40px;" @click="downloadJson">
-                                        <CIcon name="cil-code" class="mr-2" /> JSON
+                                    <button class="btn btn-outline-primary px-3 d-flex align-items-center shadow-sm" style="height: 40px;" @click="openApiExport">
+                                        <CIcon name="cil-link" class="mr-2" /> API Link
                                     </button>
                                     <button class="btn btn-outline-danger px-3 d-flex align-items-center shadow-sm" style="height: 40px;" @click="deleteResponse">
                                         <CIcon name="cil-trash" class="mr-1" /> Delete
@@ -106,6 +106,25 @@
                     </div>
                 </CCol>
             </CRow>
+        <CModal title="API Link" :show.sync="showApiExportModal" :closeOnBackdrop="false">
+            <p class="text-muted mb-3">ลิงก์นี้ใช้เปิดผลตอบกลับ JSON ของฟอร์มได้โดยตรง</p>
+            <div v-if="apiExportUrl" class="api-link-box mb-3">
+                <a :href="apiExportUrl" target="_blank" rel="noopener noreferrer">{{ apiExportUrl }}</a>
+            </div>
+            <div v-else class="alert alert-info mb-3">
+                กดสร้างลิงก์ API เพื่อเริ่มใช้งาน
+            </div>
+            <div v-if="apiExportError" class="alert alert-danger mb-3">{{ apiExportError }}</div>
+            <template #footer>
+                <CButton color="secondary" @click="showApiExportModal = false">ปิด</CButton>
+                <CButton v-if="apiExportUrl" color="info" :disabled="apiExportLoading" @click="copyApiExportUrl">
+                    {{ copied ? 'คัดลอกแล้ว' : 'คัดลอกลิงก์' }}
+                </CButton>
+                <CButton color="primary" :disabled="apiExportLoading" @click="rotateApiExportUrl">
+                    {{ apiExportLoading ? 'กำลังสร้าง...' : (apiExportUrl ? 'สุ่มลิงก์ใหม่' : 'สร้างลิงก์ API') }}
+                </CButton>
+            </template>
+        </CModal>
         </div>
         </div>
 </template>
@@ -116,6 +135,7 @@ import moment from 'moment';
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue';
 import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
 import ButtonBack from '@/projects/components/Button/ButtonBack.vue';
+import Service from '@/service/api.js';
 
 export default {
     name: 'ResponseDetail',
@@ -127,7 +147,12 @@ export default {
         return {
             loading: false,
             error: null,
-            response: null
+            response: null,
+            showApiExportModal: false,
+            apiExportUrl: '',
+            apiExportLoading: false,
+            apiExportError: '',
+            copied: false
         };
     },
     computed: {
@@ -212,6 +237,41 @@ export default {
         }
     },
     methods: {
+        openApiExport() {
+            this.showApiExportModal = true;
+            this.apiExportError = '';
+            this.copied = false;
+        },
+        async rotateApiExportUrl() {
+            const form = this.response && this.response.form;
+            const formId = form && (form._id || form.id || (typeof form === 'string' ? form : null));
+            if (!formId || this.apiExportLoading) return;
+            if (this.apiExportUrl && !window.confirm('เมื่อสุ่มใหม่ ลิงก์ API เดิมจะใช้ไม่ได้ทันที ต้องการดำเนินการต่อหรือไม่?')) return;
+
+            this.apiExportLoading = true;
+            this.apiExportError = '';
+            this.copied = false;
+            try {
+                const result = await Service.response('rotate-export-api', { formId });
+                const token = result && result.data && result.data.data && result.data.data.token;
+                if (!token) throw new Error('Missing export token');
+                const apiBase = process.env.VUE_APP_API_BASE_URL || `${window.location.origin}/api/v1/`;
+                this.apiExportUrl = `${apiBase.replace(/\/$/, '')}/response/export-api/${token}`;
+            } catch (err) {
+                this.apiExportError = 'สร้างลิงก์ API ไม่สำเร็จ กรุณาลองใหม่';
+            } finally {
+                this.apiExportLoading = false;
+            }
+        },
+        async copyApiExportUrl() {
+            if (!this.apiExportUrl) return;
+            try {
+                await navigator.clipboard.writeText(this.apiExportUrl);
+                this.copied = true;
+            } catch (err) {
+                this.apiExportError = 'คัดลอกอัตโนมัติไม่สำเร็จ กรุณาเลือกลิงก์แล้วคัดลอก';
+            }
+        },
         getAvatarChar() {
             var name = this.getResponderName();
             return (name ? name.charAt(0) : 'A').toUpperCase();
@@ -460,6 +520,21 @@ export default {
 </script>
 
 <style scoped>
+.api-link-box {
+    padding: 12px 14px;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.api-link-box a {
+    color: #2f6fed;
+    font-family: monospace;
+    text-decoration: underline;
+}
+
 .rounded-20 { border-radius: 20px !important; }
 .rounded-16 { border-radius: 16px !important; }
 .rounded-pill { border-radius: 50rem !important; }

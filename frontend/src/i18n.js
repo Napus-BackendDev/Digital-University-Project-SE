@@ -12,8 +12,8 @@ const messages = {
 }
 
 export default new VueI18n({
-  locale: localStorage.getItem("lang") || getBrowserLocale() || 'en',
-  fallbackLocale: 'en',
+  locale: getInitialLocale(),
+  fallbackLocale: 'th',
   messages,
 })
 
@@ -28,4 +28,14 @@ function getBrowserLocale() {
   }
 
   return navigatorLocale.trim().split(/-|_/)[0]
+}
+
+function getSupportedBrowserLocale() {
+  const locale = getBrowserLocale()
+  return ['th', 'en'].includes(locale) ? locale : 'en'
+}
+
+function getInitialLocale() {
+  const savedLocale = localStorage.getItem('lang')
+  return ['th', 'en'].includes(savedLocale) ? savedLocale : getSupportedBrowserLocale()
 }

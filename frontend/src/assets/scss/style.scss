@@ -7,6 +7,65 @@
 // Import styles with default layout.
 @import "~@coreui/coreui-pro/scss/coreui";
 
+// System-wide button sizing. Keep one visual rhythm across native Bootstrap
+// buttons and CoreUI CButton output while preserving semantic color variants.
+:root {
+  --app-button-height: 40px;
+  --app-button-height-sm: 32px;
+  --app-button-height-lg: 48px;
+  --app-button-radius: 8px;
+}
+
+.btn {
+  height: var(--app-button-height);
+  min-height: var(--app-button-height);
+  padding: 0.5rem 1rem;
+  border-radius: var(--app-button-radius) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  line-height: 1.25;
+  vertical-align: middle;
+}
+
+.btn-sm,
+.btn-group-sm > .btn {
+  height: var(--app-button-height);
+  min-height: var(--app-button-height);
+  padding: 0.5rem 1rem;
+  border-radius: var(--app-button-radius) !important;
+}
+
+.btn-lg,
+.btn-group-lg > .btn {
+  height: var(--app-button-height);
+  min-height: var(--app-button-height);
+  padding: 0.5rem 1rem;
+  border-radius: var(--app-button-radius) !important;
+}
+
+.btn-group > .btn,
+.btn-group-vertical > .btn {
+  min-width: var(--app-button-height);
+}
+
+.btn-group > .btn:not(:first-child),
+.btn-group > .btn:not(:last-child),
+.btn-group-vertical > .btn:not(:first-child),
+.btn-group-vertical > .btn:not(:last-child) {
+  border-radius: var(--app-button-radius) !important;
+}
+
+button:not(.btn) {
+  border-radius: var(--app-button-radius);
+}
+
+.btn .c-icon,
+.btn svg {
+  flex: 0 0 auto;
+}
+
 .header-title {
   font-size: 1.5rem;
 }

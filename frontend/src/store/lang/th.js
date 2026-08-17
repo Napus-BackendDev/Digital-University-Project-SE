@@ -23,6 +23,7 @@ const th = {
     },
 
     table: {
+        itemsPerPage: "จำนวนฟอร์มต่อหน้า",
         title: "ฟอร์มทั้งหมด",
         access: "การเข้าถึง",
         noForms: "ยังไม่มีแบบสอบถาม เริ่มสร้างเพื่อใช้งาน!",
@@ -94,6 +95,9 @@ const th = {
     },
 
     form: {
+        responderEmail: "ที่อยู่อีเมล",
+        responderEmailPlaceholder: "กรอกที่อยู่อีเมลของคุณ",
+        validEmailRequired: "กรุณากรอกที่อยู่อีเมลที่ถูกต้อง",
         yourAnswer: "คำตอบของคุณ",
         submit: "ส่งฟอร์ม",
         copyForm: "คัดลอกฟอร์ม",
@@ -129,6 +133,7 @@ const th = {
         save: "บันทึก",
         cancel: "ยกเลิก",
         back: "ย้อนกลับ",
+        backToTop: "กลับขึ้นด้านบน",
         preview: "ตัวอย่าง"
     },
 
@@ -298,6 +303,7 @@ const th = {
         image: "รูปภาพ"
     },
     responses: {
+        description: "ดูสรุปและรายละเอียดผลการตอบกลับของแบบฟอร์ม",
         title: "สรุปผลการตอบกลับ",
         total: "การตอบกลับทั้งหมด",
         summary: "สรุปผล",
@@ -310,6 +316,10 @@ const th = {
         noExportData: "ไม่มีข้อมูลที่จะส่งออก"
     },
     builder: {
+        formTitle: "หัวข้อแบบฟอร์ม",
+        formTitlePlaceholder: "กรอกหัวข้อแบบฟอร์ม",
+        formDescription: "คำอธิบายแบบฟอร์ม",
+        formDescriptionPlaceholder: "กรอกคำอธิบายแบบฟอร์ม",
         addLanguage: "เพิ่มภาษา",
         shortAnswerPlaceholder: "คำตอบสั้นๆ",
         paragraphPlaceholder: "คำบรรยายยาวๆ",
@@ -377,6 +387,18 @@ const th = {
                 desc: "ส่งอีเมลแจ้งเตือนไปยังผู้สร้างแบบฟอร์มหรือผู้ร่วมจัดการเมื่อมีการตอบกลับใหม่เข้ามา"
             }
         }
+    },
+    flow: {
+        routeLocked: "ล็อกตามเส้นทางคำตอบ",
+        createTitle: "สร้างฟอร์ม",
+        createDescription: "ตั้งค่า สร้างคำถาม และเปิดใช้งานแบบฟอร์ม",
+        steps: { language: "ตั้งค่าภาษา", question: "สร้างคำถาม", access: "ตั้งค่าการเข้าถึง", formSetting: "ตั้งค่าแบบฟอร์ม", publish: "เปิดการใช้งาน" },
+        next: "ถัดไป", back: "ย้อนกลับ", finish: "เสร็จสิ้น", saving: "กำลังบันทึก...", saved: "บันทึกการเปลี่ยนแปลงแล้ว",
+        actionRequired: "กรุณาดำเนินการในขั้นตอนนี้อย่างน้อย 1 รายการ",
+        languageRequired: "กรุณาเพิ่มภาษาอย่างน้อย 1 ภาษา",
+        questionRequired: "กรุณาสร้างคำถามอย่างน้อย 1 ข้อ",
+        language: { title: "ภาษาที่ใช้ในแบบฟอร์ม", description: "เลือกภาษาไทยหรืออังกฤษได้ทันที และเพิ่มภาษาอื่นได้ไม่จำกัดจำนวน", otherLanguages: "ภาษาอื่น", placeholder: "พิมพ์รหัสภาษา เช่น zh, ja", add: "เพิ่มภาษา", empty: "กรุณากรอกรหัสภาษา", duplicate: "มีภาษานี้อยู่แล้ว", minimum: "ต้องมีอย่างน้อย 1 ภาษา", removeConfirm: "ต้องการนำภาษา {language} ออกจากทุกช่องของแบบฟอร์มหรือไม่?", remove: "นำภาษาออก", generic: "ภาษา {language}" },
+        publish: { title: "เปิดการใช้งาน", description: "เลือกกลุ่มผู้ใช้งานที่สามารถเปิดและตอบแบบฟอร์มนี้", internal: "ใช้งานภายในองค์กร", internalDesc: "ใช้กฎผู้ใช้และองค์กรจากขั้นตั้งค่าการเข้าถึง", public: "เปิดเป็นสาธารณะ", publicDesc: "บุคคลภายนอกที่มีลิงก์ตอบได้โดยไม่ต้องเข้าสู่ระบบ", copy: "คัดลอกลิงก์", copied: "คัดลอกแล้ว", generateQr: "สร้าง QR Code", qrTitle: "QR Code สำหรับแบบฟอร์ม", qrDescription: "สแกน QR Code นี้เพื่อเปิดและตอบแบบฟอร์ม", downloadQr: "ดาวน์โหลด PNG" }
     }
 }
 export default th

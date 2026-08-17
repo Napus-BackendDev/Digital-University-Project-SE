@@ -1,8 +1,6 @@
 <template>
     <div class="flex-grow-1">
 
-        <ButtonBack v-if="!isPublicForm" />
-
         <!-- Loading -->
         <div v-if="loading" class="fillform-center text-muted">
             <CSpinner color="secondary" />
@@ -58,12 +56,26 @@
                     </CCardBody>
                 </CCard>
 
+                <CCard v-if="requiresPublicEmail"
+                    class="mb-3 border question-card">
+                    <CCardBody class="p-4">
+                        <label class="question-title mb-2" for="guest-email">
+                            {{ $t('form.responderEmail') }} <span class="text-danger">*</span>
+                        </label>
+                        <CInput id="guest-email" v-model.trim="guestEmail" type="email"
+                            :placeholder="$t('form.responderEmailPlaceholder')" :disabled="isPreviewMode"
+                            :is-valid="guestEmail ? isValidEmail(guestEmail) : null" />
+                    </CCardBody>
+                </CCard>
+
                 <!-- Question Cards -->
                 <transition-group name="fade-slide" tag="div">
                     <CCard v-for="(question, index) in visibleQuestions" :key="convertIdToStr(question._id) || index"
                         v-if="isQuestionVisible(question)" :id="'question-card-' + convertIdToStr(question._id)"
                         class="mb-3"
-                        :class="['question-card border', { 'card-error': errorIds.has(question._id), 'followup-card': isFollowUp(question) }]">
+                        :aria-disabled="isQuestionLocked(question) ? 'true' : 'false'"
+                        :inert="isQuestionLocked(question) ? '' : null"
+                        :class="['question-card border', { 'card-error': errorIds.has(question._id), 'followup-card': isFollowUp(question), 'route-locked-card': isQuestionLocked(question), 'route-target-pulse': activeRouteTargetId === convertIdToStr(question._id) }]">
                         <CCardBody class="p-4">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <p v-if="!isType(question, 'title_description', 'image')"
@@ -74,6 +86,10 @@
                                 <span v-if="hasAnswer(question._id)" class="answered-badge">
                                     <CIcon name="cil-check-circle" size="sm" class="mr-1" />
                                     {{ $t('form.answered') || 'ตอบแล้ว' }}
+                                </span>
+                                <span v-else-if="isQuestionLocked(question)" class="route-locked-badge">
+                                    <CIcon name="cil-lock-locked" size="sm" class="mr-1" />
+                                    {{ $t('flow.routeLocked') }}
                                 </span>
                             </div>
                             <p v-if="!isType(question, 'title_description', 'image')" class="question-title mb-1">
@@ -235,6 +251,10 @@
                     </CButton>
                 </div>
 
+                <div v-if="!isPublicForm" class="form-back-section">
+                    <ButtonBack />
+                </div>
+
             </template>
         </div>
 
@@ -264,6 +284,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import ButtonBack from '../../components/Button/ButtonBack.vue'
+import Service from '@/service/api.js'
 
 export default {
     name: 'Fillform',
@@ -277,6 +298,7 @@ export default {
         return {
             form: null,
             answers: {},
+            activeRouteTargetId: null,
             showModal: false,
             modalTitle: '',
             modalMessage: '',
@@ -293,6 +315,7 @@ export default {
             isNewMode: this.$route.query.new === 'true',
             errorIds: new Set(),
             responderId: null,
+            guestEmail: '',
             isAlreadySubmitted: false, // New state for Limit to One Response
             filePreviewUrlCache: null,
             filePreviewUrls: [],
@@ -301,7 +324,7 @@ export default {
     },
     created() {
         this.filePreviewUrlCache = new WeakMap();
-        if (this.user && this.user._id) {
+        if (!this.isPublicForm && this.user && this.user._id) {
             this.responderId = this.user._id;
         }
     },
@@ -353,6 +376,7 @@ export default {
             }
         },
         async ensureResponderId() {
+            if (this.isPublicForm) return null;
             if (this.user && this.user._id) {
                 this.responderId = this.user._id;
                 this.persistResponderId(this.responderId);
@@ -494,7 +518,9 @@ export default {
             this.isHydrating = true;
             this.error = null;
             try {
-                const data = await this.$store.dispatch('Forms/getById', { _id: this.formId });
+                const data = this.isPublicForm
+                    ? (await Service.form('get-public', { formId: this.formId })).data.data
+                    : await this.$store.dispatch('Forms/getById', { _id: this.formId });
 
                 this.form = {
                     ...data,
@@ -503,7 +529,7 @@ export default {
 
                 // 2. Check for "Limit to One Response" and "Collect Email" requirements
                 const settings = this.form.settings || {};
-                const currentUser = this.user || {};
+                const currentUser = this.isPublicForm ? {} : (this.user || {});
                 const isAdmin = currentUser.role === 'Admin' || currentUser.role === 'SuperAdmin';
                 if (!this.responderId) {
                     const storedResponder = this.loadStoredResponderId();
@@ -554,6 +580,10 @@ export default {
                     init[this.convertIdToStr(q._id)] = isMulti ? [] : null;
                 });
                 this.answers = init;
+                if (this.isPublicForm) {
+                    this.loading = false;
+                    return;
+                }
                 try {
                     // 3. Fetch user responses for this form/responder on load
                     if (!currentResponder) {
@@ -637,7 +667,7 @@ export default {
                 return;
             }
 
-            const currentResponder = this.user?._id || this.responderId || await this.ensureResponderId();
+            const currentResponder = this.isPublicForm ? null : (this.user?._id || this.responderId || await this.ensureResponderId());
             if (!currentResponder) return;
 
             this.isSaving = true;
@@ -1035,6 +1065,43 @@ export default {
             }
             return false;
         },
+        getChoiceNavigation(question) {
+            const choices = question && question.config && Array.isArray(question.config.choices)
+                ? question.config.choices
+                : [];
+            const targets = choices
+                .map(choice => this.convertIdToStr(choice && choice.nextQuestion))
+                .filter(Boolean);
+            if (!targets.length) return null;
+            const answer = this.answers[this.convertIdToStr(question._id)];
+            if (Array.isArray(answer) || answer === null || answer === undefined || answer === '') {
+                return { selectedTarget: null, targets };
+            }
+            const selected = choices.find((choice, index) => String(this.getOptionKey(choice, index)) === String(answer));
+            return {
+                selectedTarget: this.convertIdToStr(selected && selected.nextQuestion),
+                targets
+            };
+        },
+        isQuestionLocked(question) {
+            if (!this.form || !Array.isArray(this.form.questions) || !question) return false;
+            const questions = this.visibleQuestions || [];
+            const questionId = this.convertIdToStr(question._id);
+            const questionIndex = questions.findIndex(item => this.convertIdToStr(item._id) === questionId);
+            if (questionIndex < 0) return false;
+
+            for (let sourceIndex = 0; sourceIndex < questions.length; sourceIndex++) {
+                const navigation = this.getChoiceNavigation(questions[sourceIndex]);
+                if (!navigation || !navigation.selectedTarget) continue;
+                const selectedTarget = navigation.selectedTarget;
+                const otherTargets = navigation.targets.filter(target => target !== selectedTarget && target !== 'submit');
+                if (otherTargets.includes(questionId)) return true;
+                if (selectedTarget === 'submit' && questionIndex > sourceIndex) return true;
+                const targetIndex = questions.findIndex(item => this.convertIdToStr(item._id) === selectedTarget);
+                if (targetIndex > sourceIndex && questionIndex > sourceIndex && questionIndex < targetIndex) return true;
+            }
+            return false;
+        },
         async duplicateForm() {
             if (!this.form) return;
             this.submitting = true;
@@ -1090,6 +1157,8 @@ export default {
 
         async submitForm() {
             const missing = (this.form.questions || []).filter(q => {
+                if (this.isType(q, 'title_description', 'image')) return false;
+                if (this.isQuestionLocked(q)) return false;
                 const isGlobalRequired = !!(
                     (this.form && this.form.settings && this.form.settings.requireResponse) ||
                     (this.form && this.form.requireResponse)
@@ -1108,9 +1177,18 @@ export default {
             }
             this.errorIds = new Set();
 
-            const currentResponder = this.user?._id || this.responderId || await this.ensureResponderId();
+            const requiresGuestEmail = this.requiresPublicEmail;
+            if (requiresGuestEmail && !this.isValidEmail(this.guestEmail)) {
+                this.modalTitle = this.$t('common.error');
+                this.modalMessage = this.$t('form.validEmailRequired');
+                this.modalType = 'error';
+                this.showModal = true;
+                return;
+            }
 
-            if (!currentResponder) {
+            const currentResponder = this.isPublicForm ? null : (this.user?._id || this.responderId || await this.ensureResponderId());
+
+            if (!this.isPublicForm && !currentResponder) {
                 this.modalTitle = this.$t('form.notAuthenticated');
                 this.modalMessage = this.$t('form.loginRequired');
                 this.modalType = 'error';
@@ -1121,9 +1199,10 @@ export default {
             this.submit = true;
             this.submitting = true;
             try {
-                const currentResponder = this.user?._id || this.responderId || await this.ensureResponderId();
+                const currentResponder = this.isPublicForm ? null : (this.user?._id || this.responderId || await this.ensureResponderId());
                 const createPayload = {
                     responder: currentResponder,
+                    responderEmail: this.isPublicForm ? this.guestEmail : null,
                     form: this.form._id,
                     answers: Object.entries(this.answers).map(([question, response]) => ({ question, response }))
                 };
@@ -1174,6 +1253,9 @@ export default {
             this.showModal = false;
             this.$router.back();
         },
+        isValidEmail(value) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+        },
         hasAnswer(questionId) {
             const ans = this.answers[this.convertIdToStr(questionId)];
             if (Array.isArray(ans)) return ans.length > 0;
@@ -1210,6 +1292,20 @@ export default {
 
                 if (targetId) {
                     const targetIdStr = this.convertIdToStr(targetId);
+                    const hasConditionalRoute = !!this.getChoiceNavigation(question);
+                    if (hasConditionalRoute) {
+                        this.visibleQuestions.forEach(item => {
+                            if (!this.isQuestionLocked(item)) return;
+                            const lockedId = this.convertIdToStr(item._id);
+                            if (this.hasAnswer(lockedId)) this.$set(this.answers, lockedId, null);
+                        });
+                    }
+                    if (hasConditionalRoute && targetIdStr !== 'submit') {
+                        this.activeRouteTargetId = targetIdStr;
+                        window.setTimeout(() => {
+                            if (this.activeRouteTargetId === targetIdStr) this.activeRouteTargetId = null;
+                        }, 1200);
+                    }
                     if (targetIdStr === 'submit') {
                         const submitSection = document.getElementById('submit-section');
                         if (submitSection) submitSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1232,11 +1328,16 @@ export default {
             return this.$route.query.mode === 'preview' || this.$route.name === 'Preview';
         },
         isPublicForm() {
+            if (this.$route.name === 'PublicForm') return true;
             const isInternalMode = ['preview', 'duplicate'].includes(this.$route.query.mode);
             const isInternalSource = this.$route.query.source === 'internal';
             const isPreviewRoute = this.$route.name === 'Preview';
 
             return this.$route.name === 'FormFill' && !isInternalMode && !isInternalSource && !isPreviewRoute;
+        },
+        requiresPublicEmail() {
+            const settings = this.form && this.form.settings || {};
+            return this.isPublicForm && (settings.collectEmail || settings.limitResponse);
         },
         isFirstTime() {
             return !this.draftResponseId;
@@ -1333,7 +1434,7 @@ export default {
         isLoginRequired() {
             const settings = this.form?.settings || {};
             const currentResponder = this.user?._id || this.responderId;
-            return settings.collectEmail && !currentResponder && !this.isPreviewMode;
+            return !this.isPublicForm && settings.collectEmail && !currentResponder && !this.isPreviewMode;
         }
     },
     watch: {
@@ -1364,8 +1465,7 @@ export default {
 
 .fillform-body {
     margin: 28px auto;
-    padding: 0 16px 50vh;
-    /* Allow enough space for any question to be centered */
+    padding: 0 16px 32px;
 }
 
 .fillform-center {
@@ -1668,6 +1768,38 @@ export default {
     background: #ffffff;
     border: 1px solid #eef3f8;
     box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03);
+}
+
+.route-locked-card {
+    border-style: dashed !important;
+    background: #f1f5f9 !important;
+    filter: grayscale(.25);
+}
+
+.route-locked-card .card-body {
+    opacity: .58;
+    cursor: not-allowed;
+}
+
+.route-locked-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.route-target-pulse {
+    animation: routeTargetPulse 1.1s ease-out;
+}
+
+@keyframes routeTargetPulse {
+    0% { transform: translateY(14px); box-shadow: 0 0 0 0 rgba(139, 31, 27, .38); }
+    45% { transform: translateY(0); box-shadow: 0 0 0 7px rgba(139, 31, 27, .16); }
+    100% { transform: translateY(0); box-shadow: 0 4px 18px rgba(15, 23, 42, .03); }
 }
 
 .followup-card {

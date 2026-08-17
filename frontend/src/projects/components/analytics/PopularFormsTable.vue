@@ -142,7 +142,7 @@ export default {
                         const found = this.organizations.find(x => String(x._id) === String(o));
                         if (found) orgObj = found;
                     }
-                    if (typeof orgObj === 'string') return orgObj;
+                    if (typeof orgObj === 'string') return null;
                     if (typeof orgObj === 'object') {
                         if (Array.isArray(orgObj.title)) {
                             const locale = this.$i18n.locale.toLowerCase();

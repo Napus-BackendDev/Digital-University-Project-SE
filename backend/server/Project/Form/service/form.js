@@ -4,6 +4,23 @@ const User = require('../../User/controller/user');
 const ResMessage = require("../../Settings/service/message");
 const { maybeSendCollaborationInvites } = require('../../Email/service/collaboration');
 const { maybeSendOrganizationInvites } = require('../../Email/service/inviteOrganization');
+const FormModel = require('../models/form.model');
+
+exports.onQueryPublic = async function (request, response) {
+    try {
+        const id = String(request.params.id || '');
+        if (!/^[a-f\d]{24}$/i.test(id)) return response.status(404).json({ success: false, message: 'Public form not found' });
+        const doc = await FormModel.findOne({ _id: id, 'settings.allowPublicResponses': true })
+            .select('title description questions schedule settings organization')
+            .populate({ path: 'questions', populate: { path: 'type', select: 'type' } })
+            .lean();
+        if (!doc) return response.status(404).json({ success: false, message: 'This form is not open to the public' });
+        response.set('Cache-Control', 'no-store');
+        return response.status(200).json({ success: true, data: doc });
+    } catch (err) {
+        return response.status(500).json({ success: false, message: 'Could not load public form' });
+    }
+};
 
 exports.checkAccess = async function (request, response) {
     try {

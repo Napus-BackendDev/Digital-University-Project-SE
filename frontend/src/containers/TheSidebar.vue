@@ -191,7 +191,8 @@ export default {
                 });
             }
         },
-        logout() {
+        async logout() {
+            await this.$store.dispatch('User/logout');
             window.localStorage.removeItem('activeUserId');
             this.$router.push('/pages/login')
         },

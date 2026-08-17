@@ -5,6 +5,7 @@
                 <div>
                     <!-- ── Form Title  ── -->
                     <div class="mb-3">
+                        <label class="form-meta-label">{{ $t('builder.formTitle') }}</label>
                         <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
                             class="d-flex align-items-center mb-1">
                             <div class="lang-key-wrapper flex-shrink-0 mr-2">
@@ -34,8 +35,8 @@
                                 </div>
                             </div>
                             <CInput class="form-title-input flex-grow-1 border-bottom mb-0" v-model="titleItem.value"
-                                @change="updateFormMeta" />
-                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                :placeholder="$t('builder.formTitlePlaceholder')" @change="updateFormMeta" />
+                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0 language-row-remove"
                                 v-if="form.title && form.title.length > 1" @click="removeFormTitle(tIdx)">
                                 <CIcon name="cil-minus" />
                             </CButton>
@@ -48,6 +49,7 @@
 
                     <!-- ── Form Description ── -->
                     <div>
+                        <label class="form-meta-label">{{ $t('builder.formDescription') }}</label>
                         <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
                             class="d-flex align-items-start mb-1">
                             <div class="lang-key-wrapper flex-shrink-0 mr-2">
@@ -78,8 +80,8 @@
                                 </div>
                             </div>
                             <CTextarea class="form-desc-input flex-grow-1 border-bottom mb-0" v-model="descItem.value"
-                                @change="updateFormMeta" rows="2" />
-                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                :placeholder="$t('builder.formDescriptionPlaceholder')" @change="updateFormMeta" rows="2" />
+                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0 language-row-remove"
                                 v-if="form.description && form.description.length > 1" @click="removeFormDesc(dIdx)">
                                 <CIcon name="cil-minus" />
                             </CButton>
@@ -137,7 +139,7 @@
                                     </div>
                                     <CInput class="flex-grow-1 mb-0" v-model="titleItem.value"
                                         @change="updateQuestionTitle(question)" style="background-color: #f8fafc;" />
-                                    <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0"
+                                    <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0 language-row-remove"
                                         v-if="question.title && question.title.length > 1"
                                         @click="removeTitle(question, titleIndex)">
                                         <CIcon name="cil-minus" />
@@ -213,7 +215,7 @@
                                             </div>
                                             <CInput class="flex-grow-1 mb-0" v-model="lang.value"
                                                 @input="(e) => updateOption(question, choiceIndex, li, e)" />
-                                            <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0"
+                                            <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0 language-row-remove"
                                                 v-if="choice.lang && choice.lang.length > 1"
                                                 @click="removeOptionLanguage(question, choiceIndex, li)">
                                                 <CIcon name="cil-minus" />
@@ -223,7 +225,7 @@
 
 
                                     <CButton color="danger" variant="ghost" size="sm" class="ml-1 mb-1"
-                                        v-if="question.config && question.config.choices && question.config.choices.length > 1 && (!choice.lang || choice.lang.length <= 1)"
+                                        v-if="question.config && question.config.choices && question.config.choices.length > 1"
                                         @click="removeOption(question, choiceIndex)">
                                         <CIcon name="cil-minus" />
                                     </CButton>
@@ -398,7 +400,7 @@
                                 </div>
                                 <CTextarea class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
                                     rows="2" />
-                                <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0 language-row-remove"
                                     v-if="question.config && question.config.description && question.config.description.length > 1"
                                     @click="removeConfigDesc(question, dIdx)">
                                     <CIcon name="cil-minus" />
@@ -768,6 +770,16 @@ export default {
         }
     },
     methods: {
+        getFormLanguages() {
+            const languages = this.form && this.form.settings && this.form.settings.languages;
+            return Array.isArray(languages) && languages.length ? languages : ['en'];
+        },
+        localizedValues(thValue, enValue) {
+            return this.getFormLanguages().map(key => ({
+                key,
+                value: key === 'th' ? thValue : enValue
+            }));
+        },
         resolveImageUrl(value) {
             if (!value || typeof value !== 'string') return '';
             if (value.startsWith('data:') || value.startsWith('http://') || value.startsWith('https://')) {
@@ -1080,7 +1092,7 @@ export default {
 
             const config = {
                 choices: (isMultipleChoice || isCheckboxes)
-                    ? [{ key: '0', lang: [{ key: 'en', value: 'Option 1' }] }]
+                    ? [{ key: '0', lang: this.localizedValues('ตัวเลือก 1', 'Option 1') }]
                     : [],
                 allowMultipleSelect: isCheckboxes,
                 maxRating: isRating ? 5 : null,
@@ -1089,12 +1101,12 @@ export default {
                 maxFileSize: isFileUpload ? 1 : null,
                 fileTypes: isFileUpload ? ['image', 'pdf', 'doc'] : [],
                 image: null,
-                description: isTitleDescription ? [{ key: 'en', value: 'Description' }] : [],
+                description: isTitleDescription ? this.localizedValues('คำอธิบาย', 'Description') : [],
             };
 
             const payload = {
                 form: this.form && this.form._id ? this.form._id : undefined,
-                title: [{ key: 'en', value: 'Untitled Question' }],
+                title: this.localizedValues('คำถามไม่มีชื่อ', 'Untitled Question'),
                 order: this.localQuestions.length + 1,
                 type: foundType._id,
                 isRequired: false,
@@ -1188,7 +1200,7 @@ export default {
             if (!question.config) this.$set(question, 'config', {});
 
             if ((isMultipleChoice || isCheckboxes) && (!Array.isArray(question.config.choices) || question.config.choices.length === 0)) {
-                this.$set(question.config, 'choices', [{ key: '0', lang: [{ key: 'en', value: 'Option 1' }] }]);
+                this.$set(question.config, 'choices', [{ key: '0', lang: this.localizedValues('ตัวเลือก 1', 'Option 1') }]);
             }
             if (isRating && (typeof question.config.maxRating !== 'number' || isNaN(question.config.maxRating))) {
                 this.$set(question.config, 'maxRating', 5);
@@ -1203,7 +1215,7 @@ export default {
             const isTitleDescription = foundType.type === 'title_description';
             if (isTitleDescription) {
                 if (!Array.isArray(question.config.description) || question.config.description.length === 0)
-                    this.$set(question.config, 'description', [{ key: 'en', value: 'Description' }]);
+                    this.$set(question.config, 'description', this.localizedValues('คำอธิบาย', 'Description'));
             }
 
             if (isImage) {
@@ -1343,9 +1355,9 @@ export default {
             if (!question) return;
             if (!question.config) this.$set(question, 'config', {});
             if (!Array.isArray(question.config.choices)) {
-                this.$set(question.config, 'choices', [{ key: "0", lang: [{ key: 'en', value: '' }] }]);
+                this.$set(question.config, 'choices', [{ key: "0", lang: this.localizedValues('', '') }]);
             } else {
-                question.config.choices.push({ key: String(question.config.choices.length), lang: [{ key: '', value: '' }] });
+                question.config.choices.push({ key: String(question.config.choices.length), lang: this.localizedValues('', '') });
             }
             this.putQuestion(question);
         },
@@ -1537,6 +1549,14 @@ export default {
 </script>
 
 <style scoped>
+.form-meta-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #3c4b64;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
 .image-drop-zone {
     position: relative;
     width: 100%;
@@ -1580,6 +1600,17 @@ export default {
 
 .lang-key-dropdown .dropdown-toggle::after {
     display: none;
+}
+
+.lang-key-dropdown,
+.manual-lang-input {
+    pointer-events: none;
+}
+
+.manual-lang-input .text-danger,
+.language-row-remove,
+.add-lang-btn {
+    display: none !important;
 }
 
 .lang-key-input>>>input {
@@ -1637,9 +1668,7 @@ export default {
 }
 
 .add-lang-btn {
-    background: rgba(250, 251, 255, 0.816);
-    color: #0ea5e9;
-    border: 1px solid rgba(153, 211, 255, 0.289);
+    display: none !important;
 }
 
 .add-option-btn {

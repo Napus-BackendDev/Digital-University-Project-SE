@@ -120,6 +120,8 @@ const module = {
                 const formData = new FormData();
                 formData.append('responder', data.responder);
                 formData.append('form', data.form);
+                if (data.responderEmail) formData.append('responderEmail', data.responderEmail);
+                if (data.responderName) formData.append('responderName', data.responderName);
                 formData.append('submit', String(!!data.submit));
 
                 const files = [];
@@ -158,6 +160,8 @@ const module = {
                 payload = {
                     responder: data.responder,
                     form: data.form,
+                    responderEmail: data.responderEmail || null,
+                    responderName: data.responderName || null,
                     submit: !!data.submit,
                     answers: (data.answers || []).map(ans => ({
                         question: ans.question,
@@ -186,6 +190,8 @@ const module = {
                 const formData = new FormData();
                 formData.append('responder', data.responder);
                 formData.append('form', data.form);
+                if (data.responderEmail) formData.append('responderEmail', data.responderEmail);
+                if (data.responderName) formData.append('responderName', data.responderName);
                 if (data._id) formData.append('_id', data._id);
                 if (typeof data.submit !== 'undefined') {
                     formData.append('submit', String(!!data.submit));

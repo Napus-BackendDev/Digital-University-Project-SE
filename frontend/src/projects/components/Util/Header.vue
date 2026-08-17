@@ -12,11 +12,11 @@
                         <transition name="fade" mode="out-in">
                             <div v-if="isSaving" key="saving" class="saving-indicator d-flex align-items-center">
                                 <CSpinner size="sm" color="primary" class="mr-2" style="width: 1rem; height: 1rem;" />
-                                <span class="text-primary font-weight-bold small">Saving...</span>
+                                <span class="text-primary font-weight-bold small">{{ $t('flow.saving') }}</span>
                             </div>
                             <div v-else-if="isSaved" key="saved" class="saved-indicator d-flex align-items-center">
                                 <CIcon name="cil-check-circle" size="sm" class="mr-2 text-success" />
-                                <span class="text-success font-weight-bold small">All changes saved</span>
+                                <span class="text-success font-weight-bold small">{{ $t('flow.saved') }}</span>
                             </div>
                         </transition>
                     </div>
@@ -91,6 +91,7 @@ export default {
                     responses: [],
                     creator: this.user?._id,
                     settings: {
+                        languages: ['en'],
                         startDateTime: '',
                         endDateTime: '',
                         collectEmail: false,
@@ -104,7 +105,7 @@ export default {
 
                 const response = await this.$store.dispatch('Forms/create', newFormData)
                 const id = response.data.data._id
-                this.$router.push({ name: 'EditorCreateForm', params: { _id: id } })
+                this.$router.push({ name: 'EditorCreateForm', params: { _id: id }, query: { step: 'language', flow: 'new' } })
             } catch (error) {
                 console.error('Failed to create form:', error)
             } finally {
