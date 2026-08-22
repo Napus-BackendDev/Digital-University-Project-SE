@@ -5,11 +5,22 @@ var cfg = require('../config/config');
 var resMsg = require('../config/message');
 var mongodb = null;
 
+function getRedactedMongoURI(uri) {
+    try {
+        const parsed = new URL(uri);
+        if (parsed.username) parsed.username = '***';
+        if (parsed.password) parsed.password = '***';
+        return parsed.toString();
+    } catch (error) {
+        return '[configured]';
+    }
+}
+
 exports.init = async function (callback) {
     try {
         mongoose.Promise = global.Promise;
 
-        console.log("MongoURI:", cfg.mongoURI);
+        console.log("MongoURI:", getRedactedMongoURI(cfg.mongoURI));
 
         await mongoose.connect(cfg.mongoURI);
 

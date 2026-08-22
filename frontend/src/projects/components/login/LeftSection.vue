@@ -75,16 +75,9 @@
                     </div>
                 </div>
 
-                <!-- Google login button -->
-                <CButton type="button" size="lg" variant="outline"
-                    class="d-flex align-items-center justify-content-center py-2 w-50 mx-auto"
-                    @click="handleGoogleLogin" :disabled="isLoading"
-                    style="background-color: #E5E5E5; border-color: #E5E5E5; color: #171717;">
-                    <!-- Google logo icon -->
-                    <img src="/google-icon-logo-svgrepo-com.svg" alt="Google Logo" width="18" height="18"
-                        class="mr-2" />
-                    <span>Google</span>
-                </CButton>
+                <div class="d-flex justify-content-center">
+                    <div ref="googleButton"></div>
+                </div>
             </CForm>
         </CCardBody>
     </CContainer>
@@ -106,7 +99,8 @@ import {
 
 
 import { cilLockUnlocked, cilLockLocked } from '@coreui/icons'
-import { mockLogin, mockGoogleLogin } from '../../../mock/users'
+import api from '@/service/api'
+import { mockLogin } from '../../../mock/users'
 
 export default {
     name: 'LeftSection',
@@ -133,7 +127,58 @@ export default {
             cilLockLocked                
         }
     },
+    mounted() {
+        this.renderGoogleButton()
+    },
     methods: {
+        loadGoogleIdentityScript() {
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+                return Promise.resolve()
+            }
+
+            return new Promise((resolve, reject) => {
+                const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]')
+                if (existingScript) {
+                    existingScript.addEventListener('load', resolve, { once: true })
+                    existingScript.addEventListener('error', reject, { once: true })
+                    return
+                }
+
+                const script = document.createElement('script')
+                script.src = 'https://accounts.google.com/gsi/client'
+                script.async = true
+                script.defer = true
+                script.onload = resolve
+                script.onerror = () => reject(new Error('Could not load Google Sign-In'))
+                document.head.appendChild(script)
+            })
+        },
+
+        async renderGoogleButton() {
+            try {
+                const clientId = process.env.VUE_APP_GOOGLE_CLIENT_ID
+                if (!clientId) {
+                    throw new Error('Google client ID is not configured')
+                }
+
+                await this.loadGoogleIdentityScript()
+                window.google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: this.handleGoogleCredential,
+                })
+                window.google.accounts.id.renderButton(this.$refs.googleButton, {
+                    type: 'standard',
+                    theme: 'outline',
+                    size: 'large',
+                    text: 'continue_with',
+                    shape: 'rectangular',
+                    width: 220,
+                })
+            } catch (error) {
+                this.errorMessage = error.message || 'Google login failed'
+                this.showAlert = true
+            }
+        },
         
         togglePasswordVisibility() {
             this.showPassword = !this.showPassword
@@ -166,22 +211,27 @@ export default {
         },
 
        
-        async handleGoogleLogin() {
+        async handleGoogleCredential(response) {
             this.isLoading = true
             this.errorMessage = ''
             this.showAlert = false
             try {
-                const result = await mockGoogleLogin()
+                const credential = response && response.credential
+
+                if (!credential) {
+                    throw new Error('Google did not return an ID token')
+                }
+
+                const result = await api.auth('google', { credential })
 
                 // Store authentication data
-                localStorage.setItem('token', result.data.token)
                 localStorage.setItem('user', JSON.stringify(result.data.user))
 
-                // Redirect to user dashboard
-                this.$router.push('/dashboard/user/dashboard')
+                // Redirect to the main app after the backend creates the session cookie
+                this.$router.push('/forms')
             } catch (error) {
                 // Show error notification
-                this.errorMessage = error.message || 'Google login failed'
+                this.errorMessage = error.response?.data?.message || error.message || 'Google login failed'
                 this.showAlert = true
             } finally {
                 this.isLoading = false

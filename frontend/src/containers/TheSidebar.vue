@@ -49,6 +49,15 @@
                         </div>
                     </template>
                 </v-select>
+                <CButton
+                    v-else
+                    color="link"
+                    class="p-0 text-white"
+                    :title="$t('nav.logout')"
+                    @click="logout"
+                >
+                    <CIcon name="cil-account-logout" />
+                </CButton>
             </div>
         </CSidebarFooter>
     </CSidebar>
@@ -71,7 +80,11 @@ export default {
         }
     },
     async created() {
-        if (!this.isUserSwitcherEnabled) return;
+        if (!this.isUserSwitcherEnabled) {
+            await this.loadCurrentProfile();
+            return;
+        }
+
         try {
             const res = await api.user('exp');
             const data = res && res.data && res.data.data;
@@ -110,6 +123,23 @@ export default {
         }
     },
     methods: {
+        async loadCurrentProfile() {
+            try {
+                const res = await api.auth('me');
+                const user = res && res.data && res.data.user;
+                if (user) {
+                    this.$store.commit('User/user', user);
+                    window.localStorage.setItem('user', JSON.stringify(user));
+                }
+            } catch (e) {
+                this.$store.commit('User/user', null);
+                window.localStorage.removeItem('user');
+                window.localStorage.removeItem('activeUserId');
+                if (this.$route.path !== '/pages/login') {
+                    this.$router.push('/pages/login');
+                }
+            }
+        },
         isActive(path) {
             const currentPath = this.$route.path.split('/')
             return currentPath.includes(path)
@@ -130,15 +160,22 @@ export default {
         },
         canReadPage(pageName) {
             const role = this.user.role;
-            const permission = this.getPagePermission(pageName);
             const roleTitle = this.getRoleTitle(role).toLowerCase();
 
-            if (!permission) {
-                return roleTitle === 'admin' || !role || !Array.isArray(role.permission) || role.permission.length === 0;
-            }
-
+            // Admin always has full access
             if (roleTitle === 'admin') {
                 return true;
+            }
+
+            // Everyone should be able to see the Forms page by default
+            if (pageName === 'Forms') {
+                return true;
+            }
+
+            // Otherwise, check explicit permissions
+            const permission = this.getPagePermission(pageName);
+            if (!permission) {
+                return false;
             }
 
             const readAccess = Array.isArray(permission.access)
@@ -193,6 +230,7 @@ export default {
         },
         async logout() {
             await this.$store.dispatch('User/logout');
+            window.localStorage.removeItem('user');
             window.localStorage.removeItem('activeUserId');
             this.$router.push('/pages/login')
         },

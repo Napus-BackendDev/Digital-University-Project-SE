@@ -31,7 +31,6 @@ const router = new Router({
     mode: 'history',
     scrollBehavior: () => ({ y: 0 }),
     routes: [
-
         {
             path: '/public/forms/:id',
             name: 'PublicForm',
@@ -44,11 +43,13 @@ const router = new Router({
             redirect: 'forms',
             name: 'Home',
             component: TheContainer,
+            meta: { requiresAuth: true },
             children: [
                 {
                     path: 'forms',
                     name: 'Forms',
-                    component: Forms
+                    component: Forms,
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: 'forms/:id',
@@ -59,12 +60,14 @@ const router = new Router({
                 {
                     path: 'manage',
                     name: 'ManageForms',
-                    component: ManageForms
+                    component: ManageForms,
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: 'manage/:_id',
                     name: 'EditorCreateForm',
-                    component: CreateForm
+                    component: CreateForm,
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: 'preview/:id',
@@ -76,50 +79,55 @@ const router = new Router({
                     path: 'response/:id',
                     name: 'Response',
                     component: Response,
+                    meta: { requiresAuth: true },
                     props: true
                 },
                 {
                     path: 'analytics',
                     name: 'Analytics',
-                    component: Analytics
+                    component: Analytics,
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: 'permissions',
                     name: 'Permissions',
-                    component: Permission
+                    component: Permission,
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: 'email',
                     name: 'Email',
-                    component: Email
+                    component: Email,
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: 'email/:id',
                     name: 'EmailDetail',
                     component: EmailDetail,
+                    meta: { requiresAuth: true },
                     props: true
                 }
             ]
         },
 
-    {
-      path: '/pages',
-      redirect: '/pages/404',
-      name: 'Pages',
-      component: {
-        render(c) {
-          return c('router-view')
-        }
-      },
-      children: [
         {
-          path: 'login',
-          name: 'Login',
-          component: Login
+            path: '/pages',
+            redirect: '/pages/404',
+            name: 'Pages',
+            component: {
+                render(c) {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: 'login',
+                    name: 'Login',
+                    component: Login
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 })
 
 const routePages = {

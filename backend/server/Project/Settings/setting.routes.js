@@ -9,11 +9,11 @@ const question = require("./service/question_type");
 const collaborator = require("./service/controll");
 const emailTemplate = require("./service/emailTemplate");
 const { authenticate, authorize } = require('../../../middleware/authorization');
-
-router.use(authenticate);
 // const auth_message = require("./service/auth_message");
 // const Role = require("../Accounts/service/role");
 // const Authen_Type = require("../Accounts/service/authen_type");
+
+router.use(authenticate);
 
 router.get("/group", authorize('Manage Forms', 'read'), group.onQuerys);
 router.post("/group", authorize('Manage Forms', 'create'), group.onCreate);

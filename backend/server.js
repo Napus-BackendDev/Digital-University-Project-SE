@@ -8,15 +8,7 @@ var fs = require('fs');
 var cfg = require('./config/config');
 
 
-// Load demo ejs for test Oauth
-app.set('view engine', 'ejs');
 
-app.get('/', (req, res) => {
-    res.render('index');
-});
-app.get('/oauth', (req, res) => {
-    res.render('login');
-});
 
 
 /**

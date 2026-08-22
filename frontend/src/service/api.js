@@ -13,6 +13,18 @@ instance.defaults.headers = {
 }
 
 export default {
+  auth(method, data) {
+    switch (method) {
+      case 'google':
+        return instance.post('auth/google', data)
+      case 'me':
+        return instance.get('auth/me')
+      case 'logout':
+        return instance.post('auth/logout')
+      default:
+        break
+    }
+  },
 
   auth(method, data) {
     switch (method) {

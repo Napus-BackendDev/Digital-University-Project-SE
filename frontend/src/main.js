@@ -27,14 +27,6 @@ import localeMixin from './mixins/localeMixin'
 Vue.mixin(localeMixin)
 
 
-import GAuth from 'vue-google-oauth2'
-const gauthOption = {
-  clientId: process.env.VUE_APP_CLIENTID,
-  scope: process.env.VUE_APP_SCOPE,
-  prompt: process.env.VUE_APP_PROMPT
-}
-Vue.use(GAuth, gauthOption)
-
 new Vue({
   el: '#app',
   router,
