@@ -7,6 +7,10 @@
 // Import styles with default layout.
 @import "~@coreui/coreui-pro/scss/coreui";
 
+body, button, input, select, textarea, .c-app {
+  font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
 .header-title {
   font-size: 1.5rem;
 }
@@ -167,3 +171,80 @@
 //    padding-bottom: 0;
 //  }
 //}
+
+
+/* ========================================================
+   LIGHT-THEMED SIDEBAR STYLING
+   ======================================================== */
+.c-sidebar,
+.c-sidebar.c-sidebar-light,
+.c-sidebar.c-sidebar-dark {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04) !important;
+
+  .c-sidebar-brand {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border-bottom: 1px solid #edf2f7 !important;
+
+    .brand-title {
+      color: #0f172a !important;
+    }
+    .brand-subtitle {
+      color: #8c1515 !important;
+    }
+  }
+
+  .c-sidebar-nav {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .c-sidebar-nav-item {
+    margin: 3px 10px;
+  }
+
+  .c-sidebar-nav-link {
+    color: #475569 !important;
+    background-color: transparent !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    transition: all 0.18s ease !important;
+
+    .c-sidebar-nav-icon {
+      color: #64748b !important;
+      transition: color 0.18s ease !important;
+    }
+
+    &:hover {
+      color: #8c1515 !important;
+      background-color: #fdf2f2 !important;
+
+      .c-sidebar-nav-icon {
+        color: #8c1515 !important;
+      }
+    }
+
+    &.c-active {
+      color: #8c1515 !important;
+      background-color: #fce8e8 !important;
+      font-weight: 700 !important;
+
+      .c-sidebar-nav-icon {
+        color: #8c1515 !important;
+      }
+    }
+  }
+
+  .c-sidebar-footer {
+    background-color: #f8fafc !important;
+    background-image: none !important;
+    border-top: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+  }
+}

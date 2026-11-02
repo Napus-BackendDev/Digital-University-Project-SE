@@ -5,7 +5,17 @@
             :endDate.sync="endDate" />
 
         <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
-            :pagination="false" hover class="mb-0 tables-container" :no-items-view="{ noItems: $t('table.noForms') }">
+            :pagination="false" hover class="mb-0 tables-container">
+
+            <template #no-items-view>
+                <div class="empty-state-box text-center py-5">
+                    <div class="empty-state-icon mx-auto mb-3">
+                        <CIcon name="cil-description" size="xl" />
+                    </div>
+                    <h5 class="font-weight-bold text-dark mb-1">{{ $t('table.noForms') || 'ยังไม่มีแบบสอบถาม' }}</h5>
+                    <p class="text-muted small mb-0">เมื่อมีแบบสอบถามที่มอบหมายให้คุณ รายการจะแสดงขึ้นที่นี่</p>
+                </div>
+            </template>
 
             <!-- Form Name (Title & Description) Slot -->
             <template #form="{ item }">
@@ -621,6 +631,21 @@ export default {
     border: 1px solid #e2e8f0;
     padding: 0;
     overflow: hidden;
+}
+
+.empty-state-box {
+    padding: 3.5rem 1.5rem;
+}
+
+.empty-state-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .text-lg {

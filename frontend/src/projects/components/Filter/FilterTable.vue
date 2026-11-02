@@ -1,93 +1,92 @@
 <template>
-    <CCard class="filter-card mb-4">
-        <CCardBody class="p-4">
-            <CRow class="align-items-end">
-                <!-- Search -->
-                <CCol md="3" lg="3" class="mb-2 mb-md-0">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.search')
-                        }}</label>
-                    <CInput :value="searchQuery" @input="$emit('update:searchQuery', $event)"
-                        :placeholder="$t('table.searchPlaceholder')" class="mb-0 custom-filter-input"
-                        style="height: 38px;">
-                        <template #prepend-content>
-                            <CIcon name="cil-magnifying-glass" class="text-muted" />
-                        </template>
-                    </CInput>
+    <CCard class="filter-card mb-4 border-0">
+        <CCardBody class="p-3 p-md-4">
+            <CRow class="align-items-end g-3">
+                <!-- Search Input -->
+                <CCol col="12" md="4" lg="3" class="mb-3 mb-lg-0">
+                    <label class="filter-label">{{ $t('table.search') }}</label>
+                    <div class="filter-input-wrap">
+                        <CIcon name="cil-magnifying-glass" class="filter-icon" />
+                        <input
+                            type="text"
+                            class="form-control modern-input"
+                            :value="searchQuery"
+                            @input="$emit('update:searchQuery', $event.target.value)"
+                            :placeholder="$t('table.searchPlaceholder')"
+                        />
+                    </div>
                 </CCol>
 
                 <!-- Status Dropdown -->
-                <CCol md="3" lg="2" class="mb-2 mb-md-0">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.status')
-                        }}</label>
+                <CCol col="12" sm="6" md="3" lg="2" class="mb-3 mb-lg-0">
+                    <label class="filter-label">{{ $t('table.status') }}</label>
                     <CDropdown class="filter-dropdown w-100">
                         <template #toggler>
-                            <button
-                                class="btn d-flex align-items-center justify-content-between text-muted border bg-white w-100 px-3"
-                                style="border-radius: 6px; height: 38px;">
+                            <button class="btn modern-dropdown-btn w-100">
                                 <div class="d-flex align-items-center text-truncate">
-                                    <CIcon name="cil-filter" size="sm" class="mr-2" />
-                                    <span class="text-truncate small">{{ selectedStatus === 'All' ? $t('status.all') :
+                                    <CIcon name="cil-filter" size="sm" class="mr-2 text-muted" />
+                                    <span class="text-truncate font-weight-medium">{{ selectedStatus === 'All' ? $t('status.all') :
                                         $t('status.' + selectedStatus.toLowerCase().replace(/\s/g, '')) }}</span>
                                 </div>
-                                <CIcon name="cil-chevron-bottom" size="sm" class="ml-2" />
+                                <CIcon name="cil-chevron-bottom" size="sm" class="text-muted ml-2" />
                             </button>
                         </template>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}
-                        </CDropdownItem>
+                        <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}</CDropdownItem>
                         <template v-if="managementMode">
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}
-                            </CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Active')">{{ $t('status.active')
-                                }}
-                            </CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Closed')">{{ $t('status.closed')
-                                }}
-                            </CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}</CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Active')">{{ $t('status.active') }}</CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Closed')">{{ $t('status.closed') }}</CDropdownItem>
                         </template>
                         <template v-else>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}
-                            </CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'In Progress')">{{
-                                $t('status.inprogress') }}
-                            </CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{
-                                $t('status.completed') }}
-                            </CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}</CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'In Progress')">{{ $t('status.inprogress') }}</CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{ $t('status.completed') }}</CDropdownItem>
                         </template>
                     </CDropdown>
                 </CCol>
 
-                <!-- Time Range Filters -->
-                <CCol md="3" lg="4" class="mb-2 mb-md-0">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{
-                        $t('table.rangeShortcuts')
-                        }}</label>
-                    <CButtonGroup class="w-100">
-                        <CButton v-for="shortcut in dateShortcuts" :key="shortcut.id"
-                            :color="currentShortcut === shortcut.id ? 'primary' : 'secondary'"
-                            :variant="currentShortcut === shortcut.id ? null : 'outline'"
-                            style="height: 38px; flex: 1;" @click="applyQuickDate(shortcut.id)">
+                <!-- Range Shortcuts -->
+                <CCol col="12" sm="6" md="5" lg="3" class="mb-3 mb-lg-0">
+                    <label class="filter-label">{{ $t('table.rangeShortcuts') }}</label>
+                    <div class="segmented-control">
+                        <button
+                            v-for="shortcut in dateShortcuts"
+                            :key="shortcut.id"
+                            type="button"
+                            class="segmented-btn"
+                            :class="{ active: currentShortcut === shortcut.id }"
+                            @click="applyQuickDate(shortcut.id)"
+                        >
                             {{ shortcut.label || $t('table.quickDate.' + shortcut.id) }}
-                        </CButton>
-                    </CButtonGroup>
+                        </button>
+                    </div>
                 </CCol>
 
                 <!-- Time Range: From -->
-                <CCol sm="6" md="1.5" class="mb-2 mb-md-0" style="flex: 0 0 12.5%; max-width: 12.5%;">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.dateFrom')
-                        }}</label>
-                    <CInput type="date" :value="startDate" @input="onDateInput('startDate', $event)"
-                        class="mb-0 custom-filter-input" style="height: 38px;" />
+                <CCol col="6" sm="6" md="6" lg="2" class="mb-2 mb-lg-0">
+                    <label class="filter-label">{{ $t('table.dateFrom') }}</label>
+                    <div class="filter-input-wrap">
+                        <input
+                            type="date"
+                            class="form-control modern-input modern-date"
+                            :value="startDate"
+                            @input="onDateInput('startDate', $event.target.value)"
+                        />
+                    </div>
                 </CCol>
 
                 <!-- Time Range: To -->
-                <CCol sm="6" md="1.5" lg="1.5" class="mb-2 mb-md-0" style="flex: 0 0 12.5%; max-width: 12.5%;">
-                    <label class="small text-muted font-weight-bold text-uppercase mb-2 d-block">{{ $t('table.dateTo')
-                        }}</label>
-                    <CInput type="date" :value="endDate" @input="onDateInput('endDate', $event)"
-                        class="mb-0 custom-filter-input" style="height: 38px;" />
+                <CCol col="6" sm="6" md="6" lg="2" class="mb-2 mb-lg-0">
+                    <label class="filter-label">{{ $t('table.dateTo') }}</label>
+                    <div class="filter-input-wrap">
+                        <input
+                            type="date"
+                            class="form-control modern-input modern-date"
+                            :value="endDate"
+                            @input="onDateInput('endDate', $event.target.value)"
+                        />
+                    </div>
                 </CCol>
-
             </CRow>
         </CCardBody>
     </CCard>
@@ -140,7 +139,6 @@ export default {
                 start = moment().format('YYYY-MM-DD');
                 end = moment().format('YYYY-MM-DD');
             } else if (type === 'last7Days') {
-                // Last 7 days: from 6 days ago up to today (7-day window)
                 start = moment().subtract(6, 'days').format('YYYY-MM-DD');
                 end = moment().format('YYYY-MM-DD');
             } else if (type === 'last30Days') {
@@ -152,7 +150,7 @@ export default {
             this.$emit('update:endDate', end);
         },
         onDateInput(prop, value) {
-            this.currentShortcut = ''; // Reset shortcut when manually inputting date
+            this.currentShortcut = '';
             this.$emit(`update:${prop}`, value);
         }
     }
@@ -162,48 +160,144 @@ export default {
 <style scoped>
 .filter-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
-.custom-filter-input ::v-deep .form-control {
-    border-radius: 6px;
+.filter-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.filter-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.filter-icon {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    pointer-events: none;
+    z-index: 2;
+    width: 16px;
+    height: 16px;
+}
+
+.filter-input-wrap .modern-input {
+    padding-left: 36px;
+}
+
+.modern-input {
+    height: 40px;
+    background: #f8fafc;
     border: 1px solid #cbd5e1;
-    font-size: 0.9rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    color: #0f172a;
+    transition: all 0.2s ease;
+    width: 100%;
 }
 
-.custom-filter-input ::v-deep .form-control:focus {
-    border-color: #3c4b64;
-    box-shadow: 0 0 0 0.2rem rgba(60, 75, 100, 0.1);
+.modern-date {
+    padding-left: 10px !important;
+    padding-right: 6px !important;
+    font-size: 0.825rem;
+}
+
+.modern-input:focus {
+    background: #ffffff;
+    border-color: #8c1515;
+    box-shadow: 0 0 0 3px rgba(140, 21, 21, 0.1);
+    outline: none;
+}
+
+.modern-dropdown-btn {
+    height: 40px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    font-size: 0.875rem;
+    color: #0f172a;
+    transition: all 0.2s ease;
+}
+
+.modern-dropdown-btn:hover,
+.modern-dropdown-btn:focus {
+    background: #ffffff;
+    border-color: #8c1515;
+    box-shadow: 0 0 0 3px rgba(140, 21, 21, 0.1);
+}
+
+.segmented-control {
+    display: flex;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 10px;
+    height: 40px;
+}
+
+.segmented-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 8px;
+    padding: 0 4px;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+    cursor: pointer;
+}
+
+.segmented-btn:hover {
+    color: #0f172a;
+}
+
+.segmented-btn.active {
+    background: #ffffff;
+    color: #8c1515;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .filter-dropdown ::v-deep .dropdown-menu {
-    min-width: 160px;
-    border-radius: 0.75rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    min-width: 180px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
     border: 1px solid #e2e8f0;
-    padding: 0.35rem;
+    padding: 6px;
 }
 
 .filter-dropdown ::v-deep .dropdown-item {
-    border-radius: 0.5rem;
+    border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 500;
-    padding: 0.4rem 0.75rem;
-    color: #475569;
+    padding: 8px 12px;
+    color: #334155;
     transition: all 0.15s ease;
 }
 
 .filter-dropdown ::v-deep .dropdown-item.active,
 .filter-dropdown ::v-deep .dropdown-item:active {
-    background-color: #fef3f2 !important;
+    background-color: #fef2f2 !important;
     color: #8c1515 !important;
     font-weight: 600;
 }
 
 .filter-dropdown ::v-deep .dropdown-item:hover:not(.active) {
-    background: #f1f5f9;
+    background: #f8fafc;
     color: #0f172a;
 }
 </style>

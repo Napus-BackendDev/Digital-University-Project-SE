@@ -1,40 +1,51 @@
 <template>
   <div class="email-templates-container">
     <Header 
-      title="My Email Template" 
-      description="Manage and deploy your high-performance email responses." 
+      :title="($te && $te('nav.email')) ? $t('nav.email') : 'Email Templates'" 
+      :description="($te && $te('email.description')) ? $t('email.description') : 'Manage and deploy system email notifications and responses.'" 
     />
     <div>
-      <CRow>
+      <CRow v-if="templates && templates.length > 0">
         <CCol v-for="(template, index) in templates" :key="index" sm="12" md="6" lg="4" xl="3" class="mb-4">
-          <CCard class="template-card h-100">
+          <CCard class="template-card h-100 border-0">
             <CCardBody class="d-flex flex-column p-4">
-              <div class="icon-wrapper mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-4">
                 <div class="icon-box">
                   <CIcon :name="template.icon" size="xl" />
                 </div>
+                <span class="system-badge">System</span>
               </div>
               
-              <h4 class="template-title mb-2">{{ template.name }}</h4>
+              <h5 class="template-title mb-2">{{ template.name }}</h5>
               <p class="template-description text-muted mb-4">{{ template.description }}</p>
               
               <div class="mt-auto">
-                <hr class="divider mb-4" />
+                <hr class="divider mb-3" />
                 <div class="d-flex justify-content-between align-items-center">
                   <div class="modified-info">
                     <div class="label text-uppercase text-muted">Last Modified</div>
                     <div class="date font-weight-bold">{{ template.lastModified }}</div>
                   </div>
-                  <CButton variant="outline" class="edit-btn px-3 py-2" @click="editTemplate(template)">
+                  <button class="btn edit-btn px-3 py-2" @click="editTemplate(template)">
                     <CIcon name="cil-pencil" class="mr-2" />
-                    <span class="font-weight-bold">Edit</span>
-                  </CButton>
+                    <span>Edit</span>
+                  </button>
                 </div>
               </div>
             </CCardBody>
           </CCard>
         </CCol>
       </CRow>
+
+      <CCard v-else class="empty-state-card border-0 py-5 text-center">
+        <CCardBody>
+          <div class="empty-icon-box mx-auto mb-3">
+            <CIcon name="cil-envelope-closed" size="xl" />
+          </div>
+          <h5 class="font-weight-bold text-dark mb-1">ยังไม่มีเทมเพลตอีเมล</h5>
+          <p class="text-muted small mb-0">รายการเทมเพลตอีเมลจะแสดงขึ้นที่นี่</p>
+        </CCardBody>
+      </CCard>
     </div>
   </div>
 </template>
@@ -63,13 +74,12 @@ export default {
     templates() {
       if (!this.item) return [];
       return this.item.map(t => {
-        let nameObjEn = t.name.find(n => n.key === 'en') || {};
-        let nameObjTh = t.name.find(n => n.key === 'th') || {};
+        let nameObjEn = (t.name && t.name.find(n => n.key === 'en')) || {};
+        let nameObjTh = (t.name && t.name.find(n => n.key === 'th')) || {};
         
         let displayTitle = nameObjEn.value || t.code;
         let displayDesc = nameObjTh.value || '';
 
-        // Simple formatting for date
         let date = new Date(t.updatedAt || t.createdAt);
         let dateString = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
@@ -96,42 +106,60 @@ export default {
 </script>
 
 <style scoped>
-
 .template-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   background-color: #ffffff;
 }
 
 .template-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+  border-color: #cbd5e1 !important;
 }
 
 .icon-box {
-  width: 52px;
-  height: 52px;
-  background-color: #f1f5f9;
+  width: 48px;
+  height: 48px;
+  background-color: rgba(140, 21, 21, 0.08);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #475569;
+  color: #8c1515;
+  transition: transform 0.2s ease;
+}
+
+.template-card:hover .icon-box {
+  transform: scale(1.05);
+}
+
+.system-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #64748b;
 }
 
 .template-title {
-  color: #1e293b;
+  color: #0f172a;
   font-weight: 700;
-  font-size: 1.25rem;
-  letter-spacing: -0.025em;
+  font-size: 1.15rem;
+  letter-spacing: -0.015em;
+  margin-top: 4px;
 }
 
 .template-description {
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   line-height: 1.5;
   color: #64748b !important;
+  min-height: 40px;
 }
 
 .divider {
@@ -141,30 +169,50 @@ export default {
 }
 
 .modified-info .label {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   letter-spacing: 0.05em;
-  font-weight: 600;
+  font-weight: 700;
+  color: #94a3b8;
 }
 
 .modified-info .date {
-  font-size: 1rem;
-  color: #1e293b;
+  font-size: 0.875rem;
+  color: #334155;
+  font-weight: 600;
 }
 
 .edit-btn {
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  color: #1e293b;
-  background-color: #ffffff;
+  border-radius: 10px;
+  color: #334155;
+  background-color: #f8fafc;
   display: flex;
   align-items: center;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.18s ease;
 }
 
 .edit-btn:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: #000000;
+  background-color: #fef2f2;
+  border-color: rgba(140, 21, 21, 0.3);
+  color: #8c1515;
+}
+
+.empty-state-card {
+  background: white;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px;
+}
+
+.empty-icon-box {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

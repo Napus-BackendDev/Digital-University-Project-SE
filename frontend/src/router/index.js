@@ -95,6 +95,10 @@ export default new Router({
         },
 
         {
+            path: '/login',
+            redirect: '/pages/login'
+        },
+        {
             path: '/pages',
             redirect: '/pages/404',
             name: 'Pages',

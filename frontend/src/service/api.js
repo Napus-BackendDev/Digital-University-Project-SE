@@ -11,6 +11,9 @@ instance.defaults.headers = {
   Accept: "application/json"
 }
 
+instance.defaults.withCredentials = true;
+
+
 export default {
 
   form(method, data, configs) {
@@ -208,4 +211,17 @@ export default {
     }
   },
 
+
+  auth(method, data) {
+    switch (method) {
+      case 'google':
+        return instance.post('auth/google', data);
+      case 'me':
+        return instance.get('auth/me');
+      case 'logout':
+        return instance.post('auth/logout');
+      default:
+        break;
+    }
+  },
 }

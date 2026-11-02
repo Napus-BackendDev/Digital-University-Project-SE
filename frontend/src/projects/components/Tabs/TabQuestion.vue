@@ -1,101 +1,157 @@
 <template>
     <div>
-        <CCard class="mb-4 rounded-20 shadow-sm border">
-            <CCardBody>
-                <div>
-                    <!-- ── Form Title  ── -->
-                    <div class="mb-3">
-                        <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
-                            class="d-flex align-items-center mb-1">
-                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light"
-                                    size="sm" class="lang-key-dropdown">
-                                    <template #toggler>
-                                        <CButton class="lang-key-btn border shadow-none"
-                                            style="width: 3.2rem; min-width: 3.2rem;">
-                                            {{ (titleItem.key || 'EN').toUpperCase() }}
-                                        </CButton>
-                                    </template>
-                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
-                                        @click="setLangKey(titleItem, lang.value, updateFormMeta)">
-                                        {{ lang.label }}
-                                    </CDropdownItem>
-                                    <CDropdownDivider />
-                                    <CDropdownItem
-                                        @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">
-                                        Other...</CDropdownItem>
-                                </CDropdown>
-                                <div v-else class="manual-lang-input d-flex align-items-center">
-                                    <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateFormMeta"
-                                        @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
-                                    <CButton
-                                        @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', updateFormMeta)"
-                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+        <!-- ── Form Header Card (Wrapped in Spotlight #1 during Step 1) ── -->
+        <div :class="{ 'wizard-spotlight-box mb-2': isWizardActive && wizardStep === 1 }">
+            <div v-if="isWizardActive && wizardStep === 1" class="wizard-spotlight-banner">
+                <CIcon name="cil-bolt" size="sm" class="mr-2" />
+                <span>SPOTLIGHT #1: กรอบไฮไลต์ล้อมรอบ [Component: Form Header Card — การ์ดหัวเรื่องแบบสอบถามใน TabQuestion.vue]</span>
+            </div>
+
+            <div v-if="isWizardActive && wizardStep === 2" class="wizard-step1-done-strip mb-3">
+                <CIcon name="cil-check-circle" size="sm" class="mr-2" />
+                <span>[Component: Form Header Card (บันทึกเสร็จแล้วใน Step 1)] — แสดงชื่อฟอร์มและคำชี้แจงด้านล่าง</span>
+            </div>
+
+            <div :class="{ 'p-3': isWizardActive && wizardStep === 1 }">
+                <CCard class="mb-4 rounded-20 shadow-sm border">
+                    <CCardBody>
+                        <div>
+                            <!-- Wizard Top Language & Second Language Component Bar -->
+                            <div v-if="isWizardActive && wizardStep === 1" class="d-flex flex-wrap align-items-center mb-3 gap-2">
+                                <div class="wizard-comp-chip is-sky">
+                                    <CIcon name="cil-globe-alt" size="sm" class="mr-1" />
+                                    <span>[Component: Language Dropdown] เลือกภาษาหลักด้านหน้าชื่อฟอร์ม (TH / EN)</span>
                                 </div>
+                                <button
+                                    type="button"
+                                    class="wizard-comp-btn is-purple"
+                                    @click="addBilingualHeader"
+                                >
+                                    <CIcon name="cil-plus" size="sm" class="mr-1" />
+                                    <span>[Component: ปุ่ม + เพิ่มภาษาที่ 2 (TH/EN)] เปิดช่องกรอก 2 ภาษาคู่กัน</span>
+                                </button>
                             </div>
-                            <CInput class="form-title-input flex-grow-1 border-bottom mb-0" v-model="titleItem.value"
-                                @change="updateFormMeta" />
-                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                v-if="form.title && form.title.length > 1" @click="removeFormTitle(tIdx)">
-                                <CIcon name="cil-minus" />
-                            </CButton>
-                        </div>
-                        <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
-                            @click="addFormTitle" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
-                            <CIcon name="cil-globe-alt" />
-                        </CButton>
-                    </div>
 
-                    <!-- ── Form Description ── -->
-                    <div>
-                        <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
-                            class="d-flex align-items-start mb-1">
-                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
-                                    size="sm" class="lang-key-dropdown">
-                                    <template #toggler>
-                                        <CButton class="lang-key-btn border shadow-none"
-                                            style="width: 3.2rem; min-width: 3.2rem;">
-                                            {{ (descItem.key || 'EN').toUpperCase() }}
-                                        </CButton>
-                                    </template>
-                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
-                                        @click="setLangKey(descItem, lang.value, updateFormMeta)">
-                                        {{ lang.label }}
-                                    </CDropdownItem>
-                                    <CDropdownDivider />
-                                    <CDropdownItem
-                                        @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
-                                        Other...
-                                    </CDropdownItem>
-                                </CDropdown>
-                                <div v-else class="manual-lang-input d-flex align-items-center">
-                                    <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="updateFormMeta"
-                                        @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
-                                    <CButton
-                                        @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', updateFormMeta)"
-                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                            <!-- ── Form Title  ── -->
+                            <div class="mb-3" :class="{ 'wizard-input-frame is-maroon': isWizardActive && wizardStep === 1 }">
+                                <div v-if="isWizardActive && wizardStep === 1" class="wizard-field-caption is-maroon">
+                                    [Component: Form Title Input Box (ช่องกรอกชื่อแบบสอบถาม — บังคับกรอก *)] พิมพ์แล้วบันทึก Auto-Save (PUT /api/v1/form)
                                 </div>
+                                <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
+                                    class="d-flex align-items-center mb-1">
+                                    <div class="lang-key-wrapper flex-shrink-0 mr-2">
+                                        <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light"
+                                            size="sm" class="lang-key-dropdown">
+                                            <template #toggler>
+                                                <CButton class="lang-key-btn border shadow-none"
+                                                    style="width: 3.2rem; min-width: 3.2rem;">
+                                                    {{ (titleItem.key || 'EN').toUpperCase() }}
+                                                </CButton>
+                                            </template>
+                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
+                                                @click="setLangKey(titleItem, lang.value, updateFormMeta)">
+                                                {{ lang.label }}
+                                            </CDropdownItem>
+                                            <CDropdownDivider />
+                                            <CDropdownItem
+                                                @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">
+                                                Other...</CDropdownItem>
+                                        </CDropdown>
+                                        <div v-else class="manual-lang-input d-flex align-items-center">
+                                            <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateFormMeta"
+                                                @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
+                                            <CButton
+                                                @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', updateFormMeta)"
+                                                size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                        </div>
+                                    </div>
+                                    <CInput class="form-title-input flex-grow-1 border-bottom mb-0" v-model="titleItem.value"
+                                        @change="updateFormMeta" />
+                                    <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                        v-if="form.title && form.title.length > 1" @click="removeFormTitle(tIdx)">
+                                        <CIcon name="cil-minus" />
+                                    </CButton>
+                                </div>
+                                <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
+                                    @click="addFormTitle" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
+                                    <CIcon name="cil-globe-alt" />
+                                </CButton>
                             </div>
-                            <CTextarea class="form-desc-input flex-grow-1 border-bottom mb-0" v-model="descItem.value"
-                                @change="updateFormMeta" rows="2" />
-                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                v-if="form.description && form.description.length > 1" @click="removeFormDesc(dIdx)">
-                                <CIcon name="cil-minus" />
-                            </CButton>
+
+                            <!-- ── Form Description ── -->
+                            <div :class="{ 'wizard-input-frame is-slate': isWizardActive && wizardStep === 1 }">
+                                <div v-if="isWizardActive && wizardStep === 1" class="wizard-field-caption is-slate">
+                                    [Component: Form Description Textarea (ช่องกรอกคำชี้แจง/วัตถุประสงค์ของแบบสอบถาม)] อธิบายรายละเอียดให้ผู้ตอบทราบก่อนเริ่มทำ
+                                </div>
+                                <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
+                                    class="d-flex align-items-start mb-1">
+                                    <div class="lang-key-wrapper flex-shrink-0 mr-2">
+                                        <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
+                                            size="sm" class="lang-key-dropdown">
+                                            <template #toggler>
+                                                <CButton class="lang-key-btn border shadow-none"
+                                                    style="width: 3.2rem; min-width: 3.2rem;">
+                                                    {{ (descItem.key || 'EN').toUpperCase() }}
+                                                </CButton>
+                                            </template>
+                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
+                                                @click="setLangKey(descItem, lang.value, updateFormMeta)">
+                                                {{ lang.label }}
+                                            </CDropdownItem>
+                                            <CDropdownDivider />
+                                            <CDropdownItem
+                                                @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
+                                                Other...
+                                            </CDropdownItem>
+                                        </CDropdown>
+                                        <div v-else class="manual-lang-input d-flex align-items-center">
+                                            <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="updateFormMeta"
+                                                @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
+                                            <CButton
+                                                @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', updateFormMeta)"
+                                                size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                        </div>
+                                    </div>
+                                    <CTextarea class="form-desc-input flex-grow-1 border-bottom mb-0" v-model="descItem.value"
+                                        @change="updateFormMeta" rows="2" />
+                                    <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                        v-if="form.description && form.description.length > 1" @click="removeFormDesc(dIdx)">
+                                        <CIcon name="cil-minus" />
+                                    </CButton>
+                                </div>
+                                <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
+                                    @click="addFormDesc" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
+                                    <CIcon name="cil-globe-alt" />
+                                </CButton>
+                            </div>
+
                         </div>
-                        <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
-                            @click="addFormDesc" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
-                            <CIcon name="cil-globe-alt" />
-                        </CButton>
-                    </div>
+                    </CCardBody>
+                </CCard>
+            </div>
+        </div>
 
-                </div>
-            </CCardBody>
-        </CCard>
+        <!-- Coachmark Popover #1 -->
+        <FormBuilderWizard
+            v-if="isWizardActive && wizardStep === 1"
+            mode="coachmark"
+            :currentStep="1"
+            :form="form"
+            @fill-sample-header="fillSampleHeader"
+            @skip="$emit('wizard-skip')"
+            @next-step="$emit('wizard-next')"
+        />
 
-        <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }"
-            :row-height="10" :is-draggable="true" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
+        <!-- ── Questions Editor Area (Wrapped in Spotlight #2A during Step 2) ── -->
+        <div :class="{ 'wizard-spotlight-box mb-2': isWizardActive && wizardStep === 2 }">
+            <div v-if="isWizardActive && wizardStep === 2" class="wizard-spotlight-banner">
+                <CIcon name="cil-bolt" size="sm" class="mr-2" />
+                <span>SPOTLIGHT #2A: กรอบไฮไลต์ล้อมรอบ [Component: Question Card Editor — การ์ดสร้างและตั้งค่าข้อคำถาม]</span>
+            </div>
+
+            <div :class="{ 'p-3': isWizardActive && wizardStep === 2 }">
+                <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }"
+                    :row-height="10" :is-draggable="true" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
             <GridItem v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)"
                 v-bind="getLayoutItem(question, qIndex)">
                 <CCard :id="'question-' + (question._id || qIndex)"
@@ -503,14 +559,36 @@
                     </CCardBody>
                 </CCard>
             </GridItem>
-        </GridLayout>
+                </GridLayout>
 
-        <!-- Empty state -->
-        <div v-if="!localQuestions || localQuestions.length === 0"
-            class="text-center py-5 text-muted bg-white rounded-20 shadow-sm">
-            <CIcon name="cil-notes" :height="40" class="mb-3 text-muted" />
-            <p class="mb-0">{{ $t('builder.emptyQuestions') }}</p>
+                <!-- Empty state -->
+                <div v-if="!localQuestions || localQuestions.length === 0"
+                    class="text-center py-5 text-muted bg-white rounded-20 shadow-sm border">
+                    <CIcon name="cil-notes" :height="40" class="mb-3 text-muted" />
+                    <p class="mb-3 font-weight-bold text-dark">{{ $t('builder.emptyQuestions') }}</p>
+                    <button
+                        v-if="isWizardActive && wizardStep === 2"
+                        type="button"
+                        class="wizard-comp-btn is-purple"
+                        @click="addSampleQuestion"
+                    >
+                        <CIcon name="cil-plus" size="sm" class="mr-1" />
+                        <span>คลิกเพื่อสร้างข้อคำถามข้อแรกอัตโนมัติ (หรือเลือกจากแผง 8 ชนิดด้านขวา)</span>
+                    </button>
+                </div>
+            </div>
         </div>
+
+        <!-- Coachmark Popover #2 -->
+        <FormBuilderWizard
+            v-if="isWizardActive && wizardStep === 2"
+            mode="coachmark"
+            :currentStep="2"
+            :form="form"
+            @prev-step="$emit('wizard-prev')"
+            @add-sample-question="addSampleQuestion"
+            @next-step="$emit('wizard-next')"
+        />
 
         <!-- Image Select modal -->
         <CModal :show.sync="showImageModal" :centered="true">
@@ -555,15 +633,19 @@
 import { mapGetters } from 'vuex';
 import { GridLayout, GridItem } from 'vue-grid-layout'
 import { loadStoredLayout, saveGridLayout, buildGridLayoutFromQuestions, getLayoutItem as svcGetLayoutItem, onDragStop as svcOnDragStop } from '../../service/draggable'
+import FormBuilderWizard from '../Wizard/FormBuilderWizard.vue';
 
 export default {
     name: 'TabQuestion',
     props: {
-        form: { type: Object, required: true }
+        form: { type: Object, required: true },
+        isWizardActive: { type: Boolean, default: false },
+        wizardStep: { type: Number, default: 1 }
     },
     components: {
         GridLayout,
-        GridItem
+        GridItem,
+        FormBuilderWizard
     },
     data() {
         return {
@@ -1393,12 +1475,166 @@ export default {
                 this.$set(question, 'nextQuestion', val.split(':')[1]);
             }
             this.putQuestion(question);
+        },
+        addBilingualHeader() {
+            if (!this.form) return;
+            if (!Array.isArray(this.form.title) || this.form.title.length < 2) {
+                this.addFormTitle();
+            }
+            if (!Array.isArray(this.form.description) || this.form.description.length < 2) {
+                this.addFormDesc();
+            }
+        },
+        fillSampleHeader() {
+            if (!this.form) return;
+            this.$set(this.form, 'title', [
+                { key: 'th', value: 'แบบประเมินความพึงพอใจการใช้บริการศูนย์บรรณสารและสื่อการศึกษา' },
+                { key: 'en', value: 'Library and Educational Media Center Satisfaction Survey' }
+            ]);
+            this.$set(this.form, 'description', [
+                { key: 'th', value: 'ขอความร่วมมือนักศึกษาและบุคลากรตอบแบบสอบถามเพื่อนำไปพัฒนาคุณภาพการให้บริการ' },
+                { key: 'en', value: 'Please share your feedback to help us improve our library services.' }
+            ]);
+            this.updateFormMeta();
+        },
+        async addSampleQuestion() {
+            const mcType = (this.questionTypes || []).find(t => String(t.type || '').toLowerCase() === 'multiple_choice')
+                || (this.questionTypes || [])[0];
+            const typeId = mcType ? mcType._id : 'multiple_choice';
+            let created = await this.addQuestion(typeId);
+            if (!created) {
+                created = {
+                    _id: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+                    title: [],
+                    order: (this.localQuestions ? this.localQuestions.length : 0) + 1,
+                    type: mcType || { _id: 'multiple_choice', type: 'multiple_choice' },
+                    isRequired: true,
+                    nextQuestion: null,
+                    config: { choices: [] }
+                };
+                this.localQuestions.push(created);
+                if (this.form) {
+                    if (!Array.isArray(this.form.questions)) this.$set(this.form, 'questions', []);
+                    this.form.questions.push(created);
+                }
+            }
+            this.$set(created, 'title', [
+                { key: 'th', value: 'ท่านพึงพอใจต่อความรวดเร็วและการให้บริการโดยรวมในระดับใด?' },
+                { key: 'en', value: 'How satisfied are you with the overall speed and service quality?' }
+            ]);
+            if (!created.config) this.$set(created, 'config', {});
+            this.$set(created.config, 'choices', [
+                { key: '0', lang: [{ key: 'th', value: 'ดีมาก (Very Satisfied)' }] },
+                { key: '1', lang: [{ key: 'th', value: 'ดี (Satisfied)' }] },
+                { key: '2', lang: [{ key: 'th', value: 'ปานกลาง (Neutral)' }] }
+            ]);
+            this.$set(created, 'isRequired', true);
+            this.buildGridLayoutFromQuestions();
+            if (!String(created._id).startsWith('tmp-')) {
+                await this.putQuestion(created);
+            }
         }
     }
 }
 </script>
 
 <style scoped>
+.wizard-spotlight-box {
+    border: 2.5px dashed #f59e0b;
+    background-color: #fffbeb;
+    border-radius: 16px;
+    overflow: visible;
+}
+
+.wizard-spotlight-banner {
+    background-color: #fef3c7;
+    border-bottom: 1px solid #f59e0b;
+    color: #92400e;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+}
+
+.wizard-step1-done-strip {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    font-weight: 600;
+    font-size: 0.84rem;
+    padding: 0.55rem 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.wizard-comp-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.wizard-comp-chip.is-sky {
+    background-color: #f0f9ff;
+    border: 1.5px solid #0284c7;
+    color: #0369a1;
+}
+
+.wizard-comp-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.9rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.16s ease;
+}
+
+.wizard-comp-btn.is-purple {
+    background-color: #f5f3ff;
+    border: 1.5px solid #7c3aed;
+    color: #5b21b6;
+}
+
+.wizard-comp-btn.is-purple:hover {
+    background-color: #ede9fe;
+    transform: translateY(-1px);
+}
+
+.wizard-input-frame {
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    background-color: #ffffff;
+}
+
+.wizard-input-frame.is-maroon {
+    border: 2px solid #8b1f1f;
+}
+
+.wizard-input-frame.is-slate {
+    border: 1.5px solid #64748b;
+}
+
+.wizard-field-caption {
+    font-size: 0.76rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.wizard-field-caption.is-maroon {
+    color: #8b1f1f;
+}
+
+.wizard-field-caption.is-slate {
+    color: #334155;
+}
 .image-drop-zone {
     position: relative;
     width: 100%;

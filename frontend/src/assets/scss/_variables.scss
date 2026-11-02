@@ -10,6 +10,8 @@ $navbar-brand-padding-y: math.div($nav-link-height - $navbar-brand-height, 2);
 $navbar-padding-y: math.div($spacer, 2);
 
 // ---------- Typography ----------
+$font-family-sans-serif: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-family-base: $font-family-sans-serif !default;
 $headings-margin-bottom: math.div($spacer, 2);
 
 // ---------- Inputs / Forms ----------

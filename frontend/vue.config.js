@@ -2,7 +2,9 @@ module.exports = {
   lintOnSave: false,
   runtimeCompiler: true,
   devServer: {
-    disableHostCheck: true
+    port: 8080,
+    disableHostCheck: true,
+    historyApiFallback: true
   },
   configureWebpack: {
     // Necessary to run npm link https://webpack.js.org/configuration/resolve/#resolve-symlinks

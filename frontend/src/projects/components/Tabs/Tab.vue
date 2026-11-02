@@ -1,17 +1,59 @@
 <template>
     <CRow>
         <CCol md="9" class="mb-4">
-            <TabQuestion v-if="activeTab === 'question'" ref="tabQuestion" :form="form"
-                @auto-save="triggerAutoSave" />
-            <TabResponses v-else-if="activeTab === 'response'" ref="tabResponses" :responses="form"
-                @auto-save="triggerAutoSave" />
-            <TabSetting v-else-if="activeTab === 'setting'" ref="tabSetting" :settings="form"
-                @auto-save="triggerAutoSave" />
+            <!-- Step 4 Readiness Checklist & Share QR Code Workspace + Coachmark #4 -->
+            <div v-if="isWizardActive && wizardStep === 4">
+                <FormBuilderWizard
+                    mode="step4-workspace"
+                    :currentStep="4"
+                    :form="form"
+                />
+                <FormBuilderWizard
+                    mode="coachmark"
+                    :currentStep="4"
+                    :form="form"
+                    @prev-step="$emit('wizard-prev')"
+                    @open-preview="$emit('wizard-open-preview')"
+                    @finish="$emit('wizard-finish')"
+                />
+            </div>
+
+            <TabQuestion
+                v-if="activeTab === 'question'"
+                ref="tabQuestion"
+                :form="form"
+                :isWizardActive="isWizardActive"
+                :wizardStep="wizardStep"
+                @auto-save="triggerAutoSave"
+                @wizard-next="$emit('wizard-next')"
+                @wizard-prev="$emit('wizard-prev')"
+                @wizard-skip="$emit('wizard-skip')"
+            />
+            <TabResponses
+                v-else-if="activeTab === 'response'"
+                ref="tabResponses"
+                :responses="form"
+                @auto-save="triggerAutoSave"
+            />
+            <TabSetting
+                v-else-if="activeTab === 'setting'"
+                ref="tabSetting"
+                :settings="form"
+                :isWizardActive="isWizardActive"
+                :wizardStep="wizardStep"
+                @auto-save="triggerAutoSave"
+                @wizard-next="$emit('wizard-next')"
+                @wizard-prev="$emit('wizard-prev')"
+                @wizard-skip="$emit('wizard-skip')"
+            />
         </CCol>
 
-        <Toolbar 
-            :activeTab="activeTab" 
+        <Toolbar
+            ref="toolbar"
+            :activeTab="activeTab"
             :form="form"
+            :isWizardActive="isWizardActive"
+            :wizardStep="wizardStep"
             @update:activeTab="(val) => $emit('update:activeTab', val)"
             :questionTypes="questionTypes"
             @add-question="addAndOpen"
@@ -26,6 +68,7 @@ import TabQuestion from './TabQuestion.vue';
 import TabResponses from './TabResponses.vue';
 import TabSetting from './TabSetting.vue';
 import Toolbar from './Toolbar.vue';
+import FormBuilderWizard from '../Wizard/FormBuilderWizard.vue';
 
 export default {
     name: 'Tab',
@@ -33,7 +76,8 @@ export default {
         TabQuestion,
         TabResponses,
         TabSetting,
-        Toolbar
+        Toolbar,
+        FormBuilderWizard
     },
     props: {
         form: {
@@ -43,11 +87,15 @@ export default {
         activeTab: {
             type: String,
             default: 'question'
+        },
+        isWizardActive: {
+            type: Boolean,
+            default: false
+        },
+        wizardStep: {
+            type: Number,
+            default: 1
         }
-    },
-    data() {
-        return {
-        };
     },
     created() {
         this.$store.dispatch('Setting/question_type/get');
@@ -65,6 +113,11 @@ export default {
     methods: {
         triggerAutoSave() {
             this.$emit('auto-save');
+        },
+        openQRModal() {
+            if (this.$refs.toolbar) {
+                this.$refs.toolbar.showQRModal = true;
+            }
         },
         async addAndOpen(typeId) {
             this.$emit('update:activeTab', 'question');
@@ -133,7 +186,6 @@ export default {
     justify-content: center;
     align-items: center;
 }
-
 
 .custom-tabs-wrapper .nav-link:hover {
     color: #334155 !important;

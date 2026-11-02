@@ -17,9 +17,11 @@ module.exports = function () {
     if (status) {
       middlewares(app);
       app.use(function (req, res, next) {
+        const origin = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:8080';
         if (req.method === "OPTIONS") {
           const headers = {
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
             "Access-Control-Allow-Methods": "POST, GET, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers":
               "X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Headers, X-Access-Token",
@@ -27,7 +29,8 @@ module.exports = function () {
           res.writeHead(200, headers);
           res.end();
         } else {
-          res.header("Access-Control-Allow-Origin", "*");
+          res.header("Access-Control-Allow-Origin", origin);
+          res.header("Access-Control-Allow-Credentials", "true");
           next();
         }
       });

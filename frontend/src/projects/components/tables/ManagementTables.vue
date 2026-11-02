@@ -5,8 +5,18 @@
 
         <!-- Table -->
         <CDataTable class="user-tables-container mb-0" :items="tableData" :fields="fields"
-            :items-per-page="itemsPerPage" :pagination="false" hover :activePage.sync="activePage"
-            :no-items-view="{ noItems: $t('table.noItems') }">
+            :items-per-page="itemsPerPage" :pagination="false" hover :activePage.sync="activePage">
+
+            <!-- Empty State Slot -->
+            <template #no-items-view>
+                <div class="empty-state-box text-center py-5">
+                    <div class="empty-state-icon mx-auto mb-3">
+                        <CIcon name="cil-folder-open" size="xl" />
+                    </div>
+                    <h5 class="font-weight-bold text-dark mb-1">{{ $t('table.noItems') || 'ยังไม่มีแบบสอบถามที่คุณสร้าง' }}</h5>
+                    <p class="text-muted small mb-0">เริ่มต้นสร้างแบบสอบถามใหม่จากปุ่ม "สร้างแบบสอบถาม" ด้านบนเพื่อเริ่มเก็บข้อมูล</p>
+                </div>
+            </template>
 
             <!-- Questionnaire (Title & Description) -->
             <template #title="{ item }">
@@ -701,6 +711,21 @@ export default {
     border: 1px solid #e2e8f0;
     padding: 0;
     overflow: hidden;
+}
+
+.empty-state-box {
+    padding: 3.5rem 1.5rem;
+}
+
+.empty-state-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .text-muted {
