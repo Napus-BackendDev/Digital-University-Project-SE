@@ -723,18 +723,19 @@
   - Excalidraw Live Canvas (`http://127.0.0.1:3000`): 2,002 elements เรนเดอร์ครบถ้วน ไม่มีข้อความซ้อนทับ
 - เรื่องค้าง: ส่งมอบงานและแสดงภาพให้ผู้ใช้ตรวจสอบ
 
-### 2026-11-01 17:23:00 Asia/Bangkok
+### 2026-11-02 13:14:00 Asia/Bangkok
 
-- ผู้ใช้: ขอให้รวม BPM เป็นอันเดียวใหญ่พอ ("รวม BPM เป็นอันเดี่ยวใหญ่พอ")
-- ข้อตกลงที่ยืนยัน: รวม 3 กระบวนการย่อยให้กลายเป็น **Single Master BPMN 2.0 Pool** ผืนใหญ่ผืนเดียว ลากยาวต่อเนื่องตั้งแต่ Phase 1 (สร้าง/เผยแพร่) -> Phase 2 (ตอบ/ประมวลผลคำตอบ) -> Phase 3 (วิเคราะห์สถิติ/บริหารสิทธิ์)
+- ผู้ใช้: ขอให้ commit และ push ข้อมูลทั้งหมดเข้า remote repository ("comit และ push")
+- ข้อตกลงที่ยืนยัน: บันทึกการเปลี่ยนแปลงทั้งหมดเป็น commit ตามมาตรฐาน Conventional Commits และ push ขึ้น remote repository
 - ผลที่ทำจริง:
-  1. ออกแบบและสร้างโครงสร้าง Unified BPMN 2.0 Pool ใหม่ (ความกว้าง 9,400px) ประกอบด้วย 4 Swimlanes หลัก (System Admin, Form Creator & Staff, Respondent, Automated Backend & MongoDB) + External Cloud Services Pool ด้านบน
-  2. เชื่อมโยง Flow ต่อเนื่องแบบไร้รอยต่อ:
-     - Phase 1 ส่งต่อ QR Code/Link สู่ Phase 2 (ผู้ตอบสแกนเข้าทำ)
-     - Phase 2 ส่งคำตอบที่ประมวลผลแล้วสู่ Phase 3 (แดชบอร์ดสถิติ & Admin)
-  3. บันทึกและซิงค์ข้อมูลขึ้น Excalidraw Live Canvas ที่ `http://127.0.0.1:3000` (รวม **1,888 Elements**)
-  4. ปรับปรุงเอกสารสเปก [business_process_model_specification.md](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/docs/business_process_model_specification.md) และบันทึกไฟล์ [business_process_model_bpmn.excalidraw](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/docs/diagrams/business_process_model_bpmn.excalidraw)
-  5. บันทึกภาพหน้าจอจริงด้วย Playwright (`unified_bpmn_left.png`, `unified_bpmn_right.png`)
+  1. ตรวจสอบสถานะ git status และความปลอดภัยของ secret ต่าง ๆ (ยืนยัน `.env`, `.env.dev`, `node_modules` ถูก ignore เรียบร้อย)
+  2. Stage ไฟล์ทั้งหมด 91 รายการ (ประกอบด้วยโค้ด Vue Production UI Form Builder Wizard, ไฟล์ Excalidraw Sections 1-9 BPMN 2.0, เอกสารสเปก `docs/business_process_model_specification.md`, ภาพแคปเจอร์ระบบ และการตั้งค่าพอร์ต 8080/8081)
+  3. สร้าง Commit [3996c773](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE): `feat(wizard): add 4-step wizard UI, unified BPMN 2.0 diagrams, and port reconfig`
+  4. สลับและตรวจสอบสิทธิ์ GitHub CLI ด้วยบัญชี `Napus-BackendDev` ผ่านฉลุย
+  5. Push สำเร็จ 100% ไปยัง GitHub Remote `origin` ที่ branch `feature/ui-wizard-and-bpmn` (Pull Request link: https://github.com/Napus-BackendDev/Digital-University-Project-SE/pull/new/feature/ui-wizard-and-bpmn)
+  6. ตรวจสอบ remote `gitlab` พบว่า Personal Access Token เดิม (`glpat-NZkgrYs7P-...`) หมดอายุจากเซิร์ฟเวอร์ และ remote `origin/main` มี commit แยกสาย (`af45eece`) จึงรักษาความปลอดภัยของโค้ดด้วยการ push แยก branch ก่อนอย่างปลอดภัย
 - การตรวจและข้อจำกัด:
-  - Excalidraw Live Canvas (`http://127.0.0.1:3000`): 1,888 Elements (Sections 1–8: 1,586, Unified BPMN: 302 Elements) แสดงผลต่อเนื่องเป็นแคนวาสเดียวสมบูรณ์แบบ
-- เรื่องค้าง: ส่งมอบให้ผู้ใช้ตรวจสอบ
+  - GitHub Remote (`origin`): Push สำเร็จที่ branch `feature/ui-wizard-and-bpmn`
+  - GitLab Remote (`gitlab`): Token หมดอายุ (HTTP 401 Unauthorized) ต้องการ token ใหม่หากต้องการ push เข้า GitLab
+- เรื่องค้าง: พร้อมรวมเข้า main หรือเปิด Pull Request ตามที่ผู้ใช้ต้องการ
+
