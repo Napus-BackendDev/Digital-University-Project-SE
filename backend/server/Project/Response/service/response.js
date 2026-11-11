@@ -162,7 +162,11 @@ exports.onUpdate = async function (request, response) {
 exports.onDelete = async function (request, response) {
     try {
         let query = {};
-        query._id = new mongo.ObjectId(request.body._id);
+        const idToDel = request.body?._id || request.params?.id || request.query?._id;
+        if (!idToDel) {
+            return ResMessage.sendResponse(response, 0, 40000);
+        }
+        query._id = new mongo.ObjectId(idToDel);
 
         const existingResponse = await Response.onQuery(query);
         const doc = await Response.onDelete(query);

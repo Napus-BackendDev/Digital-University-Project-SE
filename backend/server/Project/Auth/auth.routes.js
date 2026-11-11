@@ -1,14 +1,32 @@
+const crypto = require('crypto');
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const UserModel = require('../User/models/user.model');
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '225788483142-8pkg8on8nh60ao83ve33ff3lflv2ccvo.apps.googleusercontent.com';
-const JWT_SECRET = process.env.JWT_SECRET || '1b125b462a1213961735717b12db0c1e8fbd0253557bfadaabca9047e987dfd5f5ca8f87241d25d4f220264483955622e178c9f662cc1f95f27cdcbc1896ec07';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const JWT_EXPIRES_IN = '7d';
+let devEphemeralJwtSecret = null;
 
-const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+function isDeveloperEnv() {
+  return (process.env.APP_ENV || 'production').toLowerCase() === 'developer';
+}
+
+function getJwtSecret() {
+  if (process.env.JWT_SECRET) {
+    return process.env.JWT_SECRET;
+  }
+  if (isDeveloperEnv()) {
+    if (!devEphemeralJwtSecret) {
+      devEphemeralJwtSecret = crypto.randomBytes(32).toString('hex');
+    }
+    return devEphemeralJwtSecret;
+  }
+  throw new Error('JWT_SECRET environment variable is required when APP_ENV is not developer');
+}
+
+const client = new OAuth2Client(GOOGLE_CLIENT_ID || undefined);
 
 /**
  * POST /auth/google
@@ -57,8 +75,8 @@ router.post('/google', async (req, res) => {
       }
     }
 
-    // 3. If client already verified with Google and supplied userInfo
-    if (!payload && userInfo && userInfo.email) {
+    // 3. Developer-only unverified userInfo bypass (never active in production)
+    if (!payload && isDeveloperEnv() && userInfo && userInfo.email) {
       payload = userInfo;
     }
 
@@ -75,11 +93,20 @@ router.post('/google', async (req, res) => {
     });
 
     if (!dbUser) {
+      // Determine default role: designated admin emails get Admin, all other sign-ups get Student
+      const adminEmails = ['napus.dev@gmail.com'];
+      const defaultRole = adminEmails.includes(email) ? '69aec1c73996270d703db3d7' : '69e9e2226c400846810ef687';
+
       // Create new user record if first-time sign-in
       dbUser = await UserModel.create({
         name: name,
-        email: email
+        email: email,
+        picture: payload.picture || null,
+        role: defaultRole
       });
+    } else if (payload.picture && dbUser.picture !== payload.picture) {
+      dbUser.picture = payload.picture;
+      await dbUser.save();
     }
 
     // Create a session JWT
@@ -93,7 +120,7 @@ router.post('/google', async (req, res) => {
         role: dbUser.role,
         organization: dbUser.organization
       },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: JWT_EXPIRES_IN }
     );
 
@@ -153,7 +180,7 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
 
     // Query latest user data from DB if available
     let dbUser = null;
@@ -167,7 +194,7 @@ router.get('/me', async (req, res) => {
         googleId: decoded.googleId,
         email: dbUser.email,
         name: dbUser.name,
-        picture: decoded.picture,
+        picture: dbUser.picture || decoded.picture || null,
         role: dbUser.role,
         organization: dbUser.organization
       } : {
@@ -175,7 +202,7 @@ router.get('/me', async (req, res) => {
         googleId: decoded.googleId,
         email: decoded.email,
         name: decoded.name,
-        picture: decoded.picture,
+        picture: decoded.picture || null,
         role: decoded.role,
         organization: decoded.organization
       },

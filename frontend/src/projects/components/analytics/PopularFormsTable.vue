@@ -8,9 +8,19 @@
                 <CDataTable
                     :items="computedTableItems"
                     :fields="tableFields"
-                    hover
+                    :hover="computedTableItems.length > 0"
                     class="mb-0 tables-container"
+                    :class="{ 'table-empty': computedTableItems.length === 0 }"
                 >
+                    <template #no-items-view>
+                        <EmptyState
+                            borderless
+                            icon="cil-chart-line"
+                            title="ยังไม่มีข้อมูลสถิติแบบสอบถาม"
+                            description="เมื่อมีการตอบแบบสอบถามในระบบ สถิติความนิยมจะแสดงขึ้นที่นี่"
+                        />
+                    </template>
+
                     <!-- Form Name Slot -->
                     <template #formName="{item}">
                         <td class="py-3 pl-3 text-dark">
@@ -94,10 +104,12 @@
 import { mapGetters } from 'vuex'
 import moment from 'moment'
 import localeMixin from '@/mixins/localeMixin'
+import EmptyState from '@/projects/components/Util/EmptyState.vue'
 import { getTableStatusLabel, isInTimeRange, isSubmittedResponse } from '@/projects/utils/analytics'
 
 export default {
     name: 'PopularFormsTable',
+    components: { EmptyState },
     mixins: [localeMixin],
     props: {
         timeRange: {
@@ -256,11 +268,27 @@ export default {
 
 .tables-container {
     background: white;
-    border-radius: 1rem;
+    border-radius: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0 !important;
     padding: 0;
     overflow: hidden;
+}
+
+.tables-container.table-empty tbody tr,
+.tables-container.table-empty tbody tr:hover,
+.tables-container.table-empty tbody td {
+    background: transparent !important;
+    background-color: transparent !important;
+    cursor: default !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+.tables-container.table-empty thead th {
+    cursor: default !important;
+    pointer-events: none !important;
+    user-select: none !important;
 }
 
 .response-icon-box {
@@ -269,7 +297,7 @@ export default {
     justify-content: center;
     width: 20px;
     height: 20px;
-    border-radius: 4px;
+    border-radius: 8px;
     background-color: #f1f5f9;
 }
 
@@ -319,7 +347,7 @@ export default {
 .visibility-badge {
     display: inline-flex;
     padding: 0.25em 0.8em;
-    border-radius: 6px;
+    border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;

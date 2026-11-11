@@ -1,6 +1,11 @@
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+function getJwtSecret() {
+    if (process.env.JWT_SECRET) {
+        return process.env.JWT_SECRET;
+    }
+    throw new Error("JWT_SECRET environment variable is required");
+}
 
 /**
  * requireAuth – verifies the JWT cookie set by /auth/google.
@@ -13,7 +18,7 @@ async function requireAuth(req, res, next) {
             return res.status(401).json({ message: "Unauthorized: No token provided. Please login." });
         }
 
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, getJwtSecret());
         if (!decoded) {
             return res.status(401).json({ message: "Unauthorized: Invalid token. Please login." });
         }

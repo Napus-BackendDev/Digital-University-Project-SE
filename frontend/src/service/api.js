@@ -21,7 +21,7 @@ export default {
       case 'exp':
         return instance.get('form/exp', { params: data })
       case 'getByUser':
-        return instance.post('form/user', { _id: data.userId })
+        return instance.post('form/user', { _id: data.userId, mode: data.mode })
       case 'get':
         return instance.post('form/get', data)
       case 'create':

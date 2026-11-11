@@ -77,8 +77,7 @@ export default new Router({
                 },
                 {
                     path: 'permissions',
-                    name: 'Permissions',
-                    component: Permission
+                    redirect: { name: 'ManageForms' }
                 },
                 {
                     path: 'email',

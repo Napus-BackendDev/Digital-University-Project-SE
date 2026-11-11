@@ -13,7 +13,7 @@ var objSchema = new Schema({
     },
     organization: {
         type: [{ type: Schema.Types.ObjectId, ref: 'Organizations' }],
-        default: ["69baf8349050b9215c700b96"]
+        default: []
     },
     collaborator: [{
         user: { type: Schema.Types.ObjectId, ref: 'Users' },
@@ -27,7 +27,9 @@ var objSchema = new Schema({
         requireResponse: { type: Boolean, default: false },
         confirmMessage: { type: String, default: 'Thank you for completing this survey. Your response has been recorded.' },
         showAnotherResponseLink: { type: Boolean, default: true },
-        allowedUser: { type: [{ type: Schema.Types.ObjectId, ref: 'Users' }], default: [] }
+        allowedUser: { type: [{ type: Schema.Types.ObjectId, ref: 'Users' }], default: [] },
+        requireLogin: { type: Boolean, default: false },
+        allowedRoles: { type: [{ type: Schema.Types.ObjectId, ref: 'Roles' }], default: [] }
     },
     responses: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] },
     originalFormId: { type: Schema.Types.ObjectId, ref: 'Forms', default: null, index: true },

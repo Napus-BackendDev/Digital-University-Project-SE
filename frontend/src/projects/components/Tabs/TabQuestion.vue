@@ -1,163 +1,130 @@
 <template>
     <div>
-        <!-- ── Form Header Card (Wrapped in Spotlight #1 during Step 1) ── -->
-        <div :class="{ 'wizard-spotlight-box mb-2': isWizardActive && wizardStep === 1 }">
-            <div v-if="isWizardActive && wizardStep === 1" class="wizard-spotlight-banner">
-                <CIcon name="cil-bolt" size="sm" class="mr-2" />
-                <span>SPOTLIGHT #1: กรอบไฮไลต์ล้อมรอบ [Component: Form Header Card — การ์ดหัวเรื่องแบบสอบถามใน TabQuestion.vue]</span>
-            </div>
-
-            <div v-if="isWizardActive && wizardStep === 2" class="wizard-step1-done-strip mb-3">
-                <CIcon name="cil-check-circle" size="sm" class="mr-2" />
-                <span>[Component: Form Header Card (บันทึกเสร็จแล้วใน Step 1)] — แสดงชื่อฟอร์มและคำชี้แจงด้านล่าง</span>
-            </div>
-
-            <div :class="{ 'p-3': isWizardActive && wizardStep === 1 }">
-                <CCard class="mb-4 rounded-20 shadow-sm border">
-                    <CCardBody>
-                        <div>
-                            <!-- Wizard Top Language & Second Language Component Bar -->
-                            <div v-if="isWizardActive && wizardStep === 1" class="d-flex flex-wrap align-items-center mb-3 gap-2">
-                                <div class="wizard-comp-chip is-sky">
-                                    <CIcon name="cil-globe-alt" size="sm" class="mr-1" />
-                                    <span>[Component: Language Dropdown] เลือกภาษาหลักด้านหน้าชื่อฟอร์ม (TH / EN)</span>
+        <CCard class="mb-4 rounded-20 shadow-sm border">
+            <CCardBody>
+                <div>
+                    <!-- ── Form Title  ── -->
+                    <div class="mb-3">
+                        <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
+                            class="d-flex align-items-center mb-1">
+                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
+                                <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light"
+                                    size="sm" class="lang-key-dropdown">
+                                    <template #toggler>
+                                        <CButton class="lang-key-btn border shadow-none"
+                                            style="width: 3.2rem; min-width: 3.2rem;">
+                                            {{ (titleItem.key || 'EN').toUpperCase() }}
+                                        </CButton>
+                                    </template>
+                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
+                                        @click="setLangKey(titleItem, lang.value, updateFormMeta)">
+                                        {{ lang.label }}
+                                    </CDropdownItem>
+                                    <CDropdownDivider />
+                                    <CDropdownItem
+                                        @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">
+                                        Other...</CDropdownItem>
+                                </CDropdown>
+                                <div v-else class="manual-lang-input d-flex align-items-center">
+                                    <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateFormMeta"
+                                        @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
+                                    <CButton
+                                        @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', updateFormMeta)"
+                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
                                 </div>
-                                <button
-                                    type="button"
-                                    class="wizard-comp-btn is-purple"
-                                    @click="addBilingualHeader"
-                                >
-                                    <CIcon name="cil-plus" size="sm" class="mr-1" />
-                                    <span>[Component: ปุ่ม + เพิ่มภาษาที่ 2 (TH/EN)] เปิดช่องกรอก 2 ภาษาคู่กัน</span>
-                                </button>
                             </div>
-
-                            <!-- ── Form Title  ── -->
-                            <div class="mb-3" :class="{ 'wizard-input-frame is-maroon': isWizardActive && wizardStep === 1 }">
-                                <div v-if="isWizardActive && wizardStep === 1" class="wizard-field-caption is-maroon">
-                                    [Component: Form Title Input Box (ช่องกรอกชื่อแบบสอบถาม — บังคับกรอก *)] พิมพ์แล้วบันทึก Auto-Save (PUT /api/v1/form)
-                                </div>
-                                <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
-                                    class="d-flex align-items-center mb-1">
-                                    <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                        <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light"
-                                            size="sm" class="lang-key-dropdown">
-                                            <template #toggler>
-                                                <CButton class="lang-key-btn border shadow-none"
-                                                    style="width: 3.2rem; min-width: 3.2rem;">
-                                                    {{ (titleItem.key || 'EN').toUpperCase() }}
-                                                </CButton>
-                                            </template>
-                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
-                                                @click="setLangKey(titleItem, lang.value, updateFormMeta)">
-                                                {{ lang.label }}
-                                            </CDropdownItem>
-                                            <CDropdownDivider />
-                                            <CDropdownItem
-                                                @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">
-                                                Other...</CDropdownItem>
-                                        </CDropdown>
-                                        <div v-else class="manual-lang-input d-flex align-items-center">
-                                            <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateFormMeta"
-                                                @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
-                                            <CButton
-                                                @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', updateFormMeta)"
-                                                size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
-                                        </div>
-                                    </div>
-                                    <CInput class="form-title-input flex-grow-1 border-bottom mb-0" v-model="titleItem.value"
-                                        @change="updateFormMeta" />
-                                    <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                        v-if="form.title && form.title.length > 1" @click="removeFormTitle(tIdx)">
-                                        <CIcon name="cil-minus" />
-                                    </CButton>
-                                </div>
-                                <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
-                                    @click="addFormTitle" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
-                                    <CIcon name="cil-globe-alt" />
-                                </CButton>
-                            </div>
-
-                            <!-- ── Form Description ── -->
-                            <div :class="{ 'wizard-input-frame is-slate': isWizardActive && wizardStep === 1 }">
-                                <div v-if="isWizardActive && wizardStep === 1" class="wizard-field-caption is-slate">
-                                    [Component: Form Description Textarea (ช่องกรอกคำชี้แจง/วัตถุประสงค์ของแบบสอบถาม)] อธิบายรายละเอียดให้ผู้ตอบทราบก่อนเริ่มทำ
-                                </div>
-                                <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
-                                    class="d-flex align-items-start mb-1">
-                                    <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                        <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
-                                            size="sm" class="lang-key-dropdown">
-                                            <template #toggler>
-                                                <CButton class="lang-key-btn border shadow-none"
-                                                    style="width: 3.2rem; min-width: 3.2rem;">
-                                                    {{ (descItem.key || 'EN').toUpperCase() }}
-                                                </CButton>
-                                            </template>
-                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
-                                                @click="setLangKey(descItem, lang.value, updateFormMeta)">
-                                                {{ lang.label }}
-                                            </CDropdownItem>
-                                            <CDropdownDivider />
-                                            <CDropdownItem
-                                                @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
-                                                Other...
-                                            </CDropdownItem>
-                                        </CDropdown>
-                                        <div v-else class="manual-lang-input d-flex align-items-center">
-                                            <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="updateFormMeta"
-                                                @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
-                                            <CButton
-                                                @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', updateFormMeta)"
-                                                size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
-                                        </div>
-                                    </div>
-                                    <CTextarea class="form-desc-input flex-grow-1 border-bottom mb-0" v-model="descItem.value"
-                                        @change="updateFormMeta" rows="2" />
-                                    <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                        v-if="form.description && form.description.length > 1" @click="removeFormDesc(dIdx)">
-                                        <CIcon name="cil-minus" />
-                                    </CButton>
-                                </div>
-                                <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
-                                    @click="addFormDesc" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
-                                    <CIcon name="cil-globe-alt" />
-                                </CButton>
-                            </div>
-
+                            <CInput class="form-title-input flex-grow-1 border-bottom mb-0" v-model="titleItem.value"
+                                @change="updateFormMeta" />
+                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                v-if="hasMultipleLanguages" @click="removeFormTitle(tIdx)">
+                                <CIcon name="cil-minus" />
+                            </CButton>
                         </div>
-                    </CCardBody>
-                </CCard>
-            </div>
-        </div>
+                        <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
+                            @click="addFormTitle" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
+                            <CIcon name="cil-globe-alt" />
+                        </CButton>
+                    </div>
 
-        <!-- Coachmark Popover #1 -->
-        <FormBuilderWizard
-            v-if="isWizardActive && wizardStep === 1"
-            mode="coachmark"
-            :currentStep="1"
-            :form="form"
-            @fill-sample-header="fillSampleHeader"
-            @skip="$emit('wizard-skip')"
-            @next-step="$emit('wizard-next')"
-        />
+                    <!-- ── Form Description ── -->
+                    <div v-if="!hasFormDescription" class="add-desc-box mt-3 p-3 rounded-12 d-flex align-items-center justify-content-between" @click="expandFormDesc">
+                        <div class="d-flex align-items-center text-muted font-weight-bold">
+                            <CIcon name="cil-notes" class="mr-2 text-primary" />
+                            <span>{{ $t('builder.addDescriptionPrompt') }}</span>
+                        </div>
+                        <CButton size="sm" color="primary" variant="ghost" class="font-weight-bold">
+                            <CIcon name="cil-plus" class="mr-1" />
+                            {{ $t('builder.add') }}
+                        </CButton>
+                    </div>
 
-        <!-- ── Questions Editor Area (Wrapped in Spotlight #2A during Step 2) ── -->
-        <div :class="{ 'wizard-spotlight-box mb-2': isWizardActive && wizardStep === 2 }">
-            <div v-if="isWizardActive && wizardStep === 2" class="wizard-spotlight-banner">
-                <CIcon name="cil-bolt" size="sm" class="mr-2" />
-                <span>SPOTLIGHT #2A: กรอบไฮไลต์ล้อมรอบ [Component: Question Card Editor — การ์ดสร้างและตั้งค่าข้อคำถาม]</span>
-            </div>
+                    <div v-else class="mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted font-weight-bold">
+                                {{ $t('builder.formDescription') }}
+                            </small>
+                            <CButton size="sm" color="danger" variant="ghost" class="p-0 font-weight-bold d-flex align-items-center text-danger"
+                                @click="removeFormDescBox" v-c-tooltip="'Remove description'">
+                                <CIcon name="cil-trash" size="sm" class="mr-1" />
+                                <small>{{ $t('builder.remove') }}</small>
+                            </CButton>
+                        </div>
 
-            <div :class="{ 'p-3': isWizardActive && wizardStep === 2 }">
-                <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }"
-                    :row-height="10" :is-draggable="true" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
+                        <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
+                            class="d-flex align-items-start mb-1">
+                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
+                                <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
+                                    size="sm" class="lang-key-dropdown">
+                                    <template #toggler>
+                                        <CButton class="lang-key-btn border shadow-none"
+                                            style="width: 3.2rem; min-width: 3.2rem;">
+                                            {{ (descItem.key || 'EN').toUpperCase() }}
+                                        </CButton>
+                                    </template>
+                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
+                                        @click="setLangKey(descItem, lang.value, updateFormMeta)">
+                                        {{ lang.label }}
+                                    </CDropdownItem>
+                                    <CDropdownDivider />
+                                    <CDropdownItem
+                                        @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
+                                        Other...
+                                    </CDropdownItem>
+                                </CDropdown>
+                                <div v-else class="manual-lang-input d-flex align-items-center">
+                                    <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="updateFormMeta"
+                                        @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
+                                    <CButton
+                                        @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', updateFormMeta)"
+                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                </div>
+                            </div>
+                            <CTextarea class="form-desc-input flex-grow-1 border-bottom mb-0" v-model="descItem.value"
+                                @change="updateFormMeta" rows="2" />
+                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                v-if="hasMultipleLanguages" @click="removeFormDesc(dIdx)">
+                                <CIcon name="cil-minus" />
+                            </CButton>
+                        </div>
+                        <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
+                            @click="addFormDesc" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
+                            <CIcon name="cil-globe-alt" />
+                        </CButton>
+                    </div>
+
+                </div>
+            </CCardBody>
+        </CCard>
+
+        <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }"
+            :row-height="10" :margin="[10, 20]" :is-draggable="true" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
             <GridItem v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)"
                 v-bind="getLayoutItem(question, qIndex)">
                 <CCard :id="'question-' + (question._id || qIndex)"
-                    class="mb-3 position-relative rounded-20 shadow-sm border">
+                    class="position-relative rounded-20 shadow-sm border mb-0 h-100">
                     <CCardBody class="p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="question-card-content">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
                             <div class="number-question" v-if="isCounted(question)">
                                 {{ displayQuestionNumber(question, qIndex) }}</div>
 
@@ -195,7 +162,7 @@
                                     <CInput class="flex-grow-1 mb-0" v-model="titleItem.value"
                                         @change="updateQuestionTitle(question)" style="background-color: #f8fafc;" />
                                     <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0"
-                                        v-if="question.title && question.title.length > 1"
+                                        v-if="hasMultipleLanguages"
                                         @click="removeTitle(question, titleIndex)">
                                         <CIcon name="cil-minus" />
                                     </CButton>
@@ -271,7 +238,7 @@
                                             <CInput class="flex-grow-1 mb-0" v-model="lang.value"
                                                 @input="(e) => updateOption(question, choiceIndex, li, e)" />
                                             <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0"
-                                                v-if="choice.lang && choice.lang.length > 1"
+                                                v-if="hasMultipleLanguages"
                                                 @click="removeOptionLanguage(question, choiceIndex, li)">
                                                 <CIcon name="cil-minus" />
                                             </CButton>
@@ -352,7 +319,7 @@
                             <CDropdown class="mr-3" color="secondary" variant="outline">
                                 <template #toggler>
                                     <button class="btn d-flex align-items-center text-muted border bg-white"
-                                        style="border-radius: 6px;">
+                                        style="border-radius: 12px;">
                                         {{ (question.config && question.config.maxRating) || 5 }}
                                     </button>
                                 </template>
@@ -412,53 +379,73 @@
                         </div>
 
                         <div v-else-if="getQuestionType(question.type).toLowerCase() === 'title_description'">
-                            <small class="text-muted font-weight-bold d-block mb-1">
-                                {{ $t('builder.description') }}
-                            </small>
-
-                            <div v-for="(descItem, dIdx) in (question.config && question.config.description || [])" :key="'qd-' + dIdx"
-                                class="d-flex align-items-start">
-                                <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                    <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
-                                        size="sm" class="lang-key-dropdown">
-                                        <template #toggler>
-                                            <CButton class="lang-key-btn border shadow-none"
-                                                style="width: 3.2rem; min-width: 3.2rem;">
-                                                {{ (descItem.key || 'EN').toUpperCase() }}
-                                            </CButton>
-                                        </template>
-                                        <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
-                                            @click="setLangKey(descItem, lang.value, () => putQuestion(question))">
-                                            {{ lang.label }}
-                                        </CDropdownItem>
-                                        <CDropdownDivider />
-                                        <CDropdownItem
-                                            @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
-                                            Other...</CDropdownItem>
-                                    </CDropdown>
-                                    <div v-else class="manual-lang-input d-flex align-items-center">
-                                        <CInput class="lang-key-input mb-0" v-model="descItem.key"
-                                            @change="putQuestion(question)" @blur="checkManualKey(descItem)"
-                                            maxlength="3" style="width: 3.2rem;" />
-                                        <CButton
-                                            @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', () => putQuestion(question))"
-                                            size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
-                                    </div>
+                            <div v-if="!hasQuestionDescription(question)" class="add-desc-box p-3 rounded-12 d-flex align-items-center justify-content-between" @click="expandQuestionDesc(question)">
+                                <div class="d-flex align-items-center text-muted font-weight-bold">
+                                    <CIcon name="cil-notes" class="mr-2 text-primary" />
+                                    <span>{{ $t('builder.addQuestionDescriptionPrompt') }}</span>
                                 </div>
-                                <CTextarea class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
-                                    rows="2" />
-                                <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                    v-if="question.config && question.config.description && question.config.description.length > 1"
-                                    @click="removeConfigDesc(question, dIdx)">
-                                    <CIcon name="cil-minus" />
+                                <CButton size="sm" color="primary" variant="ghost" class="font-weight-bold">
+                                    <CIcon name="cil-plus" class="mr-1" />
+                                    {{ $t('builder.add') }}
                                 </CButton>
                             </div>
 
-                            <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn"
-                                style="width: 3.2rem;" @click="addConfigDesc(question)" size="sm"
-                                v-c-tooltip="'Add language'" aria-label="Add language">
-                                <CIcon name="cil-globe-alt" />
-                            </CButton>
+                            <div v-else>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted font-weight-bold">
+                                        {{ $t('builder.description') }}
+                                    </small>
+                                    <CButton size="sm" color="danger" variant="ghost" class="p-0 font-weight-bold d-flex align-items-center text-danger"
+                                        @click="removeQuestionDescBox(question)" v-c-tooltip="'Remove description'">
+                                        <CIcon name="cil-trash" size="sm" class="mr-1" />
+                                        <small>{{ $t('builder.remove') }}</small>
+                                    </CButton>
+                                </div>
+
+                                <div v-for="(descItem, dIdx) in (question.config && question.config.description || [])" :key="'qd-' + dIdx"
+                                    class="d-flex align-items-start mb-1">
+                                    <div class="lang-key-wrapper flex-shrink-0 mr-2">
+                                        <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
+                                            size="sm" class="lang-key-dropdown">
+                                            <template #toggler>
+                                                <CButton class="lang-key-btn border shadow-none"
+                                                    style="width: 3.2rem; min-width: 3.2rem;">
+                                                    {{ (descItem.key || 'EN').toUpperCase() }}
+                                                </CButton>
+                                            </template>
+                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
+                                                @click="setLangKey(descItem, lang.value, () => putQuestion(question))">
+                                                {{ lang.label }}
+                                            </CDropdownItem>
+                                            <CDropdownDivider />
+                                            <CDropdownItem
+                                                @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
+                                                Other...</CDropdownItem>
+                                        </CDropdown>
+                                        <div v-else class="manual-lang-input d-flex align-items-center">
+                                            <CInput class="lang-key-input mb-0" v-model="descItem.key"
+                                                @change="putQuestion(question)" @blur="checkManualKey(descItem)"
+                                                maxlength="3" style="width: 3.2rem;" />
+                                            <CButton
+                                                @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', () => putQuestion(question))"
+                                                size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
+                                        </div>
+                                    </div>
+                                    <CTextarea class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
+                                        rows="2" />
+                                    <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
+                                        v-if="hasMultipleLanguages"
+                                        @click="removeConfigDesc(question, dIdx)">
+                                        <CIcon name="cil-minus" />
+                                    </CButton>
+                                </div>
+
+                                <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn"
+                                    style="width: 3.2rem;" @click="addConfigDesc(question)" size="sm"
+                                    v-c-tooltip="'Add language'" aria-label="Add language">
+                                    <CIcon name="cil-globe-alt" />
+                                </CButton>
+                            </div>
                         </div>
 
                         <div v-else-if="getQuestionType(question.type).toLowerCase() === 'image'">
@@ -486,7 +473,7 @@
                                     <CDropdown color="light" variant="outline">
                                         <template #toggler>
                                             <button class="btn d-flex align-items-center text-muted border bg-white"
-                                                style="border-radius: 6px;">
+                                                style="border-radius: 12px;">
                                                 <CIcon :name="getIconForType(question.type)" class="mr-2" />
                                                 <span class="text-capitalize">
                                                     {{ formatTypeLabel(getQuestionType(question.type)) }}
@@ -514,7 +501,7 @@
                                     <CDropdown color="light" variant="outline">
                                         <template #toggler>
                                             <button class="btn d-flex align-items-center text-muted border bg-white"
-                                                style="border-radius: 6px;">
+                                                style="border-radius: 12px;">
                                                 <CIcon
                                                     :name="!question.nextQuestion ? 'cil-check-alt' : 'cil-list-low-priority'"
                                                     class="mr-2" />
@@ -556,39 +543,18 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </CCardBody>
                 </CCard>
             </GridItem>
-                </GridLayout>
+        </GridLayout>
 
-                <!-- Empty state -->
-                <div v-if="!localQuestions || localQuestions.length === 0"
-                    class="text-center py-5 text-muted bg-white rounded-20 shadow-sm border">
-                    <CIcon name="cil-notes" :height="40" class="mb-3 text-muted" />
-                    <p class="mb-3 font-weight-bold text-dark">{{ $t('builder.emptyQuestions') }}</p>
-                    <button
-                        v-if="isWizardActive && wizardStep === 2"
-                        type="button"
-                        class="wizard-comp-btn is-purple"
-                        @click="addSampleQuestion"
-                    >
-                        <CIcon name="cil-plus" size="sm" class="mr-1" />
-                        <span>คลิกเพื่อสร้างข้อคำถามข้อแรกอัตโนมัติ (หรือเลือกจากแผง 8 ชนิดด้านขวา)</span>
-                    </button>
-                </div>
-            </div>
+        <!-- Empty state -->
+        <div v-if="!localQuestions || localQuestions.length === 0"
+            class="text-center py-5 text-muted bg-white rounded-20 shadow-sm">
+            <CIcon name="cil-notes" :height="40" class="mb-3 text-muted" />
+            <p class="mb-0">{{ $t('builder.emptyQuestions') }}</p>
         </div>
-
-        <!-- Coachmark Popover #2 -->
-        <FormBuilderWizard
-            v-if="isWizardActive && wizardStep === 2"
-            mode="coachmark"
-            :currentStep="2"
-            :form="form"
-            @prev-step="$emit('wizard-prev')"
-            @add-sample-question="addSampleQuestion"
-            @next-step="$emit('wizard-next')"
-        />
 
         <!-- Image Select modal -->
         <CModal :show.sync="showImageModal" :centered="true">
@@ -626,6 +592,36 @@
                 </div>
             </template>
         </CModal>
+
+        <!-- Modal Confirm Delete Language -->
+        <CModal :show.sync="showDeleteLangModal" :centered="true" size="sm">
+            <template #header-wrapper>
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title font-weight-bold text-danger">
+                        <CIcon name="cil-warning" class="mr-2" />
+                        {{ $t('builder.deleteLanguageTitle') }}
+                    </h5>
+                </div>
+            </template>
+            <template #default>
+                <div class="p-3">
+                    <p class="mb-0 text-dark">
+                        {{ $t('builder.deleteLanguageConfirm', { lang: (langToDelete || '').toUpperCase() }) }}
+                    </p>
+                </div>
+            </template>
+            <template #footer-wrapper>
+                <div class="d-flex justify-content-end p-2 border-top">
+                    <CButton color="secondary" variant="ghost" @click="showDeleteLangModal = false">
+                        {{ $t('builder.modal.cancel') }}
+                    </CButton>
+                    <CButton color="danger" class="ml-2 px-3 shadow-sm font-weight-bold" @click="confirmRemoveLanguageGlobally">
+                        <CIcon name="cil-trash" class="mr-1" />
+                        {{ $t('builder.delete') }}
+                    </CButton>
+                </div>
+            </template>
+        </CModal>
     </div>
 </template>
 
@@ -633,19 +629,15 @@
 import { mapGetters } from 'vuex';
 import { GridLayout, GridItem } from 'vue-grid-layout'
 import { loadStoredLayout, saveGridLayout, buildGridLayoutFromQuestions, getLayoutItem as svcGetLayoutItem, onDragStop as svcOnDragStop } from '../../service/draggable'
-import FormBuilderWizard from '../Wizard/FormBuilderWizard.vue';
 
 export default {
     name: 'TabQuestion',
     props: {
-        form: { type: Object, required: true },
-        isWizardActive: { type: Boolean, default: false },
-        wizardStep: { type: Number, default: 1 }
+        form: { type: Object, required: true }
     },
     components: {
         GridLayout,
-        GridItem,
-        FormBuilderWizard
+        GridItem
     },
     data() {
         return {
@@ -671,6 +663,9 @@ export default {
                 { value: 'en', label: 'EN' },
             ],
             isImageUpdating: false,
+            showDeleteLangModal: false,
+            langToDelete: '',
+            isFormDescExpanded: false,
         };
     },
     watch: {
@@ -713,8 +708,9 @@ export default {
                 if (newForm && (!Array.isArray(newForm.title) || newForm.title.length === 0)) {
                     this.$nextTick(() => this.addFormTitle());
                 }
-                if (newForm && (!Array.isArray(newForm.description) || newForm.description.length === 0)) {
-                    this.$nextTick(() => this.addFormDesc());
+
+                if (newForm) {
+                    this.$nextTick(() => this.reconcileFormLanguages());
                 }
             }
         },
@@ -735,22 +731,20 @@ export default {
         } catch (e) { }
     },
     mounted() {
-        try {
-            console.warn('TabQuestion mounted — debug hook installed');
-            window.__TABQUESTION_INVOKE_ONDRAG = () => {
-                try {
-                    console.warn('Invoking onDragStop via window.__TABQUESTION_INVOKE_ONDRAG');
-                    return this.onDragStop(this.layout);
-                } catch (e) {
-                    console.error('invoke onDragStop failed', e);
-                }
-            };
-        } catch (e) {
-            /* ignore */
-        }
+        this.$nextTick(() => {
+            this.syncCardHeights();
+        });
     },
     computed: {
         ...mapGetters('Setting/question_type', { question_type: 'item' }),
+        hasMultipleLanguages() {
+            return this.getFormLanguages().length > 1;
+        },
+        hasFormDescription() {
+            if (this.isFormDescExpanded) return true;
+            if (!this.form || !Array.isArray(this.form.description) || this.form.description.length === 0) return false;
+            return this.form.description.some(d => d && d.value && typeof d.value === 'string' && d.value.trim().length > 0);
+        },
         questionTypes() {
             if (!this.question_type || !Array.isArray(this.question_type)) return [];
             return JSON.parse(JSON.stringify(this.question_type)).map(type => ({
@@ -865,10 +859,44 @@ export default {
                         }
                     }
                 }
+                this.syncCardHeights();
             } catch (e) {
                 this.layout = [];
                 this.gridKey++;
             }
+        },
+
+        syncCardHeights() {
+            this.$nextTick(() => {
+                if (!this.layout || this.layout.length === 0 || !this.localQuestions) return;
+                const ROW_HEIGHT = 10;
+                const MARGIN_Y = 20;
+                const UNIT = ROW_HEIGHT + MARGIN_Y; // 30px per grid unit
+
+                let currentY = 0;
+                for (let i = 0; i < this.layout.length; i++) {
+                    const item = this.layout[i];
+                    const cardEl = document.getElementById('question-' + item.i);
+                    let actualPx = 0;
+                    if (cardEl) {
+                        const contentWrapper = cardEl.querySelector('.question-card-content');
+                        if (contentWrapper) {
+                            actualPx = contentWrapper.offsetHeight + 48 + 2; // p-4 (24px*2) + border
+                        } else {
+                            const body = cardEl.querySelector('.card-body');
+                            actualPx = body ? body.scrollHeight : cardEl.offsetHeight;
+                        }
+                    }
+
+                    const h = actualPx > 50
+                        ? Math.max(5, Math.ceil((actualPx + MARGIN_Y) / UNIT))
+                        : item.h;
+
+                    if (item.h !== h) this.$set(item, 'h', h);
+                    if (item.y !== currentY) this.$set(item, 'y', currentY);
+                    currentY += h;
+                }
+            });
         },
 
         getLayoutItem(question, qIndex) {
@@ -882,9 +910,13 @@ export default {
 
                 const oldIds = (this.localQuestions || []).map(q => this.convertIdToStr(q._id || ''));
                 const newIds = (reordered || []).map(q => this.convertIdToStr(q._id || ''));
-                if (oldIds.join(',') === newIds.join(',')) return;
+                if (oldIds.join(',') === newIds.join(',')) {
+                    this.syncCardHeights();
+                    return;
+                }
                 if (Array.isArray(reordered)) {
                     this.localQuestions = reordered;
+                    this.buildGridLayoutFromQuestions();
                     try {
                         await this.updateOrdersAndPersist(reordered);
                     } catch (e) { console.error(e); }
@@ -924,38 +956,406 @@ export default {
             }
         },
 
-        addFormTitle() {
+        getFormLanguages() {
+            const langs = [];
+            const addKey = (k) => {
+                if (!k) return;
+                const normalized = String(k).trim().toLowerCase();
+                if (normalized && !langs.includes(normalized)) {
+                    langs.push(normalized);
+                }
+            };
+            if (this.form && Array.isArray(this.form.title)) {
+                this.form.title.forEach(t => addKey(t && t.key));
+            }
+            if (this.form && Array.isArray(this.form.description)) {
+                this.form.description.forEach(d => addKey(d && d.key));
+            }
+            (this.localQuestions || []).forEach(q => {
+                if (Array.isArray(q.title)) {
+                    q.title.forEach(t => addKey(t && t.key));
+                }
+                if (q.config && Array.isArray(q.config.description)) {
+                    q.config.description.forEach(d => addKey(d && d.key));
+                }
+                if (q.config && Array.isArray(q.config.choices)) {
+                    q.config.choices.forEach(c => {
+                        if (Array.isArray(c.lang)) {
+                            c.lang.forEach(l => addKey(l && l.key));
+                        }
+                    });
+                }
+            });
+            return langs.length > 0 ? langs : ['en'];
+        },
+
+        getNextFormLang() {
+            const priority = ['en', 'th', 'cn', 'jp'];
+            const active = this.getFormLanguages();
+            const next = priority.find(k => !active.includes(k));
+            return next || '';
+        },
+
+        reconcileFormLanguages() {
+            if (!this.form) return;
+            const activeLangs = this.getFormLanguages();
+            if (!activeLangs || activeLangs.length === 0) return;
+
+            let formChanged = false;
+            if (!Array.isArray(this.form.title) || this.form.title.length === 0) {
+                this.$set(this.form, 'title', activeLangs.map(k => ({ key: k, value: k === 'en' ? 'Untitled Form' : '' })));
+                formChanged = true;
+            } else {
+                activeLangs.forEach(k => {
+                    if (!this.form.title.some(t => (t.key || '').toLowerCase() === k)) {
+                        this.form.title.push({ key: k, value: '' });
+                        formChanged = true;
+                    }
+                });
+            }
+
+            if (!Array.isArray(this.form.description) || this.form.description.length === 0) {
+                this.$set(this.form, 'description', activeLangs.map(k => ({ key: k, value: '' })));
+                formChanged = true;
+            } else {
+                activeLangs.forEach(k => {
+                    if (!this.form.description.some(d => (d.key || '').toLowerCase() === k)) {
+                        this.form.description.push({ key: k, value: '' });
+                        formChanged = true;
+                    }
+                });
+            }
+
+            (this.localQuestions || []).forEach(q => {
+                let qChanged = false;
+                if (!Array.isArray(q.title) || q.title.length === 0) {
+                    this.$set(q, 'title', activeLangs.map(k => ({ key: k, value: '' })));
+                    qChanged = true;
+                } else {
+                    activeLangs.forEach(k => {
+                        if (!q.title.some(t => (t.key || '').toLowerCase() === k)) {
+                            q.title.push({ key: k, value: '' });
+                            qChanged = true;
+                        }
+                    });
+                }
+
+                if (q.config && Array.isArray(q.config.description)) {
+                    activeLangs.forEach(k => {
+                        if (!q.config.description.some(d => (d.key || '').toLowerCase() === k)) {
+                            q.config.description.push({ key: k, value: '' });
+                            qChanged = true;
+                        }
+                    });
+                }
+
+                if (q.config && Array.isArray(q.config.choices)) {
+                    q.config.choices.forEach(c => {
+                        if (!Array.isArray(c.lang) || c.lang.length === 0) {
+                            this.$set(c, 'lang', activeLangs.map(k => ({ key: k, value: '' })));
+                            qChanged = true;
+                        } else {
+                            activeLangs.forEach(k => {
+                                if (!c.lang.some(l => (l.key || '').toLowerCase() === k)) {
+                                    c.lang.push({ key: k, value: '' });
+                                    qChanged = true;
+                                }
+                            });
+                        }
+                    });
+                }
+
+                if (qChanged && q._id && !String(q._id).startsWith('tmp-')) {
+                    this.putQuestion(q);
+                }
+            });
+
+            if (formChanged) {
+                this.updateFormMeta();
+            }
+            this.$nextTick(() => this.syncCardHeights());
+        },
+
+        async addLanguageGlobally(specifiedKey = null) {
+            const active = this.getFormLanguages();
+            const newKey = (specifiedKey || this.getNextFormLang() || 'other').toLowerCase();
+            if (active.includes(newKey)) return;
+
             if (!this.form) return;
             if (!Array.isArray(this.form.title)) {
                 this.$set(this.form, 'title', [{ key: 'en', value: 'Untitled Form' }]);
-            } else {
-                this.form.title.push({ key: this.getNextLang(this.form.title), value: '' });
             }
+            if (!this.form.title.some(t => (t.key || '').toLowerCase() === newKey)) {
+                this.form.title.push({ key: newKey, value: '' });
+            }
+
+            if (!Array.isArray(this.form.description)) {
+                this.$set(this.form, 'description', [{ key: 'en', value: '' }]);
+            }
+            if (!this.form.description.some(d => (d.key || '').toLowerCase() === newKey)) {
+                this.form.description.push({ key: newKey, value: '' });
+            }
+
+            const promises = [];
+            (this.localQuestions || []).forEach(q => {
+                let changed = false;
+                if (!Array.isArray(q.title)) {
+                    this.$set(q, 'title', [{ key: 'en', value: '' }]);
+                    changed = true;
+                }
+                if (!q.title.some(t => (t.key || '').toLowerCase() === newKey)) {
+                    q.title.push({ key: newKey, value: '' });
+                    changed = true;
+                }
+
+                if (q.config && Array.isArray(q.config.description)) {
+                    if (!q.config.description.some(d => (d.key || '').toLowerCase() === newKey)) {
+                        q.config.description.push({ key: newKey, value: '' });
+                        changed = true;
+                    }
+                }
+
+                if (q.config && Array.isArray(q.config.choices)) {
+                    q.config.choices.forEach(c => {
+                        if (!Array.isArray(c.lang)) {
+                            this.$set(c, 'lang', [{ key: 'en', value: '' }]);
+                            changed = true;
+                        }
+                        if (!c.lang.some(l => (l.key || '').toLowerCase() === newKey)) {
+                            c.lang.push({ key: newKey, value: '' });
+                            changed = true;
+                        }
+                    });
+                }
+
+                if (changed && q._id && !String(q._id).startsWith('tmp-')) {
+                    promises.push(this.putQuestion(q));
+                }
+            });
+
             this.updateFormMeta();
+            this.$nextTick(() => this.syncCardHeights());
+            if (promises.length > 0) {
+                await Promise.all(promises);
+            }
+        },
+
+        requestRemoveLanguageGlobally(langKey) {
+            const active = this.getFormLanguages();
+            if (active.length <= 1) return;
+            this.langToDelete = (langKey || '').toLowerCase();
+            this.showDeleteLangModal = true;
+        },
+
+        async confirmRemoveLanguageGlobally() {
+            const targetKey = this.langToDelete;
+            this.showDeleteLangModal = false;
+            this.langToDelete = '';
+            if (!targetKey) return;
+
+            if (this.form && Array.isArray(this.form.title)) {
+                this.form.title = this.form.title.filter(t => (t.key || '').toLowerCase() !== targetKey);
+                if (this.form.title.length === 0) {
+                    this.form.title.push({ key: 'en', value: 'Untitled Form' });
+                }
+            }
+
+            if (this.form && Array.isArray(this.form.description)) {
+                this.form.description = this.form.description.filter(d => (d.key || '').toLowerCase() !== targetKey);
+            }
+
+            const promises = [];
+            (this.localQuestions || []).forEach(q => {
+                let changed = false;
+                if (Array.isArray(q.title)) {
+                    const filtered = q.title.filter(t => (t.key || '').toLowerCase() !== targetKey);
+                    if (filtered.length !== q.title.length) {
+                        this.$set(q, 'title', filtered.length > 0 ? filtered : [{ key: 'en', value: '' }]);
+                        changed = true;
+                    }
+                }
+
+                if (q.config && Array.isArray(q.config.description)) {
+                    const filtered = q.config.description.filter(d => (d.key || '').toLowerCase() !== targetKey);
+                    if (filtered.length !== q.config.description.length) {
+                        this.$set(q.config, 'description', filtered);
+                        changed = true;
+                    }
+                }
+
+                if (q.config && Array.isArray(q.config.choices)) {
+                    q.config.choices.forEach(c => {
+                        if (Array.isArray(c.lang)) {
+                            const filtered = c.lang.filter(l => (l.key || '').toLowerCase() !== targetKey);
+                            if (filtered.length !== c.lang.length) {
+                                this.$set(c, 'lang', filtered.length > 0 ? filtered : [{ key: 'en', value: '' }]);
+                                changed = true;
+                            }
+                        }
+                    });
+                }
+
+                if (changed && q._id && !String(q._id).startsWith('tmp-')) {
+                    promises.push(this.putQuestion(q));
+                }
+            });
+
+            this.updateFormMeta();
+            this.$nextTick(() => this.syncCardHeights());
+            if (promises.length > 0) {
+                await Promise.all(promises);
+            }
+        },
+
+        async changeLanguageKeyGlobally(oldKey, newKey) {
+            if (!oldKey || !newKey || oldKey.toLowerCase() === newKey.toLowerCase()) return;
+            const oldK = oldKey.toLowerCase();
+            const newK = newKey.toLowerCase();
+
+            if (this.form && Array.isArray(this.form.title)) {
+                this.form.title.forEach(t => {
+                    if ((t.key || '').toLowerCase() === oldK) {
+                        this.$set(t, 'key', newK);
+                        this.$set(t, 'isManualMode', false);
+                    }
+                });
+            }
+
+            if (this.form && Array.isArray(this.form.description)) {
+                this.form.description.forEach(d => {
+                    if ((d.key || '').toLowerCase() === oldK) {
+                        this.$set(d, 'key', newK);
+                        this.$set(d, 'isManualMode', false);
+                    }
+                });
+            }
+
+            const promises = [];
+            (this.localQuestions || []).forEach(q => {
+                let changed = false;
+                if (Array.isArray(q.title)) {
+                    q.title.forEach(t => {
+                        if ((t.key || '').toLowerCase() === oldK) {
+                            this.$set(t, 'key', newK);
+                            this.$set(t, 'isManualMode', false);
+                            changed = true;
+                        }
+                    });
+                }
+
+                if (q.config && Array.isArray(q.config.description)) {
+                    q.config.description.forEach(d => {
+                        if ((d.key || '').toLowerCase() === oldK) {
+                            this.$set(d, 'key', newK);
+                            this.$set(d, 'isManualMode', false);
+                            changed = true;
+                        }
+                    });
+                }
+
+                if (q.config && Array.isArray(q.config.choices)) {
+                    q.config.choices.forEach(c => {
+                        if (Array.isArray(c.lang)) {
+                            c.lang.forEach(l => {
+                                if ((l.key || '').toLowerCase() === oldK) {
+                                    this.$set(l, 'key', newK);
+                                    this.$set(l, 'isManualMode', false);
+                                    changed = true;
+                                }
+                            });
+                        }
+                    });
+                }
+
+                if (changed && q._id && !String(q._id).startsWith('tmp-')) {
+                    promises.push(this.putQuestion(q));
+                }
+            });
+
+            this.updateFormMeta();
+            if (promises.length > 0) {
+                await Promise.all(promises);
+            }
+        },
+
+        addFormTitle() {
+            this.addLanguageGlobally();
         },
 
         removeFormTitle(idx) {
-            if (!this.form || !Array.isArray(this.form.title)) return;
-            if (this.form.title.length <= 1) return;
-            this.form.title.splice(idx, 1);
-            this.updateFormMeta();
+            const item = this.form && this.form.title && this.form.title[idx];
+            if (item && item.key) this.requestRemoveLanguageGlobally(item.key);
         },
 
-        addFormDesc() {
+        hasQuestionDescription(question) {
+            if (question && question.isDescExpanded) return true;
+            if (!question || !question.config || !Array.isArray(question.config.description) || question.config.description.length === 0) return false;
+            return question.config.description.some(d => d && d.value && typeof d.value === 'string' && d.value.trim().length > 0);
+        },
+
+        expandFormDesc() {
+            this.isFormDescExpanded = true;
             if (!this.form) return;
-            if (!Array.isArray(this.form.description)) {
-                this.$set(this.form, 'description', [{ key: 'en', value: 'Description' }]);
+            const activeLangs = this.getFormLanguages();
+            if (!Array.isArray(this.form.description) || this.form.description.length === 0) {
+                this.$set(this.form, 'description', activeLangs.map(k => ({ key: k, value: '' })));
             } else {
-                this.form.description.push({ key: this.getNextLang(this.form.description), value: '' });
+                activeLangs.forEach(k => {
+                    if (!this.form.description.some(d => (d.key || '').toLowerCase() === k)) {
+                        this.form.description.push({ key: k, value: '' });
+                    }
+                });
+            }
+            this.$nextTick(() => {
+                const el = this.$el.querySelector('.form-desc-input textarea');
+                if (el) el.focus();
+            });
+        },
+
+        removeFormDescBox() {
+            this.isFormDescExpanded = false;
+            if (this.form && Array.isArray(this.form.description)) {
+                this.form.description.forEach(d => {
+                    d.value = '';
+                });
             }
             this.updateFormMeta();
         },
 
+        expandQuestionDesc(question) {
+            this.$set(question, 'isDescExpanded', true);
+            if (!question.config) this.$set(question, 'config', {});
+            const activeLangs = this.getFormLanguages();
+            if (!Array.isArray(question.config.description) || question.config.description.length === 0) {
+                this.$set(question.config, 'description', activeLangs.map(k => ({ key: k, value: '' })));
+            } else {
+                activeLangs.forEach(k => {
+                    if (!question.config.description.some(d => (d.key || '').toLowerCase() === k)) {
+                        question.config.description.push({ key: k, value: '' });
+                    }
+                });
+            }
+            this.syncCardHeights();
+        },
+
+        removeQuestionDescBox(question) {
+            this.$set(question, 'isDescExpanded', false);
+            if (question && question.config && Array.isArray(question.config.description)) {
+                question.config.description.forEach(d => {
+                    d.value = '';
+                });
+            }
+            this.putQuestion(question);
+            this.syncCardHeights();
+        },
+
+        addFormDesc() {
+            this.addLanguageGlobally();
+        },
+
         removeFormDesc(idx) {
-            if (!this.form || !Array.isArray(this.form.description)) return;
-            if (this.form.description.length <= 1) return;
-            this.form.description.splice(idx, 1);
-            this.updateFormMeta();
+            const item = this.form && this.form.description && this.form.description[idx];
+            if (item && item.key) this.requestRemoveLanguageGlobally(item.key);
         },
 
         async putQuestion(question, imageFile = null) {
@@ -1030,9 +1430,10 @@ export default {
             const isImage = foundType.type === 'image';
             const isTitleDescription = foundType.type === 'title_description';
 
+            const activeLangs = this.getFormLanguages();
             const config = {
                 choices: (isMultipleChoice || isCheckboxes)
-                    ? [{ key: '0', lang: [{ key: 'en', value: 'Option 1' }] }]
+                    ? [{ key: '0', lang: activeLangs.map(k => ({ key: k, value: k === 'en' ? 'Option 1' : '' })) }]
                     : [],
                 allowMultipleSelect: isCheckboxes,
                 maxRating: isRating ? 5 : null,
@@ -1041,12 +1442,12 @@ export default {
                 maxFileSize: isFileUpload ? 1 : null,
                 fileTypes: isFileUpload ? ['image', 'pdf', 'doc'] : [],
                 image: null,
-                description: isTitleDescription ? [{ key: 'en', value: 'Description' }] : [],
+                description: isTitleDescription ? activeLangs.map(k => ({ key: k, value: k === 'en' ? 'Description' : '' })) : [],
             };
 
             const payload = {
                 form: this.form && this.form._id ? this.form._id : undefined,
-                title: [{ key: 'en', value: 'Untitled Question' }],
+                title: activeLangs.map(k => ({ key: k, value: k === 'en' ? 'Untitled Question' : '' })),
                 order: this.localQuestions.length + 1,
                 type: foundType._id,
                 isRequired: false,
@@ -1192,23 +1593,15 @@ export default {
                 case 'file_upload': return 'cil-cloud-upload';
                 case 'title_description': return 'cil-text';
                 case 'image': return 'cil-image-1';
-                default: return 'cil-question';
+                default: return 'cil-notes';
             }
         },
         addTitle(question) {
-            if (!question) return;
-            if (!Array.isArray(question.title) || question.title.length === 0) {
-                this.$set(question, 'title', [{ key: 'en', value: '' }]);
-            } else {
-                question.title.push({ key: this.getNextLang(question.title), value: '' });
-            }
-            this.putQuestion(question);
+            this.addLanguageGlobally();
         },
         removeTitle(question, tIndex) {
-            if (!question || !Array.isArray(question.title)) return;
-            if (question.title.length <= 1) return;
-            question.title.splice(tIndex, 1);
-            this.putQuestion(question);
+            const item = question && question.title && question.title[tIndex];
+            if (item && item.key) this.requestRemoveLanguageGlobally(item.key);
         },
         updateQuestionDescription(question) {
             if (!question || !question._id) return;
@@ -1294,10 +1687,12 @@ export default {
         addOption(question) {
             if (!question) return;
             if (!question.config) this.$set(question, 'config', {});
+            const activeLangs = this.getFormLanguages();
+            const optionLangs = activeLangs.map(k => ({ key: k, value: '' }));
             if (!Array.isArray(question.config.choices)) {
-                this.$set(question.config, 'choices', [{ key: "0", lang: [{ key: 'en', value: '' }] }]);
+                this.$set(question.config, 'choices', [{ key: "0", lang: optionLangs }]);
             } else {
-                question.config.choices.push({ key: String(question.config.choices.length), lang: [{ key: '', value: '' }] });
+                question.config.choices.push({ key: String(question.config.choices.length), lang: optionLangs });
             }
             this.putQuestion(question);
         },
@@ -1321,20 +1716,12 @@ export default {
             this.putQuestion(question);
         },
         addOptionLanguage(question, choiceIndex) {
-            if (!question || !question.config || !Array.isArray(question.config.choices)) return;
-            const choice = question.config.choices[choiceIndex];
-            if (!choice) return;
-            if (!Array.isArray(choice.lang)) this.$set(choice, 'lang', []);
-            choice.lang.push({ key: this.getNextLang(choice.lang), value: '' });
-            this.putQuestion(question);
+            this.addLanguageGlobally();
         },
         removeOptionLanguage(question, choiceIndex, langIndex) {
-            if (!question || !question.config || !Array.isArray(question.config.choices)) return;
-            const choice = question.config.choices[choiceIndex];
-            if (!choice || !Array.isArray(choice.lang)) return;
-            if (choice.lang.length <= 1) return;
-            choice.lang.splice(langIndex, 1);
-            this.putQuestion(question);
+            const choice = question && question.config && question.config.choices && question.config.choices[choiceIndex];
+            const item = choice && choice.lang && choice.lang[langIndex];
+            if (item && item.key) this.requestRemoveLanguageGlobally(item.key);
         },
         removeOption(question, oIndex) {
             if (!question || !Array.isArray(question.config.choices)) return;
@@ -1407,20 +1794,11 @@ export default {
             this.putQuestion(question);
         },
         addConfigDesc(question) {
-            if (!question) return;
-            if (!question.config) this.$set(question, 'config', {});
-            if (!Array.isArray(question.config.description)) {
-                this.$set(question.config, 'description', [{ key: 'en', value: '' }]);
-            } else {
-                question.config.description.push({ key: this.getNextLang(question.config.description), value: '' });
-            }
-            this.putQuestion(question);
+            this.addLanguageGlobally();
         },
         removeConfigDesc(question, idx) {
-            if (!question || !Array.isArray(question.config.description)) return;
-            if (question.config.description.length <= 1) return;
-            question.config.description.splice(idx, 1);
-            this.putQuestion(question);
+            const item = question && question.config && question.config.description && question.config.description[idx];
+            if (item && item.key) this.requestRemoveLanguageGlobally(item.key);
         },
         getPlaceholder(type, lang) {
             return 'Untitled Question';
@@ -1430,16 +1808,25 @@ export default {
             return this.commonLangs.some(l => l.value.toLowerCase() === key.toLowerCase());
         },
         setLangKey(item, key, updateFn) {
-            this.$set(item, 'key', key);
-            this.$set(item, 'isManualMode', false);
-            if (typeof updateFn === 'function') updateFn();
-            else this.updateFormMeta();
+            if (!item) return;
+            const oldKey = item.key;
+            if (oldKey && key && oldKey.toLowerCase() !== key.toLowerCase()) {
+                this.changeLanguageKeyGlobally(oldKey, key);
+            } else {
+                this.$set(item, 'key', key);
+                this.$set(item, 'isManualMode', false);
+                if (typeof updateFn === 'function') updateFn();
+                else this.updateFormMeta();
+            }
         },
         checkManualKey(item) {
-            if (!item.key) {
+            if (!item || !item.key) {
                 this.$set(item, 'key', 'en');
                 this.$set(item, 'isManualMode', false);
+            } else {
+                this.$set(item, 'key', item.key.toLowerCase().trim());
             }
+            this.reconcileFormLanguages();
         },
         // Returns the next unused language key given an array of existing lang items
         getNextLang(existingItems) {
@@ -1475,172 +1862,18 @@ export default {
                 this.$set(question, 'nextQuestion', val.split(':')[1]);
             }
             this.putQuestion(question);
-        },
-        addBilingualHeader() {
-            if (!this.form) return;
-            if (!Array.isArray(this.form.title) || this.form.title.length < 2) {
-                this.addFormTitle();
-            }
-            if (!Array.isArray(this.form.description) || this.form.description.length < 2) {
-                this.addFormDesc();
-            }
-        },
-        fillSampleHeader() {
-            if (!this.form) return;
-            this.$set(this.form, 'title', [
-                { key: 'th', value: 'แบบประเมินความพึงพอใจการใช้บริการศูนย์บรรณสารและสื่อการศึกษา' },
-                { key: 'en', value: 'Library and Educational Media Center Satisfaction Survey' }
-            ]);
-            this.$set(this.form, 'description', [
-                { key: 'th', value: 'ขอความร่วมมือนักศึกษาและบุคลากรตอบแบบสอบถามเพื่อนำไปพัฒนาคุณภาพการให้บริการ' },
-                { key: 'en', value: 'Please share your feedback to help us improve our library services.' }
-            ]);
-            this.updateFormMeta();
-        },
-        async addSampleQuestion() {
-            const mcType = (this.questionTypes || []).find(t => String(t.type || '').toLowerCase() === 'multiple_choice')
-                || (this.questionTypes || [])[0];
-            const typeId = mcType ? mcType._id : 'multiple_choice';
-            let created = await this.addQuestion(typeId);
-            if (!created) {
-                created = {
-                    _id: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-                    title: [],
-                    order: (this.localQuestions ? this.localQuestions.length : 0) + 1,
-                    type: mcType || { _id: 'multiple_choice', type: 'multiple_choice' },
-                    isRequired: true,
-                    nextQuestion: null,
-                    config: { choices: [] }
-                };
-                this.localQuestions.push(created);
-                if (this.form) {
-                    if (!Array.isArray(this.form.questions)) this.$set(this.form, 'questions', []);
-                    this.form.questions.push(created);
-                }
-            }
-            this.$set(created, 'title', [
-                { key: 'th', value: 'ท่านพึงพอใจต่อความรวดเร็วและการให้บริการโดยรวมในระดับใด?' },
-                { key: 'en', value: 'How satisfied are you with the overall speed and service quality?' }
-            ]);
-            if (!created.config) this.$set(created, 'config', {});
-            this.$set(created.config, 'choices', [
-                { key: '0', lang: [{ key: 'th', value: 'ดีมาก (Very Satisfied)' }] },
-                { key: '1', lang: [{ key: 'th', value: 'ดี (Satisfied)' }] },
-                { key: '2', lang: [{ key: 'th', value: 'ปานกลาง (Neutral)' }] }
-            ]);
-            this.$set(created, 'isRequired', true);
-            this.buildGridLayoutFromQuestions();
-            if (!String(created._id).startsWith('tmp-')) {
-                await this.putQuestion(created);
-            }
         }
     }
 }
 </script>
 
 <style scoped>
-.wizard-spotlight-box {
-    border: 2.5px dashed #f59e0b;
-    background-color: #fffbeb;
-    border-radius: 16px;
-    overflow: visible;
-}
-
-.wizard-spotlight-banner {
-    background-color: #fef3c7;
-    border-bottom: 1px solid #f59e0b;
-    color: #92400e;
-    font-weight: 700;
-    font-size: 0.88rem;
-    padding: 0.6rem 1rem;
-    display: flex;
-    align-items: center;
-    border-top-left-radius: 14px;
-    border-top-right-radius: 14px;
-}
-
-.wizard-step1-done-strip {
-    background-color: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    color: #334155;
-    font-weight: 600;
-    font-size: 0.84rem;
-    padding: 0.55rem 1rem;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-}
-
-.wizard-comp-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.45rem 0.85rem;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    font-weight: 700;
-}
-
-.wizard-comp-chip.is-sky {
-    background-color: #f0f9ff;
-    border: 1.5px solid #0284c7;
-    color: #0369a1;
-}
-
-.wizard-comp-btn {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.45rem 0.9rem;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.16s ease;
-}
-
-.wizard-comp-btn.is-purple {
-    background-color: #f5f3ff;
-    border: 1.5px solid #7c3aed;
-    color: #5b21b6;
-}
-
-.wizard-comp-btn.is-purple:hover {
-    background-color: #ede9fe;
-    transform: translateY(-1px);
-}
-
-.wizard-input-frame {
-    padding: 0.7rem 0.9rem;
-    border-radius: 12px;
-    background-color: #ffffff;
-}
-
-.wizard-input-frame.is-maroon {
-    border: 2px solid #8b1f1f;
-}
-
-.wizard-input-frame.is-slate {
-    border: 1.5px solid #64748b;
-}
-
-.wizard-field-caption {
-    font-size: 0.76rem;
-    font-weight: 700;
-    margin-bottom: 0.35rem;
-}
-
-.wizard-field-caption.is-maroon {
-    color: #8b1f1f;
-}
-
-.wizard-field-caption.is-slate {
-    color: #334155;
-}
 .image-drop-zone {
     position: relative;
     width: 100%;
     cursor: pointer;
     border: 2px dashed #adb5bd;
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
     background: #f8fafc;
     aspect-ratio: 1 / 1;
@@ -1672,7 +1905,7 @@ export default {
     text-transform: uppercase;
     background-color: #f1f3f5;
     color: #495057;
-    border-radius: 6px;
+    border-radius: 12px;
     font-size: 0.875rem;
 }
 
@@ -1721,6 +1954,19 @@ export default {
     font-weight: 600;
 }
 
+.add-desc-box {
+    border: 1.5px dashed #cbd5e1;
+    background-color: #f8fafc;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.add-desc-box:hover {
+    border-color: #3b82f6;
+    background-color: #f0f7ff;
+    transform: translateY(-1px);
+}
+
 .icon-btn {
     width: 38px;
     height: 34px;
@@ -1728,7 +1974,7 @@ export default {
     align-items: center;
     justify-content: center;
     padding: 0;
-    border-radius: 6px;
+    border-radius: 12px;
 }
 
 .add-lang-btn {

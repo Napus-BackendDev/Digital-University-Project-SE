@@ -8,7 +8,7 @@
                 </CCol>
                 <CCol md="9">
                     <CInput type="datetime-local" class="mb-0"
-                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
+                        style="height: 45px; background-color: #f8f9fa; border-radius: 12px; border: 1px solid #e2e8f0;"
                         :value="formattedStart" @input="updateStart" @change="triggerAutoSave" />
                 </CCol>
             </CRow>
@@ -18,7 +18,7 @@
                 </CCol>
                 <CCol md="9">
                     <CInput type="datetime-local" class="mb-0"
-                        style="height: 45px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0;"
+                        style="height: 45px; background-color: #f8f9fa; border-radius: 12px; border: 1px solid #e2e8f0;"
                         :value="formattedEnd" @input="updateEnd" @change="triggerAutoSave" />
                 </CCol>
             </CRow>

@@ -1,25 +1,46 @@
 const nodemailer = require("nodemailer");
 
-let transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER || process.env.SMTP_USER, // อีเมลผู้ส่ง
-        pass: process.env.EMAIL_PASS || process.env.SMTP_PASS, // รหัสผ่าน (หรือ App Password)
-    },
-});
-
-exports.sendMail = async function (to, subject, text, html) {
+function getTransporter() {
+    const host = process.env.SMTP_HOST;
+    const port = parseInt(process.env.SMTP_PORT || '25', 10);
     const user = process.env.EMAIL_USER || process.env.SMTP_USER;
     const pass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
 
-    if (!user || !pass) {
+    if (host && host !== 'smtp.gmail.com') {
+        const config = {
+            host: host,
+            port: port,
+            secure: port === 465,
+            tls: {
+                rejectUnauthorized: false
+            }
+        };
+        if (user && pass) {
+            config.auth = { user, pass };
+        }
+        return nodemailer.createTransport(config);
+    }
+
+    const gmailConfig = {
+        service: "gmail"
+    };
+    if (user && pass) {
+        gmailConfig.auth = { user, pass };
+    }
+    return nodemailer.createTransport(gmailConfig);
+}
+
+exports.sendMail = async function (to, subject, text, html) {
+    const host = process.env.SMTP_HOST;
+    const user = process.env.EMAIL_USER || process.env.SMTP_USER;
+    const pass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
+
+    if (!host && (!user || !pass)) {
         console.warn("Mail credentials not configured, skipping email to:", to);
         return { success: false, error: "Credentials not configured" };
     }
 
     // --- Inline Image Processing ---
-    // Automatically detect base64 images in HTML and convert them to CID attachments
-    // This improves compatibility with many email clients (Outlook, Gmail mobile, etc.)
     let attachments = [];
     let processedHtml = html || '';
 
@@ -45,8 +66,10 @@ exports.sendMail = async function (to, subject, text, html) {
         }
     }
 
+    const senderEmail = process.env.EMAIL_FROM || process.env.SMTP_FROM || user || 'no-reply@mfu.ac.th';
+
     let mailOptions = {
-        from: `"Digital University Form" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
+        from: `"Digital University Form" <${senderEmail}>`,
         to,          // ผู้รับ
         subject,     // หัวข้อ
         text,        // ข้อความธรรมดา
@@ -55,8 +78,9 @@ exports.sendMail = async function (to, subject, text, html) {
     };
 
     try {
+        const transporter = getTransporter();
         let info = await transporter.sendMail(mailOptions);
-        return { success: true, messageId: info.messageId };
+        return { success: true, messageId: info.messageId, response: info.response };
     } catch (error) {
         console.error("Error sending mail:", error);
         return { success: false, error };

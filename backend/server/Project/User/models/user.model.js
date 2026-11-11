@@ -6,8 +6,9 @@ var Schema = mongoose.Schema;
 var objSchema = new Schema({
     name: { type: String, default: null },
     email: { type: String, default: null },
+    picture: { type: String, default: null },
     password: { type: String, default: null },
-    role: { type: Schema.Types.ObjectId, ref: 'Roles', default: "69aec1c73996270d703db3d7" },
+    role: { type: Schema.Types.ObjectId, ref: 'Roles', default: "69e9e2226c400846810ef687" },
     organization: { type: Schema.Types.ObjectId, ref: 'Organizations', default: null },
     response: { type: [{ type: Schema.Types.ObjectId, ref: 'Responses' }], default: [] }
 

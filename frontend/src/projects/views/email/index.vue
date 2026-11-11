@@ -37,27 +37,26 @@
         </CCol>
       </CRow>
 
-      <CCard v-else class="empty-state-card border-0 py-5 text-center">
-        <CCardBody>
-          <div class="empty-icon-box mx-auto mb-3">
-            <CIcon name="cil-envelope-closed" size="xl" />
-          </div>
-          <h5 class="font-weight-bold text-dark mb-1">ยังไม่มีเทมเพลตอีเมล</h5>
-          <p class="text-muted small mb-0">รายการเทมเพลตอีเมลจะแสดงขึ้นที่นี่</p>
-        </CCardBody>
-      </CCard>
+      <EmptyState
+        v-else
+        icon="cil-envelope-closed"
+        title="ยังไม่มีเทมเพลตอีเมล"
+        description="รายการเทมเพลตอีเมลจะแสดงขึ้นที่นี่"
+      />
     </div>
   </div>
 </template>
 
 <script>
 import Header from '../../components/Util/Header.vue'
+import EmptyState from '../../components/Util/EmptyState.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'EmailView',
   components: {
-    Header
+    Header,
+    EmptyState
   },
   data() {
     return {

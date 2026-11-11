@@ -50,7 +50,7 @@
                     </CCol>
                     <CCol md="2" class="mb-3">
                         <label class="mb-2 d-none d-md-block">&nbsp;</label>
-                        <CButton color="primary" block style="height: 45px; border-radius: 8px;"
+                        <CButton color="primary" block style="height: 45px; border-radius: 12px;"
                             class="font-weight-bold" @click="addCollaborator">
                             {{ $t('editor.settings.access.add') }}
                         </CButton>
@@ -234,7 +234,7 @@ export default {
 .form-select-custom {
     min-height: 45px !important;
     background-color: #f8f9fa !important;
-    border-radius: 8px !important;
+    border-radius: 12px !important;
     border: 1px solid #e2e8f0 !important;
     transition: all 0.3s ease;
     box-shadow: none !important;
@@ -249,7 +249,7 @@ export default {
 .form-select-custom.v-select >>> .vs__dropdown-toggle {
     min-height: 45px !important;
     background-color: #f8f9fa !important;
-    border-radius: 8px !important;
+    border-radius: 12px !important;
     border: 1px solid #e2e8f0 !important;
     padding: 2px 0.5rem;
 }
@@ -272,7 +272,7 @@ export default {
 .form-select-custom.v-select >>> .vs__selected {
     background-color: #f1f5f9 !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 6px !important;
+    border-radius: 12px !important;
     padding: 2px 8px !important;
     margin: 0 !important;
     font-size: 0.85rem !important;
@@ -315,7 +315,7 @@ export default {
     display: inline-flex;
     align-items: center;
     padding: 0.4rem 0.75rem;
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: #ffffff;
     color: #475569;
     font-weight: 500;
@@ -371,7 +371,7 @@ export default {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding: 2px 8px;
-    border-radius: 6px;
+    border-radius: 12px;
     margin-right: 4px;
 }
 

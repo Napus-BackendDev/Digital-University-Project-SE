@@ -174,7 +174,7 @@ body, button, input, select, textarea, .c-app {
 
 
 /* ========================================================
-   LIGHT-THEMED SIDEBAR STYLING
+   LIGHT-THEMED SIDEBAR STYLING & SMOOTH ANIMATIONS
    ======================================================== */
 .c-sidebar,
 .c-sidebar.c-sidebar-light,
@@ -183,11 +183,45 @@ body, button, input, select, textarea, .c-app {
   background-image: none !important;
   border-right: 1px solid #e2e8f0 !important;
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 256px !important;
+  min-width: 256px !important;
+  max-width: 256px !important;
+  flex: 0 0 256px !important;
+  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              min-width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              max-width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              flex 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
 
   .c-sidebar-brand {
     background-color: #ffffff !important;
     background-image: none !important;
     border-bottom: 1px solid #edf2f7 !important;
+    flex: 0 0 56px !important;
+    height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+                padding 0.3s ease !important;
+
+    .brand-logo {
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    }
+
+    .brand-text {
+      max-width: 160px;
+      opacity: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      transition: max-width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+                  opacity 0.2s ease,
+                  padding 0.3s ease !important;
+    }
 
     .brand-title {
       color: #0f172a !important;
@@ -202,10 +236,17 @@ body, button, input, select, textarea, .c-app {
     background-image: none !important;
     padding-top: 8px;
     padding-bottom: 8px;
+    height: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
   }
 
   .c-sidebar-nav-item {
     margin: 3px 10px;
+    transition: margin 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
   }
 
   .c-sidebar-nav-link {
@@ -214,6 +255,9 @@ body, button, input, select, textarea, .c-app {
     font-weight: 500 !important;
     border-radius: 8px !important;
     padding: 10px 14px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis;
     transition: all 0.18s ease !important;
 
     .c-sidebar-nav-icon {
@@ -242,9 +286,198 @@ body, button, input, select, textarea, .c-app {
   }
 
   .c-sidebar-footer {
-    background-color: #f8fafc !important;
+    background-color: #ffffff !important;
     background-image: none !important;
-    border-top: 1px solid #e2e8f0 !important;
+    border-top: 1px solid #f1f5f9 !important;
     color: #1e293b !important;
+    flex: 0 0 auto !important;
+    padding: 10px 14px !important;
+    overflow: hidden !important;
+    transition: padding 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+                min-height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  }
+
+  .c-sidebar-minimizer {
+    background-color: #ffffff !important;
+    border: none !important;
+    border-top: 1px solid #f1f5f9 !important;
+    color: #64748b !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    flex: 0 0 44px !important;
+    position: relative !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    padding-right: 16px !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+
+    &::before {
+      background-size: 11px auto !important;
+      opacity: 0.55 !important;
+      transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    }
+
+    &:hover {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+
+      &::before {
+        opacity: 0.9 !important;
+      }
+    }
+  }
+
+  /* Minimized state styling with smooth transition */
+  &.c-sidebar-minimized {
+    width: 56px !important;
+    min-width: 56px !important;
+    max-width: 56px !important;
+    flex: 0 0 56px !important;
+
+    .c-sidebar-brand {
+      width: 56px !important;
+      padding: 0 !important;
+
+      .brand-text {
+        max-width: 0 !important;
+        opacity: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin: 0 !important;
+        pointer-events: none;
+      }
+    }
+
+    .c-sidebar-nav-item {
+      margin: 4px auto !important;
+    }
+
+    /* CoreUI overrides for footer in minimized mode */
+    .c-sidebar-footer {
+      height: auto !important;
+      min-height: 52px !important;
+      padding: 6px 2px !important;
+      margin: 0 !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: visible !important;
+
+      .overflow-hidden {
+        display: none !important;
+      }
+    }
+
+    .c-sidebar-minimizer {
+      width: 56px !important;
+      justify-content: center !important;
+      padding-right: 0 !important;
+
+      &::before {
+        width: 100% !important;
+        margin: 0 auto !important;
+      }
+    }
+  }
+}
+
+/* Wrapper transition to sync with sidebar animation */
+.c-wrapper {
+  transition: margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              margin-right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+/* ========================================================
+   GLOBAL CARD & COMPONENT ROUNDING UTILITIES
+   ======================================================== */
+.rounded-20 {
+  border-radius: 20px !important;
+}
+
+.rounded-16 {
+  border-radius: 16px !important;
+}
+
+.rounded-24 {
+  border-radius: 24px !important;
+}
+
+.rounded-12 {
+  border-radius: 12px !important;
+}
+
+/* ========================================================
+   GLOBAL ROUNDED-12 ENFORCEMENT & COMPONENT STYLING
+   ======================================================== */
+.rounded-12 {
+  border-radius: 12px !important;
+}
+
+/* Standard buttons (excluding circular and explicitly full-pill buttons) */
+.btn:not(.rounded-circle):not(.btn-pill):not(.rounded-pill) {
+  border-radius: 12px !important;
+}
+
+/* Inputs, textareas, selects */
+.form-control,
+input.form-control,
+textarea.form-control,
+select.form-control,
+.custom-select {
+  border-radius: 12px !important;
+}
+
+/* Badges and dropdown menus */
+.badge:not(.rounded-pill) {
+  border-radius: 12px !important;
+}
+
+.dropdown-menu {
+  border-radius: 12px !important;
+}
+
+/* Header buttons and badge */
+.c-header {
+  .btn:not(.rounded-circle):not(.rounded-pill) {
+    border-radius: 12px !important;
+  }
+  .badge:not(.rounded-pill) {
+    border-radius: 12px !important;
+  }
+}
+
+
+/* ========================================================
+   PUBLIC FORM CLEAN LAYOUT (NO SIDEBAR / NO NAVBAR)
+   ======================================================== */
+.c-app.c-app-public {
+  background-color: #f0f2f5 !important;
+  min-height: 100vh;
+
+  .c-wrapper,
+  .c-wrapper-public {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    min-height: 100vh;
+  }
+
+  .c-main,
+  .c-main-public {
+    padding-top: 24px !important;
+    padding-bottom: 48px !important;
+  }
+
+  .c-container-public {
+    max-width: 860px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
   }
 }

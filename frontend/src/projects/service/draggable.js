@@ -48,42 +48,38 @@ export function saveGridLayout(form, gridLayout) {
  * Returns an array of layout items { i, x, y, w, h }
  */
 export function buildGridLayoutFromQuestions(localQuestions = [], storedLayout = null, getQuestionType = (t) => t, isFollowUp = (q) => false) {
+    const ROW_HEIGHT = 10;
+    const MARGIN_Y = 20;
+    const UNIT = ROW_HEIGHT + MARGIN_Y; // 30px per unit
+
     const calculateHeight = (q, type) => {
-        if (!q) return 6;
-        let h = 6;
-
-        if (isFollowUp(q)) {
-            h += 1;
-        }
-
+        if (!q) return 8;
+        let px = 180; // base card height
         const titleLangs = Array.isArray(q.title) ? q.title.length : 1;
-        h += (titleLangs * 2.2) + 2;
+        px += (titleLangs - 1) * 44;
 
         const safeType = (type || '').toLowerCase();
-        if (safeType === 'short_answer') h += 2.5;
-        else if (safeType === 'paragraph') h += 4.8;
-        else if (safeType === 'multiple_choice' || safeType === 'checkbox') {
+        if (safeType === 'short_answer') {
+            px += 50;
+        } else if (safeType === 'paragraph') {
+            px += 110;
+        } else if (safeType === 'multiple_choice' || safeType === 'checkbox') {
             const choices = (q.config && Array.isArray(q.config.choices)) ? q.config.choices : [{}];
-            for (const c of choices) {
-                const langs = Array.isArray(c.lang) ? c.lang.length : 1;
-                if (safeType === 'multiple_choice') {
-                    h += (langs * 2.2) + 2.8;
-                } else if (safeType === 'checkbox') {
-                    h += (langs * 2.2) + 2.5;
-                }
-            }
-            h += 2;
-        }
-        else if (safeType === 'rating') h += 3;
-        else if (safeType === 'file_upload') h += 7;
-        else if (safeType === 'title_description') {
+            px += choices.length * 48 + 45;
+        } else if (safeType === 'rating') {
+            px += 85;
+        } else if (safeType === 'file_upload') {
+            px += 140;
+        } else if (safeType === 'title_description') {
             const descLangs = (q.config && Array.isArray(q.config.description)) ? q.config.description.length : 1;
-            h += (descLangs * 4) + 2.5;
+            px += descLangs * 85;
+        } else if (safeType === 'image') {
+            px += 320;
+        } else {
+            px += 60;
         }
-        else if (safeType === 'image') h += 60;
-        else h += 3;
 
-        return Math.ceil(h);
+        return Math.max(5, Math.ceil((px + MARGIN_Y) / UNIT));
     };
 
     // determine order based on stored layout if available
@@ -109,7 +105,7 @@ export function buildGridLayoutFromQuestions(localQuestions = [], storedLayout =
         const h = calculateHeight(q, typeStr);
         const qId = String(q && (q._id != null ? q._id : i));
         l.push({ i: qId, x: 0, y: yCursor, w: 12, h });
-        yCursor += h + 1;
+        yCursor += h;
     }
     return l;
 }

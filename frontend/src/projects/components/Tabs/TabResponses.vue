@@ -49,13 +49,12 @@
         <!-- SUMMARY VIEW -->
         <div v-if="currentView === 'summary'" class="summary-wrapper">
             <!-- Empty state -->
-            <div v-if="allSubmittedResponses.length === 0" class="empty-state-card py-5 shadow-sm rounded-20 bg-white">
-                <div class="empty-icon-wrapper mb-3">
-                    <CIcon name="cil-coffee" size="xl" class="text-muted opacity-50" />
-                </div>
-                <h4 class="text-dark font-weight-bold">{{ $t('responses.noData') }}</h4>
-                <p class="text-muted">{{ $t('responses.noDataDesc') }}</p>
-            </div>
+            <EmptyState
+                v-if="allSubmittedResponses.length === 0"
+                icon="cil-coffee"
+                :title="$t('responses.noData')"
+                :description="$t('responses.noDataDesc')"
+            />
 
             <!-- Dynamic question cards -->
             <div v-for="(q, qIdx) in summaryByQuestion" :key="q._id" class="question-response-card mb-5">
@@ -135,14 +134,17 @@
                                 <div v-for="(file, i) in paginateResponses(q._id, flattenFiles(q.responses))" :key="i"
                                     class="file-response-item">
                                     <div class="item-content">
-                                        <a :href="resolveImageUrl(file)" target="_blank" rel="noopener noreferrer"
+                                        <a :href="hasFileUrl(file) ? resolveImageUrl(file) : '#'"
+                                            :target="hasFileUrl(file) ? '_blank' : undefined"
+                                            :rel="hasFileUrl(file) ? 'noopener noreferrer' : undefined"
+                                            @click="onFileClick($event, file)"
                                             class="file-link">
                                             <div v-if="isImageResponse(file)" class="image-wrapper">
-                                                <img v-if="!imgErrors[file]" :src="resolveImageUrl(file)"
+                                                <img v-if="hasFileUrl(file) && !imgErrors[file]" :src="resolveImageUrl(file)"
                                                     class="file-image-preview" @error="$set(imgErrors, file, true)" />
                                                 <div v-else class="file-placeholder fallback">
                                                     <CIcon name="cil-image1" height="32" class="text-muted mb-2" />
-                                                    <span class="file-name text-muted small px-2">{{
+                                                    <span class="file-name text-truncate text-muted small px-2 w-100">{{
                                                         fileNameFromPath(file) }}</span>
                                                 </div>
                                             </div>
@@ -202,10 +204,11 @@ import * as XLSX from 'xlsx'
 import { CChartBar } from '@coreui/vue-chartjs'
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue'
 import Pagination from '@/projects/components/Util/Pagination.vue'
+import EmptyState from '@/projects/components/Util/EmptyState.vue'
 
 export default {
     name: 'TabResponses',
-    components: { ResponseTables, CChartBar, Pagination },
+    components: { ResponseTables, CChartBar, Pagination, EmptyState },
     props: {
         responses: {
             type: Object,
@@ -251,15 +254,26 @@ export default {
             const flattened = [];
             responses.forEach(r => {
                 if (Array.isArray(r)) {
-                    flattened.push(...r.filter(f => f));
-                } else if (r) {
-                    flattened.push(r);
+                    r.forEach(f => {
+                        if (typeof f === 'string' && f.trim()) flattened.push(f.trim());
+                        else if (f && typeof f === 'object' && (f.path || f.url || f.name)) flattened.push(f.path || f.url || f.name);
+                    });
+                } else if (typeof r === 'string' && r.trim()) {
+                    flattened.push(r.trim());
+                } else if (r && typeof r === 'object' && (r.path || r.url || r.name)) {
+                    flattened.push(r.path || r.url || r.name);
                 }
             });
-            return [...new Set(flattened)].filter(f => {
-                if (typeof f !== 'string') return false;
-                return f.includes('/') || f.includes('\\') || f.startsWith('data:');
-            });
+            return [...new Set(flattened)];
+        },
+        hasFileUrl(file) {
+            if (!file || typeof file !== 'string') return false;
+            return file.includes('/') || file.includes('\\') || file.startsWith('http://') || file.startsWith('https://') || file.startsWith('data:');
+        },
+        onFileClick(event, file) {
+            if (!this.hasFileUrl(file)) {
+                event.preventDefault();
+            }
         },
         getTypeIcon(type) {
             const t = (type || '').toLowerCase();
@@ -268,7 +282,10 @@ export default {
             if (t.includes('rating')) return 'cil-star';
             if (t.includes('short')) return 'cil-minus';
             if (t.includes('para')) return 'cil-align-left';
-            return 'cil-question';
+            if (t.includes('file')) return 'cil-cloud-upload';
+            if (t.includes('image')) return 'cil-image1';
+            if (t.includes('title') || t.includes('desc')) return 'cil-text';
+            return 'cil-notes';
         },
         formatTypeLabel(rawType) {
             if (!rawType) return '';
@@ -569,7 +586,7 @@ export default {
         fileNameFromPath(value) {
             if (!value || typeof value !== 'string') return 'Attachment';
             const clean = value.split('?')[0];
-            const parts = clean.split('/');
+            const parts = clean.split(/[\\/]/);
             return parts[parts.length - 1] || 'Attachment';
         },
         choiceColor(idx) {
@@ -1100,20 +1117,51 @@ export default {
 
 /* Empty State Card */
 .empty-state-card {
-    border: 1px dashed #cbd5e1;
-    background: #f8fafc;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    min-height: 200px;
+    min-height: 280px;
+    padding: 3.5rem 2rem !important;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.empty-state-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+.empty-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    color: #64748b;
+}
+
+.empty-icon-wrapper .c-icon,
+.empty-icon-wrapper svg {
+    color: #64748b !important;
+}
+
+.rounded-20 {
+    border-radius: 20px !important;
 }
 
 /* Question Response Card Elite */
 .question-response-card {
     background: white;
-    border-radius: 24px;
+    border-radius: 20px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     border: 1px solid rgba(241, 245, 249, 1);
     overflow: hidden;
@@ -1157,7 +1205,7 @@ export default {
     display: inline-flex;
     align-items: center;
     padding: 4px 12px;
-    border-radius: 6px;
+    border-radius: 12px;
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -1247,7 +1295,7 @@ export default {
     color: #1e293b;
     font-weight: 700;
     padding: 2px 8px;
-    border-radius: 6px;
+    border-radius: 12px;
     font-size: 0.75rem;
 }
 

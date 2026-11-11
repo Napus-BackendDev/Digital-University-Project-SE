@@ -199,7 +199,7 @@ export default {
     height: 40px;
     background: #f8fafc;
     border: 1px solid #cbd5e1;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 0.875rem;
     color: #0f172a;
     transition: all 0.2s ease;
@@ -223,7 +223,7 @@ export default {
     height: 40px;
     background: #f8fafc;
     border: 1px solid #cbd5e1;
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -244,7 +244,7 @@ export default {
     display: flex;
     background: #f1f5f9;
     padding: 3px;
-    border-radius: 10px;
+    border-radius: 12px;
     height: 40px;
 }
 
@@ -255,7 +255,7 @@ export default {
     font-size: 0.78rem;
     font-weight: 600;
     color: #64748b;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 0 4px;
     white-space: nowrap;
     transition: all 0.18s ease;
@@ -281,7 +281,7 @@ export default {
 }
 
 .filter-dropdown ::v-deep .dropdown-item {
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 0.85rem;
     font-weight: 500;
     padding: 8px 12px;

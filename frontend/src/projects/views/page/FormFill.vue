@@ -3,10 +3,9 @@
 
         <ButtonBack v-if="!isPublicForm" />
 
-        <!-- Loading -->
-        <div v-if="loading" class="fillform-center text-muted">
-            <CSpinner color="secondary" />
-            <p class="mt-3">{{ $t('common.loading') }}</p>
+        <!-- Loading Skeleton -->
+        <div v-if="loading" class="py-4">
+            <SkeletonLoader type="form-fill" />
         </div>
 
         <!-- Error -->
@@ -25,7 +24,7 @@
                             <CIcon name="cil-lock-locked" size="3xl" class="text-primary mb-3"
                                 style="width: 60px; height: 60px;" />
                             <h4 class="font-weight-bold">{{ $t('form.loginRequired') }}</h4>
-                            <p class="text-muted">{{ $t('form.collectEmail') }}</p>
+                            <p class="text-muted">{{ loginPromptMessage }}</p>
                         </div>
                         <CButton color="primary" block size="lg" style="border-radius: 12px; font-weight: 600;"
                             @click="onAuthenGoogle">
@@ -36,7 +35,7 @@
             </div>
 
             <!-- Content below replaces the blocking overlay -->
-            <template v-if="true">
+            <template v-else>
                 <CCard class="mb-3 border header-card">
                     <div v-if="isPreviewMode" class="preview-banner p-2 text-center text-white font-weight-bold">
                         <CIcon name="cil-magnifying-glass" class="mr-2" />
@@ -264,11 +263,13 @@
 <script>
 import { mapGetters } from 'vuex'
 import ButtonBack from '../../components/Button/ButtonBack.vue'
+import SkeletonLoader from '../../components/Util/SkeletonLoader.vue'
 
 export default {
     name: 'Fillform',
     components: {
-        ButtonBack
+        ButtonBack,
+        SkeletonLoader
     },
     props: {
         formId: { type: String, required: true },
@@ -333,6 +334,78 @@ export default {
             if (Array.isArray(ans)) return ans;
             return [ans];
         },
+        extractResponseDoc(res) {
+            const rawData = res && res.data ? res.data : res;
+            const node = rawData && rawData.data ? rawData.data : rawData;
+            return Array.isArray(node) ? node[0] : node;
+        },
+        parseAnswerUrls(val) {
+            if (!val) return [];
+            let list = val;
+            if (typeof val === 'string') {
+                const trimmed = val.trim();
+                if (trimmed.startsWith('[')) {
+                    try {
+                        list = JSON.parse(trimmed);
+                    } catch (e) {
+                        list = [val];
+                    }
+                } else {
+                    list = [val];
+                }
+            }
+            if (!Array.isArray(list)) list = [list];
+            return list.filter((u) => typeof u === 'string' && u.trim());
+        },
+        snapshotFileAnswers() {
+            const snapshot = {};
+            Object.keys(this.answers || {}).forEach((qId) => {
+                const val = this.answers[qId];
+                if (!Array.isArray(val)) return;
+                const hasFile = val.some((item) => typeof File !== 'undefined' && item instanceof File);
+                if (hasFile) {
+                    snapshot[qId] = val.slice();
+                }
+            });
+            return snapshot;
+        },
+        syncUploadedFileAnswers(savedDoc, snapshot) {
+            if (!savedDoc || !Array.isArray(savedDoc.answers) || !snapshot) return;
+            const answerByQuestion = {};
+            savedDoc.answers.forEach((ans) => {
+                if (!ans) return;
+                const qId = this.convertIdToStr(typeof ans.question === 'object' ? ans.question._id : ans.question);
+                if (qId) answerByQuestion[qId] = ans.response;
+            });
+            Object.keys(snapshot).forEach((qId) => {
+                const sentItems = snapshot[qId];
+                if (!Array.isArray(sentItems) || !Object.prototype.hasOwnProperty.call(answerByQuestion, qId)) return;
+                const serverUrls = this.parseAnswerUrls(answerByQuestion[qId]);
+                if (serverUrls.length === 0) return;
+
+                const existingSentUrls = new Set(sentItems.filter((x) => typeof x === 'string'));
+                const newlyUploadedUrls = serverUrls.filter((u) => !existingSentUrls.has(u));
+                const currentItems = Array.isArray(this.answers[qId]) ? this.answers[qId].slice() : [];
+                if (currentItems.length === 0) return;
+
+                let uploadIdx = 0;
+                let changed = false;
+                const nextItems = currentItems.map((item) => {
+                    if (typeof File !== 'undefined' && item instanceof File && sentItems.includes(item)) {
+                        const replacement = newlyUploadedUrls[uploadIdx] || serverUrls[uploadIdx];
+                        if (replacement) {
+                            uploadIdx += 1;
+                            changed = true;
+                            return replacement;
+                        }
+                    }
+                    return item;
+                });
+                if (changed) {
+                    this.$set(this.answers, qId, nextItems);
+                }
+            });
+        },
         getResponderStorageKey() {
             return `du.formfill.responder.${this.formId}`;
         },
@@ -358,6 +431,22 @@ export default {
                 this.persistResponderId(this.responderId);
                 return this.responderId;
             }
+            const activeUserId = (typeof window !== 'undefined' && window.localStorage)
+                ? window.localStorage.getItem('activeUserId')
+                : null;
+            if (activeUserId) {
+                try {
+                    const activeUser = await this.$store.dispatch('User/get', { _id: activeUserId });
+                    const resolvedId = (activeUser && activeUser._id) || (this.user && this.user._id);
+                    if (resolvedId) {
+                        this.responderId = resolvedId;
+                        this.persistResponderId(this.responderId);
+                        return this.responderId;
+                    }
+                } catch (e) {
+                    // continue with fallback
+                }
+            }
             if (this.responderId) return this.responderId;
 
             const storedResponder = this.loadStoredResponderId();
@@ -366,16 +455,19 @@ export default {
                 return this.responderId;
             }
 
-            // Legacy fallback kept for compatibility with existing deployments.
-            try {
-                const user = await this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
-                if (user && user._id) {
-                    this.responderId = user._id;
-                    this.persistResponderId(this.responderId);
-                    return this.responderId;
+            // Legacy fallback only enabled in explicit developer mode.
+            const isDevEnv = (process.env.VUE_APP_APP_ENV || 'production').toLowerCase() === 'developer';
+            if (isDevEnv) {
+                try {
+                    const user = await this.$store.dispatch('User/get', { _id: '69aec1c73996270d703db3aa' });
+                    if (user && user._id) {
+                        this.responderId = user._id;
+                        this.persistResponderId(this.responderId);
+                        return this.responderId;
+                    }
+                } catch (e) {
+                    // continue with fallback
                 }
-            } catch (e) {
-                // continue with fallback
             }
 
             // Prefer form creator as a stable fallback responder when collectEmail is disabled.
@@ -517,15 +609,14 @@ export default {
 
                 // 2.1 Personal Access Check (Specified Users Only)
                 if (settings.allowedUser && Array.isArray(settings.allowedUser) && settings.allowedUser.length > 0 && !this.isPreviewMode && !isAdmin) {
-                    if (!currentResponder) {
-                        this.error = this.$t('form.loginRequiredPersonal');
+                    if (!currentUser || !currentUser._id) {
                         this.loading = false;
                         return;
                     }
 
                     const isAllowed = settings.allowedUser.some(u => {
                         const allowedId = String(typeof u === 'object' ? (u._id || u.value) : u);
-                        return allowedId === String(currentResponder);
+                        return allowedId === String(currentUser._id);
                     });
 
                     if (!isAllowed) {
@@ -535,8 +626,28 @@ export default {
                     }
                 }
 
-                // If collectEmail is true and user is not logged in, we stay in a "Login Required" state
-                if (settings.collectEmail && !currentResponder && !this.isPreviewMode) {
+                // 2.2 Role / Position Access Check (Specified Roles Only)
+                if (settings.allowedRoles && Array.isArray(settings.allowedRoles) && settings.allowedRoles.length > 0 && !this.isPreviewMode && !isAdmin) {
+                    if (!currentUser || !currentUser._id) {
+                        this.loading = false;
+                        return;
+                    }
+
+                    const userRoleId = String(typeof currentUser.role === 'object' ? (currentUser.role._id || currentUser.role.id) : currentUser.role);
+                    const isRoleAllowed = settings.allowedRoles.some(r => {
+                        const rId = String(typeof r === 'object' ? (r._id || r.value) : r);
+                        return rId === userRoleId;
+                    });
+
+                    if (!isRoleAllowed) {
+                        this.error = this.$t('form.accessDeniedRole');
+                        this.loading = false;
+                        return;
+                    }
+                }
+
+                // If requireLogin or collectEmail is true and user is not logged in, we stay in a "Login Required" state
+                if ((settings.requireLogin || settings.collectEmail) && (!currentUser || !currentUser._id) && !this.isPreviewMode) {
                     this.loading = false;
                     return;
                 }
@@ -685,20 +796,17 @@ export default {
                     }
                 }
 
+                const sentFilesSnapshot = this.snapshotFileAnswers();
                 if (this.draftResponseId) {
-                    await this.$store.dispatch('Responses/update', Object.assign({ _id: this.draftResponseId }, payload));
+                    const res = await this.$store.dispatch('Responses/update', Object.assign({ _id: this.draftResponseId }, payload));
+                    const savedDoc = this.extractResponseDoc(res);
+                    this.syncUploadedFileAnswers(savedDoc, sentFilesSnapshot);
                 } else {
                     const res = await this.$store.dispatch('Responses/create', payload);
-                    const rawData = res && res.data ? res.data : res;
-                    const createdNode = rawData && rawData.data ? rawData.data : rawData;
+                    const savedDoc = this.extractResponseDoc(res);
+                    this.syncUploadedFileAnswers(savedDoc, sentFilesSnapshot);
 
-                    let id = null;
-                    if (Array.isArray(createdNode)) {
-                        id = createdNode[0]?._id;
-                    } else {
-                        id = createdNode?._id || createdNode?.id;
-                    }
-
+                    const id = savedDoc?._id || savedDoc?.id;
                     if (id) {
                         this.draftResponseId = id;
                     } else {
@@ -760,26 +868,12 @@ export default {
             this.autoSave(true);
         },
 
-        async onAuthenGoogle() {
-            try {
-                const googleUser = await this.$gAuth.signIn();
-                if (googleUser) {
-                    const profile = googleUser.getBasicProfile();
-                    const body = {
-                        email: profile.getEmail(),
-                        name: profile.getName()
-                    };
-                    // Sync user with backend and update store
-                    const user = await this.$store.dispatch('User/get', body);
-                    if (user) {
-                        this.responderId = user._id;
-                        this.persistResponderId(this.responderId);
-                        this.onInit(); // Refresh form state with new user
-                    }
-                }
-            } catch (err) {
-                console.error('Google sign-in error:', err);
-            }
+        onAuthenGoogle() {
+            const redirectUrl = this.$route.fullPath;
+            this.$router.push({
+                path: '/pages/login',
+                query: { redirect: redirectUrl }
+            });
         },
 
         getTitle(arr) {
@@ -1143,11 +1237,15 @@ export default {
 
                 const payload = Object.assign({ _id: this.draftResponseId }, createPayload, { submit: this.submit });
 
-                if (this.draftResponseId) {
-                    await this.$store.dispatch('Responses/update', payload);
-                } else {
-                    await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: this.submit }));
+                const sentFilesSnapshot = this.snapshotFileAnswers();
+                const res = this.draftResponseId
+                    ? await this.$store.dispatch('Responses/update', payload)
+                    : await this.$store.dispatch('Responses/create', Object.assign({}, createPayload, { submit: this.submit }));
+                const savedDoc = this.extractResponseDoc(res);
+                if (!this.draftResponseId && savedDoc && (savedDoc._id || savedDoc.id)) {
+                    this.draftResponseId = savedDoc._id || savedDoc.id;
                 }
+                this.syncUploadedFileAnswers(savedDoc, sentFilesSnapshot);
 
                 this.modalTitle = this.$t('common.success');
                 this.modalMessage = this.$t('form.successMessage');
@@ -1327,10 +1425,26 @@ export default {
 
             return built;
         },
+        loginPromptMessage() {
+            const settings = this.form?.settings || {};
+            if (settings.allowedRoles && Array.isArray(settings.allowedRoles) && settings.allowedRoles.length > 0) {
+                return this.$t('form.loginRequiredRole');
+            }
+            if (settings.allowedUser && Array.isArray(settings.allowedUser) && settings.allowedUser.length > 0) {
+                return this.$t('form.loginRequiredPersonal');
+            }
+            if (settings.collectEmail) {
+                return this.$t('form.collectEmail');
+            }
+            return this.$t('form.loginRequired');
+        },
         isLoginRequired() {
             const settings = this.form?.settings || {};
-            const currentResponder = this.user?._id || this.responderId;
-            return settings.collectEmail && !currentResponder && !this.isPreviewMode;
+            const isLoggedIn = !!(this.user && this.user._id);
+            const hasUserAccessRestriction = (settings.allowedUser && Array.isArray(settings.allowedUser) && settings.allowedUser.length > 0);
+            const hasRoleAccessRestriction = (settings.allowedRoles && Array.isArray(settings.allowedRoles) && settings.allowedRoles.length > 0);
+            const mustLogin = !!(settings.requireLogin || settings.collectEmail || hasUserAccessRestriction || hasRoleAccessRestriction);
+            return mustLogin && !isLoggedIn && !this.isPreviewMode;
         }
     },
     watch: {
@@ -1421,7 +1535,7 @@ export default {
 
 .summary-banner {
     background: linear-gradient(90deg, #2eb85c 0%, #1b8d44 100%);
-    border-radius: 8px 8px 0 0;
+    border-radius: 12px 12px 0 0;
 }
 
 .preview-banner {
@@ -1481,7 +1595,7 @@ export default {
     font-weight: normal;
     width: 100%;
     padding: 8px 10px;
-    border-radius: 6px;
+    border-radius: 12px;
 }
 
 .option-input {
@@ -1528,7 +1642,7 @@ export default {
 .answer-upload-preview {
     max-width: 280px;
     max-height: 180px;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid #e5e7eb;
     object-fit: contain;
     background: #fff;
@@ -1538,14 +1652,14 @@ export default {
     width: 280px;
     height: 180px;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: 12px;
     background: #fff;
 }
 
 .answer-upload-media-preview {
     width: 280px;
     max-height: 180px;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid #e5e7eb;
     background: #fff;
 }
@@ -1576,7 +1690,7 @@ export default {
 .question-full-image {
     display: block;
     width: 100%;
-    border-radius: 4px;
+    border-radius: 12px;
 }
 
 .image-question-placeholder {
@@ -1587,7 +1701,7 @@ export default {
     width: 100%;
     min-height: 120px;
     border: 2px dashed #d1d5db;
-    border-radius: 8px;
+    border-radius: 12px;
     background: #f9fafb;
     color: #9ca3af;
     font-size: 0.85rem;
@@ -1595,7 +1709,7 @@ export default {
 
 .card-error {
     border: 1.5px solid #e55353 !important;
-    border-radius: 8px;
+    border-radius: 12px;
 }
 
 .success-modal .modal-dialog {
@@ -1726,7 +1840,7 @@ export default {
     width: 140px;
     height: 140px;
     border: 2px dashed #d8dbe0;
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: #f8f9fa;
     cursor: pointer;
     overflow: hidden;
@@ -1747,7 +1861,7 @@ export default {
 
 .file-slot-preview {
     background-color: #fff;
-    border-radius: 6px;
+    border-radius: 12px;
 }
 
 .slot-image {

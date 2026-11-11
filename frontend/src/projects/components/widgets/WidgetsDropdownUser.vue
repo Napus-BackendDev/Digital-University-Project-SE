@@ -136,7 +136,7 @@ export default {
     font-size: 0.72rem;
     font-weight: 700;
     padding: 3px 8px;
-    border-radius: 6px;
+    border-radius: 12px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }

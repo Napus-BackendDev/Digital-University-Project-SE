@@ -1,37 +1,35 @@
 <template>
     <div class="response-table-wrapper">
-        <!-- Loading -->
-        <div v-if="loading" class="text-center py-5 text-muted bg-white rounded-20 shadow-sm">
-            <div class="spinner-grow text-primary mr-2" role="status" style="width: 1.5rem; height: 1.5rem;" />
-            <div class="mt-2 font-weight-bold">Fetching latest responses...</div>
-        </div>
-
         <!-- Error -->
-        <div v-else-if="error" class="text-center py-5 text-danger bg-white rounded-20 shadow-sm">
+        <div v-if="error" class="text-center py-5 text-danger bg-white rounded-20 shadow-sm">
             <CIcon name="cil-warning" size="xl" class="mb-3" />
             <div class="font-weight-bold">{{ error }}</div>
         </div>
 
-        <!-- Empty -->
-        <div v-else-if="tableItems.length === 0 || tableItems.every(i => i.isEmpty)"
-            class="empty-state-container py-5 text-muted bg-white rounded-20 shadow-sm border-dashed">
-            <div class="empty-illustration mb-3">
-                <CIcon name="cil-find-in-page" size="xl" class="opacity-20" />
-            </div>
-            <h5 class="font-weight-bold text-dark">No responses found</h5>
-            <p class="small">There is no data to display for this form yet.</p>
-        </div>
+        <!-- Table Container -->
+        <div v-else class="premium-table-container shadow-sm bg-white" :class="{ 'table-empty': !loading && (tableItems.length === 0 || tableItems.every(i => i.isEmpty)) }">
+            <CDataTable :items="loading ? [] : pagedItems" :fields="fields" :loading="loading" :hover="!loading && tableItems.length > 0" class="mb-0 custom-premium-table">
+                <!-- Loading inside CDataTable -->
+                <template #loading>
+                    <TableLoading borderless />
+                </template>
 
-        <!-- Table -->
-        <template v-else>
-            <div class="premium-table-container shadow-sm bg-white">
-                <CDataTable :items="pagedItems" :fields="fields" class="mb-0 custom-premium-table">
-                    <!-- # column -->
-                    <template #id="{ item }">
-                        <td class="align-middle pl-4 shadow-none border-0">
-                            <div v-if="!item.isEmpty" class="index-badge-modern">{{ item.id }}</div>
-                        </td>
-                    </template>
+                <!-- Empty inside CDataTable -->
+                <template #no-items-view>
+                    <EmptyState
+                        borderless
+                        icon="cil-find-in-page"
+                        :title="$t('responses.noData')"
+                        :description="$t('responses.noDataDesc')"
+                    />
+                </template>
+
+                <!-- # column -->
+                <template #id="{ item }">
+                    <td class="align-middle pl-4 shadow-none border-0">
+                        <div v-if="!item.isEmpty" class="index-badge-modern">{{ item.id }}</div>
+                    </td>
+                </template>
 
                     <!-- Responder column -->
                     <template #responder="{ item }">
@@ -87,27 +85,28 @@
                         </td>
                     </template>
                 </CDataTable>
-            </div>
 
-            <!-- Pagination Modern -->
-            <div class="d-flex justify-content-between align-items-center mt-4 px-2">
-                <div class="text-muted small font-weight-bold">
-                    Showing {{ ((activePage - 1) * perPage) + 1 }} - {{ Math.min(activePage * perPage, tableItems.length) }} of {{ tableItems.length }}
+                <!-- Pagination Modern -->
+                <div v-if="!loading && tableItems.length > 0 && !tableItems.every(i => i.isEmpty)" class="d-flex justify-content-between align-items-center mt-4 px-2">
+                    <div class="text-muted small font-weight-bold">
+                        Showing {{ ((activePage - 1) * perPage) + 1 }} - {{ Math.min(activePage * perPage, tableItems.length) }} of {{ tableItems.length }}
+                    </div>
+                    <Pagination :activePage.sync="activePage" :pages="totalPages" />
                 </div>
-                <Pagination :activePage.sync="activePage" :pages="totalPages" />
             </div>
-        </template>
-    </div>
+        </div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import moment from 'moment'
 import Pagination from '@/projects/components/Util/Pagination.vue'
+import EmptyState from '@/projects/components/Util/EmptyState.vue'
+import TableLoading from '@/projects/components/Util/TableLoading.vue'
 
 export default {
     name: 'ResponseTables',
-    components: { Pagination },
+    components: { Pagination, EmptyState, TableLoading },
     props: {
         responseList: {
             type: Array,

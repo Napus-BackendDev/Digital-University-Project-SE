@@ -8,6 +8,7 @@ import router from './router/index'
 import { iconsSet as icons } from './assets/icons/icons.js'
 import i18n from './i18n.js'
 import store from "@/store/store";
+if (typeof window !== 'undefined') { window.$store = store; }
 
 import OtpInput from "@bachdgvn/vue-otp-input";
 Vue.component("v-otp-input", OtpInput);

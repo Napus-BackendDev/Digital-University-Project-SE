@@ -14,7 +14,7 @@
           variant="outline"
           color="light"
           size="sm"
-          class="lang-btn d-flex align-items-center px-3 py-1"
+          class="lang-btn d-flex align-items-center px-3 py-1 rounded-12"
           @click="toggleLang"
         >
           <CIcon :name="isThai ? 'cif-th' : 'cif-gb'" class="mr-2" />
@@ -634,6 +634,7 @@ $mfu-gold-hover: #e5a93c;
       font-size: 0.75rem;
       background: #f8fafc;
       color: #64748b;
+      border-radius: 12px !important;
     }
   }
 
@@ -673,6 +674,7 @@ $mfu-gold-hover: #e5a93c;
   .security-info {
     background: #f8fafc;
     border: 1px solid #f1f5f9;
+    border-radius: 12px !important;
   }
 
   .help-section {

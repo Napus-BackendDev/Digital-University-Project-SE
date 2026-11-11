@@ -23,6 +23,10 @@ const en = {
     },
 
     table: {
+        showing: "Showing",
+        itemsPerPage: "items per page",
+        of: "of",
+        items: "items",
         title: "All Forms",
         access: "Access",
         noForms: "No questionnaires yet. Create one to get started.",
@@ -51,6 +55,11 @@ const en = {
         duplicate: "Duplication",
         edit: "Edit",
         delete: "Delete",
+        addDescriptionPrompt: "+ Add Form Description",
+        addQuestionDescriptionPrompt: "+ Add Description",
+        formDescription: "Form Description",
+        add: "Add",
+        remove: "Remove",
         search: "Search...",
         searchPlaceholder: "Search forms...",
         allStatus: "All Status",
@@ -109,6 +118,8 @@ const en = {
         accessDenied: "Access denied. This form is restricted to specific organizations.",
         accessDeniedPersonal: "Access denied. This form is restricted to specific users.",
         loginRequiredPersonal: "This form is restricted to specific users. Please sign in to verify your access.",
+        accessDeniedRole: "Access denied. This form is restricted to specific roles or positions.",
+        loginRequiredRole: "This form is restricted to specific roles. Please sign in to verify your access.",
         signInWithGoogle: "Sign in with Google",
         collectEmail: "Collect email addresses",
         limitResponse: "Limit to one response",
@@ -221,12 +232,19 @@ const en = {
                 noEmails: "No authorized users selected.", // Updated key
                 specifyUser: "Specify User Access",
                 emailPlaceholder: "Select or search for users to allow access", // Updated key
-                userHint: "If you specify individual users, only those users will be able to access the form. This is useful for sensitive or personal questionnaires."
+                userHint: "If you specify individual users, only those users will be able to access the form. This is useful for sensitive or personal questionnaires.",
+                allowedRoles: "Authorized Roles / Positions",
+                noRoles: "No specific roles selected (Open to all roles).",
+                specifyRole: "Specify Roles / Positions",
+                rolePlaceholder: "Select roles (e.g. Student, Lecturer, Staff, Admin)",
+                roleHint: "Restrict access to respondents holding specific university roles/positions."
             },
             response: {
                 title: "Response Settings",
                 collectEmail: "Collect email addresses",
-                collectEmailDesc: "Require respondents to enter their email",
+                collectEmailDesc: "Require respondents to enter their email (Identified)",
+                requireLogin: "Require Sign-in (Log in Required)",
+                requireLoginDesc: "Require respondents to log in to access and submit the form",
                 notifications: "Email Notifications",
                 notificationsDesc: "Send email notifications to respondents after submission",
                 message: "Email Message",
@@ -332,7 +350,10 @@ const en = {
         goTo: "Next Action",
         nextQuestion: "Next Question",
         submitForm: "Submit Form",
-        questionLabel: "Question"
+        questionLabel: "Question",
+        deleteLanguageTitle: "Confirm Delete Language",
+        deleteLanguageConfirm: "Are you sure you want to delete the {lang} language? All titles, descriptions, and choices in this language will be removed across the entire form.",
+        delete: "Delete"
     },
     security: {
         title: "Permissions",

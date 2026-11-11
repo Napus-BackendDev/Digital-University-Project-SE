@@ -14,6 +14,15 @@
 
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
+                    <h6 class="mb-1 font-weight-bold">{{ $t('editor.settings.response.requireLogin') }}</h6>
+                    <small class="text-muted">{{ $t('editor.settings.response.requireLoginDesc') }}</small>
+                </div>
+                <CSwitch class="mx-1" color="dark" shape="pill" variant="opposite" :checked="mappedRequireLogin"
+                    @update:checked="val => { mappedRequireLogin = val; triggerAutoSave(); }" />
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
                     <h6 class="mb-1 font-weight-bold">{{ $t('editor.settings.response.notifications') }}</h6>
                     <small class="text-muted">{{ $t('editor.settings.response.notificationsDesc') }}</small>
                 </div>
@@ -28,7 +37,7 @@
                     :placeholder="$t('editor.settings.response.messagePlaceholder')" 
                     rows="4" 
                     class="form-control p-3" 
-                    style="border-radius: 8px; border: 1px solid #e2e8f0; background-color: #f8f9fa; resize: vertical;"
+                    style="border-radius: 12px; border: 1px solid #e2e8f0; background-color: #f8f9fa; resize: vertical;"
                     @change="triggerAutoSave" 
                 ></textarea>
                 <small class="text-muted mt-2 d-inline-block" v-html="$t('editor.settings.response.messageTip')"></small>
@@ -73,6 +82,15 @@ export default {
             set(val) {
                 if (!this.settings.settings) this.$set(this.settings, 'settings', {});
                 this.$set(this.settings.settings, 'collectEmail', val);
+            }
+        },
+        mappedRequireLogin: {
+            get() {
+                return !!(this.settings.settings && this.settings.settings.requireLogin);
+            },
+            set(val) {
+                if (!this.settings.settings) this.$set(this.settings, 'settings', {});
+                this.$set(this.settings.settings, 'requireLogin', val);
             }
         },
         mappedLimitResponse: {

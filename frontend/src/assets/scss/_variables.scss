@@ -3,6 +3,21 @@
 // ---------- Spacing ----------
 $spacer: 1rem !default;
 
+// ---------- Border Radius Global Defaults (rounded-12 standard) ----------
+$border-radius:               12px !default;
+$border-radius-lg:            16px !default;
+$border-radius-sm:            10px !default;
+$badge-border-radius:         12px !default;
+$btn-border-radius:           12px !default;
+$btn-border-radius-sm:        10px !default;
+$btn-border-radius-lg:        16px !default;
+$input-border-radius:         12px !default;
+$input-border-radius-sm:      10px !default;
+$input-border-radius-lg:      16px !default;
+$card-border-radius:          16px !default;
+$dropdown-border-radius:      12px !default;
+$modal-content-border-radius: 16px !default;
+
 // ---------- Navbar ----------
 $nav-link-height: 3rem !default;
 $navbar-brand-height: 2.5rem !default;

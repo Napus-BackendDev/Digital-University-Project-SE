@@ -4,18 +4,22 @@
             :endDate.sync="endDate" :managementMode="true" />
 
         <!-- Table -->
-        <CDataTable class="user-tables-container mb-0" :items="tableData" :fields="fields"
-            :items-per-page="itemsPerPage" :pagination="false" hover :activePage.sync="activePage">
+        <CDataTable class="user-tables-container mb-0" :class="{ 'table-empty': !loading && tableData.length === 0 }" :items="loading ? [] : tableData" :fields="fields"
+            :items-per-page="itemsPerPage" :pagination="false" :loading="loading" :hover="!loading && tableData.length > 0" :activePage.sync="activePage">
+
+            <!-- Loading State Slot -->
+            <template #loading>
+                <TableLoading borderless />
+            </template>
 
             <!-- Empty State Slot -->
             <template #no-items-view>
-                <div class="empty-state-box text-center py-5">
-                    <div class="empty-state-icon mx-auto mb-3">
-                        <CIcon name="cil-folder-open" size="xl" />
-                    </div>
-                    <h5 class="font-weight-bold text-dark mb-1">{{ $t('table.noItems') || 'ยังไม่มีแบบสอบถามที่คุณสร้าง' }}</h5>
-                    <p class="text-muted small mb-0">เริ่มต้นสร้างแบบสอบถามใหม่จากปุ่ม "สร้างแบบสอบถาม" ด้านบนเพื่อเริ่มเก็บข้อมูล</p>
-                </div>
+                <EmptyState
+                    borderless
+                    icon="cil-folder-open"
+                    :title="$t('table.noItems') || 'ยังไม่มีแบบสอบถามที่คุณสร้าง'"
+                    description="เริ่มต้นสร้างแบบสอบถามใหม่จากปุ่ม '+ สร้าง' ด้านบนเพื่อเริ่มเก็บข้อมูล"
+                />
             </template>
 
             <!-- Questionnaire (Title & Description) -->
@@ -163,8 +167,7 @@
                             <div class="icon-wrapper mr-2 chart-color" style="width: 20px; height: 20px;">
                                 <CIcon name="cil-check-alt" size="sm" class="text-success" />
                             </div>
-                            <span class="response-count font-weight-bold mr-1">{{ getCompletedCount(item)
-                                }}</span>
+                            <span class="response-count font-weight-bold mr-1">{{ item.completedCount }} / {{ item.targetCount }}</span>
                             <small class="text-muted">{{ $t('table.completedResponse') }}</small>
                         </div>
                         <div class="d-flex align-items-center">
@@ -172,8 +175,7 @@
                                 style="width: 20px; height: 20px; background-color: #f1f5f9;">
                                 <CIcon name="cil-history" size="sm" class="text-info" />
                             </div>
-                            <span class="response-count font-weight-bold mr-1">{{ getOngoingCount(item)
-                                }}</span>
+                            <span class="response-count font-weight-bold mr-1">{{ item.ongoingCount }}</span>
                             <small class="text-muted">{{ $t('table.ongoingResponse') }}</small>
                         </div>
                     </div>
@@ -184,21 +186,21 @@
             <template #actions="{ item }">
                 <td class="align-middle text-right pr-4">
                     <div class="d-flex align-items-center justify-content-end">
-                        <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn"
+                        <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn btn-preview"
                             @click.stop="goToPreviewForm(item)" v-c-tooltip="$t('button.preview')" aria-label="Preview">
                             <CIcon name="cil-magnifying-glass" />
                         </CButton>
                         <template v-if="item.canEdit">
-                            <CButton size="sm" color="primary" variant="ghost" class="p-2 mr-2 action-icon-btn"
+                            <CButton size="sm" color="success" variant="ghost" class="p-2 mr-2 action-icon-btn btn-duplicate"
                                 @click.stop="goToDuplicationForm(item)" v-c-tooltip="$t('table.duplicate')"
                                 aria-label="Duplicate">
                                 <CIcon name="cil-copy" />
                             </CButton>
-                            <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn"
+                            <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn btn-edit"
                                 @click.stop="goToEditForm(item)" v-c-tooltip="$t('button.edit')" aria-label="Edit">
                                 <CIcon name="cil-pencil" />
                             </CButton>
-                            <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn"
+                            <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn btn-delete"
                                 @click.stop="confirmDeleteItem(item)" v-c-tooltip="$t('table.delete')"
                                 aria-label="Delete">
                                 <CIcon name="cil-trash" />
@@ -218,8 +220,26 @@
             </template>
         </CDataTable>
 
-        <!-- Pagination -->
-        <Pagination :activePage.sync="activePage" :pages="totalPages" />
+        <!-- Table Footer: Rows per page & Pagination -->
+        <div v-if="!loading && tableData.length > 0" class="d-flex justify-content-between align-items-center flex-wrap mt-3 px-2">
+            <!-- Left: Items Per Page Selector -->
+            <div class="d-flex align-items-center text-muted small font-weight-bold my-1">
+                <span class="mr-2">{{ $t('table.showing') || 'แสดง' }}</span>
+                <select v-model.number="itemsPerPage" class="custom-per-page-select mr-2">
+                    <option :value="5">5</option>
+                    <option :value="10">10</option>
+                    <option :value="15">15</option>
+                    <option :value="20">20</option>
+                </select>
+                <span class="mr-2">{{ $t('table.itemsPerPage') || 'รายการต่อหน้า' }}</span>
+                <span class="text-secondary">({{ tableStartItem }} - {{ tableEndItem }} {{ $t('table.of') || 'จาก' }} {{ tableData.length }} {{ $t('table.items') || 'รายการ' }})</span>
+            </div>
+
+            <!-- Right: Pagination -->
+            <div class="my-1">
+                <Pagination :activePage.sync="activePage" :pages="totalPages" align="end" noMargin />
+            </div>
+        </div>
     </div>
 </template>
 
@@ -228,16 +248,22 @@ import { mapGetters } from 'vuex'
 import moment from 'moment'
 import Pagination from '@/projects/components/Util/Pagination.vue'
 import FilterTable from '@/projects/components/Filter/FilterTable.vue'
+import EmptyState from '@/projects/components/Util/EmptyState.vue'
+import TableLoading from '@/projects/components/Util/TableLoading.vue'
 import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'ManagementTables',
-    components: { Pagination, FilterTable },
+    components: { Pagination, FilterTable, EmptyState, TableLoading },
     mixins: [localeMixin],
     props: {
         items: {
             type: Array,
             default: () => []
+        },
+        loading: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
@@ -254,6 +280,7 @@ export default {
     async created() {
         this.$store.dispatch('User/getAll');
         this.$store.dispatch('Organizations/getAll');
+        this.$store.dispatch('Responses/exp');
     },
     computed: {
         fields() {
@@ -287,6 +314,10 @@ export default {
         },
 
         tableData() {
+            // Touch reactive dependencies so tableData recalculates when users or responses arrive
+            const _reactiveUsers = this.users;
+            const _reactiveResponses = this.responses;
+
             const raw = this.items || [];
 
             const locale = this.$i18n.locale.toLowerCase();
@@ -303,8 +334,22 @@ export default {
                 }
             }
 
+            // Defense in depth: Non-admin users only process forms where they are creator or collaborator
+            const safeItems = (!isAdmin && currentUserId) ? raw.filter(f => {
+                if (!f) return false;
+                const creatorId = f.creator && typeof f.creator === 'object' ? (f.creator._id || f.creator.id) : f.creator;
+                if (String(creatorId) === String(currentUserId)) return true;
+                if (Array.isArray(f.collaborator)) {
+                    return f.collaborator.some(c => {
+                        const collabUserId = c.user && typeof c.user === 'object' ? (c.user._id || c.user.id) : c.user;
+                        return String(collabUserId) === String(currentUserId);
+                    });
+                }
+                return false;
+            }) : raw;
+
             // Normalize items into display rows
-            const mapped = raw.map(f => {
+            const mapped = safeItems.map(f => {
                 if (!f) return { isEmpty: true };
 
                 // Permission Logic (for button visibility)
@@ -449,6 +494,11 @@ export default {
                 // Responses array
                 const responses = Array.isArray(f.responses) ? f.responses : [];
 
+                const formTarget = { ...f, access, _raw: f };
+                const targetCount = this.getTargetCount(formTarget);
+                const completedCount = this.getCompletedCount(f);
+                const ongoingCount = this.getOngoingCount(f);
+
                 return {
                     _id: f._id,
                     title,
@@ -465,6 +515,9 @@ export default {
                     collaborators,
                     allowedUserList,
                     canEdit,
+                    targetCount,
+                    completedCount,
+                    ongoingCount,
                     isEmpty: false,
                     _raw: f
                 };
@@ -514,40 +567,109 @@ export default {
         }
     },
     methods: {
+        getTargetCount(item) {
+            const form = item._raw || item;
+            if (!form) return 0;
+
+            const allUsers = this.users || [];
+            if (!allUsers.length) return 0;
+
+            const rawOrgs = form.organization || [];
+            const formOrgIds = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs])
+                .filter(Boolean)
+                .map(o => (o && typeof o === 'object' ? (o._id || o.id) : o)?.toString());
+
+            const isPublicForm = formOrgIds.includes('6a0b51af2dbf6e77c4df73fe') ||
+                (Array.isArray(item.access) && item.access.some(name => name === 'General' || name === 'ทั่วไป' || name === 'Public'));
+
+            // Allowed Roles restriction (if specified)
+            const allowedRoles = (form.settings && Array.isArray(form.settings.allowedRoles)) ? form.settings.allowedRoles : [];
+            const allowedRoleIds = allowedRoles.map(r => (r && typeof r === 'object' ? (r._id || r.id) : r)?.toString()).filter(Boolean);
+            const hasRoleFilter = allowedRoleIds.length > 0;
+
+            // 1. Gather users matching organizations and allowed roles
+            const targetUserIds = new Set();
+
+            allUsers.forEach(u => {
+                if (!u || !u._id) return;
+                const uId = u._id.toString();
+                const uOrgId = (u.organization && typeof u.organization === 'object' ? (u.organization._id || u.organization.id) : u.organization)?.toString();
+                const uRoleId = (u.role && typeof u.role === 'object' ? (u.role._id || u.role.id) : u.role)?.toString();
+
+                const roleMatches = !hasRoleFilter || (uRoleId && allowedRoleIds.includes(uRoleId));
+
+                if (isPublicForm) {
+                    if (roleMatches) targetUserIds.add(uId);
+                } else if (uOrgId && formOrgIds.includes(uOrgId)) {
+                    if (roleMatches) targetUserIds.add(uId);
+                }
+            });
+
+            // 2. Union explicitly allowed users (settings.allowedUser)
+            const allowedUsers = (form.settings && Array.isArray(form.settings.allowedUser)) ? form.settings.allowedUser : [];
+            allowedUsers.forEach(u => {
+                if (!u) return;
+                const id = (typeof u === 'object' ? (u._id || u.id || u.value) : u)?.toString();
+                if (id) targetUserIds.add(id);
+            });
+
+            return targetUserIds.size;
+        },
         getCompletedCount(item) {
             const formId = item._id ? item._id.toString() : null;
             if (!formId) return 0;
             
-            // Priority 1: Use global responses store for most accurate real-time data
-            if (this.responses && Array.isArray(this.responses)) {
-                return this.responses.filter(r => {
-                    const rFormId = r.form && typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form;
-                    return String(rFormId) === formId && (r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true');
-                }).length;
-            }
-            
-            // Priority 2: Fallback to item's own responses array if global store is empty
-            const responses = item.responses;
-            if (!Array.isArray(responses)) return 0;
-            return responses.filter(r => r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true').length;
+            const allResponses = (this.responses && Array.isArray(this.responses)) ? this.responses : (item.responses || []);
+            const formResponses = allResponses.filter(r => {
+                const rFormId = r.form && typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form;
+                return String(rFormId) === formId;
+            });
+
+            const completedResponders = new Set();
+            formResponses.forEach(r => {
+                const isSubmitted = r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true';
+                if (isSubmitted) {
+                    const responderId = (r.responder && typeof r.responder === 'object' ? (r.responder._id || r.responder.id) : r.responder) || r._id;
+                    completedResponders.add(String(responderId));
+                }
+            });
+
+            return completedResponders.size;
         },
         getOngoingCount(item) {
             const formId = item._id ? item._id.toString() : null;
             if (!formId) return 0;
 
-            // Priority 1: Use global responses store
-            if (this.responses && Array.isArray(this.responses)) {
-                return this.responses.filter(r => {
-                    const rFormId = r.form && typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form;
-                    const isSubmitted = r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true';
-                    return String(rFormId) === formId && !isSubmitted;
-                }).length;
-            }
+            const allResponses = (this.responses && Array.isArray(this.responses)) ? this.responses : (item.responses || []);
+            const formResponses = allResponses.filter(r => {
+                const rFormId = r.form && typeof r.form === 'object' ? (r.form._id || r.form.id) : r.form;
+                return String(rFormId) === formId;
+            });
 
-            // Priority 2: Fallback
-            const responses = item.responses;
-            if (!Array.isArray(responses)) return 0;
-            return responses.filter(r => !(r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true')).length;
+            // Responders who have submitted
+            const completedResponders = new Set();
+            formResponses.forEach(r => {
+                const isSubmitted = r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true';
+                if (isSubmitted) {
+                    const responderId = (r.responder && typeof r.responder === 'object' ? (r.responder._id || r.responder.id) : r.responder) || r._id;
+                    completedResponders.add(String(responderId));
+                }
+            });
+
+            // Responders with ongoing draft (submit: false) who have not submitted yet
+            const ongoingResponders = new Set();
+            formResponses.forEach(r => {
+                const isSubmitted = r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true';
+                if (!isSubmitted) {
+                    const responderId = (r.responder && typeof r.responder === 'object' ? (r.responder._id || r.responder.id) : r.responder) || r._id;
+                    const rIdStr = String(responderId);
+                    if (!completedResponders.has(rIdStr)) {
+                        ongoingResponders.add(rIdStr);
+                    }
+                }
+            });
+
+            return ongoingResponders.size;
         },
         formatAccessLabel(v) {
             if (!v) return '';
@@ -693,6 +815,9 @@ export default {
         }
     },
     watch: {
+        itemsPerPage() {
+            this.activePage = 1;
+        },
         isCode(val) {
             if (val === 'confirm' && this.deleteItem) {
                 this.deleteForm(this.deleteItem);
@@ -711,6 +836,41 @@ export default {
     border: 1px solid #e2e8f0;
     padding: 0;
     overflow: hidden;
+}
+
+.user-tables-container.table-empty tbody tr,
+.user-tables-container.table-empty tbody tr:hover,
+.user-tables-container.table-empty tbody td {
+    background: transparent !important;
+    background-color: transparent !important;
+    cursor: default !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+.user-tables-container.table-empty thead th {
+    cursor: default !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+.custom-per-page-select {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px !important;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.custom-per-page-select:focus,
+.custom-per-page-select:hover {
+    border-color: #8c1515;
+    box-shadow: 0 0 0 2px rgba(140, 21, 21, 0.1);
 }
 
 .empty-state-box {
@@ -942,11 +1102,47 @@ export default {
     justify-content: center;
     border-radius: 50% !important;
     transition: all 0.2s ease;
+    border: none !important;
+    background: transparent;
 }
 
-.action-icon-btn:hover {
-    background-color: #f1f5f9 !important;
-    color: #3c4b64 !important;
+/* 1. Preview: Sky Blue / Info (#0284c7) - สำรวจ/ดูข้อมูล */
+.action-icon-btn.btn-preview {
+    color: #0284c7 !important;
+}
+.action-icon-btn.btn-preview:hover {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    transform: translateY(-1px);
+}
+
+/* 2. Duplicate: Emerald Green / Success (#10b981) - โคลน/สร้างใหม่เชิงบวก */
+.action-icon-btn.btn-duplicate {
+    color: #10b981 !important;
+}
+.action-icon-btn.btn-duplicate:hover {
+    background-color: #d1fae5 !important;
+    color: #059669 !important;
+    transform: translateY(-1px);
+}
+
+/* 3. Edit: Amber Orange / Warning (#f59e0b) - แก้ไข ปรับปรุงข้อมูล */
+.action-icon-btn.btn-edit {
+    color: #f59e0b !important;
+}
+.action-icon-btn.btn-edit:hover {
+    background-color: #fef3c7 !important;
+    color: #d97706 !important;
+    transform: translateY(-1px);
+}
+
+/* 4. Delete: Crimson Red / Danger (#ef4444) - ลบ/อันตราย */
+.action-icon-btn.btn-delete {
+    color: #ef4444 !important;
+}
+.action-icon-btn.btn-delete:hover {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
     transform: translateY(-1px);
 }
 

@@ -61,7 +61,7 @@
                         />
                     </CCol>
                     <CCol md="2" class="mb-3">
-                        <CButton color="primary" block style="height: 45px; border-radius: 8px;"
+                        <CButton color="primary" block style="height: 45px; border-radius: 12px;"
                             class="font-weight-bold mt-4" @click="addOrganization">
                             {{ $t('editor.settings.access.add') }}
                         </CButton>
@@ -109,7 +109,7 @@
                         />
                     </CCol>
                     <CCol md="2" class="mb-3">
-                        <CButton color="primary" block style="height: 45px; border-radius: 8px;"
+                        <CButton color="primary" block style="height: 45px; border-radius: 12px;"
                             class="font-weight-bold mt-4" @click="addUser">
                             {{ $t('editor.settings.access.add') }}
                         </CButton>
@@ -121,6 +121,55 @@
             <div class="info-hint mb-3">
                 <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
                 <h6 class="mb-0 " v-html="$t('editor.settings.organization.userHint')"></h6>
+            </div>
+
+            <!-- Selected Roles List -->
+            <div class="mb-4 mt-4">
+                <label class="mb-3 font-weight-bold">{{ $t('editor.settings.organization.allowedRoles') }}</label>
+                <div class="org-list">
+                    <span v-for="(roleRef, index) in (settings.settings ? settings.settings.allowedRoles : [])" :key="'role-' + index" class="badge-custom border">
+                        <CIcon name="cil-user" size="sm" class="mr-2 text-primary" />
+                        {{ getRoleTitle(roleRef) }}
+                        <span class="ml-2 delete-icon-wrapper" @click.stop="removeRole(index)" :title="$t('editor.settings.access.remove')">
+                            <CIcon name="cil-x" size="sm" class="delete-icon" />
+                        </span>
+                    </span>
+                    <div v-if="!settings.settings || !settings.settings.allowedRoles || settings.settings.allowedRoles.length === 0" class="text-muted small my-auto">
+                        {{ $t('editor.settings.organization.noRoles') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Selection Section -->
+            <div class="mb-4">
+                <h6 class="font-weight-bold mb-3">{{ $t('editor.settings.organization.specifyRole') }}</h6>
+
+                <CRow>
+                    <CCol md="10" class="mb-3">
+                        <label class="mb-2 font-weight-bold small">{{ $t('editor.settings.organization.rolePlaceholder') }}</label>
+                        <v-select 
+                            :options="roleOptions" 
+                            v-model="newRoleId"
+                            multiple
+                            :close-on-select="false"
+                            :reduce="role => role.value"
+                            :placeholder="$t('editor.settings.organization.rolePlaceholder')"
+                            class="form-select-custom"
+                        />
+                    </CCol>
+                    <CCol md="2" class="mb-3">
+                        <CButton color="primary" block style="height: 45px; border-radius: 12px;"
+                            class="font-weight-bold mt-4" @click="addRole">
+                            {{ $t('editor.settings.access.add') }}
+                        </CButton>
+                    </CCol>
+                </CRow>
+
+                <!-- Role Info Hint -->
+                <div class="info-hint mb-3">
+                    <CIcon name="cil-info" size="xl" class="mr-3 text-info" />
+                    <h6 class="mb-0 " v-html="$t('editor.settings.organization.roleHint')"></h6>
+                </div>
             </div>
 
         </CCardBody>
@@ -148,12 +197,21 @@ export default {
     data() {
         return {
             selectedOrgId: [],
-            newUserId: []
+            newUserId: [],
+            newRoleId: []
         }
     },
     computed: {
         ...mapGetters('Organizations', ['organizations']),
         ...mapGetters('User', ['users']),
+        ...mapGetters('Roles', ['roles']),
+        roleOptions() {
+            if (!this.roles || !Array.isArray(this.roles)) return [];
+            return this.roles.map(r => ({
+                label: this.getLang(r.title) || (r.title && r.title[0] ? r.title[0].value : 'Role'),
+                value: r._id
+            }));
+        },
         userOptions() {
             if (!this.users || !Array.isArray(this.users)) return [];
             return this.users.map(u => ({
@@ -182,31 +240,38 @@ export default {
         getOrgName(orgId) {
             if (!orgId) return '...';
 
-            // Check if orgId is already an object (populated by backend)
+            const rawId = (typeof orgId === 'object' && orgId !== null)
+                ? (orgId._id || orgId.id || orgId.value || orgId)
+                : orgId;
+
+            // Always try to find full org object from organizations list
             let org = null;
-            if (typeof orgId === 'object' && orgId !== null) {
-                org = orgId;
-            } else if (this.organizations) {
-                // If it's an ID string/ObjectId, find it in the cached list
-                org = this.organizations.find(o => (o._id === orgId || o.id === orgId));
+            if (this.organizations && Array.isArray(this.organizations)) {
+                org = this.organizations.find(o => String(o._id) === String(rawId) || String(o.id) === String(rawId));
             }
 
-            // Fallback: If not found in memory but it's an object, return name or title
+            // Fallback to orgId itself if it's already an object with title/name
+            if (!org && typeof orgId === 'object' && orgId !== null) {
+                org = orgId;
+            }
+
             if (!org) {
-                if (typeof orgId === 'string') return orgId;
+                if (typeof rawId === 'string') return rawId;
                 return 'Unknown Org';
             }
 
             // Extract Name based on language/title structure
+            const locale = (this.$i18n && this.$i18n.locale) ? this.$i18n.locale.toLowerCase() : 'en';
             if (Array.isArray(org.title)) {
-                // Try to find English title first, or any first title available
+                const match = org.title.find(t => t && t.key && t.key.toLowerCase() === locale);
+                if (match && match.value) return match.value;
                 const en = org.title.find(t => t && t.key === 'en');
                 if (en && en.value) return en.value;
                 const th = org.title.find(t => t && t.key === 'th');
                 if (th && th.value) return th.value;
                 return org.title[0] ? org.title[0].value : 'Unnamed';
             }
-            return org.name || org.title || (org._id ? String(org._id) : 'Unnamed');
+            return org.name || org.title || (org._id ? String(org._id) : String(rawId || 'Unnamed'));
         },
         addOrganization() {
             if (!this.selectedOrgId || this.selectedOrgId.length === 0) return;
@@ -262,6 +327,48 @@ export default {
                 this.triggerAutoSave();
             }
         },
+        addRole() {
+            if (!this.newRoleId || this.newRoleId.length === 0) return;
+
+            if (!this.settings.settings) {
+                this.$set(this.settings, 'settings', {});
+            }
+            if (!this.settings.settings.allowedRoles) {
+                this.$set(this.settings.settings, 'allowedRoles', []);
+            }
+
+            this.newRoleId.forEach(val => {
+                const roleId = String(typeof val === 'object' ? (val.value || val._id) : val);
+
+                const exists = this.settings.settings.allowedRoles.some(r => {
+                    const id = String(typeof r === 'object' ? (r._id || r.value) : r);
+                    return id === roleId;
+                });
+
+                if (!exists) {
+                    const fullRole = Array.isArray(this.roles) ? this.roles.find(r => String(r._id) === roleId) : null;
+                    this.settings.settings.allowedRoles.push(fullRole || roleId);
+                }
+            });
+
+            this.newRoleId = [];
+            this.triggerAutoSave();
+        },
+        removeRole(index) {
+            if (this.settings.settings && Array.isArray(this.settings.settings.allowedRoles)) {
+                this.settings.settings.allowedRoles.splice(index, 1);
+                this.triggerAutoSave();
+            }
+        },
+        getRoleTitle(roleRef) {
+            if (!roleRef) return 'Unknown';
+            if (typeof roleRef === 'object' && roleRef.title) {
+                return this.getLang(roleRef.title) || (roleRef.title[0] ? roleRef.title[0].value : 'Role');
+            }
+            if (!this.roles) return String(roleRef);
+            const r = this.roles.find(x => String(x._id) === String(roleRef));
+            return r ? (this.getLang(r.title) || (r.title[0] ? r.title[0].value : String(roleRef))) : String(roleRef);
+        },
         async triggerAutoSave() {
             this.$emit('auto-save');
         },
@@ -285,7 +392,10 @@ export default {
         if (!this.settings.settings.allowedUser) {
             this.$set(this.settings.settings, 'allowedUser', []);
         }
-        this.$store.dispatch('User/getAll');
+        if (!this.settings.settings.allowedRoles) {
+            this.$set(this.settings.settings, 'allowedRoles', []);
+        }
+        this.$store.dispatch('Roles/getAll');
     }
 }
 </script>
@@ -299,7 +409,7 @@ export default {
 .form-select-custom {
     min-height: 45px;
     background-color: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid #e2e8f0;
     transition: all 0.3s ease;
 }
@@ -308,7 +418,7 @@ export default {
 .form-select-custom.v-select >>> .vs__dropdown-toggle {
     min-height: 45px !important;
     background-color: #f8f9fa !important;
-    border-radius: 8px !important;
+    border-radius: 12px !important;
     border: 1px solid #e2e8f0 !important;
     padding: 2px 0.5rem;
 }
@@ -331,7 +441,7 @@ export default {
 .form-select-custom.v-select >>> .vs__selected {
     background-color: #f1f5f9 !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 6px !important;
+    border-radius: 12px !important;
     padding: 2px 8px !important;
     margin: 0 !important;
     font-size: 0.85rem !important;
@@ -366,7 +476,7 @@ export default {
 
 .btn-custom {
     height: 45px;
-    border-radius: 8px;
+    border-radius: 12px;
     transition: all 0.2s ease;
 }
 
@@ -391,7 +501,7 @@ export default {
     align-items: center;
     padding: 0.75rem 1rem;
     background-color: #f0f7ff;
-    border-radius: 10px;
+    border-radius: 12px;
     border-left: 4px solid #3b82f6;
     color: #1e40af;
 }
@@ -400,7 +510,7 @@ export default {
     display: inline-flex;
     align-items: center;
     padding: 0.5rem 0.75rem;
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: #f1f5f9;
     color: #475569;
     font-weight: 500;

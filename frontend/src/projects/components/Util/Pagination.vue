@@ -1,7 +1,7 @@
 <template>
-    <div class="d-flex justify-content-center mt-4 mb-2">
-        <CPagination :activePage="activePage" :pages="pages" :doubleArrows="false" align="center"
-            class="custom-pagination border-0" @update:activePage="$emit('update:activePage', $event)" />
+    <div :class="['d-flex', noMargin ? 'my-0' : 'mt-4 mb-2', (align === 'right' || align === 'end') ? 'justify-content-end' : 'justify-content-center']">
+        <CPagination :activePage="activePage" :pages="pages" :doubleArrows="false" :align="align"
+            class="custom-pagination border-0 mb-0" @update:activePage="$emit('update:activePage', $event)" />
     </div>
 </template>
 
@@ -16,6 +16,14 @@ export default {
         pages: {
             type: Number,
             default: 1
+        },
+        align: {
+            type: String,
+            default: 'center'
+        },
+        noMargin: {
+            type: Boolean,
+            default: false
         }
     }
 }

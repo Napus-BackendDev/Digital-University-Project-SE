@@ -3,11 +3,7 @@
         <Header :title="$t('nav.forms')" :description="$t('table.header')" />
         <WidgetsDropdownUser :stats="stats" @filter="(status) => $refs.table.filterStatus(status)" />
         
-        <div v-if="loading" class="text-center py-5">
-            <CSpinner color="primary" variant="grow" />
-            <div class="mt-2 text-muted">{{ $t('common.loading') }}</div>
-        </div>
-        <FormTables v-else ref="table" @update-stats="updateStats" />
+        <FormTables ref="table" :loading="loading" @update-stats="updateStats" />
     </div>
 </template>
 
@@ -63,19 +59,22 @@ export default {
                 }
 
                 this.loading = true;
+                this.$store.commit('Forms/clearForms');
                 const isAdmin = this.checkAdmin(this.user);
                 
                 try {
-                    await Promise.all([
-                        this.$store.dispatch('Forms/getByUser', {
-                            userId: this.user._id,
-                            organizationId: orgId,
-                            isAdmin: isAdmin
-                        }),
-                        this.$store.dispatch('Responses/get', {
-                            responder: this.user._id
-                        })
-                    ]);
+                    await this.$store.dispatch('Forms/getByUser', {
+                        userId: this.user._id,
+                        organizationId: orgId,
+                        isAdmin: isAdmin
+                    });
+                    this.loading = false;
+                    // Background non-blocking responder status fetch
+                    this.$store.dispatch('Responses/get', {
+                        responder: this.user._id
+                    }).catch(e => console.error("[Forms.vue] Background responses sync error:", e));
+                } catch (err) {
+                    console.error("[Forms.vue] Error fetching forms:", err);
                 } finally {
                     this.loading = false;
                 }

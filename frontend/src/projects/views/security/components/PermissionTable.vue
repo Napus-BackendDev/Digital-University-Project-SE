@@ -27,18 +27,17 @@
                 </div>
             </div>
 
-            <div class="table-responsive tables-container border-0">
+            <div class="table-responsive tables-container border-0" :class="{ 'table-empty': filteredItems.length === 0 }">
                 <CDataTable :items="filteredItems" :fields="fields" :items-per-page="itemsPerPage"
-                    :activePage.sync="activePage" :pagination="false" hover class="mb-0">
+                    :activePage.sync="activePage" :pagination="false" :hover="filteredItems.length > 0" class="mb-0">
                     
                     <template #no-items-view>
-                        <div class="empty-state-box text-center py-5">
-                            <div class="empty-state-icon mx-auto mb-3">
-                                <CIcon name="cil-shield-alt" size="xl" />
-                            </div>
-                            <h5 class="font-weight-bold text-dark mb-1">ยังไม่มีข้อมูลบทบาทและสิทธิ์</h5>
-                            <p class="text-muted small mb-0">ตารางสิทธิ์จะแสดงขึ้นเมื่อมีการกำหนดบทบาทผู้ใช้งานในระบบ</p>
-                        </div>
+                        <EmptyState
+                            borderless
+                            icon="cil-shield-alt"
+                            title="ยังไม่มีข้อมูลบทบาทและสิทธิ์"
+                            description="ตารางสิทธิ์จะแสดงขึ้นเมื่อมีการกำหนดบทบาทผู้ใช้งานในระบบ"
+                        />
                     </template>
 
                     <template #role="{ item }">
@@ -73,10 +72,11 @@
 
 <script>
 import Pagination from '@/projects/components/Util/Pagination.vue'
+import EmptyState from '@/projects/components/Util/EmptyState.vue'
 
 export default {
     name: 'PermissionTable',
-    components: { Pagination },
+    components: { Pagination, EmptyState },
     props: {
         items: { type: Array, default: () => [] },
         fields: { type: Array, default: () => [] },
@@ -116,6 +116,22 @@ export default {
 </script>
 
 <style scoped>
+.tables-container.table-empty tbody tr,
+.tables-container.table-empty tbody tr:hover,
+.tables-container.table-empty tbody td {
+    background: transparent !important;
+    background-color: transparent !important;
+    cursor: default !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+.tables-container.table-empty thead th {
+    cursor: default !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
 .permission-card {
     background: #ffffff;
     border: 1px solid #e2e8f0 !important;

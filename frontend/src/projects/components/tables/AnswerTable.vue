@@ -45,7 +45,7 @@
                                 <template v-for="(val, i) in resolveResponse(item)">
                                     <!-- Image in Array -->
                                     <template v-if="isImagePath(val)">
-                                        <a :key="i" :href="resolveFileUrl(val)" target="_blank"
+                                        <a v-if="hasFileUrl(val)" :key="i" :href="resolveFileUrl(val)" target="_blank"
                                             rel="noopener noreferrer"
                                             class="file-response-link p-1 border-0 bg-transparent shadow-none">
                                             <img v-if="!imgErrors[val]" :src="resolveFileUrl(val)"
@@ -59,10 +59,17 @@
                                                     }}</span>
                                             </div>
                                         </a>
+                                        <div v-else :key="i"
+                                            class="file-response-link p-1 d-inline-flex align-items-center bg-light rounded shadow-sm"
+                                            style="font-size: 0.75rem;">
+                                            <CIcon name="cil-image1" class="mr-1 text-muted" style="width: 14px" />
+                                            <span class="text-truncate" style="max-width: 100px">{{ getFileName(val)
+                                                }}</span>
+                                        </div>
                                     </template>
                                     <!-- File in Array -->
-                                    <template v-else-if="isFilePath(val)">
-                                        <a :key="i" :href="resolveFileUrl(val)" target="_blank"
+                                    <template v-else-if="isFilePath(val, item.question)">
+                                        <a v-if="hasFileUrl(val)" :key="i" :href="resolveFileUrl(val)" target="_blank"
                                             rel="noopener noreferrer"
                                             class="file-response-link p-1 d-inline-flex align-items-center bg-light rounded shadow-sm"
                                             style="font-size: 0.75rem;">
@@ -70,6 +77,13 @@
                                             <span class="text-truncate" style="max-width: 100px">{{ getFileName(val)
                                                 }}</span>
                                         </a>
+                                        <div v-else :key="i"
+                                            class="file-response-link p-1 d-inline-flex align-items-center bg-light rounded shadow-sm"
+                                            style="font-size: 0.75rem;">
+                                            <CIcon name="cil-paperclip" class="mr-1 text-primary" style="width: 14px" />
+                                            <span class="text-truncate" style="max-width: 100px">{{ getFileName(val)
+                                                }}</span>
+                                        </div>
                                     </template>
                                     <!-- Standard Pill -->
                                     <span v-else :key="i" class="response-pill">
@@ -96,7 +110,7 @@
 
                         <!-- Image Preview -->
                         <template v-else-if="isImagePath(item.response)">
-                            <a :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer"
+                            <a v-if="hasFileUrl(item.response)" :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer"
                                 class="file-response-link">
                                 <img v-if="!imgErrors[item.response]" :src="resolveFileUrl(item.response)"
                                     class="answer-image-preview" loading="lazy"
@@ -107,15 +121,24 @@
                                     <span class="small">{{ getFileName(item.response) }}</span>
                                 </div>
                             </a>
+                            <div v-else
+                                class="file-response-link bg-light p-2 rounded shadow-sm d-flex align-items-center">
+                                <CIcon name="cil-image1" class="mr-2 text-muted" />
+                                <span class="small">{{ getFileName(item.response) }}</span>
+                            </div>
                         </template>
 
                         <!-- File / Link -->
-                        <template v-else-if="isFilePath(item.response)">
-                            <a :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer"
+                        <template v-else-if="isFilePath(item.response, item.question)">
+                            <a v-if="hasFileUrl(item.response)" :href="resolveFileUrl(item.response)" target="_blank" rel="noopener noreferrer"
                                 class="file-response-link bg-light p-2 rounded shadow-sm d-flex align-items-center">
                                 <CIcon name="cil-paperclip" class="mr-2 text-primary" />
                                 <span class="small">{{ getFileName(item.response) }}</span>
                             </a>
+                            <div v-else class="file-response-link bg-light p-2 rounded shadow-sm d-flex align-items-center">
+                                <CIcon name="cil-paperclip" class="mr-2 text-primary" />
+                                <span class="small">{{ getFileName(item.response) }}</span>
+                            </div>
                         </template>
 
                         <!-- Standard Text or Single Choice Label -->
@@ -202,9 +225,17 @@ export default {
             if (Array.isArray(val) && val.length === 0) return true;
             return false;
         },
+        getQuestionTypeStr(question) {
+            if (!question || !question.type) return '';
+            let t = (question.type.type || question.type || '').toString().toLowerCase();
+            if (/^[0-9a-fA-F]{24}$/.test(t) && this.questionTypes.length) {
+                const found = this.questionTypes.find(type => type._id === t);
+                if (found) t = found.type.toLowerCase();
+            }
+            return t;
+        },
         isRating(question) {
-            if (!question || !question.type) return false;
-            const t = (question.type.type || question.type || '').toString().toLowerCase();
+            const t = this.getQuestionTypeStr(question);
             return t === 'rating' || t === 'rate';
         },
         getRatingMax(question) {
@@ -213,9 +244,14 @@ export default {
             }
             return 5;
         },
-        isFilePath(val) {
+        hasFileUrl(val) {
             if (typeof val !== 'string') return false;
-            return val.includes('\\') || val.includes('/') || val.startsWith('http');
+            return val.includes('\\') || val.includes('/') || val.startsWith('http') || val.startsWith('data:');
+        },
+        isFilePath(val, question) {
+            if (typeof val !== 'string' || !val.trim()) return false;
+            if (this.hasFileUrl(val)) return true;
+            return this.getQuestionTypeStr(question).includes('file');
         },
         isImagePath(val) {
             if (typeof val !== 'string') return false;
@@ -256,20 +292,15 @@ export default {
             }
         },
         getQuestionIcon(question) {
-            if (!question || !question.type) return 'cil-help';
-            let t = (question.type.type || question.type || '').toString().toLowerCase();
-
-            // Resolve ID if it looks like a Mongo ID
-            if (/^[0-9a-fA-F]{24}$/.test(t) && this.questionTypes.length) {
-                const found = this.questionTypes.find(type => type._id === t);
-                if (found) t = found.type.toLowerCase();
-            }
+            const t = this.getQuestionTypeStr(question);
+            if (!t) return 'cil-notes';
 
             switch (t) {
                 case 'short_answer': return 'cil-short-text';
                 case 'paragraph': return 'cil-align-left';
                 case 'multiple_choice': return 'cil-list';
-                case 'checkboxes': return 'cil-check-square';
+                case 'checkbox':
+                case 'checkboxes': return 'cil-square';
                 case 'dropdown': return 'cil-arrow-circle-bottom';
                 case 'rating': return 'cil-star';
                 case 'date': return 'cil-calendar';
@@ -279,14 +310,8 @@ export default {
             }
         },
         getQuestionTypeLabel(question) {
-            if (!question || !question.type) return 'Unknown Type';
-            let t = (question.type.type || question.type || '').toString().toLowerCase();
-
-            // Resolve ID if it looks like a Mongo ID
-            if (/^[0-9a-fA-F]{24}$/.test(t) && this.questionTypes.length) {
-                const found = this.questionTypes.find(type => type._id === t);
-                if (found) t = found.type.toLowerCase();
-            }
+            const t = this.getQuestionTypeStr(question);
+            if (!t) return 'Unknown Type';
 
             switch (t) {
                 case 'short_answer': case 'short': return 'Short Text';
@@ -325,11 +350,7 @@ export default {
             }
 
             // Handle single choice (Multiple Choice / Dropdown)
-            var q = item.question;
-            var t = '';
-            if (q && q.type) {
-                t = (q.type.type || q.type || '').toString().toLowerCase();
-            }
+            const t = this.getQuestionTypeStr(item.question);
             if (['multiple_choice', 'dropdown'].includes(t)) {
                 return this.getChoiceLabel(item.question, raw);
             }

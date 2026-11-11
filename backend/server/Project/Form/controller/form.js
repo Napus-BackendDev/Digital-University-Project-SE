@@ -12,6 +12,7 @@ const defaultPopulate = [
     ]
   },
   { path: 'settings.allowedUser', select: 'name email' },
+  { path: 'settings.allowedRoles', select: 'title' },
   { path: 'responsesCount' }
 ];
 
@@ -24,6 +25,7 @@ const formPopulate = [
   { path: "status" },
   { path: "creator", select: "-password" },
   { path: "settings.allowedUser", select: "-password" },
+  { path: "settings.allowedRoles", select: "title" },
   {
     path: "collaborator",
     populate: [

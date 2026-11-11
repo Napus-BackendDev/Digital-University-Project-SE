@@ -3,11 +3,7 @@
         <Header :title="$t('nav.manage')" :description="$t('description')" :showCreateButton="true" />
         <WidgetsManageForms :forms="filteredForms" @filter="(status) => $refs.table.filterStatus(status)" />
         
-        <div v-if="loading" class="text-center py-5">
-            <CSpinner color="primary" variant="grow" />
-            <div class="mt-2 text-muted">{{ $t('common.loading') }}</div>
-        </div>
-        <ManagementTables v-else ref="table" :items="filteredForms" />
+        <ManagementTables ref="table" :items="filteredForms" :loading="loading" />
     </div>
 </template>
 
@@ -84,9 +80,12 @@ export default {
                     await this.$store.dispatch('Forms/getByUser', {
                         userId: userId,
                         organizationId: orgId,
-                        isAdmin: isAdmin
+                        isAdmin: isAdmin,
+                        mode: 'manage'
                     });
-                    await this.$store.dispatch('Responses/exp');
+                    this.loading = false;
+                    // Background non-blocking response counts fetch
+                    this.$store.dispatch('Responses/exp').catch(e => console.error("[ManageForms.vue] Background responses sync error:", e));
                 } catch (err) {
                     console.error("[ManageForms.vue] Error fetching forms:", err);
                 } finally {
@@ -114,45 +113,30 @@ export default {
         filteredForms() {
             let raw = this.forms || [];
 
-            const currentUserId = this.user ? this.user._id : null;
+            const currentUserId = this.user ? (this.user._id || this.user.id) : null;
 
             // 1. Identify Admin
             const isAdmin = this.checkAdmin(this.user);
 
             // 2. Responsibility Filter
-            // Note: Relaxed filter because the backend already filters correctly based on organization/creator.
-            // We only keep a safety filter if we're not admin, but we trust the backend's results.
+            // Non-admin users in Manage Forms can ONLY see forms they created or collaborate on
             if (currentUserId && !isAdmin) {
                 const filtered = raw.filter(f => {
                     if (!f) return false;
                     
-                    // Allow everything returned by the backend by default, 
-                    // or keep the restrictive check if we're sure about the ID matching.
-                    // For now, let's log any mismatches.
-                    const creatorId = f.creator && typeof f.creator === 'object' ? f.creator._id : f.creator;
+                    const creatorId = f.creator && typeof f.creator === 'object' ? (f.creator._id || f.creator.id) : f.creator;
                     const isCreator = String(creatorId) === String(currentUserId);
-                    
                     if (isCreator) return true;
 
                     // Collaborator check
                     if (Array.isArray(f.collaborator)) {
-                        if (f.collaborator.some(c => {
-                            const collabUserId = c.user && typeof c.user === 'object' ? c.user._id : c.user;
+                        return f.collaborator.some(c => {
+                            const collabUserId = c.user && typeof c.user === 'object' ? (c.user._id || c.user.id) : c.user;
                             return String(collabUserId) === String(currentUserId);
-                        })) return true;
+                        });
                     }
 
-                    // Authorized User check (settings.allowedUser)
-                    if (f.settings && Array.isArray(f.settings.allowedUser)) {
-                        if (f.settings.allowedUser.some(u => {
-                            const allowedId = u && typeof u === 'object' ? u._id : u;
-                            return String(allowedId) === String(currentUserId);
-                        })) return true;
-                    }
-
-                    // Organization check (The backend already does this, so we should allow it)
-                    // If the backend returned it, it's likely authorized.
-                    return true; 
+                    return false;
                 });
 
                 return filtered;

@@ -4,17 +4,20 @@
         <FilterTable :searchQuery.sync="searchQuery" :selectedStatus.sync="selectedStatus" :startDate.sync="startDate"
             :endDate.sync="endDate" />
 
-        <CDataTable :items="tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
-            :pagination="false" hover class="mb-0 tables-container">
+        <CDataTable :items="loading ? [] : tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
+            :pagination="false" :loading="loading" :hover="!loading && tableData.length > 0" class="mb-0 tables-container" :class="{ 'table-empty': !loading && tableData.length === 0 }">
+
+            <template #loading>
+                <TableLoading borderless />
+            </template>
 
             <template #no-items-view>
-                <div class="empty-state-box text-center py-5">
-                    <div class="empty-state-icon mx-auto mb-3">
-                        <CIcon name="cil-description" size="xl" />
-                    </div>
-                    <h5 class="font-weight-bold text-dark mb-1">{{ $t('table.noForms') || 'ยังไม่มีแบบสอบถาม' }}</h5>
-                    <p class="text-muted small mb-0">เมื่อมีแบบสอบถามที่มอบหมายให้คุณ รายการจะแสดงขึ้นที่นี่</p>
-                </div>
+                <EmptyState
+                    borderless
+                    icon="cil-description"
+                    :title="$t('table.noForms') || 'ยังไม่มีแบบสอบถาม'"
+                    description="เมื่อมีแบบสอบถามที่มอบหมายให้คุณ รายการจะแสดงขึ้นที่นี่"
+                />
             </template>
 
             <!-- Form Name (Title & Description) Slot -->
@@ -153,8 +156,26 @@
             </template>
         </CDataTable>
 
-        <!-- Pagination -->
-        <Pagination :activePage.sync="activePage" :pages="totalPages" />
+        <!-- Table Footer: Rows per page & Pagination -->
+        <div v-if="!loading && tableData.length > 0" class="d-flex justify-content-between align-items-center flex-wrap mt-3 px-2">
+            <!-- Left: Items Per Page Selector -->
+            <div class="d-flex align-items-center text-muted small font-weight-bold my-1">
+                <span class="mr-2">{{ $t('table.showing') || 'แสดง' }}</span>
+                <select v-model.number="itemsPerPage" class="custom-per-page-select mr-2">
+                    <option :value="5">5</option>
+                    <option :value="10">10</option>
+                    <option :value="15">15</option>
+                    <option :value="20">20</option>
+                </select>
+                <span class="mr-2">{{ $t('table.itemsPerPage') || 'รายการต่อหน้า' }}</span>
+                <span class="text-secondary">({{ startItem }} - {{ endItem }} {{ $t('table.of') || 'จาก' }} {{ totalItems }} {{ $t('table.items') || 'รายการ' }})</span>
+            </div>
+
+            <!-- Right: Pagination -->
+            <div class="my-1">
+                <Pagination :activePage.sync="activePage" :pages="totalPages" align="end" noMargin />
+            </div>
+        </div>
     </div>
 </template>
 
@@ -162,19 +183,26 @@
 import { mapGetters } from 'vuex'
 import Pagination from '@/projects/components/Util/Pagination.vue'
 import FilterTable from '@/projects/components/Filter/FilterTable.vue'
+import EmptyState from '@/projects/components/Util/EmptyState.vue'
+import TableLoading from '@/projects/components/Util/TableLoading.vue'
 import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'UserTables',
-    components: { Pagination, FilterTable },
+    components: { Pagination, FilterTable, EmptyState, TableLoading },
     mixins: [localeMixin],
+    props: {
+        loading: {
+            type: Boolean,
+            default: false
+        }
+    },
     data() {
         return {
             searchQuery: '',
             selectedStatus: 'All',
             startDate: '',
             endDate: '',
-            loading: false,
             activePage: 1,
             itemsPerPage: 5
         }
@@ -203,6 +231,16 @@ export default {
 
         totalPages() {
             return Math.max(1, Math.ceil(this.tableData.length / this.itemsPerPage))
+        },
+        startItem() {
+            if (this.tableData.length === 0) return 0;
+            return (this.activePage - 1) * this.itemsPerPage + 1;
+        },
+        endItem() {
+            return Math.min(this.activePage * this.itemsPerPage, this.tableData.length);
+        },
+        totalItems() {
+            return this.tableData.length;
         },
 
         baseTableData() {
@@ -402,7 +440,9 @@ export default {
 
                 // Access Control Logic
                 const userOrgId = currentUser?.organization?._id || currentUser?.organization;
-                const formOrgIds = (Array.isArray(f.organization) ? f.organization : [f.organization]).map(o => (o?._id || o)?.toString());
+                const formOrgIds = (Array.isArray(f.organization) ? f.organization : [f.organization])
+                    .filter(Boolean)
+                    .map(o => (o?._id || o)?.toString());
                 const isPublic = isPublicForm;
                 const isMember = userOrgId && formOrgIds.includes(userOrgId.toString());
                 const isAllowedUser = f.settings && Array.isArray(f.settings.allowedUser) &&
@@ -411,8 +451,16 @@ export default {
                         return currentUser?._id && id === String(currentUser._id);
                     });
 
-                // Admins can enter all forms they view in this table
-                const canEnter = isAdmin || isPublic || isMember || isAllowedUser;
+                const userRoleId = currentUser?.role?._id || currentUser?.role;
+                const formAllowedRoles = (f.settings && Array.isArray(f.settings.allowedRoles)) ? f.settings.allowedRoles : [];
+                const hasRoleRestriction = formAllowedRoles.length > 0;
+                const isAllowedRole = !hasRoleRestriction || formAllowedRoles.some(r => {
+                    const rId = String(typeof r === 'object' ? (r._id || r.value) : r);
+                    return userRoleId && rId === String(userRoleId);
+                });
+
+                // User is a target respondent only if explicitly invited or matches organization and role
+                const canEnter = isAllowedUser || ((isPublic || isMember) && isAllowedRole);
 
                 return {
                     _id: f._id,
@@ -619,6 +667,11 @@ export default {
 
             return orgId;
         }
+    },
+    watch: {
+        itemsPerPage() {
+            this.activePage = 1;
+        }
     }
 }
 </script>
@@ -631,6 +684,41 @@ export default {
     border: 1px solid #e2e8f0;
     padding: 0;
     overflow: hidden;
+}
+
+.tables-container.table-empty tbody tr,
+.tables-container.table-empty tbody tr:hover,
+.tables-container.table-empty tbody td {
+    background: transparent !important;
+    background-color: transparent !important;
+    cursor: default !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+.tables-container.table-empty thead th {
+    cursor: default !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+.custom-per-page-select {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px !important;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.custom-per-page-select:focus,
+.custom-per-page-select:hover {
+    border-color: #8c1515;
+    box-shadow: 0 0 0 2px rgba(140, 21, 21, 0.1);
 }
 
 .empty-state-box {

@@ -1,8 +1,10 @@
 <template>
         <div class="c-main">
-        <CProgress v-if="loading" indeterminate color="primary" class="mb-3" style="height: 4px;" />
+        <div v-if="loading" class="py-4 px-3">
+            <SkeletonLoader type="form-fill" />
+        </div>
         
-        <CRow v-if="error" class="justify-content-center mt-5">
+        <CRow v-else-if="error" class="justify-content-center mt-5">
             <CCol md="6">
                 <CCallout color="danger" class="bg-white shadow-sm border-left-4">
                     <h5 class="text-danger font-weight-bold">Error</h5>
@@ -116,10 +118,11 @@ import moment from 'moment';
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue';
 import AnswerTable from '@/projects/components/tables/AnswerTable.vue';
 import ButtonBack from '@/projects/components/Button/ButtonBack.vue';
+import SkeletonLoader from '@/projects/components/Util/SkeletonLoader.vue';
 
 export default {
     name: 'ResponseDetail',
-    components: { ResponseTables, AnswerTable, ButtonBack },
+    components: { ResponseTables, AnswerTable, ButtonBack, SkeletonLoader },
     props: {
         id: { type: String, required: true }
     },
