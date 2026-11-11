@@ -56,7 +56,7 @@ npm start
 
 ```bash
 cd frontend
-npm install --legacy-peer-deps
+npm install --legacy-peer-deps --ignore-scripts
 cp .env.example .env
 npm run serve
 ```
@@ -89,7 +89,7 @@ npm run serve
 
 | อาการ | วิธีแก้ |
 | --- | --- |
-| `npm install` ใน `frontend/` ติด peer dependency error | ใช้คำสั่ง `npm install --legacy-peer-deps` |
+| `npm install` ใน `frontend/` ติด peer dependency หรือ `deasync` / `node-gyp` error | ใช้คำสั่ง `npm install --legacy-peer-deps --ignore-scripts` |
 | Backend ไม่สตาร์ตเพราะ `JWT_SECRET environment variable is required` | ตรวจสอบว่าสร้าง `backend/.env` แล้วใส่ค่า `JWT_SECRET` และ `MONGODB` |
 | อัปโหลดไฟล์แล้วรูปไม่แสดงหรือเรียก API ไม่ได้ | ตรวจว่า `VUE_APP_API_BASE_URL` และ `FRONTEND_URL` ชี้ตรงพอร์ตที่รันจริง |
 
