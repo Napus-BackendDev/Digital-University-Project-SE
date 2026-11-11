@@ -1715,3 +1715,12 @@
   - **Backend (`npm install`, `.env.example -> .env`, `npm start`):** `GET /api/v1/organization/exp` ตอบ `200 OK`; ทดสอบยิง `POST /api/v1/auth/google` แบบ unverified `{ userInfo }` ในโหมด production เริ่มต้น ถูกปฏิเสธ `HTTP 400` ถูกต้อง
   - **Frontend:** พบว่า `npm install --legacy-peer-deps` บน Windows ARM64 Node 24 ติด compile `deasync` (จาก `@vue/cli-plugin-unit-jest`), จึงปรับคำสั่งใน [`README.md`](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/README.md) เป็น `npm install --legacy-peer-deps --ignore-scripts` และทดสอบรัน `npm run serve` บน clone ใหม่ผ่าน `HTTP 200 OK` (`Compiled successfully`) พร้อมลบโฟลเดอร์ทดสอบชั่วคราวแล้ว
 - **สถานะ Git:** Force-push (`--force-with-lease`) commit [`d4ac3cea`](https://github.com/Napus-BackendDev/Digital-University-Project-SE) ขึ้น `origin/main` และตั้ง upstream tracking `main -> origin/main` แล้ว ตามด้วย commit อัปเดต [`README.md`](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/README.md)
+
+### 2026-11-11 20:49 — ลบ Branch แยกทั้งหมดเหลือเฉพาะ `main`
+
+- **คำขอผู้ใช้:** `"ลบ branches แยกทั้งหมด"`
+- **ผลที่ทำจริง:**
+  - ลบ branch บน GitHub (`origin`): `feature/ui-wizard-and-bpmn`, `copilot/switch-database-from-test-to-question`
+  - ลบ local branch: `feature/ui-wizard-and-bpmn`
+  - รัน `git fetch origin --prune` ล้าง remote-tracking refs ค้าง `14` รายการออก
+- **ผลตรวจหลังลบ:** `git ls-remote --heads origin` เหลือเฉพาะ `refs/heads/main`, local `git branch -a` เหลือเฉพาะ `* main` (`origin/main`, `gitlab/main`), `gh pr list --state open` ว่าง
