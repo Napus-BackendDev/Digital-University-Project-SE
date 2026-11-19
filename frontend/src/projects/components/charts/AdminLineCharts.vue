@@ -225,7 +225,7 @@ export default {
     background-color: #fff1f2;
     color: #9B1B30;
     border-radius: 50px;
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -240,7 +240,7 @@ export default {
 
 .range-btn {
     border-radius: 8px !important;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     transition: all 0.2s ease;
     border: none !important;

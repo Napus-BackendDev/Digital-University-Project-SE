@@ -2,29 +2,69 @@
 
 const config = require('../../../../config/email.config');
 
+const escapeHtml = (value) => String(value === undefined || value === null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 /**
  * Internal helper to generate the email header.
  */
 const renderHeader = (branding) => `
     <tr>
         <td align="center" style="padding: 32px 40px; background-color: ${branding.primaryColor}; background-image: linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.secondaryColor} 100%);">
-            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">${branding.logoText}</h1>
-            <p style="margin: 4px 0 0; color: rgba(255,255,255,0.8); font-size: 14px;">${branding.serviceName}</p>
+            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">${escapeHtml(branding.logoText)}</h1>
+            <p style="margin: 4px 0 0; color: rgba(255,255,255,0.85); font-size: 14px;">${escapeHtml(branding.serviceName)}</p>
         </td>
     </tr>
 `;
 
 /**
+ * Renders an optional inquiry contact banner above the footer when a form specifies
+ * a responsible organization or coordinator email.
+ */
+const renderContactStrip = ({ contactOrganization, contactEmail }) => {
+    const org = String(contactOrganization || '').trim();
+    const email = String(contactEmail || '').trim();
+    if (!org && !email) return '';
+
+    const safeOrg = escapeHtml(org);
+    const safeEmail = escapeHtml(email);
+    const emailLink = safeEmail
+        ? `<a href="mailto:${safeEmail}" style="color: #8c1515; font-weight: 600; text-decoration: none;">${safeEmail}</a>`
+        : '';
+
+    const details = safeOrg && emailLink
+        ? `${safeOrg} &middot; ${emailLink}`
+        : (safeOrg || emailLink);
+
+    return `
+    <tr>
+        <td style="padding: 18px 40px; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #8c1515;">
+                Form Contact / Coordinator
+            </p>
+            <p style="margin: 0; font-size: 13px; color: #334155;">
+                ${details}
+            </p>
+        </td>
+    </tr>
+    `;
+};
+
+/**
  * Internal helper to generate the email footer.
  */
-const renderFooter = (branding) => `
+const renderFooter = (branding, hasContactStrip = false) => `
     <tr>
-        <td style="padding: 30px 40px; background-color: #fafbfc; border-top: 1px solid #f0f2f5; text-align: center;">
+        <td style="padding: 26px 40px; background-color: #fafbfc; border-top: 1px solid #f0f2f5; text-align: center;">
             <p style="margin: 0; color: ${branding.mutedTextColor}; font-size: 12px;">
-                <strong>${branding.logoText} Form Service</strong><br>
-                ${branding.footerText}
+                <strong>${escapeHtml(branding.logoText)} Form Service</strong><br>
+                ${escapeHtml(hasContactStrip ? 'Mae Fah Luang University' : branding.footerText)}
             </p>
-            <div style="margin-top: 15px;">
+            <div style="margin-top: 12px;">
                 <a href="${branding.privacyUrl}" style="color: ${branding.mutedTextColor}; font-size: 11px; margin: 0 5px;">Privacy Policy</a> | 
                 <a href="${branding.supportUrl}" style="color: ${branding.mutedTextColor}; font-size: 11px; margin: 0 5px;">Contact Support</a>
             </div>
@@ -36,9 +76,17 @@ const renderFooter = (branding) => `
  * Wraps content in a professional, responsive, and robust HTML email layout.
  */
 exports.wrapInLayout = function (content, options = {}) {
-    const branding = { ...config.branding, ...options.branding };
-    const title = options.title || `${branding.logoText} Notification`;
-    const preheader = options.preheader || '';
+    const branding = {
+        ...config.branding,
+        ...(options.branding || {}),
+        ...(options.appName ? { logoText: options.appName } : {})
+    };
+    const title = escapeHtml(options.title || `${branding.logoText} Notification`);
+    const preheader = escapeHtml(options.preheader || '');
+    const contactStrip = renderContactStrip({
+        contactOrganization: options.contactOrganization,
+        contactEmail: options.contactEmail
+    });
 
     return `
 <!DOCTYPE html>
@@ -46,7 +94,7 @@ exports.wrapInLayout = function (content, options = {}) {
 <head>
     <meta charset="utf-8">
     <meta name="x-apple-disable-message-reformatting">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta http-equiv="x-apple-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
     <title>${title}</title>
@@ -102,7 +150,8 @@ exports.wrapInLayout = function (content, options = {}) {
                             </td>
                         </tr>
 
-                        ${renderFooter(branding)}
+                        ${contactStrip}
+                        ${renderFooter(branding, Boolean(contactStrip))}
                     </table>
                     <!--[if mso]>
                     </td>

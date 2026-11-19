@@ -1,30 +1,12 @@
-const crypto = require('crypto');
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const UserModel = require('../User/models/user.model');
+const { isDeveloperEnv, getJwtSecret } = require('../Response/utils/responsePolicy');
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const JWT_EXPIRES_IN = '7d';
-let devEphemeralJwtSecret = null;
-
-function isDeveloperEnv() {
-  return (process.env.APP_ENV || 'production').toLowerCase() === 'developer';
-}
-
-function getJwtSecret() {
-  if (process.env.JWT_SECRET) {
-    return process.env.JWT_SECRET;
-  }
-  if (isDeveloperEnv()) {
-    if (!devEphemeralJwtSecret) {
-      devEphemeralJwtSecret = crypto.randomBytes(32).toString('hex');
-    }
-    return devEphemeralJwtSecret;
-  }
-  throw new Error('JWT_SECRET environment variable is required when APP_ENV is not developer');
-}
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID || undefined);
 
@@ -88,8 +70,9 @@ router.post('/google', async (req, res) => {
     const name = payload.name || `${payload.given_name || ''} ${payload.family_name || ''}`.trim() || email;
 
     // Find or link with existing MongoDB User record
+    const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     let dbUser = await UserModel.findOne({
-      email: { $regex: new RegExp(`^${email}$`, 'i') }
+      email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') }
     });
 
     if (!dbUser) {
@@ -104,9 +87,22 @@ router.post('/google', async (req, res) => {
         picture: payload.picture || null,
         role: defaultRole
       });
-    } else if (payload.picture && dbUser.picture !== payload.picture) {
-      dbUser.picture = payload.picture;
-      await dbUser.save();
+    } else {
+      let dirty = false;
+      if (payload.picture && dbUser.picture !== payload.picture) {
+        dbUser.picture = payload.picture;
+        dirty = true;
+      }
+      const emailPrefix = dbUser.email ? dbUser.email.split('@')[0] : '';
+      if (!dbUser.name || dbUser.name === dbUser.email || dbUser.name === emailPrefix) {
+        if (name && dbUser.name !== name) {
+          dbUser.name = name;
+          dirty = true;
+        }
+      }
+      if (dirty) {
+        await dbUser.save();
+      }
     }
 
     // Create a session JWT

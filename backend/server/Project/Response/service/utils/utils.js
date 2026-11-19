@@ -5,19 +5,39 @@ const { getUploadUrl } = require('../../../../../helpers/upload');
 const fs = require('fs');
 const path = require('path');
 
-const cleanUpOrphanedFile = function (fileUrl) {
-    if (!fileUrl || typeof fileUrl !== 'string' || !fileUrl.includes('/uploads/')) return;
-    try {
-        // Strip leading slash if present safely
-        const relativeUrl = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
-        const filePath = path.join(__dirname, '../../../../../public', relativeUrl);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-
+const extractUploadUrls = function (value) {
+    if (!value) return [];
+    let items = value;
+    if (typeof items === 'string') {
+        const trimmed = items.trim();
+        if (trimmed.startsWith('[')) {
+            try {
+                items = JSON.parse(trimmed);
+            } catch (e) {
+                items = [items];
+            }
+        } else {
+            items = [items];
         }
-    } catch (e) {
-        console.error(`[Auto-Cleanup] Failed to delete file ${fileUrl}:`, e.message);
     }
+    if (!Array.isArray(items)) return [];
+    return items.filter((u) => typeof u === 'string' && u.includes('/uploads/'));
+};
+
+const cleanUpOrphanedFile = function (fileUrl) {
+    const urls = extractUploadUrls(fileUrl);
+    urls.forEach((url) => {
+        try {
+            // Strip leading slash if present safely
+            const relativeUrl = url.startsWith('/') ? url.slice(1) : url;
+            const filePath = path.join(__dirname, '../../../../../public', relativeUrl);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        } catch (e) {
+            console.error(`[Auto-Cleanup] Failed to delete file ${url}:`, e.message);
+        }
+    });
 };
 
 const attachFilesToAnswers = function (answers, files, body) {
@@ -90,5 +110,6 @@ const attachFilesToAnswers = function (answers, files, body) {
 
 module.exports = {
     attachFilesToAnswers,
-    cleanUpOrphanedFile
+    cleanUpOrphanedFile,
+    extractUploadUrls
 };

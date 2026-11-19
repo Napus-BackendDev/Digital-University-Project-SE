@@ -1,7 +1,7 @@
 <template>
     <div class="responses-container">
         <!-- Toolbar -->
-        <div class="d-flex justify-content-between align-items-center mb-4 px-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 px-2 px-md-3" style="gap: 12px;">
             <div>
                 <h2 class="section-title mb-1">{{ $t('responses.title') }}</h2>
                 <div class="response-count-badge">
@@ -38,9 +38,9 @@
                         <CIcon name="cil-spreadsheet" size="sm" class="mr-2 text-success" />
                         {{ $t('responses.excel') }}
                     </CDropdownItem>
-                    <CDropdownItem @click="downloadJson" class="dropdown-item-modern">
-                        <CIcon name="cil-code" size="sm" class="mr-2 text-primary" />
-                        {{ $t('responses.json') }}
+                    <CDropdownItem @click="copyApiUrl" class="dropdown-item-modern">
+                        <CIcon :name="apiCopied ? 'cil-check-alt' : 'cil-copy'" size="sm" class="mr-2 text-primary" />
+                        {{ apiCopied ? $t('responses.apiCopied') : $t('responses.copyApi') }}
                     </CDropdownItem>
                 </CDropdown>
             </div>
@@ -66,7 +66,7 @@
                                 <span>{{ qIdx + 1 }}</span>
                             </div>
                             <div>
-                                <h3 class="q-title-display mb-1">{{ getTitle(q.title) }}</h3>
+                                <h3 class="q-title-display mb-1">{{ getLang(q.title) || `Question ${qIdx + 1}` }}</h3>
                                 <div class="q-type-badge" :class="'type-' + q.type">
                                     <CIcon :name="getTypeIcon(q.type)" size="sm" class="mr-1" />
                                     {{ formatTypeLabel(q.type) }}
@@ -182,8 +182,8 @@
 
         <!-- INDIVIDUAL VIEW -->
         <div v-else-if="currentView === 'individual'" class="individual-responses-wrapper">
-            <div class="question-response-card p-4 p-md-5">
-                <div class="d-flex align-items-center mb-4 pb-4 border-bottom-soft px-2">
+            <div class="question-response-card p-3 p-md-5">
+                <div class="d-flex align-items-center mb-3 mb-md-4 pb-3 pb-md-4 border-bottom-soft px-1 px-md-2">
                     <div class="q-index-circle mr-3">
                         <CIcon name="cil-list" size="sm" />
                     </div>
@@ -191,7 +191,7 @@
                         $t('responses.individual')
                     }}</h3>
                 </div>
-                <ResponseTables :responseList="allSubmittedResponses" />
+                <ResponseTables :responseList="allSubmittedResponses" :totalQuestions="totalInputQuestions" />
             </div>
         </div>
     </div>
@@ -200,14 +200,19 @@
 <script>
 import { mapGetters } from 'vuex'
 import moment from 'moment'
+import { buildApiUrl, copyText } from '@/projects/utils/apiUrl'
 import * as XLSX from 'xlsx'
 import { CChartBar } from '@coreui/vue-chartjs'
 import ResponseTables from '@/projects/components/tables/ResponseTables.vue'
 import Pagination from '@/projects/components/Util/Pagination.vue'
 import EmptyState from '@/projects/components/Util/EmptyState.vue'
+import { formatExportAnswerValue, applySheetHyperlinks } from '@/projects/utils/exportFileUrl'
+import { countInputQuestions, isFreeTextQuestionType } from '@/projects/utils/formPolicy'
+import localeMixin from '@/mixins/localeMixin'
 
 export default {
     name: 'TabResponses',
+    mixins: [localeMixin],
     components: { ResponseTables, CChartBar, Pagination, EmptyState },
     props: {
         responses: {
@@ -226,6 +231,8 @@ export default {
             loading: false,
             error: null,
             copied: false,
+            apiCopied: false,
+            apiCopyTimer: null,
         }
     },
     created() {
@@ -280,8 +287,7 @@ export default {
             if (t.includes('choice')) return 'cil-circle';
             if (t.includes('check')) return 'cil-square';
             if (t.includes('rating')) return 'cil-star';
-            if (t.includes('short')) return 'cil-minus';
-            if (t.includes('para')) return 'cil-align-left';
+            if (isFreeTextQuestionType(t)) return 'cil-align-left';
             if (t.includes('file')) return 'cil-cloud-upload';
             if (t.includes('image')) return 'cil-image1';
             if (t.includes('title') || t.includes('desc')) return 'cil-text';
@@ -289,6 +295,7 @@ export default {
         },
         formatTypeLabel(rawType) {
             if (!rawType) return '';
+            if (isFreeTextQuestionType(rawType)) return 'Free Text';
             return rawType
                 .split(/[_\s]+/)
                 .map(seg => seg ? seg.charAt(0).toUpperCase() + seg.slice(1) : '')
@@ -305,9 +312,7 @@ export default {
             let deptQuestionIdx = -1;
 
             firstAnswers.forEach((a, i) => {
-                const title = a.question && Array.isArray(a.question.title) && a.question.title.length
-                    ? this.getTitle(a.question.title).toLowerCase()
-                    : '';
+                const title = this.getLang(a.question && a.question.title).toLowerCase();
                 if (title === 'department' || title.includes('แผนก') || title.includes('ฝ่าย') || title.includes('สังกัด')) {
                     deptQuestionIdx = i;
                 }
@@ -318,16 +323,14 @@ export default {
             const questionHeaders = [];
             firstAnswers.forEach((a, i) => {
                 if (i === deptQuestionIdx) return; // Skip because it's promoted to the 3rd column
-                const title = a.question && Array.isArray(a.question.title) && a.question.title.length
-                    ? this.getTitle(a.question.title)
-                    : `Question ${i + 1}`;
+                const title = this.getLang(a.question && a.question.title) || `Question ${i + 1}`;
                 questionHeaders.push(title);
             });
             headers.push(...questionHeaders);
 
             // 3. Prepare Rows
             const rows = this.allSubmittedResponses.map(r => {
-                let responderName = '-';
+                let responderName = 'Anonymous';
                 let responderEmail = '-';
                 let departmentValue = '-';
 
@@ -336,11 +339,11 @@ export default {
                     if (typeof org === 'string') {
                         // Try to find the organization in the store by ID
                         const found = this.allOrganizations.find(o => (o._id && o._id.toString() === org) || (o.id && o.id.toString() === org));
-                        if (found) return this.getTitle(found.title) || found.name || org;
+                        if (found) return this.getLang(found.title) || found.name || org;
                         return org;
                     }
                     if (Array.isArray(org.title)) {
-                        return this.getTitle(org.title) || '-';
+                        return this.getLang(org.title) || '-';
                     }
                     return org.name || org.title || org.organizationName || '-';
                 };
@@ -374,7 +377,7 @@ export default {
 
                             let opt = opts.find(o => o && (String(o.key) === String(c) || String(o._id) === String(c) || String(o.value) === String(c)));
                             if (!opt && !isNaN(c) && opts[Number(c)]) opt = opts[Number(c)];
-                            if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
+                            if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getLang(opt.lang) : (opt.label ? this.getLang(opt.label) : (opt.value || c));
                             return c;
                         }).join(', ');
                     } else {
@@ -434,124 +437,53 @@ export default {
                             ));
                             if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
 
-                            if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getTitle(opt.lang) : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
+                            if (opt) return (opt.lang && Array.isArray(opt.lang)) ? this.getLang(opt.lang) : (opt.label ? this.getLang(opt.label) : (opt.value || c));
                             return c;
                         });
                         val = labels.join(', ');
                     } else {
-                        val = Array.isArray(val) ? val.join(', ') : (val === null || val === undefined ? '' : String(val));
+                        val = formatExportAnswerValue(val);
                     }
                     row.push(val);
                 });
                 return row;
             });
 
-            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            const worksheet = applySheetHyperlinks(XLSX.utils.aoa_to_sheet([headers, ...rows]));
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Responses");
 
-            // Set column widths (optional but nice)
-            const wscols = headers.map(h => ({ wch: Math.max(h.length, 15) }));
+            // Set column widths (auto-fit up to 80 chars so full file URLs are readable)
+            const wscols = headers.map((h, colIdx) => ({
+                wch: Math.min(80, Math.max(h.length, ...rows.map(r => String(r[colIdx] || '').length), 15))
+            }));
             worksheet['!cols'] = wscols;
 
             // Generate filename: [Form Title]_[Timestamp].xlsx
-            const formTitle = this.getTitle(this.responses.title) || 'responses';
+            const formTitle = this.getLang(this.responses.title) || 'responses';
             const timestamp = moment().format('YYYY-MM-DD');
             const filename = `${formTitle}(${timestamp}).xlsx`;
 
             XLSX.writeFile(workbook, filename);
         },
 
-        // ── Download JSON ─────────────────────────────────────────────────
-        downloadJson() {
-            if (!this.allSubmittedResponses.length) {
-                alert(this.$t('responses.noExportData'));
-                return;
-            }
-
-            const formTitle = this.getTitle(this.responses.title) || 'responses';
-            const formDescription = this.getTitle(this.responses.description) || '';
-            const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
-
-            // Wrap in a metadata object for better context
-            const exportData = {
-                formTitle: formTitle,
-                description: formDescription,
-                exportedAt: timestamp,
-                totalResponses: this.allSubmittedResponses.length,
-                responses: this.allSubmittedResponses.map(r => {
-                    const responseObj = {
-                        responder: r.responder?.name || r.responderName || 'Anonymous',
-                        email: r.responder?.email || '',
-                        submittedAt: this.formatDate(r.createdAt),
-                        answers: {}
-                    };
-
-                    (r.answers || []).forEach((a, i) => {
-                        const questionTitle = a.question && Array.isArray(a.question.title)
-                            ? this.getTitle(a.question.title)
-                            : `Question ${i + 1}`;
-
-                        let val = a.response;
-                        const qType = a.question && a.question.type
-                            ? (a.question.type.type || a.question.type).toString().toLowerCase()
-                            : '';
-
-                        // Robust choice label resolution
-                        if (this.isChoiceType(qType) && a.question) {
-                            const options = (a.question.config && Array.isArray(a.question.config.choices))
-                                ? a.question.config.choices
-                                : (a.question.options || []);
-
-                            const choices = Array.isArray(val) ? val : (val !== null && val !== undefined ? [val] : []);
-                            const labels = choices.map(c => {
-                                // Try to find the option by key, id, or value
-                                let opt = options.find(o => o && (o.key === String(c) || (o._id && o._id.toString() === String(c)) || (o.value === String(c))));
-                                if (!opt && !isNaN(c) && options[Number(c)]) opt = options[Number(c)];
-
-                                if (opt) {
-                                    return (opt.lang && Array.isArray(opt.lang))
-                                        ? this.getTitle(opt.lang)
-                                        : (opt.label ? this.getTitle(opt.label) : (opt.value || c));
-                                }
-                                return c;
-                            });
-                            val = labels.length ? labels.join(', ') : (val || '');
-                        } else {
-                            val = Array.isArray(val) ? val.join(', ') : (val === null || val === undefined ? '' : val);
-                        }
-
-                        responseObj.answers[questionTitle] = val;
-                    });
-
-                    return responseObj;
-                })
-            };
-
-            const filename = `${formTitle}(${moment().format('YYYY-MM-DD')}).json`;
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", filename);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+        // ── Copy API URL ──────────────────────────────────────────────────
+        copyApiUrl() {
+            const formId = (this.responses && this.responses._id) || (this.$route && (this.$route.params._id || this.$route.params.id));
+            if (!formId) return;
+            copyText(buildApiUrl(`response/export/${formId}`)).then(() => {
+                this.apiCopied = true;
+                clearTimeout(this.apiCopyTimer);
+                this.apiCopyTimer = setTimeout(() => { this.apiCopied = false; }, 2000);
+            });
         },
-
-
 
         formatDate(dateStr) {
             return dateStr ? moment(dateStr).format('DD/MM/YYYY, HH:mm:ss') : '-';
         },
 
-        getTitle(arr) {
-            if (!arr || !arr.length) return '';
-            const lang = (navigator.language || 'en').substring(0, 2).toUpperCase();
-            return (arr.find(t => t.key && t.key.toUpperCase() === lang) || arr[0]).value || '';
-        },
-
         isTextType(type) {
-            return ['short', 'short_answer', 'paragraph', 'text'].includes((type || '').toLowerCase());
+            return isFreeTextQuestionType(type);
         },
         isChoiceType(type) {
             return ['multiple_choice', 'multiplechoice', 'checkboxes', 'checkbox', 'dropdown', 'select'].includes((type || '').toLowerCase());
@@ -598,6 +530,11 @@ export default {
         ...mapGetters({
             allOrganizations: 'Organizations/organizations'
         }),
+        totalInputQuestions() {
+            const questions = (this.responses && (this.responses.questions || this.responses.items)) || [];
+            return countInputQuestions(questions);
+        },
+
         allSubmittedResponses() {
             const list = (this.responses && this.responses.responses) || [];
             const unique = [];
@@ -758,8 +695,8 @@ export default {
                             if (opt) {
                                 // Extract title using multilingual lang array or label field
                                 label = (opt.lang && Array.isArray(opt.lang))
-                                    ? this.getTitle(opt.lang)
-                                    : (opt.label ? this.getTitle(opt.label) : (opt.value || respKey));
+                                    ? this.getLang(opt.lang)
+                                    : (opt.label ? this.getLang(opt.label) : (opt.value || respKey));
                             }
                         }
 
@@ -1206,7 +1143,7 @@ export default {
     align-items: center;
     padding: 4px 12px;
     border-radius: 12px;
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1233,7 +1170,7 @@ export default {
 
 .q-stat-pill .label {
     color: #64748b;
-    font-size: 0.7rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     text-transform: uppercase;
 }
@@ -1261,7 +1198,7 @@ export default {
 }
 
 .item-index {
-    color: #94a3b8;
+    color: #64748b;
     font-weight: 700;
     font-size: 0.85rem;
     min-width: 24px;
@@ -1296,7 +1233,7 @@ export default {
     font-weight: 700;
     padding: 2px 8px;
     border-radius: 12px;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
 }
 
 .choice-count {
@@ -1393,6 +1330,13 @@ export default {
 
     .divider-vertical {
         display: none;
+    }
+
+    .custom-export-dropdown,
+    ::v-deep .custom-export-dropdown .dropdown-toggle,
+    ::v-deep .btn-export-main {
+        width: 100%;
+        justify-content: center;
     }
 }
 </style>

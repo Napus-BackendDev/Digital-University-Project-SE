@@ -1,6 +1,6 @@
 <template>
     <CCard class="permission-card border-0 mb-4">
-        <CCardBody class="p-4">
+        <CCardBody class="p-3 p-md-4">
             <div class="security-table-card__header mb-3">
                 <div class="d-flex align-items-center">
                     <div class="header-icon-box mr-3">
@@ -8,7 +8,7 @@
                     </div>
                     <div>
                         <h5 class="font-weight-bold text-dark mb-0">{{ ($te && $te('security.rolePermissions')) ? $t('security.rolePermissions') : 'Role Permissions Matrix' }}</h5>
-                        <div class="text-muted small">Configure read, write, update, and delete access per role</div>
+                        <div class="text-muted small">{{ ($te && $te('security.rolePermissionsDesc')) ? $t('security.rolePermissionsDesc') : 'Configure create, read, update, and delete permissions per role.' }}</div>
                     </div>
                 </div>
 
@@ -35,8 +35,8 @@
                         <EmptyState
                             borderless
                             icon="cil-shield-alt"
-                            title="ยังไม่มีข้อมูลบทบาทและสิทธิ์"
-                            description="ตารางสิทธิ์จะแสดงขึ้นเมื่อมีการกำหนดบทบาทผู้ใช้งานในระบบ"
+                            :title="($te && $te('security.noRolesTitle')) ? $t('security.noRolesTitle') : 'ยังไม่มีข้อมูลบทบาทและสิทธิ์'"
+                            :description="($te && $te('security.noRolesDesc')) ? $t('security.noRolesDesc') : 'ตารางสิทธิ์จะแสดงขึ้นเมื่อมีการกำหนดบทบาทผู้ใช้งานในระบบ'"
                         />
                     </template>
 
@@ -171,7 +171,7 @@ export default {
 .role-pill-btn {
     border: none;
     background: transparent;
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     color: #64748b;
     border-radius: 8px;
@@ -194,7 +194,7 @@ export default {
     display: inline-flex;
     padding: 0.3em 0.85em;
     border-radius: 6px;
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     background: #f1f5f9;
     color: #475569;
@@ -215,7 +215,7 @@ export default {
     height: 60px;
     border-radius: 16px;
     background: #f1f5f9;
-    color: #94a3b8;
+    color: #64748b;
     display: flex;
     align-items: center;
     justify-content: center;

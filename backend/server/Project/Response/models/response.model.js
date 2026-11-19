@@ -9,7 +9,8 @@ require("../../User/models/user.model");
 
 var objSchema = new Schema(
   {
-    responder: { type: Schema.Types.ObjectId, ref: "Users", required: true },
+    responder: { type: Schema.Types.ObjectId, ref: "Users", required: false, default: null },
+    guestSessionId: { type: String, default: null, index: true },
     form: { type: Schema.Types.ObjectId, ref: "Forms", required: true, index: true },
     answers: [
       {
@@ -31,8 +32,10 @@ objSchema.post("save", async function (doc, next) {
     // Update Form's responses array
     await Form.findByIdAndUpdate(doc.form, { $push: { responses: doc._id } });
 
-    // Update User's response array
-    await User.findByIdAndUpdate(doc.responder, { $push: { response: doc._id } });
+    // Update User's response array when response belongs to a signed-in user
+    if (doc.responder) {
+      await User.findByIdAndUpdate(doc.responder, { $push: { response: doc._id } });
+    }
 
     next();
   } catch (err) {

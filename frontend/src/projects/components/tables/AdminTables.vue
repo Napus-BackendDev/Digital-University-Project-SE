@@ -12,9 +12,9 @@
             :pagination="false" hover class="mb-0 tables-container">
             <!-- Form Title Slot -->
             <template #form="{ item }">
-                <td class="py-3 pl-3">
-                    <div class="font-weight-bold text-dark">{{ item.title }}</div>
-                    <div class="small text-muted" v-if="item.description">{{ item.description }}</div>
+                <td class="py-3 pl-3" style="max-width: 280px;">
+                    <div class="font-weight-bold text-dark line-clamp-2" :title="item.title">{{ item.title }}</div>
+                    <div class="small text-muted line-clamp-2" v-if="item.description" :title="item.description">{{ item.description }}</div>
                 </td>
             </template>
 
@@ -115,8 +115,8 @@ export default {
                     const statusKey = getFormStatusKey(form);
                     const schedule = form.schedule || (form.settings && form.settings.schedule);
 
-                    // Hide true draft forms from analytics table.
-                    if (statusKey === 'pending' && (!schedule || (!schedule.startAt && !schedule.endAt))) {
+                    // Hide true draft forms (or explicitly unpublished drafts) from analytics table.
+                    if (statusKey === 'pending' && (!schedule || schedule.isPublished === false || (!schedule.startAt && !schedule.endAt))) {
                         return false;
                     }
 
@@ -229,7 +229,7 @@ export default {
 }
 
 .text-muted {
-    color: #94a3b8 !important;
+    color: #64748b !important;
 }
 
 .status-badge {
@@ -279,19 +279,19 @@ export default {
     display: inline-flex;
     padding: 0.25em 0.8em;
     border-radius: 6px;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     white-space: nowrap;
 }
 
 .visi-public {
     background-color: #ecfdf5;
-    color: #059669;
+    color: #065f46;
 }
 
 .visi-private {
     background-color: #fff1f2;
-    color: #e11d48;
+    color: #be123c;
 }
 
 .visi-org {

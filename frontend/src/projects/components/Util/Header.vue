@@ -1,22 +1,23 @@
 <template>
     <CCard class="header-card mb-4">
-        <CCardBody class="p-4">
-            <div class="d-flex align-items-center">
+        <div class="header-bg-decor" aria-hidden="true"></div>
+        <CCardBody class="p-3 p-md-4">
+            <div class="d-flex flex-column flex-md-row flex-md-wrap align-items-start align-items-md-center header-main-row">
                 <!-- Decorative icon moved to front -->
-                <div class="header-icon-box mr-3 d-none d-sm-flex">
+                <div class="header-icon-box mr-3 d-none d-md-flex flex-shrink-0">
                     <CIcon name="cil-layers" size="xl" />
                 </div>
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center mb-1">
-                        <h1 class="header-title mb-0 mr-3">{{ title }}</h1>
+                <div class="flex-grow-1 w-100 header-title-block">
+                    <div class="d-flex flex-wrap align-items-center mb-1">
+                        <h1 class="header-title mb-0 mr-2 mr-md-3">{{ title }}</h1>
                         <transition name="fade" mode="out-in">
                             <div v-if="isSaving" key="saving" class="saving-indicator d-flex align-items-center">
                                 <CSpinner size="sm" color="primary" class="mr-2" style="width: 1rem; height: 1rem;" />
-                                <span class="text-primary font-weight-bold small">Saving...</span>
+                                <span class="text-primary font-weight-bold small">{{ ($te && $te('header.saving')) ? $t('header.saving') : 'Saving...' }}</span>
                             </div>
                             <div v-else-if="isSaved" key="saved" class="saved-indicator d-flex align-items-center">
                                 <CIcon name="cil-check-circle" size="sm" class="mr-2 text-success" />
-                                <span class="text-success font-weight-bold small">All changes saved</span>
+                                <span class="text-success font-weight-bold small">{{ ($te && $te('header.allSaved')) ? $t('header.allSaved') : 'All changes saved' }}</span>
                             </div>
                         </transition>
                     </div>
@@ -24,15 +25,15 @@
                 </div>
                 
                 <!-- Actions Slot for Custom Buttons -->
-                <div class="header-actions ml-auto d-flex align-items-center">
+                <div v-if="$slots.actions || showCreateButton" class="header-actions ml-md-auto mt-3 mt-md-0 d-flex flex-wrap align-items-center">
                     <slot name="actions"></slot>
                     
                     <!-- Explicit Create Button for Management -->
-                    <div v-if="showCreateButton" class="ml-3">
+                    <div v-if="showCreateButton" :class="{ 'ml-md-3': $slots.actions, 'w-100 w-md-auto': !$slots.actions }">
                         <CButton 
                             color="primary" 
                             size="lg"
-                            class="d-flex align-items-center shadow-sm px-4 py-2"
+                            class="d-flex align-items-center justify-content-center shadow-sm px-4 py-2 header-create-btn"
                             style="border-radius: 12px; font-weight: 600; transition: all 0.2s ease;"
                             @click="createNewForm"
                             :disabled="isCreating"
@@ -86,23 +87,32 @@ export default {
             try {
                 const newFormData = {
                     title: [{ key: 'en', value: 'Untitled Form' }],
-                    description: [{ key: 'en', value: 'Description' }],
+                    description: [],
                     questions: [],
                     responses: [],
                     creator: this.user?._id,
                     organization: [],
                     collaborator: [],
+                    schedule: {
+                        isPublished: false,
+                        mode: 'always',
+                        startAt: null,
+                        endAt: null
+                    },
                     settings: {
                         startDateTime: '',
                         endDateTime: '',
                         collectEmail: false,
                         limitResponse: false,
+                        allowEditAfterSubmit: false,
+                        maxResponses: null,
                         emailNotifications: false,
-                        requireResponse: false,
+                        emailMessage: '',
+                        notifyCreator: false,
                         confirmMessage: 'Thank you for completing this survey. Your response has been recorded.',
-                        showAnotherResponseLink: true,
                         requireLogin: false,
                         allowedUser: [],
+                        allowedEmails: [],
                         allowedRoles: []
                     }
                 }
@@ -134,9 +144,10 @@ export default {
     border: 1px solid #e2e8f0;
     border-radius: 20px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
+    overflow: visible;
     position: relative;
-    border-left: 5px solid #8c1515;
+    z-index: 30;
+    border: 1px solid #e2e8f0;
 }
 
 .header-title {
@@ -179,7 +190,7 @@ export default {
     background: transparent;
     padding: 6px 14px;
     border-radius: 50px;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     color: #64748b;
     display: flex;
@@ -221,8 +232,65 @@ export default {
   opacity: 0;
 }
 
-/* Subtle background decoration */
-.header-card::after {
+.header-title-block {
+    min-width: 0;
+}
+
+.header-main-row {
+    gap: 12px 16px;
+}
+
+.header-actions {
+    position: relative;
+    z-index: 20;
+    flex: 0 1 auto;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+.header-create-btn {
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .header-title-block {
+        flex: 1 1 320px;
+        width: auto !important;
+        min-width: 260px;
+    }
+
+    .header-actions {
+        width: auto;
+    }
+
+    .header-create-btn {
+        width: auto;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .header-title {
+        font-size: 1.35rem;
+        line-height: 1.25;
+    }
+
+    .text-muted-custom {
+        font-size: 0.875rem;
+    }
+}
+
+/* Subtle background decoration clipped cleanly without blocking dropdowns */
+.header-bg-decor {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.header-bg-decor::after {
     content: "";
     position: absolute;
     top: -20px;
@@ -231,6 +299,5 @@ export default {
     height: 100px;
     background: rgba(60, 75, 100, 0.03);
     border-radius: 50%;
-    z-index: 0;
 }
 </style>

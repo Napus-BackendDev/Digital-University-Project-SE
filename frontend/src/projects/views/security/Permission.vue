@@ -1,7 +1,7 @@
 <template>
     <div class="security-page">
-        <Header :title="$t('security.title') || 'Permissions'"
-            :description="$t('security.description') || 'Review group-to-menu rules, tune access switches, and keep the permission grid controlled.'" />
+        <Header :title="($te && $te('security.title')) ? $t('security.title') : 'Permissions'"
+            :description="($te && $te('security.description')) ? $t('security.description') : 'Configure menu access permissions and manage user roles across the system.'" />
         <CRow>
             <CCol col="12">
                 <PermissionTable :items="filteredPermissionRows" :fields="fields"

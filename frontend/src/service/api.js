@@ -13,6 +13,38 @@ instance.defaults.headers = {
 
 instance.defaults.withCredentials = true;
 
+let unauthorizedHandler = null;
+let isHandlingUnauthorized = false;
+
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = typeof handler === 'function' ? handler : null;
+}
+
+instance.interceptors.response.use(
+  response => response,
+  error => {
+    const status = error && error.response && error.response.status;
+    const requestUrl = String((error && error.config && error.config.url) || '');
+    const isAuthRequest =
+      requestUrl.includes('auth/me') ||
+      requestUrl.includes('auth/logout') ||
+      requestUrl.includes('auth/google');
+
+    if (status === 401 && !isAuthRequest && unauthorizedHandler && !isHandlingUnauthorized) {
+      isHandlingUnauthorized = true;
+      try {
+        unauthorizedHandler(error);
+      } finally {
+        setTimeout(() => {
+          isHandlingUnauthorized = false;
+        }, 800);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 
 export default {
 
@@ -71,10 +103,18 @@ export default {
       case 'delete':
         return instance.delete('response', { data, ...configs })
 
-      case 'download-user-json':
-        return instance.get(`response/download/${data.formId}/response/${data.responseId}`)
+      case 'export':
       case 'download-form-json':
-        return instance.get(`response/download/${data.formId}`)
+        return instance.get(`response/export/${data.formId}`)
+      default:
+        break
+    }
+  },
+
+  analytics(method, data, configs) {
+    switch (method) {
+      case 'export':
+        return instance.get('analytics/export', { params: data, ...configs })
       default:
         break
     }
@@ -143,15 +183,27 @@ export default {
       case 'collaborator-delete':
         return instance.delete('settings/collaborator', { data })
 
-      // EmailTemplate settings
+      // EmailTemplate & SMTP settings
+      case 'email-branding-get':
+        return instance.get('settings/emailBranding')
       case 'email-template-get':
         return instance.get('settings/emailTemplate', { params: data })
       case 'email-template-create':
         return instance.post('settings/emailTemplate', data)
+      case 'email-template-test':
+        return instance.post('settings/emailTemplate/test', data)
       case 'email-template-update':
         return instance.put('settings/emailTemplate', data)
       case 'email-template-delete':
         return instance.delete('settings/emailTemplate', { data })
+      case 'smtp-get':
+        return instance.get('settings/smtp', { params: data })
+      case 'smtp-update':
+        return instance.put('settings/smtp', data)
+      case 'smtp-reset':
+        return instance.delete('settings/smtp', { data })
+      case 'smtp-test':
+        return instance.post('settings/smtp/test', data)
 
       default:
         break

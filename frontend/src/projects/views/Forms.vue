@@ -1,6 +1,20 @@
 <template>
     <div class="flex-grow-1">
-        <Header :title="$t('nav.forms')" :description="$t('table.header')" />
+        <Header :title="$t('hero.formsTitle')" :description="$t('hero.formsDesc')" />
+
+        <CAlert
+            v-if="showDeniedNotice"
+            :show="showDeniedNotice"
+            color="warning"
+            closeButton
+            class="d-flex align-items-center shadow-sm mx-3 mb-3 p-3 text-dark"
+            style="border-radius: 12px; font-weight: 500;"
+            @update:show="onDismissDeniedNotice"
+        >
+            <CIcon name="cil-warning" class="mr-2 flex-shrink-0 text-warning" size="lg" />
+            <span class="flex-grow-1">{{ $t('forms.manageDeniedNotice') }}</span>
+        </CAlert>
+
         <WidgetsDropdownUser :stats="stats" @filter="(status) => $refs.table.filterStatus(status)" />
         
         <FormTables ref="table" :loading="loading" @update-stats="updateStats" />
@@ -23,16 +37,25 @@ export default {
     data() {
         return {
             loading: false,
-            stats: { total: 0, pending: 0, completed: 0, inProgress: 0 }
+            stats: { total: 0, pending: 0, completed: 0, inProgress: 0 },
+            showDeniedNotice: false
         }
     },
     async created() {
+        if (this.$route && this.$route.query && (this.$route.query.denied === 'manage' || this.$route.query.denied)) {
+            this.showDeniedNotice = true;
+        }
         // If user is already loaded, fetch forms immediately
         if (this.user && this.user._id) {
             await this.onInit();
         }
     },
     watch: {
+        '$route.query.denied'(val) {
+            if (val === 'manage' || val) {
+                this.showDeniedNotice = true;
+            }
+        },
         user: {
             handler(val, oldVal) {
                 // Only trigger if user ID has actually changed to avoid redundant calls
@@ -95,6 +118,14 @@ export default {
         },
         updateStats(newStats) {
             this.stats = newStats;
+        },
+        onDismissDeniedNotice(val) {
+            this.showDeniedNotice = val;
+            if (!val && this.$route && this.$route.query && this.$route.query.denied) {
+                const query = { ...this.$route.query };
+                delete query.denied;
+                this.$router.replace({ query }).catch(() => {});
+            }
         }
     },
     computed: {

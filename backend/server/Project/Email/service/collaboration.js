@@ -5,7 +5,13 @@ const FormModel = require("../../Form/models/form.model");
 const UserModel = require("../../User/models/user.model");
 const dynamicEmail = require('../service/dynamicEmail');
 
-const { getFormTitle, toIdString, isValidEmail, buildFormLink } = require("./email.utils");
+const {
+  getFormTitle,
+  toIdString,
+  isValidEmail,
+  buildFormLink,
+  resolveFormContactInfo
+} = require("./email.utils");
 
 const sendInvitationToUser = async ({
   userId,
@@ -13,6 +19,9 @@ const sendInvitationToUser = async ({
   formTitle,
   permission,
   formId,
+  ownerId,
+  contactOrganization,
+  contactEmail,
 }) => {
   if (!mongo.ObjectId.isValid(userId)) return false;
 
@@ -20,26 +29,40 @@ const sendInvitationToUser = async ({
   if (!user || !isValidEmail(user.email)) return false;
 
   const permissionLabel = permission === 'edit' ? 'Editor' : 'Viewer';
-  const invitationLink = buildFormLink(formId, permission === 'edit' ? 'manage' : 'preview');
+  const manageLink = buildFormLink(formId, 'manage');
+  const formUrl = buildFormLink(formId, 'fill');
 
   const variables = {
     UserName: user.name || 'Collaborator',
     CollaboratorName: user.name || 'Collaborator',
     FormName: formTitle,
     FormTitle: formTitle,
-    FormURL: invitationLink,
-    InvitationLink: invitationLink,
+    FormURL: formUrl,
+    ManageURL: manageLink,
+    InvitationLink: manageLink,
     InviterName: inviterName,
     Permission: permissionLabel,
-    Organization: 'Digital University', // Fallback or fetch if available
+    Organization: contactOrganization || 'Digital University',
+    ContactOrganization: contactOrganization || '',
+    ContactEmail: contactEmail || '',
   };
 
-  const sent = await dynamicEmail.sendDynamicEmail('invitationCollaboration', variables, user.email);
-  return sent.success;
+  const sent = await dynamicEmail.sendDynamicEmail(
+    'invitationCollaboration',
+    variables,
+    user.email,
+    {
+      ...(ownerId ? { ownerId } : {}),
+      ...(contactOrganization ? { contactOrganization } : {}),
+      ...(contactEmail ? { contactEmail, replyTo: contactEmail } : {}),
+    }
+  );
+  return Boolean(sent && sent.success);
 };
 
 /**
  * Analyzes form diff and sends invitations to NEW collaborators only.
+ * Both Editor and Viewer receive the management dashboard link (/manage/:id).
  */
 exports.maybeSendCollaborationInvites = async ({
   previousDoc = null,
@@ -48,61 +71,54 @@ exports.maybeSendCollaborationInvites = async ({
   if (!currentDoc?._id) return;
 
   try {
-    // Fetch current state with full population to get names and emails
     const populated = await FormModel.findById(currentDoc._id)
-      .select('title settings.allowedUser collaborator creator')
-      .populate({ path: 'creator', select: 'name' })
+      .select('title settings collaborator creator organization')
+      .populate({
+        path: 'creator',
+        select: 'name email organization',
+        populate: { path: 'organization', select: 'title' }
+      })
+      .populate({ path: 'organization', select: 'title' })
       .populate({
         path: 'collaborator',
         populate: { path: 'type', select: 'title' }
       })
       .lean();
-    
+
     if (!populated) return;
 
     const formTitle = getFormTitle(populated);
     const inviterName = populated.creator?.name || 'Form Owner';
+    const ownerId = toIdString(populated.creator);
+    const { contactOrganization, contactEmail } = resolveFormContactInfo(populated);
 
-    // 1. Build map of userIds to permission level in PREVIOUS version
-    // Helper to extract role from collaborator object
     const getRoleFromCollaborator = (c) => {
-        if (!c?.type?.title) return 'edit'; // Default to edit for safety
+        if (!c?.type?.title) return 'edit';
         const titleItems = Array.isArray(c.type.title) ? c.type.title : [];
         const enTitle = titleItems.find(t => t.key === 'en')?.value || '';
         const thTitle = titleItems.find(t => t.key === 'th')?.value || '';
         const rawTitle = titleItems[0]?.value || '';
-        
+
         const fullTitle = (enTitle + thTitle + rawTitle).toLowerCase();
-        return fullTitle.includes('view') ? 'view' : 'edit';
+        return fullTitle.includes('view') || fullTitle.includes('ดู') ? 'view' : 'edit';
     };
 
     const prevMap = new Map();
     if (previousDoc) {
-        (previousDoc.settings?.allowedUser || []).forEach(id => {
-            if (id) prevMap.set(toIdString(id), 'view');
-        });
         (previousDoc.collaborator || []).forEach(c => {
             if (c?.user) prevMap.set(toIdString(c.user), getRoleFromCollaborator(c));
         });
     }
 
-    // 2. Build map for CURRENT version
     const nextMap = new Map();
-    (populated.settings?.allowedUser || []).forEach(id => {
-        if (id) nextMap.set(toIdString(id), 'view');
-    });
     (populated.collaborator || []).forEach(c => {
         if (c?.user) nextMap.set(toIdString(c.user), getRoleFromCollaborator(c));
     });
 
-
-    // 3. Find truly NEW entries
     const invitationTasks = [];
     for (const [userId, permission] of nextMap.entries()) {
-        // Only invite if they weren't in the previous list at all
         if (!prevMap.has(userId)) {
-            // Don't invite the form owner to their own form
-            if (toIdString(populated.creator) === userId) continue;
+            if (ownerId && ownerId === userId) continue;
 
             invitationTasks.push(sendInvitationToUser({
                 userId,
@@ -110,6 +126,9 @@ exports.maybeSendCollaborationInvites = async ({
                 formTitle,
                 permission,
                 formId: populated._id,
+                ownerId,
+                contactOrganization,
+                contactEmail,
             }));
         }
     }

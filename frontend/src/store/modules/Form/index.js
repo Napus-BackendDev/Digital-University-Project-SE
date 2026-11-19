@@ -56,18 +56,20 @@ const ServerModule = {
                 })
                 .catch(error => { throw error; });
         },
-        update({ commit, dispatch }, data) {
+        update({ commit, dispatch, rootState }, data) {
+            const activeUserId = rootState && rootState.User && rootState.User.user && rootState.User.user._id;
             return Service.form('update', data, {})
                 .then(response => {
-                    dispatch('get');
+                    dispatch('get', activeUserId ? { userId: activeUserId } : undefined);
                     return response;
                 })
                 .catch(error => { throw error; });
         },
-        delete({ dispatch }, data) {
+        delete({ dispatch, rootState }, data) {
+            const activeUserId = rootState && rootState.User && rootState.User.user && rootState.User.user._id;
             return Service.form('delete', data, {})
                 .then(response => {
-                    dispatch('get');
+                    dispatch('get', activeUserId ? { userId: activeUserId } : undefined);
                     return response;
                 })
                 .catch(error => { throw error; });

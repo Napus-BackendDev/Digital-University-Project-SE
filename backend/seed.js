@@ -65,16 +65,16 @@ async function seedDatabase() {
       'title.value': 'Editor'
     }) || await SettingControll.findOne({});
 
-    // All 8 expected question type names used in the project
+    // All 8 expected question type names used in the project (short_answer + paragraph merged as free_text)
     const ALL_QUESTION_TYPES = [
-      'short_answer',
-      'paragraph',
+      'free_text',
       'multiple_choice',
       'checkbox',
       'rating',
       'file_upload',
       'image',
       'title_description',
+      'section',
     ];
 
     let questionTypes = await QuestionType.find({});
@@ -87,6 +87,9 @@ async function seedDatabase() {
     const typeMap = {};
     for (const qt of questionTypes) {
       typeMap[qt.type] = qt;
+    }
+    if (!typeMap.free_text && (typeMap.paragraph || typeMap.short_answer)) {
+      typeMap.free_text = typeMap.paragraph || typeMap.short_answer;
     }
 
     // Validate all types exist
@@ -174,58 +177,53 @@ async function seedDatabase() {
     const questionTemplates = [
       // Form 1 – Student Satisfaction Survey
       [
-        { en: 'What is your student ID?', th: 'รหัสนักศึกษาของคุณคืออะไร?' },
-        { en: 'Describe your overall university experience.', th: 'อธิบายประสบการณ์โดยรวมของคุณที่มหาวิทยาลัย' },
-        { en: 'Which department are you enrolled in?', th: 'คุณลงทะเบียนในแผนกใด?' },
-        { en: 'Which services did you use? (Select all that apply)', th: 'คุณใช้บริการใดบ้าง? (เลือกทั้งหมดที่ตรงกัน)' },
-        { en: 'Rate your overall satisfaction.', th: 'ให้คะแนนความพึงพอใจโดยรวมของคุณ' },
-        { en: 'Upload your student card (optional).', th: 'อัปโหลดบัตรนักศึกษาของคุณ (ไม่บังคับ)' },
+        { en: 'Describe your overall university experience.', th: 'อธิบายประสบการณ์โดยรวมของท่านที่มหาวิทยาลัย' },
+        { en: 'Which school or department are you enrolled in?', th: 'ท่านสังกัดสำนักวิชาหรือหน่วยงานใด' },
+        { en: 'Which services did you use? (Select all that apply)', th: 'ท่านใช้บริการใดบ้าง (เลือกได้มากกว่า 1 ข้อ)' },
+        { en: 'Rate your overall satisfaction.', th: 'ประเมินระดับความพึงพอใจโดยรวมของท่าน' },
+        { en: 'Upload your student card (optional).', th: 'แนบภาพถ่ายบัตรนักศึกษาของท่าน (ไม่บังคับ)' },
         { en: 'Campus Map', th: 'แผนที่วิทยาเขต' },
         { en: 'Student Satisfaction Survey 2025', th: 'แบบสำรวจความพึงพอใจของนักศึกษา ปี 2568' },
       ],
       // Form 2 – Course Evaluation
       [
-        { en: 'What is the course code?', th: 'รหัสวิชาคืออะไร?' },
-        { en: 'Describe what you liked most about this course.', th: 'อธิบายสิ่งที่คุณชอบมากที่สุดเกี่ยวกับรายวิชานี้' },
-        { en: 'How would you rate the instructor?', th: 'คุณจะให้คะแนนอาจารย์ผู้สอนอย่างไร?' },
-        { en: 'Which learning materials were most helpful?', th: 'สื่อการเรียนรู้ใดที่มีประโยชน์มากที่สุด?' },
-        { en: 'Rate the course difficulty.', th: 'ให้คะแนนความยากของรายวิชา' },
-        { en: 'Upload your assignment sample.', th: 'อัปโหลดตัวอย่างงานที่มอบหมาย' },
-        { en: 'Course Overview Image', th: 'รูปภาพภาพรวมรายวิชา' },
+        { en: 'Describe what you liked most about this course.', th: 'ระบุจุดเด่นหรือสิ่งที่ท่านประทับใจมากที่สุดเกี่ยวกับรายวิชานี้' },
+        { en: 'How would you rate the instructor?', th: 'ท่านประเมินผลการสอนของอาจารย์ผู้สอนอยู่ในระดับใด' },
+        { en: 'Which learning materials were most helpful?', th: 'สื่อการเรียนรู้ใดที่เป็นประโยชน์ต่อการเรียนรู้ของท่านมากที่สุด' },
+        { en: 'Rate the course difficulty.', th: 'ประเมินระดับความยากง่ายของเนื้อหารายวิชา' },
+        { en: 'Upload your assignment sample.', th: 'แนบไฟล์ตัวอย่างผลงานที่ได้รับมอบหมาย' },
+        { en: 'Course Overview Image', th: 'ภาพประกอบภาพรวมรายวิชา' },
         { en: 'Course Evaluation – Semester 2/2568', th: 'แบบประเมินรายวิชา – ภาคการศึกษา 2/2568' },
       ],
       // Form 3 – Campus Facilities Feedback
       [
-        { en: 'Your name (optional).', th: 'ชื่อของคุณ (ไม่บังคับ)' },
-        { en: 'Describe the issue you encountered.', th: 'อธิบายปัญหาที่คุณพบ' },
-        { en: 'Which facility area did you visit?', th: 'คุณไปบริเวณสิ่งอำนวยความสะดวกใด?' },
-        { en: 'Which amenities need improvement?', th: 'สิ่งอำนวยความสะดวกใดที่ต้องการการปรับปรุง?' },
-        { en: 'Rate the cleanliness of the facility.', th: 'ให้คะแนนความสะอาดของสิ่งอำนวยความสะดวก' },
-        { en: 'Upload a photo of the issue.', th: 'อัปโหลดรูปถ่ายของปัญหา' },
-        { en: 'Facility Layout Reference', th: 'ผังการใช้งานสิ่งอำนวยความสะดวก' },
-        { en: 'Campus Facilities Feedback Form', th: 'แบบข้อเสนอแนะสิ่งอำนวยความสะดวก' },
+        { en: 'Describe the issue you encountered.', th: 'ระบุรายละเอียดของปัญหาหรือข้อขัดข้องที่ท่านพบ' },
+        { en: 'Which facility area did you visit?', th: 'ท่านเข้าใช้งานอาคารหรือสิ่งอำนวยความสะดวกในบริเวณใด' },
+        { en: 'Which amenities need improvement?', th: 'สิ่งอำนวยความสะดวกใดที่ควรได้รับการปรับปรุงเพิ่มเติม' },
+        { en: 'Rate the cleanliness of the facility.', th: 'ประเมินระดับความสะอาดของสถานที่และสิ่งอำนวยความสะดวก' },
+        { en: 'Upload a photo of the issue.', th: 'แนบภาพถ่ายประกอบการแจ้งปัญหา' },
+        { en: 'Facility Layout Reference', th: 'แผนผังพื้นที่และสิ่งอำนวยความสะดวก' },
+        { en: 'Campus Facilities Feedback Form', th: 'แบบสำรวจข้อเสนอแนะด้านอาคารสถานที่และสิ่งอำนวยความสะดวก' },
       ],
       // Form 4 – Research Interest Registration
       [
-        { en: 'Full name of the researcher.', th: 'ชื่อนักวิจัยเต็ม' },
-        { en: 'Briefly describe your research proposal.', th: 'อธิบายสั้นๆ เกี่ยวกับข้อเสนอการวิจัยของคุณ' },
-        { en: 'Select your primary research area.', th: 'เลือกพื้นที่การวิจัยหลักของคุณ' },
-        { en: 'Select all applicable collaboration types.', th: 'เลือกประเภทความร่วมมือที่ใช้ได้ทั้งหมด' },
-        { en: 'Rate your research experience level.', th: 'ให้คะแนนระดับประสบการณ์การวิจัยของคุณ' },
-        { en: 'Upload your CV or research portfolio.', th: 'อัปโหลด CV หรือผลงานวิจัยของคุณ' },
-        { en: 'Research Focus Areas Diagram', th: 'แผนภาพพื้นที่การวิจัย' },
-        { en: 'Research Registration – 2025 Intake', th: 'การลงทะเบียนวิจัย – รับปี 2568' },
+        { en: 'Briefly describe your research proposal.', th: 'อธิบายสรุปข้อเสนอโครงการวิจัยของท่านโดยสังเขป' },
+        { en: 'Select your primary research area.', th: 'เลือกสาขาการวิจัยหลักของท่าน' },
+        { en: 'Select all applicable collaboration types.', th: 'เลือกรูปแบบความร่วมมือทางวิชาการที่ท่านสนใจ (เลือกได้มากกว่า 1 ข้อ)' },
+        { en: 'Rate your research experience level.', th: 'ประเมินระดับประสบการณ์ด้านการวิจัยของท่าน' },
+        { en: 'Upload your CV or research portfolio.', th: 'แนบประวัติย่อ (CV) หรือแฟ้มผลงานวิจัยของท่าน' },
+        { en: 'Research Focus Areas Diagram', th: 'แผนภาพกลุ่มวิจัยและหัวข้อวิจัยหลัก' },
+        { en: 'Research Registration – 2025 Intake', th: 'แบบลงทะเบียนความสนใจด้านการวิจัย ประจำปี 2568' },
       ],
       // Form 5 – Alumni Contact Update
       [
-        { en: 'Your full name.', th: 'ชื่อนามสกุลเต็มของคุณ' },
-        { en: 'Share any notable achievements since graduation.', th: 'แบ่งปันความสำเร็จที่โดดเด่นนับตั้งแต่สำเร็จการศึกษา' },
-        { en: 'What is your current employment status?', th: 'สถานะการจ้างงานปัจจุบันของคุณคืออะไร?' },
-        { en: 'Which industries are you working in?', th: 'คุณทำงานในอุตสาหกรรมใดบ้าง?' },
-        { en: 'Rate how prepared you felt for the job market after graduation.', th: 'ให้คะแนนความพร้อมที่คุณรู้สึกสำหรับตลาดงานหลังสำเร็จการศึกษา' },
-        { en: 'Upload an updated photo (optional).', th: 'อัปโหลดรูปถ่ายที่อัปเดต (ไม่บังคับ)' },
+        { en: 'Share any notable achievements since graduation.', th: 'แบ่งปันผลงานหรือความสำเร็จทางวิชาชีพนับตั้งแต่สำเร็จการศึกษา' },
+        { en: 'What is your current employment status?', th: 'สถานภาพการทำงานในปัจจุบันของท่านคือข้อใด' },
+        { en: 'Which industries are you working in?', th: 'ท่านปฏิบัติงานอยู่ในกลุ่มอุตสาหกรรมหรือสายงานใด' },
+        { en: 'Rate how prepared you felt for the job market after graduation.', th: 'ประเมินความพร้อมในการเข้าสู่ตลาดแรงงานหลังสำเร็จการศึกษา' },
+        { en: 'Upload an updated photo (optional).', th: 'แนบภาพถ่ายปัจจุบันของท่าน (ไม่บังคับ)' },
         { en: 'Alumni Network Overview', th: 'ภาพรวมเครือข่ายศิษย์เก่า' },
-        { en: 'Alumni Contact Update Form 2025', th: 'แบบอัปเดตข้อมูลติดต่อศิษย์เก่า 2568' },
+        { en: 'Alumni Contact Update Form 2025', th: 'แบบปรับปรุงข้อมูลติดต่อศิษย์เก่า ประจำปี 2568' },
       ],
     ];
 
@@ -239,18 +237,17 @@ async function seedDatabase() {
 
     // Sample answer pools per type
     const sampleAnswers = {
-      short_answer: [
-        'John Smith', 'CS101', 'Building A', 'Dr. Alice', 'Room 204',
-        'Jane Doe', 'IT Department', 'Lab 3', 'Student Center', 'Cafeteria',
-      ],
-      paragraph: [
+      free_text: [
+        'School of Information Technology – Academic Services',
+        'CS204 Applied Software Engineering',
+        'Central Library & Learning Commons',
+        'Laboratory Building S7, Floor 3',
+        'Academic Support and Student Advising Center',
         'The university experience has been wonderful overall. The faculty members are knowledgeable and supportive.',
         'I found the course content to be very relevant and well-structured. The practical sessions were especially helpful.',
         'The campus facilities are generally well-maintained, though the library could use more study spaces.',
         'My research proposal focuses on machine learning applications in healthcare, specifically for diagnostic imaging.',
-        'Since graduating, I have been working at a tech startup and recently received a promotion to senior engineer.',
-        'The online resources provided were comprehensive and easy to navigate throughout the semester.',
-        'I appreciate the diverse learning environment and the international exchange opportunities offered.',
+        'Since graduating, I have been working at a technology enterprise and recently received a promotion to senior engineer.',
       ],
       multiple_choice: ['opt_a', 'opt_b', 'opt_c', 'opt_d'],
       checkbox: [
@@ -270,20 +267,21 @@ async function seedDatabase() {
 
     function buildAnswer(typeName) {
       switch (typeName) {
+        case 'free_text':
         case 'short_answer':
-          return pickRandom(sampleAnswers.short_answer);
         case 'paragraph':
-          return pickRandom(sampleAnswers.paragraph);
+          return pickRandom(sampleAnswers.free_text);
         case 'multiple_choice':
           return pickRandom(sampleAnswers.multiple_choice);
         case 'checkbox':
           return pickRandom(sampleAnswers.checkbox);
         case 'rating':
           return pickRandom(sampleAnswers.rating);
-        // file_upload, image and title_description do not need answers in seed
+        // file_upload, image, title_description and section do not need answers in seed
         case 'file_upload':
         case 'image':
         case 'title_description':
+        case 'section':
         default:
           return null;
       }
@@ -360,8 +358,6 @@ async function seedDatabase() {
           };
         } else if (typeName === 'rating') {
           qData.config = { maxRating: 5 };
-        } else if (typeName === 'paragraph') {
-          qData.config = { maxText: 500 };
         } else if (typeName === 'file_upload') {
           qData.config = {
             maxFiles: 3,
@@ -372,11 +368,11 @@ async function seedDatabase() {
           qData.config = {
             image: `https://placehold.co/600x300/1a1a2e/ffffff?text=Form+${fi + 1}+Image`,
           };
-        } else if (typeName === 'title_description') {
+        } else if (typeName === 'title_description' || typeName === 'section') {
           qData.config = {
             description: [
               { key: 'en', value: `This section covers: ${tmpl.descEn}` },
-              { key: 'th', value: `ส่วนนี้ครอบคลุม: ${tmpl.descTh}` },
+              { key: 'th', value: `รายละเอียดของส่วนนี้: ${tmpl.descTh}` },
             ],
           };
         }
@@ -418,64 +414,64 @@ async function seedDatabase() {
     console.log('Seeding Email Templates...');
     const emailTemplatesData = [
       {
-        name: [{ key: 'en', value: 'Invitation Collaboration' }, { key: 'th', value: 'คำเชิญทำงานร่วมกัน' }],
+        name: [{ key: 'en', value: 'Collaborator Invitation' }, { key: 'th', value: 'คำเชิญร่วมจัดการแบบสอบถาม' }],
         code: 'invitationCollaboration',
         subject: 'Invitation to collaborate on: {{FormTitle}}',
         content: `
-          <p>Hello <strong>{{CollaboratorName}}</strong>,</p>
-          <p><strong>{{InviterName}}</strong> has invited you to collaborate on the form <strong>{{FormTitle}}</strong> with <strong>{{Permission}}</strong> access.</p>
-          <p>Collaborating allows you to view responses and manage form settings together.</p>
+          <p>Dear <strong>{{CollaboratorName}}</strong>,</p>
+          <p><strong>{{InviterName}}</strong> has invited you to collaborate on the questionnaire <strong>{{FormTitle}}</strong> with <strong>{{Permission}}</strong> access.</p>
+          <p>Collaborating allows you to view responses and manage questionnaire settings together.</p>
           <div style="margin: 30px 0; text-align: center;">
-            <a href="{{InvitationLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">Open Form</a>
+            <a href="{{InvitationLink}}" style="background-color: #8c1515; color: #ffffff; padding: 12px 26px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block;">Open Form</a>
           </div>
         `,
         variables: ['InviterName', 'CollaboratorName', 'FormTitle', 'Permission', 'InvitationLink']
       },
       {
-        name: [{ key: 'en', value: 'Invitation Organization' }, { key: 'th', value: 'คำเชิญเข้าร่วมองค์กร' }],
+        name: [{ key: 'en', value: 'Organization Form Invitation' }, { key: 'th', value: 'เชิญตอบแบบสอบถามตามหน่วยงาน' }],
         code: 'invitationOrganization',
         subject: 'New Form Invitation: {{FormTitle}}',
         content: `
-          <p>Hello <strong>{{ResponderName}}</strong>,</p>
-          <p>An official form from <strong>{{OrganizationName}}</strong> has been shared with you.</p>
-          <div style="padding: 20px; background-color: #f7fafc; border-left: 4px solid #ac1515; border-radius: 8px; margin: 25px 0;">
-            <p style="margin: 0; font-size: 14px; color: #ac1515; font-weight: bold; text-transform: uppercase;">New Form</p>
-            <p style="margin: 5px 0 0; font-size: 18px; font-weight: bold;">{{FormTitle}}</p>
+          <p>Dear <strong>{{ResponderName}}</strong>,</p>
+          <p>An official questionnaire from <strong>{{OrganizationName}}</strong> has been shared with you.</p>
+          <div style="padding: 18px 20px; background-color: #f8fafc; border-left: 4px solid #8c1515; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; font-size: 12px; color: #8c1515; font-weight: bold; text-transform: uppercase;">New Questionnaire</p>
+            <p style="margin: 6px 0 0; font-size: 17px; font-weight: bold; color: #0f172a;">{{FormTitle}}</p>
           </div>
           <p>Your participation is valuable and helps us improve our university services.</p>
-          <div style="margin: 30px 0; text-align: center;">
-            <a href="{{InvitationLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">Start Response</a>
+          <div style="margin: 28px 0; text-align: center;">
+            <a href="{{InvitationLink}}" style="background-color: #8c1515; color: #ffffff; padding: 12px 26px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block;">Open Questionnaire</a>
           </div>
         `,
         variables: ['OrganizationName', 'ResponderName', 'FormTitle', 'InvitationLink']
       },
       {
-        name: [{ key: 'en', value: 'Submission Confirmation' }, { key: 'th', value: 'ยืนยันการส่งข้อมูล' }],
+        name: [{ key: 'en', value: 'Submission Confirmation' }, { key: 'th', value: 'ยืนยันการส่งแบบสอบถาม' }],
         code: 'submissionConfirmation',
         subject: 'Submission Confirmation: {{FormName}}',
         content: `
           <p>Dear <strong>{{Responder}}</strong>,</p>
           <p>Your response has been successfully submitted to <strong>{{FormName}}</strong>. This email confirms that our system has received your data.</p>
-          <div style="padding: 20px; background-color: #f7fafc; border-radius: 8px; margin: 25px 0; border: 1px solid #e2e8f0;">
-             <p style="margin: 5px 0; font-size: 14px;"><strong>Reference No:</strong> {{ReferenceNo}}</p>
-             <p style="margin: 5px 0; font-size: 14px;"><strong>Submitted At:</strong> {{SubmittedAt}}</p>
+          <div style="padding: 18px 20px; background-color: #f8fafc; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+             <p style="margin: 4px 0; font-size: 14px;"><strong>Reference No:</strong> {{ReferenceNo}}</p>
+             <p style="margin: 4px 0; font-size: 14px;"><strong>Submitted At:</strong> {{SubmittedAt}}</p>
           </div>
-          <p>Please keep this email for your records. Thank you for your participation!</p>
+          <p>Please keep this email for your records. Thank you for your participation.</p>
         `,
         variables: ['Responder', 'FormName', 'SubmittedAt', 'ReferenceNo']
       },
       {
-        name: [{ key: 'en', value: 'Response Notification' }, { key: 'th', value: 'แจ้งเตือนการตอบกลับ' }],
+        name: [{ key: 'en', value: 'Response Notification' }, { key: 'th', value: 'แจ้งเตือนเมื่อมีคำตอบใหม่' }],
         code: 'ResponseNotification',
         subject: 'New response received for: {{FormTitle}}',
         content: `
-          <p>Hello,</p>
-          <p>A new response has been submitted for your form <strong>{{FormTitle}}</strong>.</p>
-          <div style="margin: 30px 0; text-align: center;">
-            <a href="{{DashboardLink}}" style="background-color: #ac1515; color: #ffffff; padding: 12px 25px; border-radius: 6px; font-weight: bold; text-decoration: none; display: inline-block;">View in Dashboard</a>
+          <p>Dear <strong>{{UserName}}</strong>,</p>
+          <p>A new response has been submitted for your questionnaire <strong>{{FormTitle}}</strong> by <strong>{{Responder}}</strong>.</p>
+          <div style="margin: 28px 0; text-align: center;">
+            <a href="{{DashboardLink}}" style="background-color: #8c1515; color: #ffffff; padding: 12px 26px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block;">View in Dashboard</a>
           </div>
         `,
-        variables: ['FormTitle', 'DashboardLink']
+        variables: ['UserName', 'FormTitle', 'Responder', 'SubmittedAt', 'ReferenceNo', 'DashboardLink']
       }
     ];
 

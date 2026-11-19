@@ -5,7 +5,7 @@
             :endDate.sync="endDate" />
 
         <CDataTable :items="loading ? [] : tableData" :fields="fields" :items-per-page="itemsPerPage" :activePage.sync="activePage"
-            :pagination="false" :loading="loading" :hover="!loading && tableData.length > 0" class="mb-0 tables-container" :class="{ 'table-empty': !loading && tableData.length === 0 }">
+            :pagination="false" :loading="loading" :hover="!loading && tableData.length > 0" class="mb-0 tables-container mobile-card-table" :class="{ 'table-empty': !loading && tableData.length === 0 }">
 
             <template #loading>
                 <TableLoading borderless />
@@ -15,89 +15,21 @@
                 <EmptyState
                     borderless
                     icon="cil-description"
-                    :title="$t('table.noForms') || 'ยังไม่มีแบบสอบถาม'"
-                    description="เมื่อมีแบบสอบถามที่มอบหมายให้คุณ รายการจะแสดงขึ้นที่นี่"
+                    :title="$t('table.noForms')"
+                    :description="$t('table.noAssignedFormsDesc')"
                 />
             </template>
 
-            <!-- Form Name (Title & Description) Slot -->
+            <!-- Form Name (Title, Description & Urgent Deadline Meta) Slot -->
             <template #form="{ item }">
-                <td class="align-middle">
-                    <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
-                    <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
-                    <div class="mt-2" v-if="item.submissionCount > 0">
-                        <CBadge color="success" shape="pill"
-                            style="font-size: 0.7rem; font-weight: 500; padding: 0.3em 0.8em;">
-                            <CIcon name="cil-check-alt" size="sm" class="mr-1" />
-                            {{ $t('table.submittedCount', { count: item.submissionCount }) || `Submitted
-                            ${item.submissionCount} times` }}
-                        </CBadge>
-                    </div>
-                </td>
-            </template>
-
-            <!-- Create By Slot (match ManagementTables) -->
-            <template #createBy="{ item }">
-                <td class="align-middle">
-                    <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
-                    <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
-                </td>
-            </template>
-
-            <!-- Access Slot -->
-            <template #access="{ item }">
-                <td class="align-middle">
-                    <div v-if="!item.isEmpty" class="d-flex flex-column align-items-start gap-1" style="min-width: 150px;">
-                        <!-- Organization/Public Access -->
-                        <div v-if="orgAccessOnly(item.access).length === 1" class="mb-1">
-                            <div class="visibility-badge" :class="getVisibilityClass(orgAccessOnly(item.access)[0])">
-                                <CIcon v-if="isPublic(orgAccessOnly(item.access)[0])" name="cil-globe-alt" size="sm" class="mr-2"/>
-                                <CIcon v-else name="cil-bank" size="sm" class="mr-2"/>
-                                {{ formatAccessLabel(orgAccessOnly(item.access)[0]) }}
-                            </div>
-                        </div>
-                        
-                        <!-- Multiple Organizations -->
-                        <CDropdown v-else-if="orgAccessOnly(item.access).length > 1" variant="ghost" size="sm" class="m-0 p-0 custom-dropdown mb-1" placement="bottom-start" :popper-options="{ positionFixed: true }">
-                            <template #toggler-content>
-                                <div class="visibility-badge visi-org cursor-pointer">
-                                    <CIcon name="cil-bank" size="sm" class="mr-2"/>
-                                    {{ orgAccessOnly(item.access).length }} Orgs
-                                </div>
-                            </template>
-                            <CDropdownItem v-for="(acc, i) in orgAccessOnly(item.access)" :key="'org-'+i" class="p-0 border-bottom last-border-0">
-                                <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
-                                    <CIcon v-if="isPublic(acc)" name="cil-globe-alt" size="sm" class="mr-3 text-success"/>
-                                    <CIcon v-else name="cil-bank" size="sm" class="mr-3 text-info"/>
-                                    <span class="small font-weight-bold text-dark text-truncate">{{ formatAccessLabel(acc) }}</span>
-                                </div>
-                            </CDropdownItem>
-                        </CDropdown>
-
-                        <!-- Personal Access -->
-                        <div v-if="personalAccessOnly(item.access).length === 1" class="mb-1">
-                            <div class="visibility-badge visi-personal">
-                                <CIcon name="cil-user" size="sm" class="mr-1"/>
-                                {{ personalAccessOnly(item.access)[0].replace('Personal: ', '') }}
-                            </div>
-                        </div>
-
-                        <CDropdown v-else-if="personalAccessOnly(item.access).length > 1" variant="ghost" size="sm" class="m-0 p-0 custom-dropdown" placement="bottom-start" :popper-options="{ positionFixed: true }">
-                            <template #toggler-content>
-                                <div class="visibility-badge visi-personal cursor-pointer">
-                                    <CIcon name="cil-user" size="sm" class="mr-2"/>
-                                    {{ personalAccessOnly(item.access).length }} Access
-                                </div>
-                            </template>
-                            <CDropdownItem v-for="(acc, i) in personalAccessOnly(item.access)" :key="'pers-'+i" class="p-0 border-bottom last-border-0">
-                                <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100">
-                                    <CIcon name="cil-user" size="sm" class="mr-3 text-primary"/>
-                                    <span class="small font-weight-bold text-dark text-truncate">{{ acc.replace('Personal: ', '') }}</span>
-                                </div>
-                            </CDropdownItem>
-                        </CDropdown>
-
-                        <span v-if="item.access.length === 0" class="small text-muted">-</span>
+                <td class="align-middle py-3">
+                    <div class="font-weight-bold text-dark form-row-title line-clamp-2" :title="item.title">{{ item.title }}</div>
+                    <div class="small text-muted mt-1 form-row-desc line-clamp-2" v-if="item.description && item.description !== '-'" :title="item.description">{{ item.description }}</div>
+                    <div v-if="item.isClosingSoon" class="respondent-meta-row mt-2">
+                        <span class="meta-chip meta-closing">
+                            <CIcon name="cil-clock" size="sm" class="mr-1" />
+                            {{ $t('table.closingSoon') }}
+                        </span>
                     </div>
                 </td>
             </template>
@@ -106,51 +38,45 @@
             <template #timeRange="{ item }">
                 <td class="align-middle">
                     <div class="small text-dark font-weight-bold" v-if="item.timeRange && item.timeRange !== '-'">{{ item.timeRange }}</div>
-                    <div class="small text-muted mt-1" v-if="item.daysLeft">{{ item.daysLeft }}</div>
+                    <div class="small mt-1" :class="item.isClosingSoon ? 'text-warning font-weight-bold' : 'text-muted'" v-if="item.daysLeft">{{ item.daysLeft }}</div>
                 </td>
             </template>
 
-            <!-- Status Slot (match ManagementTables display) -->
+            <!-- Status Slot (status pill only) -->
             <template #status="{ item }">
                 <td class="align-middle">
                     <span v-if="item && item.status" class="status-badge" :class="getStatusClass(item.status)">
                         <span class="status-dot"></span>
-                        {{ $t('status.' + item.status.toLowerCase().replace(/\s/g, '')) }}
+                        {{ $t('respondentStatus.' + item.status.toLowerCase().replace(/\s/g, '')) }}
                     </span>
                 </td>
             </template>
 
-            <template #progress="{ item }">
+            <!-- Created By Slot (Name + Email matching /manage) -->
+            <template #createdBy="{ item }">
                 <td class="align-middle">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1 mr-3" v-if="typeof item.progress === 'number'">
-                            <CProgress :value="item.progress" :color="getProgressColor(item.progress)" height="6px"
-                                class="progress-xs" />
-                        </div>
-                        <div class="small font-weight-bold text-dark" v-if="typeof item.progress === 'number'">{{
-                            item.progress }}%</div>
-                        <div class="small font-weight-bold text-dark" v-else>-</div>
+                    <div class="creator-cell" :title="[item.createdOrg, item.createdName, item.createdEmail].filter(Boolean).join(' · ')">
+                        <div class="small text-dark font-weight-bold text-truncate creator-name">{{ item.createdOrg || item.createdName || '-' }}</div>
+                        <div v-if="item.createdOrg && item.createdName !== '-'" class="text-muted text-truncate creator-email mt-1">{{ item.createdName }}</div>
                     </div>
                 </td>
             </template>
 
-            <!-- Action Slot -->
+            <!-- Action Slot (Icon + Label Respondent CTA without tooltip) -->
             <template #action="{ item }">
-                <td class="align-middle text-right pr-4">
+                <td class="align-middle text-right pr-3">
                     <div class="d-flex align-items-center justify-content-end">
-                        <CIcon v-if="item.requireEmail" name="cil-warning" class="text-danger mr-2" style="width: 20px;"
-                            v-c-tooltip="$t('form.collectEmail')" />
-
-                        <div v-if="!item.canEnter" v-c-tooltip="$t('form.accessDenied')">
-                            <CButton color="secondary" variant="ghost" class="p-2 action-icon-btn disabled" disabled>
-                                <CIcon name="cil-lock-locked" size="lg" />
-                            </CButton>
-                        </div>
-                        <CButton v-else :color="getActionColor(item.status)" variant="ghost" class="p-2 action-icon-btn"
-                            @click.stop="goToForm(item._id, item.status === 'Completed')"
-                            v-c-tooltip="getActionTooltip(item.status, item.limitResponse)">
-                            <CIcon :name="getActionIcon(item.status, item.limitResponse)" size="lg" />
-                        </CButton>
+                        <button
+                            type="button"
+                            class="respondent-cta-btn"
+                            :class="item.cta.btnClass"
+                            :disabled="item.cta.disabled"
+                            :aria-label="item.cta.label"
+                            @click.stop="!item.cta.disabled && goToForm(item._id, item.cta.isNew)"
+                        >
+                            <CIcon :name="item.cta.icon" size="sm" class="cta-icon" />
+                            <span class="cta-label">{{ item.cta.label }}</span>
+                        </button>
                     </div>
                 </td>
             </template>
@@ -160,15 +86,15 @@
         <div v-if="!loading && tableData.length > 0" class="d-flex justify-content-between align-items-center flex-wrap mt-3 px-2">
             <!-- Left: Items Per Page Selector -->
             <div class="d-flex align-items-center text-muted small font-weight-bold my-1">
-                <span class="mr-2">{{ $t('table.showing') || 'แสดง' }}</span>
+                <span class="mr-2">{{ $t('table.showing') }}</span>
                 <select v-model.number="itemsPerPage" class="custom-per-page-select mr-2">
                     <option :value="5">5</option>
                     <option :value="10">10</option>
                     <option :value="15">15</option>
                     <option :value="20">20</option>
                 </select>
-                <span class="mr-2">{{ $t('table.itemsPerPage') || 'รายการต่อหน้า' }}</span>
-                <span class="text-secondary">({{ startItem }} - {{ endItem }} {{ $t('table.of') || 'จาก' }} {{ totalItems }} {{ $t('table.items') || 'รายการ' }})</span>
+                <span class="mr-2">{{ $t('table.itemsPerPage') }}</span>
+                <span class="text-secondary">({{ startItem }} - {{ endItem }} {{ $t('table.of') }} {{ totalItems }} {{ $t('table.items') }})</span>
             </div>
 
             <!-- Right: Pagination -->
@@ -186,6 +112,8 @@ import FilterTable from '@/projects/components/Filter/FilterTable.vue'
 import EmptyState from '@/projects/components/Util/EmptyState.vue'
 import TableLoading from '@/projects/components/Util/TableLoading.vue'
 import localeMixin from '@/mixins/localeMixin'
+import { buildCompactAccessSummary } from '@/projects/utils/analytics'
+import { buildActiveResponseRuleBadges, countInputQuestions, isFormOpenForSubmission, isUserAllowedByIndividualAccess, normalizeAllowedEmails } from '@/projects/utils/formPolicy'
 
 export default {
     name: 'UserTables',
@@ -210,18 +138,18 @@ export default {
     async created() {
         this.$store.dispatch('User/getAll');
         this.$store.dispatch('Organizations/getAll');
-        this.$store.dispatch('Responses/get');
+        if (this.user && this.user._id) {
+            this.$store.dispatch('Responses/get', { responder: this.user._id });
+        }
     },
     computed: {
         fields() {
             return [
-                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:22%' },
-                { key: 'access', label: this.$t('table.access'), _style: 'width:15%' },
-                { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:18%' },
-                { key: 'status', label: this.$t('table.status'), _style: 'width:12%' },
-                { key: 'progress', label: this.$t('table.progress'), _style: 'width:12%' },
-                { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:13%' },
-                { key: 'action', label: this.$t('table.action'), _style: 'width:8%; text-align:right' }
+                { key: 'form', label: this.$t('table.questionnaire'), _style: 'width:33%' },
+                { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:17%' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:16%' },
+                { key: 'createdBy', label: this.$t('table.createdBy'), _style: 'width:18%' },
+                { key: 'action', label: this.$t('table.action'), _style: 'width:16%; text-align:right' }
             ]
         },
         ...mapGetters('Forms', ['forms']),
@@ -244,6 +172,8 @@ export default {
         },
 
         baseTableData() {
+            // Touch users so creator role/email re-evaluates once User/getAll resolves
+            const _reactiveUsers = this.users;
             if (!this.forms || this.forms.length === 0) return [];
 
 
@@ -277,27 +207,15 @@ export default {
                     missingFields.push('organization');
                 }
 
-                // Created By (extract name and email separately)
-                let createdName = '-';
-                let createdEmail = '';
-                if (f.creator) {
-                    if (typeof f.creator === 'string' && f.creator.trim()) createdName = f.creator;
-                    else if (typeof f.creator === 'object') {
-                        createdName = f.creator.name || f.creator.fullname || f.creator.email || '-';
-                        createdEmail = f.creator.email || '';
-                    }
-                } else if (f.createdBy) {
-                    if (typeof f.createdBy === 'string' && f.createdBy.trim()) createdName = f.createdBy;
-                    else if (typeof f.createdBy === 'object') {
-                        createdName = f.createdBy.name || f.createdBy.email || '-';
-                        createdEmail = f.createdBy.email || '';
-                    }
-                } else {
+                // Created By (name and email resolved from creator or users lookup)
+                const { createdName, createdEmail, createdOrg } = this.resolveCreatorInfo(f.creator || f.createdBy);
+                if (!f.creator && !f.createdBy) {
                     missingFields.push('createdBy');
                 }
 
                 let timeRange = '-';
                 let daysLeft = '';
+                let daysLeftCount = null;
                 if (f.schedule && (f.schedule.startAt || f.schedule.endAt)) {
                     const locale = this.$i18n.locale === 'th' ? 'th-TH' : 'en-US';
                     const startAt = f.schedule.startAt ? new Date(f.schedule.startAt).toLocaleDateString(locale) : '';
@@ -305,33 +223,38 @@ export default {
                     timeRange = startAt || endAt ? `${startAt}${endAt ? ' - ' + endAt : ''}` : '-';
                     if (f.schedule.endAt) {
                         const diff = Math.ceil((new Date(f.schedule.endAt) - new Date()) / (1000 * 60 * 60 * 24));
+                        daysLeftCount = diff;
                         daysLeft = diff > 0 ? this.$t('table.daysLeft', { count: diff }) : this.$t('table.closed');
+                    } else if (f.schedule.startAt) {
+                        daysLeft = this.$t('table.openForever');
                     }
                 } else if (f.timeRange && typeof f.timeRange === 'string' && f.timeRange.trim()) {
                     timeRange = f.timeRange;
                 } else {
                     missingFields.push('timeRange');
                 }
+                const isClosingSoon = daysLeftCount !== null && daysLeftCount > 0 && daysLeftCount <= 7;
 
                 let totalQuestions = null;
                 if (Array.isArray(f.questions)) {
-                    totalQuestions = f.questions.filter(q => {
-                        if (!q) return false;
-                        const t = q.type;
-                        if (!t) return true;
-                        const typeStr = (typeof t === 'object' ? (t.type || t.name || '') : t).toLowerCase();
-                        return !['title_description', 'image'].includes(typeStr);
-                    }).length;
+                    totalQuestions = countInputQuestions(f.questions);
                 }
                 else if (typeof f.questions === 'number') totalQuestions = f.questions;
                 else if (Array.isArray(f.questionIds)) totalQuestions = f.questionIds.length;
 
                 const userObj = currentUser || {};
-                
-                // Combine responses from user object and the global responses store for maximum consistency
-                const userResponses = (this.allResponses && this.allResponses.length > 0) ? this.allResponses : (userObj.response || []);
-                const globalResponses = this.responses || [];
-                const allRelevantResponses = [...userResponses, ...globalResponses];
+                const currentUserId = (userObj._id || userObj.id || '').toString();
+
+                // Deduplicate user.response and store responses by _id, scoped strictly to currentUserId
+                const combinedMap = new Map();
+                [...(userObj.response || []), ...(this.allResponses || []), ...(this.responses || [])].forEach(r => {
+                    if (!r || !r._id) return;
+                    const rResponder = r.responder;
+                    const responderId = rResponder ? (typeof rResponder === 'object' ? (rResponder._id || rResponder.id) : rResponder).toString() : '';
+                    if (currentUserId && responderId && responderId !== currentUserId) return;
+                    combinedMap.set(String(r._id), r);
+                });
+                const allRelevantResponses = Array.from(combinedMap.values());
 
                 let status = 'Pending';
                 let progress = 0;
@@ -340,11 +263,11 @@ export default {
                 // Match responses by form ID
                 const matchedResponses = allRelevantResponses.filter(r => {
                     if (!r) return false;
-                    
+
                     // Handle both populated objects and ID strings
                     const rForm = r.form;
                     if (!rForm) return false;
-                    
+
                     const resFormId = (typeof rForm === 'object' ? (rForm._id || rForm.id) : rForm).toString();
                     return resFormId === f._id.toString();
                 });
@@ -364,13 +287,7 @@ export default {
                     // 1. Determine total questions from the form linked in the response
                     const nestedForm = userResponse.form || {};
                     if (Array.isArray(nestedForm.questions)) {
-                        totalQuestions = nestedForm.questions.filter(q => {
-                            if (!q) return false;
-                            const t = q.type;
-                            if (!t) return true;
-                            const typeStr = (typeof t === 'object' ? (t.type || t.name || '') : t).toLowerCase();
-                            return !['title_description', 'image'].includes(typeStr);
-                        }).length;
+                        totalQuestions = countInputQuestions(nestedForm.questions);
                     } else if (Array.isArray(nestedForm.questionIds)) {
                         totalQuestions = nestedForm.questionIds.length;
                     }
@@ -416,27 +333,64 @@ export default {
                 const rawOrgs = f.organization || [];
                 let access = [];
 
-                const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs])
-                    .map(o => this.getOrganizationLabel(o))
-                    .filter(Boolean);
+                const orgNames = Array.from(new Set(
+                    (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs])
+                        .map(o => this.getOrganizationLabel(o))
+                        .filter(Boolean)
+                ));
 
-                const isPublicForm = orgNames.some(name => name === 'General' || name === 'ทั่วไป');
+                const explicitMode = f.settings && f.settings.accessMode;
+                const explicitPublic = explicitMode === 'public';
+                const isPublicForm = explicitPublic || (explicitMode !== 'private' && orgNames.some(name => name === 'General' || name === 'ทั่วไป'));
+                const allowedEmailList = normalizeAllowedEmails(f.settings && f.settings.allowedEmails);
+                const hasAllowedUsers = Boolean(f.settings && Array.isArray(f.settings.allowedUser) && f.settings.allowedUser.length > 0);
+                const hasPersonalAccess = !isPublicForm && (hasAllowedUsers || allowedEmailList.length > 0);
+                const hasRoleAccess = !isPublicForm && Boolean(f.settings && Array.isArray(f.settings.allowedRoles) && f.settings.allowedRoles.length > 0);
 
                 if (isPublicForm) {
                     access = ['Public'];
                 } else if (orgNames.length > 0) {
-                    access = orgNames;
-                } else {
+                    access = [...orgNames];
+                } else if (!hasPersonalAccess && !hasRoleAccess) {
                     access = ['Private'];
                 }
 
-                if (f.settings && Array.isArray(f.settings.allowedUser) && f.settings.allowedUser.length > 0) {
+                const seenPersonalEmails = new Set();
+                if (hasPersonalAccess && hasAllowedUsers) {
                     f.settings.allowedUser.forEach(u => {
+                        const matched = (typeof u === 'object' && u)
+                            ? u
+                            : (this.users || []).find(x => x && String(x._id) === String(u));
+                        const em = matched && typeof matched.email === 'string' ? matched.email.trim().toLowerCase() : '';
+                        if (em) seenPersonalEmails.add(em);
                         access.push('Personal: ' + this.getUserName(u));
                     });
                 }
+                if (hasPersonalAccess && allowedEmailList.length > 0) {
+                    allowedEmailList.forEach(email => {
+                        if (!seenPersonalEmails.has(email)) {
+                            seenPersonalEmails.add(email);
+                            access.push('Personal: ' + email);
+                        }
+                    });
+                }
 
+                if (hasRoleAccess) {
+                    f.settings.allowedRoles.forEach(r => {
+                        const roleLabel = this.getOrganizationLabel(r) || (typeof r === 'object' ? (r.name || 'Role') : String(r));
+                        access.push('Role: ' + roleLabel);
+                    });
+                }
+
+                const accessSummary = this.buildAccessSummary(access);
                 const createdAt = f.updatedAt || f.createdAt || '-';
+                const sched = f.schedule || {};
+                const startAtParsed = sched.startAt ? new Date(sched.startAt).getTime() : NaN;
+                const endAtParsed = sched.endAt ? new Date(sched.endAt).getTime() : NaN;
+                const updatedParsed = new Date(f.updatedAt || f.createdAt || 0).getTime();
+                const startAtMs = Number.isFinite(startAtParsed) ? startAtParsed : null;
+                const endAtMs = Number.isFinite(endAtParsed) ? endAtParsed : null;
+                const updatedAtMs = Number.isFinite(updatedParsed) ? updatedParsed : 0;
 
                 // Access Control Logic
                 const userOrgId = currentUser?.organization?._id || currentUser?.organization;
@@ -445,61 +399,65 @@ export default {
                     .map(o => (o?._id || o)?.toString());
                 const isPublic = isPublicForm;
                 const isMember = userOrgId && formOrgIds.includes(userOrgId.toString());
-                const isAllowedUser = f.settings && Array.isArray(f.settings.allowedUser) &&
-                    f.settings.allowedUser.some(u => {
-                        const id = String(typeof u === 'object' ? (u._id || u.value) : u);
-                        return currentUser?._id && id === String(currentUser._id);
-                    });
+                const isAllowedIndividual = hasPersonalAccess
+                    ? isUserAllowedByIndividualAccess(f.settings, currentUser?._id, currentUser?.email)
+                    : false;
 
                 const userRoleId = currentUser?.role?._id || currentUser?.role;
-                const formAllowedRoles = (f.settings && Array.isArray(f.settings.allowedRoles)) ? f.settings.allowedRoles : [];
+                const formAllowedRoles = (!isPublic && f.settings && Array.isArray(f.settings.allowedRoles)) ? f.settings.allowedRoles : [];
                 const hasRoleRestriction = formAllowedRoles.length > 0;
                 const isAllowedRole = !hasRoleRestriction || formAllowedRoles.some(r => {
                     const rId = String(typeof r === 'object' ? (r._id || r.value) : r);
                     return userRoleId && rId === String(userRoleId);
                 });
 
-                // User is a target respondent only if explicitly invited or matches organization and role
-                const canEnter = isAllowedUser || ((isPublic || isMember) && isAllowedRole);
+                // User is a target respondent if individually invited OR matches organization and bound role (Audience Union)
+                const canEnter = isPublic || isAllowedIndividual || Boolean(isMember && isAllowedRole);
+                const limitResponse = Boolean(f.settings?.limitResponse);
+                const allowEditAfterSubmit = Boolean(f.settings?.allowEditAfterSubmit);
+                const activeResponseRules = buildActiveResponseRuleBadges(f.settings || {}, (k, p) => this.$t(k, p));
+                const cta = this.buildActionCta({ canEnter, status, limitResponse, allowEditAfterSubmit });
 
                 return {
                     _id: f._id,
+                    form: title || '-',
                     title: title || '-',
                     description: description || '-',
                     status: status || '-',
                     timeRange: timeRange || '-',
                     daysLeft: daysLeft || '',
+                    isClosingSoon,
                     progress: (typeof progress === 'number') ? progress : 0,
+                    totalQuestions,
+                    userAnswerCount,
                     organization: organization || '-',
                     createdAt,
+                    startAtMs,
+                    endAtMs,
+                    updatedAtMs,
                     createdBy: createdName || createdEmail || '-',
                     createdName: createdName || '-',
                     createdEmail: createdEmail || '',
+                    createdOrg: createdOrg || '',
                     access: access,
+                    accessSummary,
+                    activeResponseRules,
+                    cta,
                     canEnter: canEnter,
-                    limitResponse: f.settings?.limitResponse || false,
-                    requireEmail: f.settings?.collectEmail || false,
+                    limitResponse,
+                    allowEditAfterSubmit,
                     submissionCount: submissionCount,
                     _raw: f
                 };
             });
 
-            const now = new Date();
             const withAccess = mapped.filter(f => {
                 // 1. Personal access check
                 if (!f.canEnter) return false;
 
-                // 2. Schedule Check
+                // 2. Only expose published forms currently open for submission
                 const sched = (f._raw && f._raw.schedule) ? f._raw.schedule : {};
-
-                // If no schedule, do not show in the datatable as per requirement
-                if (!sched.startAt && !sched.endAt) return false;
-
-                let isInTimeRange = true;
-                if (sched.startAt && now < new Date(sched.startAt)) isInTimeRange = false;
-                if (sched.endAt && now > new Date(sched.endAt)) isInTimeRange = false;
-
-                return isInTimeRange;
+                return isFormOpenForSubmission(sched);
             });
 
             return withAccess;
@@ -537,7 +495,7 @@ export default {
                 });
             }
 
-            return filtered;
+            return [...filtered].sort((a, b) => this.compareDefaultOrder(a, b));
         },
         stats() {
             const data = this.baseTableData || [];
@@ -556,13 +514,53 @@ export default {
             handler(newVal) {
                 this.$emit('update-stats', newVal);
             }
+        },
+        itemsPerPage() {
+            this.activePage = 1;
+        },
+        searchQuery() {
+            this.activePage = 1;
+        },
+        selectedStatus() {
+            this.activePage = 1;
+        },
+        startDate() {
+            this.activePage = 1;
+        },
+        endDate() {
+            this.activePage = 1;
         }
     },
     methods: {
+        getStatusPriority(status) {
+            const s = String(status || '').toLowerCase().replace(/\s/g, '');
+            if (s === 'inprogress') return 0;
+            if (s === 'pending') return 1;
+            if (s === 'completed') return 2;
+            return 3;
+        },
+        compareDefaultOrder(a, b) {
+            const aDone = this.getStatusPriority(a.status) >= 2 ? 1 : 0;
+            const bDone = this.getStatusPriority(b.status) >= 2 ? 1 : 0;
+            if (aDone !== bDone) return aDone - bDone;
+
+            const aEnd = a.endAtMs !== null && a.endAtMs !== undefined ? a.endAtMs : Number.MAX_SAFE_INTEGER;
+            const bEnd = b.endAtMs !== null && b.endAtMs !== undefined ? b.endAtMs : Number.MAX_SAFE_INTEGER;
+            if (aEnd !== bEnd) return aEnd - bEnd;
+
+            const statusDiff = this.getStatusPriority(a.status) - this.getStatusPriority(b.status);
+            if (statusDiff !== 0) return statusDiff;
+
+            const aRefTime = a.updatedAtMs || a.startAtMs || 0;
+            const bRefTime = b.updatedAtMs || b.startAtMs || 0;
+            if (aRefTime !== bRefTime) return bRefTime - aRefTime;
+
+            const locale = this.$i18n && this.$i18n.locale === 'th' ? 'th' : 'en';
+            return String(a.title || '').localeCompare(String(b.title || ''), locale, { sensitivity: 'base' });
+        },
         goToFormRecord(item) {
-            if (item) {
-                this.goToForm(item._id);
-            }
+            if (!item || (item.cta && item.cta.disabled)) return;
+            this.goToForm(item._id, Boolean(item.cta && item.cta.isNew));
         },
         async goToForm(id, isNew = false) {
             if (!id) return;
@@ -605,33 +603,114 @@ export default {
             if (!v) return '';
             return v.startsWith('Personal: ') ? v.replace('Personal: ', '') : (this.$te('accessLabel.' + v.toLowerCase()) ? this.$t('accessLabel.' + v.toLowerCase()) : v);
         },
+        buildAccessSummary(access) {
+            return buildCompactAccessSummary(access, {
+                formatLabel: (val) => this.formatAccessLabel(val),
+                orgUnit: this.$t('table.orgUnit') || 'Orgs',
+                userUnit: this.$t('table.userUnit') || 'Users',
+                roleUnit: this.$t('table.roleUnit') || 'Roles'
+            });
+        },
+        buildActionCta({ canEnter, status, limitResponse, allowEditAfterSubmit }) {
+            if (!canEnter) {
+                return {
+                    label: this.$t('table.cta.restricted'),
+                    icon: 'cil-lock-locked',
+                    btnClass: 'cta-disabled',
+                    disabled: true,
+                    isNew: false,
+                    tooltip: this.$t('form.accessDenied')
+                };
+            }
+            const s = String(status || '').toLowerCase().replace(/\s/g, '');
+            if (s === 'completed') {
+                if (limitResponse) {
+                    if (allowEditAfterSubmit) {
+                        return {
+                            label: this.$t('table.cta.editAnswer'),
+                            icon: 'cil-pencil',
+                            btnClass: 'cta-edit',
+                            disabled: false,
+                            isNew: false,
+                            tooltip: this.$t('table.cta.editAnswer')
+                        };
+                    }
+                    return {
+                        label: this.$t('table.cta.submitted'),
+                        icon: 'cil-check-circle',
+                        btnClass: 'cta-done',
+                        disabled: true,
+                        isNew: false,
+                        tooltip: this.$t('table.cta.submitted')
+                    };
+                }
+                return {
+                    label: this.$t('table.cta.submitAgain'),
+                    icon: 'cil-reload',
+                    btnClass: 'cta-again',
+                    disabled: false,
+                    isNew: true,
+                    tooltip: this.$t('table.submitAgain')
+                };
+            }
+            if (s === 'inprogress') {
+                return {
+                    label: this.$t('table.cta.continue'),
+                    icon: 'cil-pencil',
+                    btnClass: 'cta-continue',
+                    disabled: false,
+                    isNew: false,
+                    tooltip: this.$t('table.continueForm')
+                };
+            }
+            return {
+                label: this.$t('table.cta.start'),
+                icon: 'cil-arrow-right',
+                btnClass: 'cta-start',
+                disabled: false,
+                isNew: false,
+                tooltip: this.$t('table.startForm')
+            };
+        },
         getProgressColor(progress) {
             if (progress >= 100) return 'success';
             if (progress >= 40) return 'info';
             if (progress > 0) return 'warning';
             return 'secondary';
         },
-        getActionColor(status) {
-            const s = status ? status.toLowerCase().replace(/\s/g, '') : '';
-            if (s === 'completed') return 'success';
-            if (s === 'pending') return 'primary';
-            return 'warning';
-        },
-        getActionIcon(status, limitResponse) {
-            const s = status ? status.toLowerCase().replace(/\s/g, '') : '';
-            if (s === 'completed') {
-                return limitResponse ? 'cil-check-circle' : 'cil-reload';
+        resolveCreatorInfo(creatorRef) {
+            if (!creatorRef) {
+                return { createdName: '-', createdEmail: '' };
             }
-            if (s === 'inprogress') return 'cil-pencil';
-            return 'cil-input';
-        },
-        getActionTooltip(status, limitResponse) {
-            const s = status ? status.toLowerCase().replace(/\s/g, '') : '';
-            if (s === 'completed') {
-                return limitResponse ? 'View Summary' : 'Submit Again';
+            const userList = Array.isArray(this.users) ? this.users : [];
+            if (typeof creatorRef === 'string') {
+                const trimmed = creatorRef.trim();
+                if (!trimmed) return { createdName: '-', createdEmail: '' };
+                const matched = userList.find(u =>
+                    u && (String(u._id) === trimmed || (u.email && u.email === trimmed) || (u.name && u.name === trimmed))
+                );
+                if (matched) {
+                    return {
+                        createdName: matched.name || matched.fullname || matched.email || trimmed,
+                        createdEmail: matched.email || '',
+                        createdOrg: this.getOrganizationLabel(matched.organization) || ''
+                    };
+                }
+                const display = /^[0-9a-f]{24}$/i.test(trimmed) ? '-' : trimmed;
+                return { createdName: display, createdEmail: '' };
             }
-            if (s === 'inprogress') return 'Continue Form';
-            return 'Start Form';
+            if (typeof creatorRef === 'object') {
+                const creatorId = creatorRef._id ? String(creatorRef._id) : '';
+                const matched = userList.find(u =>
+                    u && ((creatorId && String(u._id) === creatorId) || (creatorRef.email && u.email === creatorRef.email))
+                );
+                return {
+                    createdName: creatorRef.name || creatorRef.fullname || (matched && (matched.name || matched.email)) || creatorRef.email || '-',
+                    createdEmail: creatorRef.email || (matched && matched.email) || '',
+                    createdOrg: this.getOrganizationLabel(creatorRef.organization || (matched && matched.organization)) || ''
+                };
+            }
+            return { createdName: '-', createdEmail: '' };
         },
         getUserName(userRef) {
             if (!userRef) return 'Unknown';
@@ -641,15 +720,13 @@ export default {
             return u ? (u.name || u.email) : userRef;
         },
         getOrganizationLabel(orgRef) {
-            const locale = this.$i18n.locale.toLowerCase();
             if (!orgRef) return null;
 
             if (typeof orgRef === 'object') {
                 if (Array.isArray(orgRef.title)) {
-                    const localTitle = orgRef.title.find(t => t && t.key && t.key.toLowerCase() === locale);
-                    return localTitle ? localTitle.value : (orgRef.title[0] ? orgRef.title[0].value : null);
+                    return this.getLang(orgRef.title) || null;
                 }
-                return orgRef.name || orgRef.value || orgRef.title || (orgRef._id ? String(orgRef._id) : null);
+                return orgRef.name || orgRef.value || this.getLang(orgRef.title) || (orgRef._id ? String(orgRef._id) : null);
             }
 
             const orgId = String(orgRef);
@@ -659,18 +736,12 @@ export default {
 
             if (found) {
                 if (Array.isArray(found.title)) {
-                    const localTitle = found.title.find(t => t && t.key && t.key.toLowerCase() === locale);
-                    return localTitle ? localTitle.value : (found.title[0] ? found.title[0].value : null);
+                    return this.getLang(found.title) || null;
                 }
-                return found.name || found.value || found.title || orgId;
+                return found.name || found.value || this.getLang(found.title) || orgId;
             }
 
             return orgId;
-        }
-    },
-    watch: {
-        itemsPerPage() {
-            this.activePage = 1;
         }
     }
 }
@@ -730,7 +801,7 @@ export default {
     height: 60px;
     border-radius: 16px;
     background: #f1f5f9;
-    color: #94a3b8;
+    color: #64748b;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -741,12 +812,13 @@ export default {
 }
 
 .text-muted {
-    color: #94a3b8 !important;
+    color: #64748b !important;
 }
 
 .status-badge {
     display: inline-flex;
     align-items: center;
+    white-space: nowrap;
     padding: 0.35em 0.8em;
     border-radius: 50rem;
     font-size: 0.85rem;
@@ -779,12 +851,12 @@ export default {
 }
 
 .status-inprogress {
-    background-color: #fef3f2;
-    color: #8c1515;
+    background-color: #e0f2fe;
+    color: #0369a1;
 }
 
 .status-inprogress .status-dot {
-    background-color: #8c1515;
+    background-color: #0284c7;
 }
 
 .plus-circle {
@@ -896,7 +968,7 @@ export default {
 
 .visi-private {
     background-color: #fef2f2;
-    color: #dc2626;
+    color: #b91c1c;
     border: 1px solid #fee2e2;
 }
 
@@ -966,6 +1038,270 @@ export default {
 
 .cursor-pointer {
     cursor: pointer;
+}
+
+.form-row-title {
+    font-size: 0.95rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.form-row-desc {
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@media (min-width: 992px) {
+    .form-row-title,
+    .form-row-desc {
+        max-width: 300px;
+    }
+}
+
+.respondent-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.meta-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+.creator-cell {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.creator-name {
+    line-height: 1.3;
+}
+
+.creator-email {
+    font-size: 0.8125rem;
+    line-height: 1.25;
+}
+
+.response-icons-row {
+    gap: 6px;
+}
+
+.setting-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    cursor: default;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.setting-icon-badge:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.95);
+}
+
+.setting-icon-login {
+    background-color: #eef2ff;
+    color: #4338ca;
+}
+
+.setting-icon-limit {
+    background-color: #ecfdf5;
+    color: #047857;
+}
+
+.setting-icon-edit {
+    background-color: #fffbeb;
+    color: #b45309;
+}
+
+.setting-icon-quota {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+}
+
+.setting-icon-email {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.setting-icon-notify {
+    background-color: #fef2f2;
+    color: #b91c1c;
+}
+
+.meta-closing {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.text-truncate-pill {
+    max-width: 220px;
+    overflow: hidden;
+}
+
+.visi-role {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+}
+
+.text-role-accent {
+    color: #7e22ce !important;
+}
+
+.dropdown-section-header {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+    background-color: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.dropdown-caret {
+    width: 12px !important;
+    height: 12px !important;
+    opacity: 0.7;
+}
+
+.progress-cell-wrap {
+    min-width: 96px;
+}
+
+.respondent-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 9px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.15s ease, background-color 0.15s ease;
+}
+
+.respondent-cta-btn .cta-icon {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.respondent-cta-btn.cta-start {
+    background-color: #8c1515;
+    color: #ffffff;
+}
+
+.respondent-cta-btn.cta-start:hover {
+    background-color: #701010;
+    transform: translateY(-1px);
+}
+
+.respondent-cta-btn.cta-continue {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+.respondent-cta-btn.cta-continue:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.respondent-cta-btn.cta-edit {
+    background-color: #eef2ff;
+    color: #4338ca;
+}
+
+.respondent-cta-btn.cta-edit:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.respondent-cta-btn.cta-again {
+    background-color: #f0fdfa;
+    color: #0f766e;
+}
+
+.respondent-cta-btn.cta-again:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.respondent-cta-btn.cta-done {
+    background-color: #ecfdf5;
+    color: #047857;
+    cursor: default;
+}
+
+.respondent-cta-btn.cta-disabled {
+    background-color: #f1f5f9;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+@media (min-width: 992px) {
+    .tables-container ::v-deep table {
+        table-layout: auto;
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .tables-container ::v-deep thead th {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .tables-container ::v-deep thead th:last-child {
+        padding-right: 1rem !important;
+    }
+
+    .tables-container ::v-deep .form-row-title,
+    .tables-container ::v-deep .form-row-desc {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .respondent-cta-btn {
+        height: 44px;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0 16px;
+    }
+
+    .progress-cell-wrap {
+        width: 100%;
+    }
 }
 </style>
 ```

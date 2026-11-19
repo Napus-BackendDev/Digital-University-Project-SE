@@ -6,19 +6,15 @@ const defaultPopulate = [
         path: 'responder',
         select: '-password',
         populate: [
-            { path: 'organization' }
+            { path: 'organization' },
+            { path: 'role', select: 'title' }
         ]
     },
     {
         path: 'form',
         populate: [
             { path: 'questions' },
-            { path: 'creator', select: '-password' },
-            {
-                path: 'responses',
-                select: 'submit createdAt answers',
-                populate: { path: 'responder', select: '-password' }
-            }
+            { path: 'creator', select: '-password' }
         ]
     },
 ]

@@ -1,0 +1,279 @@
+{
+  "question": "How does the MFU E-Questionnaires system operate end-to-end across Form Creation (Wizard 5 steps), Policy-Guarded Form Filling, All 4 Dynamic Email Triggers (+ Per-Account Email Studio), Analytics Inspection, and All 6 Data Exports?",
+  "audience": "Client Stakeholders, Project Owners, and Engineering Reviewers",
+  "findings": [
+    "response.js:240 invokes sendDynamicEmail(\"creatorNotification\", ...) while emailTemplateDefaults.js:64 stores template code \"ResponseNotification\"; dynamicEmail.js:119 aliases both codes so unaliased queries or direct DB edits must keep that mapping in mind.",
+    "emailTemplate.js:245 resolves ownerEmail directly from authenticated user/DB and returns { sent: false } when MAIL_USER/MAIL_PASS SMTP credentials are not configured in development, requiring SMTP env config in production to deliver live mail.",
+    "inviteOrganization.js:68 sends \"invitationOrganization\" only to newly added organizations while form schedule is Active; opening a draft/scheduled form later does not retroactively dispatch missed organization invitations.",
+    "router/index.js:94 redirects legacy /permissions to ManageForms and TheSidebar.vue:126 exposes 4 main modules (/forms, /manage, /analytics, /email); fine-grained access is enforced per-form (collaborators/org/role) plus Admin global scope."
+  ],
+  "exceptions": [
+    "FORM_DRAFT / FORM_SCHEDULED / FORM_CLOSED -> HTTP 40300 termination (responsePolicy.js:273)",
+    "LOGIN_REQUIRED -> HTTP 40100 or ACCESS_DENIED_USER / ACCESS_DENIED_ROLE -> HTTP 40300 (responsePolicy.js:290)",
+    "LIMIT_RESPONSE_REACHED -> HTTP 40900 or QUOTA_REACHED -> HTTP 40300 (responsePolicy.js:335)",
+    "Unconfigured SMTP credentials -> preview verification without live mail dispatch (emailTemplate.js:270)",
+    "Export API fallback -> client-side SheetJS/JSON fallback when network export endpoint fails (TabResponses.vue:482)"
+  ],
+  "claims": {
+    "p1_start": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/views/Login.vue:1"
+    },
+    "p1_oauth": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Auth/auth.routes.js:20"
+    },
+    "p1_jwt": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Auth/auth.routes.js:95"
+    },
+    "p1_manage": {
+      "status": "verified",
+      "evidence": "frontend/src/containers/TheSidebar.vue:132"
+    },
+    "p1_gw_build": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/components/Wizard/FormBuilderWizard.vue:4"
+    },
+    "p1_wizard": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/components/Wizard/FormBuilderWizard.vue:18"
+    },
+    "p1_manual": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/components/Tabs/TabQuestion.vue:197"
+    },
+    "p1_setting": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/components/context/ResponseSettings.vue:6"
+    },
+    "p1_save_db": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Form/service/form.js:202"
+    },
+    "p1_gw_collab": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Email/service/collaboration.js:50"
+    },
+    "p1_email_collab": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Email/service/collaboration.js:38"
+    },
+    "p1_gw_org": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Email/service/inviteOrganization.js:70"
+    },
+    "p1_email_org": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Email/service/inviteOrganization.js:52"
+    },
+    "p1_share": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/components/Wizard/FormBuilderWizard.vue:511"
+    },
+    "p1_end": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:272"
+    },
+    "a1_05": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/components/Wizard/FormBuilderWizard.vue:17"
+    },
+    "a1_06": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/components/Tabs/TabQuestion.vue:197"
+    },
+    "a1_11": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Email/service/collaboration.js:50"
+    },
+    "a1_12": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Email/service/collaboration.js:54"
+    },
+    "a1_13": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Email/service/inviteOrganization.js:68"
+    },
+    "a1_14": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Email/service/inviteOrganization.js:76"
+    },
+    "p2_start": {
+      "status": "verified",
+      "evidence": "frontend/src/router/index.js:56"
+    },
+    "p2_gw_sched": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:272"
+    },
+    "p2_err_sched": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:280"
+    },
+    "p2_gw_auth": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:286"
+    },
+    "p2_err_auth": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:290"
+    },
+    "p2_gw_limit": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:332"
+    },
+    "p2_err_limit": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:335"
+    },
+    "p2_fill": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/views/page/FormFill.vue:113"
+    },
+    "p2_gw_submit": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:178"
+    },
+    "p2_save_draft": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:195"
+    },
+    "p2_commit_db": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:194"
+    },
+    "p2_gw_confirm": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:205"
+    },
+    "p2_email_confirm": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:222"
+    },
+    "p2_gw_notify": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:227"
+    },
+    "p2_email_creator": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:240"
+    },
+    "p2_end": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:245"
+    },
+    "a2_02": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:273"
+    },
+    "a2_03": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:283"
+    },
+    "a2_04": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:297"
+    },
+    "a2_05": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:313"
+    },
+    "a2_06": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:335"
+    },
+    "a2_07": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:344"
+    },
+    "a2_09": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/utils/responsePolicy.js:344"
+    },
+    "a2_10": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:195"
+    },
+    "a2_12": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:205"
+    },
+    "a2_13": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:226"
+    },
+    "a2_14": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:227"
+    },
+    "a2_15": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:243"
+    },
+    "p3_start": {
+      "status": "verified",
+      "evidence": "frontend/src/containers/TheSidebar.vue:138"
+    },
+    "p3_scope": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Form/service/form.js:111"
+    },
+    "p3_gw_module": {
+      "status": "verified",
+      "evidence": "frontend/src/containers/TheSidebar.vue:138"
+    },
+    "p3_analytics": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/views/Analytics.vue:421"
+    },
+    "p3_resp_detail": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/views/Responsedetail.vue:235"
+    },
+    "p3_gw_export": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/components/Tabs/TabResponses.vue:451"
+    },
+    "p3_exp_xlsx": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/utils/analyticsWorkbook.js:432"
+    },
+    "p3_exp_json": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Response/service/response.js:562"
+    },
+    "p3_email_studio": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/views/email/index.vue:409"
+    },
+    "p3_send_test": {
+      "status": "verified",
+      "evidence": "backend/server/Project/Settings/service/emailTemplate.js:235"
+    },
+    "p3_end": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/views/email/index.vue:779"
+    },
+    "a3_03": {
+      "status": "verified",
+      "evidence": "frontend/src/router/index.js:88"
+    },
+    "a3_04": {
+      "status": "verified",
+      "evidence": "frontend/src/router/index.js:81"
+    },
+    "a3_05": {
+      "status": "verified",
+      "evidence": "frontend/src/router/index.js:99"
+    },
+    "a3_08": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/utils/analyticsWorkbook.js:432"
+    },
+    "a3_09": {
+      "status": "verified",
+      "evidence": "frontend/src/projects/components/Tabs/TabResponses.vue:470"
+    }
+  }
+}

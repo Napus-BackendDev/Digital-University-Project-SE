@@ -1,26 +1,38 @@
 <template>
-    <CRow class="mb-4">
-        <CCol class="mb-4 mb-lg-0">
-            <div class="response-trends-container h-100">
-                <div class="header mb-4">
-                    <h4 class="m-0 font-weight-bold">{{ $t('analytics.submissionTrend') }}</h4>
+    <div class="response-trends-container h-100 d-flex flex-column justify-content-between">
+        <div>
+            <div class="d-flex justify-content-between align-items-start flex-wrap mb-3" style="gap: 12px;">
+                <div>
+                    <h4 class="m-0 font-weight-bold trend-title">{{ $t('analytics.submissionTrend') }}</h4>
                     <div class="text-muted small mt-1">{{ $t('analytics.overviewBasedOn', { range: timeRangeLabel }) }}</div>
                 </div>
-                <CChartLine
-                    :datasets="computedTrendChartData"
-                    :labels="computedTrendChartLabels"
-                    :options="trendChartOptions"
-                    style="height: 280px"
-                />
+                <div class="d-flex align-items-center flex-wrap" style="gap: 14px;">
+                    <span class="legend-item">
+                        <span class="legend-dot legend-dot--completed"></span>
+                        {{ $t('analytics.submissions') }}
+                        <strong class="legend-num">{{ periodCompletedTotal }}</strong>
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-dot legend-dot--ongoing"></span>
+                        {{ $t('analytics.ongoingDrafts') }}
+                        <strong class="legend-num">{{ periodOngoingTotal }}</strong>
+                    </span>
+                </div>
             </div>
-        </CCol>
-    </CRow>
+        </div>
+        <CChartLine
+            :datasets="computedTrendChartData"
+            :labels="computedTrendChartLabels"
+            :options="trendChartOptions"
+            style="height: 295px"
+        />
+    </div>
 </template>
 
 <script>
-import { CChartLine } from '@coreui/vue-chartjs'
-import { mapGetters } from 'vuex'
-import moment from 'moment'
+import { CChartLine } from '@coreui/vue-chartjs';
+import { mapGetters } from 'vuex';
+import { buildTrendSeries, filterFormsByUserAccess } from '@/projects/utils/analytics';
 
 export default {
     name: 'SubmissionTrendChart',
@@ -30,7 +42,11 @@ export default {
     props: {
         timeRange: {
             type: String,
-            default: '7d'
+            default: 'all'
+        },
+        trendData: {
+            type: Object,
+            default: null
         }
     },
     data() {
@@ -44,125 +60,142 @@ export default {
                     bodyFontColor: '#475569',
                     borderColor: '#e2e8f0',
                     borderWidth: 1,
-                    xPadding: 16,
-                    yPadding: 12,
-                    displayColors: false,
+                    xPadding: 14,
+                    yPadding: 10,
+                    displayColors: true,
                     intersect: false,
-                    mode: 'index',
+                    mode: 'index'
                 },
                 scales: {
                     xAxes: [{
                         gridLines: { display: false, drawBorder: false },
-                        ticks: { fontColor: '#64748b', maxTicksLimit: 7 }
+                        ticks: { fontColor: '#64748b', maxTicksLimit: 10 }
                     }],
                     yAxes: [{
                         gridLines: { color: '#f1f5f9', drawBorder: false, zeroLineColor: '#f1f5f9' },
-                        ticks: { beginAtZero: true, fontColor: '#64748b', maxTicksLimit: 5, padding: 10 }
+                        ticks: { beginAtZero: true, precision: 0, fontColor: '#64748b', maxTicksLimit: 5, padding: 10 }
                     }]
                 },
                 elements: {
-                    point: { radius: 0, hitRadius: 10, hoverRadius: 4, hoverBorderWidth: 3 }
+                    point: { radius: 2, hitRadius: 10, hoverRadius: 5, hoverBorderWidth: 2 }
                 }
             }
-        }
+        };
     },
     computed: {
         ...mapGetters('Forms', ['forms']),
+        ...mapGetters('Responses', ['responses']),
         ...mapGetters('User', ['user']),
 
         timeRangeLabel() {
             if (this.timeRange === '1d') return this.$t('analytics.today');
             if (this.timeRange === '7d') return this.$t('analytics.oneWeek');
-            return this.$t('analytics.oneMonth');
+            if (this.timeRange === '30d') return this.$t('analytics.oneMonth');
+            return this.$t('analytics.allTime');
         },
 
-        chartDataObj() {
-            if (!this.forms || !this.user) return { labels: [], data: [] };
-
-            const myForms = this.forms;
-
-            let formatStr = 'MMM DD';
-            let loopCount = 0;
-            let unit = 'days';
-            
-            if (this.timeRange === '1d') {
-                formatStr = 'HH:00';
-                loopCount = 24;
-                unit = 'hours';
-            } else if (this.timeRange === 'all' || this.timeRange === '30d') {
-                loopCount = 30;
-            } else {
-                loopCount = 7;
+        resolvedTrend() {
+            if (this.trendData && Array.isArray(this.trendData.labels)) {
+                return this.trendData;
             }
-
-            const dataMap = {};
-            const labels = [];
-            
-            for (let i = loopCount - 1; i >= 0; i--) {
-                const d = moment().subtract(i, unit);
-                const key = d.format(formatStr);
-                labels.push(key);
-                dataMap[key] = 0;
-            }
-
-            myForms.forEach(f => {
-                if (!f.responses) return;
-                f.responses.forEach(r => {
-                    const isSubmitted = r && (r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true');
-                    if (!isSubmitted || !r.createdAt) return;
-
-                    const rDate = moment(r.createdAt);
-                    if (this.timeRange === '1d' && !rDate.isSame(moment(), 'day')) return;
-                    if (this.timeRange !== '1d' && rDate.isBefore(moment().subtract(loopCount, 'days'), 'day')) return;
-
-                    const key = rDate.format(formatStr);
-                    if (dataMap[key] !== undefined) {
-                        dataMap[key]++;
-                    }
-                });
+            return buildTrendSeries(filterFormsByUserAccess(this.forms || [], this.user), {
+                allResponses: this.responses || [],
+                timeRange: this.timeRange
             });
-
-            return { labels, data: labels.map(l => dataMap[l]) };
         },
 
         computedTrendChartData() {
-            return [{
-                label: this.$t('analytics.submissions'),
-                backgroundColor: 'rgba(140, 21, 21, 0.08)',
-                borderColor: '#8c1515',
-                pointBackgroundColor: '#8c1515',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#8c1515',
-                borderWidth: 3,
-                lineTension: 0.4,
-                data: this.chartDataObj.data
-            }];
+            return [
+                {
+                    label: this.$t('analytics.submissions'),
+                    backgroundColor: 'rgba(140, 21, 21, 0.08)',
+                    borderColor: '#8c1515',
+                    pointBackgroundColor: '#8c1515',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#8c1515',
+                    borderWidth: 3,
+                    lineTension: 0.35,
+                    data: this.resolvedTrend.completedData || []
+                },
+                {
+                    label: this.$t('analytics.ongoingDrafts'),
+                    backgroundColor: 'rgba(217, 119, 6, 0.04)',
+                    borderColor: '#d97706',
+                    borderDash: [6, 4],
+                    pointBackgroundColor: '#d97706',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#d97706',
+                    borderWidth: 2,
+                    lineTension: 0.35,
+                    data: this.resolvedTrend.ongoingData || []
+                }
+            ];
         },
 
         computedTrendChartLabels() {
-            return this.chartDataObj.labels;
+            return this.resolvedTrend.labels || [];
         },
-        checkAdmin(user) {
-            if (user && user.role) {
-                const role = user.role;
-                if (Array.isArray(role.title)) {
-                    return role.title.some(t => t && t.value && t.value.toLowerCase().includes('admin'));
-                } else if (typeof role.title === 'string') {
-                    return role.title.toLowerCase().includes('admin');
-                }
-            }
-            return false;
+
+        periodCompletedTotal() {
+            return (this.resolvedTrend.completedData || []).reduce((acc, val) => acc + (Number(val) || 0), 0);
+        },
+
+        periodOngoingTotal() {
+            return (this.resolvedTrend.ongoingData || []).reduce((acc, val) => acc + (Number(val) || 0), 0);
         }
     }
-}
+};
 </script>
 
 <style scoped>
 .response-trends-container {
-    background: white;
+    background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    padding: 22px;
+}
+
+.trend-title {
+    font-size: 1rem;
+    letter-spacing: -0.01em;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.legend-num {
+    color: #0f172a;
+    background: #f1f5f9;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-dot--completed {
+    background-color: #8c1515;
+}
+
+.legend-dot--ongoing {
+    background-color: #d97706;
+}
+
+@media (max-width: 575.98px) {
+    .response-trends-container {
+        padding: 16px;
+    }
 }
 </style>

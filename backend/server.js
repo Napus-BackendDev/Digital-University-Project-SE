@@ -8,14 +8,12 @@ var fs = require('fs');
 var cfg = require('./config/config');
 
 
-// Load demo ejs for test Oauth
-app.set('view engine', 'ejs');
-
+// Root and OAuth routes
 app.get('/', (req, res) => {
-    res.render('index');
+    res.status(200).json({ status: 'ok', service: 'MFU E-Questionnaires API', version: '1.0.0' });
 });
 app.get('/oauth', (req, res) => {
-    res.render('login');
+    res.redirect(process.env.FRONTEND_URL || 'http://localhost:8080');
 });
 
 

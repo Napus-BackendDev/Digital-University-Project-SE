@@ -2,6 +2,7 @@ const mongo = require("mongodb");
 const User = require("../controller/user");
 const ResMessage = require("../../Settings/service/message");
 const { mapUserDto, mapUserListDto } = require("../dto/user.dto");
+const { isValidObjectId } = require("../../Response/utils/responsePolicy");
 const getApiId = function (request) {
   return Number(request?.query?.apiId || request?.body?.apiId) || 0;
 };
@@ -14,8 +15,11 @@ const getErrorCode = function () {
 
 exports.onQuery = async function (request, response) {
   try {
-    let query = {};
-    query._id = new mongo.ObjectId(request.body._id);
+    const rawId = request.body && request.body._id;
+    if (!isValidObjectId(rawId)) {
+      return ResMessage.sendResponse(response, getApiId(request), 40000);
+    }
+    let query = { _id: new mongo.ObjectId(rawId) };
     const doc = await User.onQuery(query);
     return ResMessage.sendResponse(response, getApiId(request), getSuccessCode(request), mapUserDto(doc));
   } catch (err) {

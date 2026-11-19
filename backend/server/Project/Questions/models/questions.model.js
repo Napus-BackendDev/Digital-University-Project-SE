@@ -9,7 +9,7 @@ var objSchema = new Schema({
     title: [{
         _id: false,
         key: { type: String, required: true },
-        value: { type: String, required: true }
+        value: { type: String, default: '' }
     }],
     description: [{
         _id: false,
@@ -27,7 +27,7 @@ var objSchema = new Schema({
                 key: { type: String, default: null },
                 value: { type: String, default: null }
             }],
-            nextQuestion: { type: mongoose.Schema.Types.ObjectId, ref: 'Questions', default: null },
+            nextQuestion: { type: mongoose.Schema.Types.Mixed, default: null },
         }],
         // Checkbox
         allowMultipleSelect: { type: Boolean, default: null },

@@ -100,7 +100,11 @@ exports.onMessage_Response = async function (number, code, res) {
 
         var doc = await infomation_messages.onQuery(query);
         if (!doc) {
-            return configMsg.getMsg(code);
+            return configMsg.getMsg(code) || {
+                code: code,
+                httpcode: Number(String(code).substring(0, 3)),
+                message: [{ value: 'An error occurred', key: 'en' }]
+            };
         }
         delete doc._id;
         delete doc.create;
@@ -112,7 +116,12 @@ exports.onMessage_Response = async function (number, code, res) {
         return doc
 
     } catch (err) {
-        return err
+        console.error('[message.service.js] Error in onMessage_Response:', err);
+        return configMsg.getMsg(code) || {
+            code: code,
+            httpcode: Number(String(code).substring(0, 3)),
+            message: [{ value: 'An error occurred', key: 'en' }]
+        };
     }
 };
 
@@ -123,7 +132,9 @@ exports.onMessage_Response = async function (number, code, res) {
 exports.sendResponse = async function (response, numbers, code, data = null) {
     const httpCode = Number(String(code).substring(0, 3)); // เอา 3 หลักแรก
     let resData = await resMsg.onMessage_Response(numbers, code);
-    if (!resData) resData = { code, httpcode: httpCode, message: [] }; // Fallback
+    if (!resData || resData instanceof Error) {
+        resData = configMsg.getMsg(code) || { code, httpcode: httpCode, message: [] };
+    }
     if (data !== null) resData.data = data;
     return response.status(httpCode).json(resData);
 }

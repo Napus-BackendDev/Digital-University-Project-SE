@@ -88,12 +88,34 @@ const module = {
                 })
                 .catch(err => { throw err; });
         },
-        get({ commit }, data) {
+        findForForm(_, params = {}) {
+            return Service.response('exp', { params }, {})
+                .then(response => normalizeResponse(response?.data?.data) || [])
+                .catch(err => {
+                    const statusCode = err?.response?.status || err?.response?.data?.httpcode;
+                    if (statusCode === 404) return [];
+                    throw err;
+                });
+        },
+        get({ commit, state }, data) {
             return Service.response('get', data, {})
                 .then(response => {
                     const result = normalizeResponse(response?.data?.data);
                     if (Array.isArray(result)) {
                         commit('responses', result);
+                    } else if (result && typeof result === 'object') {
+                        if (result._id) {
+                            const list = Array.isArray(state.responses) ? [...state.responses] : [];
+                            const idx = list.findIndex(item => String(item && item._id) === String(result._id));
+                            if (idx >= 0) {
+                                list.splice(idx, 1, result);
+                            } else {
+                                list.unshift(result);
+                            }
+                            commit('responses', list);
+                        } else {
+                            commit('responses', [result]);
+                        }
                     }
                     return result;
                 })
@@ -118,7 +140,8 @@ const module = {
             let payload;
             if (hasFile) {
                 const formData = new FormData();
-                formData.append('responder', data.responder);
+                if (data.responder) formData.append('responder', data.responder);
+                if (data.guestSessionId) formData.append('guestSessionId', data.guestSessionId);
                 formData.append('form', data.form);
                 formData.append('submit', String(!!data.submit));
 
@@ -156,7 +179,8 @@ const module = {
                 payload = formData;
             } else {
                 payload = {
-                    responder: data.responder,
+                    responder: data.responder || null,
+                    guestSessionId: data.guestSessionId || null,
                     form: data.form,
                     submit: !!data.submit,
                     answers: (data.answers || []).map(ans => ({
@@ -184,7 +208,8 @@ const module = {
             let payload = data;
             if (hasFile) {
                 const formData = new FormData();
-                formData.append('responder', data.responder);
+                if (data.responder) formData.append('responder', data.responder);
+                if (data.guestSessionId) formData.append('guestSessionId', data.guestSessionId);
                 formData.append('form', data.form);
                 if (data._id) formData.append('_id', data._id);
                 if (typeof data.submit !== 'undefined') {

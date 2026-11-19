@@ -5,20 +5,20 @@
             <!-- ID / Index Column -->
             <template #id="{ item, index }">
                 <td class="align-middle pl-4 shadow-none border-0">
-                    <div class="index-pill">{{ index + 1 }}</div>
+                    <div class="index-pill">{{ (activePage - 1) * perPage + index + 1 }}</div>
                 </td>
             </template>
 
             <!-- Question Column -->
             <template #question="{ item }">
-                <td class="align-middle border-0 py-4" style="width: 45%;">
+                <td class="align-middle border-0 py-3 py-md-4 question-col-cell">
                     <div class="d-flex align-items-start">
                         <div class="q-type-icon mr-3 mt-1">
                             <CIcon :name="getQuestionIcon(item.question)" size="sm" />
                         </div>
                         <div>
                             <h6 class="font-weight-bold text-dark mb-1 question-text">
-                                {{ getTitle(item.question && item.question.title) || 'Untitled Question' }}
+                                {{ getLang(item.question && item.question.title) || 'Untitled Question' }}
                             </h6>
                             <div class="d-flex align-items-center">
                                 <span class="badge-type-custom">
@@ -53,17 +53,17 @@
                                                 @error="$set(imgErrors, val, true)" />
                                             <div v-else
                                                 class="file-response-link p-1 d-inline-flex align-items-center bg-light rounded shadow-sm"
-                                                style="font-size: 0.75rem;">
+                                                style="font-size: 0.8125rem;">
                                                 <CIcon name="cil-image1" class="mr-1 text-muted" style="width: 14px" />
-                                                <span class="text-truncate" style="max-width: 100px">{{ getFileName(val)
+                                                <span class="text-truncate" style="max-width: 140px">{{ getFileName(val)
                                                     }}</span>
                                             </div>
                                         </a>
                                         <div v-else :key="i"
                                             class="file-response-link p-1 d-inline-flex align-items-center bg-light rounded shadow-sm"
-                                            style="font-size: 0.75rem;">
+                                            style="font-size: 0.8125rem;">
                                             <CIcon name="cil-image1" class="mr-1 text-muted" style="width: 14px" />
-                                            <span class="text-truncate" style="max-width: 100px">{{ getFileName(val)
+                                            <span class="text-truncate" style="max-width: 140px">{{ getFileName(val)
                                                 }}</span>
                                         </div>
                                     </template>
@@ -72,16 +72,16 @@
                                         <a v-if="hasFileUrl(val)" :key="i" :href="resolveFileUrl(val)" target="_blank"
                                             rel="noopener noreferrer"
                                             class="file-response-link p-1 d-inline-flex align-items-center bg-light rounded shadow-sm"
-                                            style="font-size: 0.75rem;">
+                                            style="font-size: 0.8125rem;">
                                             <CIcon name="cil-paperclip" class="mr-1 text-primary" style="width: 14px" />
-                                            <span class="text-truncate" style="max-width: 100px">{{ getFileName(val)
+                                            <span class="text-truncate" style="max-width: 140px">{{ getFileName(val)
                                                 }}</span>
                                         </a>
                                         <div v-else :key="i"
                                             class="file-response-link p-1 d-inline-flex align-items-center bg-light rounded shadow-sm"
-                                            style="font-size: 0.75rem;">
+                                            style="font-size: 0.8125rem;">
                                             <CIcon name="cil-paperclip" class="mr-1 text-primary" style="width: 14px" />
-                                            <span class="text-truncate" style="max-width: 100px">{{ getFileName(val)
+                                            <span class="text-truncate" style="max-width: 140px">{{ getFileName(val)
                                                 }}</span>
                                         </div>
                                     </template>
@@ -153,18 +153,28 @@
 
         </CDataTable>
 
-        <div v-if="totalPages > 1" class="d-flex justify-content-end p-3 border-top">
-            <Pagination :activePage.sync="activePage" :pages="totalPages" />
-        </div>
+        <Pagination
+            v-if="(answers || []).length > 0"
+            class="p-3 border-top"
+            :activePage.sync="activePage"
+            :pages="totalPages"
+            :showPerPage="true"
+            :itemsPerPage.sync="perPage"
+            :totalItems="(answers || []).length"
+            noMargin
+        />
     </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
 import Pagination from '@/projects/components/Util/Pagination.vue';
+import localeMixin from '@/mixins/localeMixin';
+import { isFreeTextQuestionType, normalizeQuestionTypeKey } from '@/projects/utils/formPolicy';
 
 export default {
     name: 'AnswerTable',
+    mixins: [localeMixin],
     components: { Pagination },
     props: {
         answers: {
@@ -181,7 +191,7 @@ export default {
                 { key: 'response', label: 'SUBMITTED ANSWER' }
             ],
             activePage: 1,
-            perPage: 20,
+            perPage: 5,
             imgErrors: {}
         }
     },
@@ -189,7 +199,6 @@ export default {
         this.$store.dispatch('Setting/question_type/get');
     },
     computed: {
-        ...mapGetters('Setting', ['lang']),
         ...mapGetters('Setting/question_type', { question_type_list: 'item' }),
         questionTypes() {
             if (!this.question_type_list || !Array.isArray(this.question_type_list)) return [];
@@ -209,17 +218,12 @@ export default {
     watch: {
         answers() {
             this.activePage = 1;
+        },
+        perPage() {
+            this.activePage = 1;
         }
     },
     methods: {
-        getTitle(titleArr) {
-            if (!titleArr || !Array.isArray(titleArr) || titleArr.length === 0) return '';
-            const currentLang = this.lang || 'en';
-            let content = titleArr.find(t => t.key && t.key.toLowerCase() === currentLang.toLowerCase());
-            if (!content) content = titleArr.find(t => t.key && t.key.toLowerCase() === 'en');
-            if (!content) content = titleArr[0];
-            return content ? content.value : '';
-        },
         isEmpty(val) {
             if (val === null || val === undefined || val === '') return true;
             if (Array.isArray(val) && val.length === 0) return true;
@@ -292,12 +296,11 @@ export default {
             }
         },
         getQuestionIcon(question) {
-            const t = this.getQuestionTypeStr(question);
+            const t = normalizeQuestionTypeKey(this.getQuestionTypeStr(question));
             if (!t) return 'cil-notes';
 
             switch (t) {
-                case 'short_answer': return 'cil-short-text';
-                case 'paragraph': return 'cil-align-left';
+                case 'free_text': return 'cil-align-left';
                 case 'multiple_choice': return 'cil-list';
                 case 'checkbox':
                 case 'checkboxes': return 'cil-square';
@@ -312,10 +315,9 @@ export default {
         getQuestionTypeLabel(question) {
             const t = this.getQuestionTypeStr(question);
             if (!t) return 'Unknown Type';
+            if (isFreeTextQuestionType(t)) return 'Free Text';
 
             switch (t) {
-                case 'short_answer': case 'short': return 'Short Text';
-                case 'paragraph': return 'Long Paragraph';
                 case 'multiple_choice': return 'Multiple choice';
                 case 'checkboxes': case 'checkbox': return 'Checkboxes';
                 case 'dropdown': return 'Dropdown';
@@ -332,10 +334,20 @@ export default {
             }
         },
         getChoiceLabel(question, val) {
-            if (!question || !question.config || !question.config.choices) return val;
-            const choice = question.config.choices.find(c => String(c.key) === String(val));
-            if (choice && choice.lang) {
-                return this.getTitle(choice.lang) || val;
+            const choices = (question && question.config && Array.isArray(question.config.choices))
+                ? question.config.choices
+                : (question && Array.isArray(question.options) ? question.options : null);
+            if (!choices || choices.length === 0) return val;
+            let choice = choices.find(c => c && (String(c.key) === String(val) || String(c._id) === String(val) || String(c.value) === String(val)));
+            if (!choice && val !== '' && val !== null && !isNaN(val) && choices[Number(val)]) {
+                choice = choices[Number(val)];
+            }
+            if (choice) {
+                const resolved = (choice.lang && Array.isArray(choice.lang))
+                    ? this.getLang(choice.lang)
+                    : (choice.label ? this.getLang(choice.label) : this.getLang(choice));
+                if (resolved) return resolved;
+                if (choice.value) return choice.value;
             }
             return val;
         },
@@ -386,7 +398,7 @@ export default {
 ::v-deep .custom-premium-table thead th {
     background-color: #f8fafc !important;
     color: #64748b !important;
-    font-size: 0.75rem !important;
+    font-size: 0.8125rem !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.08em;
@@ -417,7 +429,7 @@ export default {
     background: #f1f5f9;
     color: #64748b;
     border-radius: 8px;
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     font-weight: 700;
 }
 
@@ -439,7 +451,7 @@ export default {
 }
 
 .extra-small {
-    font-size: 0.65rem;
+    font-size: 0.8125rem;
 }
 
 .letter-spacing-1 {
@@ -447,7 +459,7 @@ export default {
 }
 
 .badge-type-custom {
-    font-size: 0.65rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -467,7 +479,7 @@ export default {
 }
 
 .empty-text {
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.9rem;
 }
 
@@ -488,7 +500,7 @@ export default {
     background: #eff6ff;
     color: #2563eb;
     border-radius: 50rem;
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     border: 1px solid #dbeafe;
 }
@@ -562,5 +574,28 @@ export default {
 
 .gap-2 {
     gap: 0.5rem;
+}
+
+.question-col-cell {
+    width: 45%;
+}
+
+@media (max-width: 767.98px) {
+    .question-col-cell {
+        width: auto;
+        min-width: 190px;
+    }
+
+    ::v-deep .custom-premium-table thead th {
+        padding: 12px 12px !important;
+    }
+
+    ::v-deep .custom-premium-table tbody td {
+        padding: 12px 12px !important;
+    }
+
+    .answer-image-preview {
+        max-width: 160px;
+    }
 }
 </style>

@@ -992,6 +992,189 @@
         }
       }
     },
+    "/api/v1/response/export/{formId}": {
+      "get": {
+        "tags": ["Responses"],
+        "summary": "Unified form export for external systems (apiId: 6)",
+        "description": "Single public endpoint returning full form metadata (`title`, `description`, `schedule`, `organizations`, `creator`, `collaborators`), ordered `questions` (1..N with choices/scale), and one flat list (`results`) of target users with `submitted` (`true`/`false`) and resolved `answers`.",
+        "parameters": [
+          {
+            "name": "formId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "64e1f9f32a6d1c0013a1b111" },
+            "description": "Target Form ObjectId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "form": {
+                              "type": "object",
+                              "properties": {
+                                "_id": { "type": "string" },
+                                "title": { "type": "object", "properties": { "th": { "type": "string" }, "en": { "type": "string" } } },
+                                "description": { "type": "object", "properties": { "th": { "type": "string" }, "en": { "type": "string" } } },
+                                "schedule": { "type": "object" },
+                                "organizations": { "type": "array", "items": { "type": "string" } },
+                                "creator": { "type": "object", "nullable": true },
+                                "collaborators": { "type": "array", "items": { "type": "object" } }
+                              }
+                            },
+                            "questions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "_id": { "type": "string" },
+                                  "order": { "type": "integer" },
+                                  "title": { "type": "object", "properties": { "th": { "type": "string" }, "en": { "type": "string" } } },
+                                  "description": { "type": "object", "properties": { "th": { "type": "string" }, "en": { "type": "string" } } },
+                                  "type": { "type": "string", "nullable": true },
+                                  "isRequired": { "type": "boolean" },
+                                  "maxRating": { "type": "integer" },
+                                  "choices": { "type": "array", "items": { "type": "object" } }
+                                }
+                              }
+                            },
+                            "exportedAt": { "type": "string", "format": "date-time" },
+                            "results": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "_id": { "type": "string", "nullable": true },
+                                  "name": { "type": "string", "nullable": true },
+                                  "email": { "type": "string", "nullable": true },
+                                  "organization": { "type": "string", "nullable": true },
+                                  "role": { "type": "string", "nullable": true },
+                                  "isTarget": { "type": "boolean" },
+                                  "submitted": { "type": "boolean" },
+                                  "submittedAt": { "type": "string", "format": "date-time", "nullable": true },
+                                  "answers": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "questionId": { "type": "string" },
+                                        "order": { "type": "integer" },
+                                        "questionTitle": { "type": "string" },
+                                        "type": { "type": "string", "nullable": true },
+                                        "value": {}
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid formId" },
+          "404": { "description": "Form not found" }
+        }
+      }
+    },
+    "/api/v1/analytics/export": {
+      "get": {
+        "tags": ["Responses"],
+        "summary": "Export comprehensive analytics & responses across all accessible forms",
+        "parameters": [
+          {
+            "name": "timeRange",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["all", "1d", "7d", "30d"], "default": "all" }
+          },
+          {
+            "name": "orgId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "default": "all" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["all", "Active", "closingSoon", "Pending", "Closed"], "default": "all" }
+          },
+          {
+            "name": "searchQuery",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "formIds",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Comma-separated form IDs to include"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "User ID for role/access scoping"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unified multi-form analytics and response export payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "exportedAt": { "type": "string", "format": "date-time" },
+                    "overall": {
+                      "type": "object",
+                      "properties": {
+                        "filters": { "type": "object" },
+                        "summary": { "type": "object" },
+                        "trend": { "type": "object" },
+                        "breakdown": { "type": "object" }
+                      }
+                    },
+                    "forms": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "form": { "type": "object" },
+                          "summary": { "type": "object" },
+                          "breakdown": { "type": "object" },
+                          "questions": { "type": "array", "items": { "type": "object" } },
+                          "results": { "type": "array", "items": { "type": "object" } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/response/get": {
       "post": {
         "tags": ["Responses"],

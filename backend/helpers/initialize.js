@@ -11,7 +11,11 @@ exports.init = async function (callback) {
 
         console.log("MongoURI:", cfg.mongoURI);
 
-        await mongoose.connect(cfg.mongoURI);
+        await mongoose.connect(cfg.mongoURI, {
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
+        });
 
         console.log("✅ MongoDB connected");
 

@@ -8,6 +8,7 @@ const verification = require("./service/verification");
 const question = require("./service/question_type");
 const collaborator = require("./service/controll");
 const emailTemplate = require("./service/emailTemplate");
+const smtpConfig = require("./service/smtpConfig");
 // const auth_message = require("./service/auth_message");
 // const Role = require("../Accounts/service/role");
 // const Authen_Type = require("../Accounts/service/authen_type");
@@ -67,10 +68,17 @@ router.post("/collaborator", collaborator.onCreate);
 router.put("/collaborator", collaborator.onUpdate);
 router.delete("/collaborator", collaborator.onDelete);
 
+router.get("/emailBranding", emailTemplate.onGetBranding);
 router.get("/emailTemplate", emailTemplate.onQuerys);
 router.get("/emailTemplate/:id", emailTemplate.onQuery);
 router.post("/emailTemplate", emailTemplate.onCreate);
+router.post("/emailTemplate/test", emailTemplate.onSendTest);
 router.put("/emailTemplate", emailTemplate.onUpdate);
 router.delete("/emailTemplate", emailTemplate.onDelete);
+
+router.get("/smtp", smtpConfig.onGet);
+router.put("/smtp", smtpConfig.onUpdate);
+router.delete("/smtp", smtpConfig.onReset);
+router.post("/smtp/test", smtpConfig.onTestConnection);
 
 module.exports = router;

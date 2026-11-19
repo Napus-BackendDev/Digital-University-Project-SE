@@ -51,6 +51,7 @@
                     />
                     <div class="overflow-hidden">
                         <div class="font-weight-bold text-dark text-truncate" style="max-width: 170px;">{{ username }}</div>
+                        <div v-if="userRole" class="small text-truncate font-weight-bold" style="max-width: 170px; color: #8c1515; font-size: 0.8125rem;">{{ userRole }}</div>
                         <div v-if="userOrganization" class="text-muted small text-truncate" style="max-width: 170px; font-weight: 500;">{{ userOrganization }}</div>
                         <div class="text-muted small text-truncate" style="max-width: 170px; opacity: 0.85;">{{ userEmail }}</div>
                     </div>
@@ -63,6 +64,8 @@
 
 <script>
 import api from '@/service/api';
+import { clearClientSession } from '@/projects/utils/authSession';
+import { canManageForms } from '@/projects/utils/formPolicy';
 
 export default {
     name: 'TheSidebar',
@@ -70,17 +73,28 @@ export default {
         return {}
     },
     async created() {
-        const isDevEnv = (process.env.VUE_APP_APP_ENV || 'production').toLowerCase() === 'developer';
-        const savedUserId = (isDevEnv && this.$route?.query?.switchUser) || window.localStorage.getItem('activeUserId');
-        if (savedUserId && (!this.$store.state.User || !this.$store.state.User.user)) {
-            try {
-                await this.$store.dispatch('User/get', { _id: savedUserId });
-            } catch (e) {
-                console.error('Failed to load user info', e);
+        await this.syncActiveUser();
+    },
+    watch: {
+        '$route.query.switchUser'(newVal) {
+            const isDevEnv = (process.env.VUE_APP_APP_ENV || 'production').toLowerCase() === 'developer';
+            if (isDevEnv && newVal) {
+                this.syncActiveUser(newVal);
             }
         }
     },
     methods: {
+        async syncActiveUser(overrideId = null) {
+            const isDevEnv = (process.env.VUE_APP_APP_ENV || 'production').toLowerCase() === 'developer';
+            const savedUserId = (isDevEnv && (overrideId || this.$route?.query?.switchUser)) || window.localStorage.getItem('activeUserId');
+            if (savedUserId && (overrideId || !this.$store.state.User || !this.$store.state.User.user)) {
+                try {
+                    await this.$store.dispatch('User/get', { _id: savedUserId });
+                } catch (e) {
+                    console.error('Failed to load user info', e);
+                }
+            }
+        },
         isActive(path) {
             const currentPath = this.$route.path.split('/')
             return currentPath.includes(path)
@@ -94,22 +108,50 @@ export default {
         analytics() {
             this.$router.push('/analytics')
         },
-        logout() {
-            window.localStorage.removeItem('activeUserId');
-            this.$router.push('/pages/login')
+        async logout() {
+            try {
+                await api.auth('logout');
+            } catch (e) {}
+            clearClientSession(this.$store);
+            this.$router.push('/pages/login');
         },
     },
     computed: {
+        canManageForms() {
+            return canManageForms(this.user);
+        },
+        isStudent() {
+            const role = this.user && this.user.role;
+            if (!role) return false;
+            if (typeof role === 'string') {
+                const lower = role.toLowerCase();
+                return lower.includes('student') || role.includes('นักศึกษา');
+            }
+            if (typeof role === 'object') {
+                if (Array.isArray(role.title)) {
+                    return role.title.some(t => {
+                        if (!t || !t.value) return false;
+                        const v = String(t.value).toLowerCase();
+                        return v.includes('student') || t.value.includes('นักศึกษา');
+                    });
+                }
+                const name = String(role.name || role.title || '').toLowerCase();
+                return name.includes('student') || String(role.name || role.title || '').includes('นักศึกษา');
+            }
+            return false;
+        },
         navs() {
-            return [{
-                _name: 'CSidebarNav',
-                _children: [
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: this.$t('nav.forms'),
-                        to: '/forms',
-                        icon: 'cil-description',
-                    },
+            const children = [
+                {
+                    _name: 'CSidebarNavItem',
+                    name: this.$t('nav.forms'),
+                    to: '/forms',
+                    icon: 'cil-description',
+                }
+            ];
+
+            if (this.canManageForms) {
+                children.push(
                     {
                         _name: 'CSidebarNavItem',
                         name: this.$t('nav.manage'),
@@ -127,8 +169,13 @@ export default {
                         name: this.$t('nav.email'),
                         to: '/email',
                         icon: 'cil-envelope-open',
-                    },
-                ]
+                    }
+                );
+            }
+
+            return [{
+                _name: 'CSidebarNav',
+                _children: children
             }];
         },
         show() {
@@ -159,6 +206,21 @@ export default {
                     return en ? en.value : (org.title[0] ? org.title[0].value : (org.name || ''));
                 }
                 return org.name || org.title || '';
+            }
+            return '';
+        },
+        userRole() {
+            const role = this.user.role;
+            if (!role) return '';
+            if (typeof role === 'string') return role;
+            if (typeof role === 'object') {
+                if (Array.isArray(role.title)) {
+                    const lang = (this.$i18n && this.$i18n.locale ? this.$i18n.locale : 'en').toLowerCase();
+                    const matched = role.title.find(t => t && t.key && t.key.toLowerCase() === lang)
+                        || role.title.find(t => t && t.key && t.key.toLowerCase() === 'en');
+                    return matched ? matched.value : (role.title[0] ? role.title[0].value : (role.name || ''));
+                }
+                return role.name || role.title || '';
             }
             return '';
         }

@@ -4,7 +4,7 @@
             :endDate.sync="endDate" :managementMode="true" />
 
         <!-- Table -->
-        <CDataTable class="user-tables-container mb-0" :class="{ 'table-empty': !loading && tableData.length === 0 }" :items="loading ? [] : tableData" :fields="fields"
+        <CDataTable class="user-tables-container mb-0 mobile-card-table" :class="{ 'table-empty': !loading && tableData.length === 0 }" :items="loading ? [] : tableData" :fields="fields"
             :items-per-page="itemsPerPage" :pagination="false" :loading="loading" :hover="!loading && tableData.length > 0" :activePage.sync="activePage">
 
             <!-- Loading State Slot -->
@@ -17,61 +17,83 @@
                 <EmptyState
                     borderless
                     icon="cil-folder-open"
-                    :title="$t('table.noItems') || 'ยังไม่มีแบบสอบถามที่คุณสร้าง'"
-                    description="เริ่มต้นสร้างแบบสอบถามใหม่จากปุ่ม '+ สร้าง' ด้านบนเพื่อเริ่มเก็บข้อมูล"
+                    :title="$t('table.noItems') || 'ยังไม่มีรายการแบบสอบถามในขณะนี้'"
+                    :description="($te && $te('table.noItemsDesc')) ? $t('table.noItemsDesc') : 'สามารถเริ่มต้นสร้างแบบสอบถามใหม่ได้จากปุ่ม \'+ สร้าง\' ด้านบน'"
                 />
             </template>
 
             <!-- Questionnaire (Title & Description) -->
             <template #title="{ item }">
-                <td class="align-middle">
-                    <template v-if="!item.isEmpty">
-                        <div class="font-weight-bold text-dark" style="font-size: 0.95rem;">{{ item.title }}</div>
-                        <div class="small text-muted mt-1" v-if="item.description">{{ item.description }}</div>
-                    </template>
+                <td class="align-middle mgmt-title-cell">
+                    <div v-if="!item.isEmpty" class="mgmt-title-box">
+                        <div class="font-weight-bold text-dark mgmt-form-title line-clamp-2" :title="item.title">{{ item.title }}</div>
+                        <div class="small text-muted mt-1 mgmt-form-desc line-clamp-2" v-if="item.description && item.description !== '-'" :title="item.description">{{ item.description }}</div>
+                    </div>
                 </td>
             </template>
 
-            <!-- Created By (Name + Email) -->
+            <!-- Created By (Organization + Name) -->
             <template #createBy="{ item }">
-                <td class="align-middle ">
-                    <div class="small text-dark font-weight-bold">{{ item.createdName || '-' }}</div>
-                    <div class="small text-muted mt-1" v-if="item.createdEmail">{{ item.createdEmail }}</div>
+                <td class="align-middle mgmt-creator-cell">
+                    <div class="mgmt-creator-box" :title="[item.createdOrg, item.createdName].filter(v => v && v !== '-').join(' · ')">
+                        <div class="small text-dark font-weight-bold mgmt-creator-name" :title="item.createdOrg || item.createdName || '-'">{{ item.createdOrg || item.createdName || '-' }}</div>
+                        <div class="small text-muted mt-1 mgmt-creator-email" v-if="item.createdOrg && item.createdName && item.createdName !== '-'" :title="item.createdName">{{ item.createdName }}</div>
+                    </div>
                 </td>
             </template>
 
-            <!-- Collaborators (Editors / Viewers) -->
+            <!-- Collaborators (Single-row grouped summary + dropdown) -->
             <template #collaborators="{ item }">
                 <td class="align-middle">
-                    <div v-if="!item.isEmpty">
-                        <div v-if="item.collaborators && item.collaborators.length > 0">
-                            <!-- Grouped Collaborators by Role -->
-                            <div v-for="(collabs, role) in groupCollaboratorsByRole(item.collaborators)" :key="role" class="mb-1 mr-1">
-                                <!-- Single person in this role -->
-                                <div v-if="collabs.length === 1" class="collaborator-badge" :class="getRoleClass(role)">
-                                    <CIcon name="cil-user" size="sm" class="mr-2"/>
-                                    {{ collabs[0].name }} ({{ role }})
-                                </div>
-                                
-                                <!-- Multiple people in this role -->
-                                <CDropdown v-else variant="ghost" size="sm" class="m-0 p-0 custom-dropdown" placement="bottom-start" :popper-options="{ positionFixed: true }">
-                                    <template #toggler-content>
-                                        <div class="collaborator-badge cursor-pointer shadow-sm" :class="getRoleClass(role)">
-                                            <CIcon name="cil-people" size="sm" class="mr-2"/>
-                                            {{ collabs.length }} {{ role }}{{ collabs.length > 1 ? 's' : '' }}
-                                        </div>
-                                    </template>
-                                    <div class="dropdown-menu-scrollable">
-                                        <CDropdownItem v-for="(person, idx) in collabs" :key="idx" class="p-0 border-bottom last-border-0">
-                                            <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100" style="min-width: 220px;">
-                                                <div class="avatar-sm mr-2 text-uppercase" :class="getRoleIconClass(role)">{{ person.name ? person.name.charAt(0) : 'U' }}</div>
-                                                <span class="small font-weight-bold text-dark text-truncate">{{ person.name }}</span>
-                                            </div>
-                                        </CDropdownItem>
-                                    </div>
-                                </CDropdown>
+                    <div v-if="!item.isEmpty" class="d-flex align-items-center">
+                        <template v-if="item.collaborators && item.collaborators.length === 1">
+                            <div class="collaborator-badge text-truncate-pill" :class="getRoleClass(item.collaborators[0].roleKey || item.collaborators[0].role)" :title="`${item.collaborators[0].name} (${item.collaborators[0].role})`">
+                                <CIcon name="cil-user" size="sm" class="mr-2 flex-shrink-0" />
+                                <span class="text-truncate">{{ item.collaborators[0].name }} ({{ item.collaborators[0].role }})</span>
                             </div>
-                        </div>
+                        </template>
+
+                        <CDropdown
+                            v-else-if="item.collaborators && item.collaborators.length > 1"
+                            variant="ghost"
+                            size="sm"
+                            class="m-0 p-0 custom-dropdown"
+                            placement="bottom-start"
+                            :customPopperOptions="{ placement: 'bottom-start', strategy: 'fixed', modifiers: [{ name: 'preventOverflow', options: { boundary: 'viewport', padding: 8 } }] }"
+                            @click.native.stop
+                        >
+                            <template #toggler-content>
+                                <div class="collaborator-badge collab-summary cursor-pointer shadow-sm" :title="item.collaboratorSummary.tooltip">
+                                    <CIcon name="cil-people" size="sm" class="mr-2 flex-shrink-0" />
+                                    <span class="d-inline-flex align-items-center">
+                                        <span v-if="item.collaboratorSummary.editors > 0 && item.collaboratorSummary.viewers > 0">
+                                            <span class="text-success-dark">{{ item.collaboratorSummary.editors }}E</span>
+                                            <span class="mx-1 text-muted">·</span>
+                                            <span class="text-slate-dark">{{ item.collaboratorSummary.viewers }}V</span>
+                                        </span>
+                                        <span v-else>{{ item.collaboratorSummary.label }}</span>
+                                    </span>
+                                    <CIcon name="cil-chevron-bottom" size="sm" class="ml-2 dropdown-caret" />
+                                </div>
+                            </template>
+                            <div class="dropdown-menu-scrollable" @click.stop>
+                                <div class="dropdown-section-header px-3 py-2 border-bottom">
+                                    {{ $t('table.collaborators') }} ({{ item.collaborators.length }})
+                                </div>
+                                <CDropdownItem v-for="(person, idx) in item.collaborators" :key="'collab-' + idx" class="p-0 border-bottom last-border-0">
+                                    <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center justify-content-between w-100" style="min-width: 240px;">
+                                        <div class="d-flex align-items-center min-width-0 mr-2">
+                                            <div class="avatar-sm mr-2 text-uppercase" :class="getRoleIconClass(person.roleKey || person.role)">
+                                                {{ person.name ? person.name.charAt(0) : 'U' }}
+                                            </div>
+                                            <span class="small font-weight-bold text-dark text-truncate">{{ person.name }}</span>
+                                        </div>
+                                        <span class="role-mini-pill flex-shrink-0" :class="getRoleClass(person.roleKey || person.role)">{{ person.role }}</span>
+                                    </div>
+                                </CDropdownItem>
+                            </div>
+                        </CDropdown>
+
                         <span v-else class="small text-muted">-</span>
                     </div>
                 </td>
@@ -95,117 +117,183 @@
                 </td>
             </template>
 
-            <!-- Access -->
+            <!-- Access (Unified 1-pill + partitioned dropdown) -->
             <template #access="{ item }">
                 <td class="align-middle">
-                    <div v-if="!item.isEmpty" class="d-flex flex-column align-items-start gap-1" style="min-width: 150px;">
-                        <!-- Organization/Public Access -->
-                        <div v-if="orgAccessOnly(item.access).length === 1" class="mb-1 mr-1">
-                            <div class="visibility-badge" :class="getVisibilityClass(orgAccessOnly(item.access)[0])">
-                                <CIcon v-if="orgAccessOnly(item.access)[0] === 'Public' || orgAccessOnly(item.access)[0] === 'Publicly'" name="cil-globe-alt" size="sm" class="mr-2"/>
-                                <CIcon v-else name="cil-bank" size="sm" class="mr-2"/>
-                                {{ orgAccessOnly(item.access)[0] }}
-                            </div>
+                    <div v-if="!item.isEmpty && item.accessSummary" class="d-flex align-items-center">
+                        <div
+                            v-if="!item.accessSummary.hasDropdown"
+                            class="visibility-badge text-truncate-pill"
+                            :class="item.accessSummary.badgeClass"
+                            :title="item.accessSummary.label"
+                        >
+                            <CIcon :name="item.accessSummary.icon" size="sm" class="mr-2 flex-shrink-0" />
+                            <span class="text-truncate">{{ item.accessSummary.label }}</span>
                         </div>
-                        
-                        <!-- Multiple Organizations -->
-                        <CDropdown v-else-if="orgAccessOnly(item.access).length > 1" variant="ghost" size="sm" class="m-0 p-0 custom-dropdown mr-2" placement="bottom-start" :popper-options="{ positionFixed: true }">
+
+                        <CDropdown
+                            v-else
+                            variant="ghost"
+                            size="sm"
+                            class="m-0 p-0 custom-dropdown"
+                            placement="bottom-start"
+                            :customPopperOptions="{ placement: 'bottom-start', strategy: 'fixed', modifiers: [{ name: 'preventOverflow', options: { boundary: 'viewport', padding: 8 } }] }"
+                            @click.native.stop
+                        >
                             <template #toggler-content>
-                                <div class="visibility-badge visi-org cursor-pointer">
-                                    <CIcon name="cil-bank" size="sm" class="mr-2"/>
-                                    {{ orgAccessOnly(item.access).length }} Orgs
+                                <div class="visibility-badge cursor-pointer text-truncate-pill" :class="item.accessSummary.badgeClass" :title="item.accessSummary.tooltip">
+                                    <CIcon :name="item.accessSummary.icon" size="sm" class="mr-2 flex-shrink-0" />
+                                    <span class="text-truncate">{{ item.accessSummary.label }}</span>
+                                    <CIcon name="cil-chevron-bottom" size="sm" class="ml-2 dropdown-caret flex-shrink-0" />
                                 </div>
                             </template>
-                            <div class="dropdown-menu-scrollable">
-                                <CDropdownItem v-for="(acc, i) in orgAccessOnly(item.access)" :key="'org-list-'+i" class="p-0 border-bottom last-border-0">
-                                    <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100" style="min-width: 200px;">
-                                        <CIcon v-if="acc === 'Public' || acc === 'Publicly'" name="cil-globe-alt" size="sm" class="mr-3 text-success"/>
-                                        <CIcon v-else name="cil-bank" size="sm" class="mr-3 text-info"/>
-                                        <span class="small font-weight-bold text-dark text-truncate">{{ formatAccessLabel(acc) }}</span>
+                            <div class="dropdown-menu-scrollable access-grouped-menu" @click.stop>
+                                <!-- Organizations Group -->
+                                <template v-if="item.accessSummary.orgs.length > 0">
+                                    <div class="dropdown-section-header px-3 py-2 border-bottom">
+                                        {{ $t('table.accessGroups.orgs') }}
                                     </div>
-                                </CDropdownItem>
-                            </div>
-                        </CDropdown>
-
-                        <!-- Personal Access (Collaborator/Allowed Users) -->
-                        <div v-if="personalAccessOnly(item.access).length > 0" class="mb-1">
-                            <!-- Single Personal Access -->
-                            <div v-if="personalAccessOnly(item.access).length === 1" class="visibility-badge visi-personal">
-                                <CIcon name="cil-user" size="sm" class="mr-1"/>
-                                {{ personalAccessOnly(item.access)[0].replace('Personal: ', '') }}
-                            </div>
-
-                            <!-- Multiple Personal Access -->
-                            <CDropdown v-else-if="personalAccessOnly(item.access).length > 1" variant="ghost" size="sm" class="m-0 p-0 custom-dropdown" placement="bottom-start" :popper-options="{ positionFixed: true }">
-                                <template #toggler-content>
-                                    <div class="visibility-badge visi-personal cursor-pointer">
-                                        <CIcon name="cil-user" size="sm" class="mr-2"/>
-                                        {{ personalAccessOnly(item.access).length }} Access
-                                    </div>
-                                </template>
-                                <div class="dropdown-menu-scrollable">
-                                    <CDropdownItem v-for="(acc, i) in personalAccessOnly(item.access)" :key="'pers-'+i" class="p-0 border-bottom last-border-0">
-                                        <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100" style="min-width: 180px;">
-                                            <CIcon name="cil-user" size="sm" class="mr-3 text-primary"/>
-                                            <span class="small font-weight-bold text-dark text-truncate">{{ acc.replace('Personal: ', '') }}</span>
+                                    <CDropdownItem v-for="(acc, i) in item.accessSummary.orgs" :key="'org-' + i" class="p-0 border-bottom">
+                                        <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100" style="min-width: 220px;">
+                                            <CIcon
+                                                :name="(acc === 'Public' || acc === 'Publicly') ? 'cil-globe-alt' : 'cil-bank'"
+                                                size="sm"
+                                                class="mr-3 flex-shrink-0"
+                                                :class="(acc === 'Public' || acc === 'Publicly') ? 'text-success' : 'text-info'"
+                                            />
+                                            <span class="small font-weight-bold text-dark text-truncate">{{ formatAccessLabel(acc) }}</span>
                                         </div>
                                     </CDropdownItem>
-                                </div>
-                            </CDropdown>
-                        </div>
+                                </template>
 
-                        <span v-if="item.access.length === 0" class="small text-muted">-</span>
+                                <!-- Authorized Users Group -->
+                                <template v-if="item.accessSummary.users.length > 0">
+                                    <div class="dropdown-section-header px-3 py-2 border-bottom">
+                                        {{ $t('table.accessGroups.users') }}
+                                    </div>
+                                    <CDropdownItem v-for="(userName, i) in item.accessSummary.users" :key="'user-' + i" class="p-0 border-bottom">
+                                        <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100" style="min-width: 220px;">
+                                            <CIcon name="cil-user" size="sm" class="mr-3 text-primary flex-shrink-0" />
+                                            <span class="small font-weight-bold text-dark text-truncate">{{ userName }}</span>
+                                        </div>
+                                    </CDropdownItem>
+                                </template>
+
+                                <!-- Authorized Roles Group -->
+                                <template v-if="item.accessSummary.roles.length > 0">
+                                    <div class="dropdown-section-header px-3 py-2 border-bottom">
+                                        {{ $t('table.accessGroups.roles') }}
+                                    </div>
+                                    <CDropdownItem v-for="(roleName, i) in item.accessSummary.roles" :key="'role-' + i" class="p-0 border-bottom last-border-0">
+                                        <div class="dropdown-item-custom px-3 py-2 d-flex align-items-center w-100" style="min-width: 220px;">
+                                            <CIcon name="cil-shield-alt" size="sm" class="mr-3 text-role-accent flex-shrink-0" />
+                                            <span class="small font-weight-bold text-dark text-truncate">{{ roleName }}</span>
+                                        </div>
+                                    </CDropdownItem>
+                                </template>
+                            </div>
+                        </CDropdown>
                     </div>
                 </td>
             </template>
 
             <!-- Responses: show two rows (Completed vs Ongoing) -->
             <template #responses="{ item }">
-                <td class="align-middle">
-                    <div v-if="!item.isEmpty" class="d-flex flex-column">
-                        <div class="d-flex align-items-center mb-1">
-                            <div class="icon-wrapper mr-2 chart-color" style="width: 20px; height: 20px;">
+                <td class="align-middle mgmt-responses-cell">
+                    <div v-if="!item.isEmpty" class="d-flex flex-column response-stats-stack">
+                        <div class="d-flex align-items-center mb-1 response-stat-line">
+                            <div class="icon-wrapper mr-2 chart-color response-icon-badge" style="width: 20px; height: 20px;">
                                 <CIcon name="cil-check-alt" size="sm" class="text-success" />
                             </div>
                             <span class="response-count font-weight-bold mr-1">{{ item.completedCount }} / {{ item.targetCount }}</span>
-                            <small class="text-muted">{{ $t('table.completedResponse') }}</small>
+                            <small class="text-muted response-stat-label">{{ $t('table.completedResponse') }}</small>
                         </div>
-                        <div class="d-flex align-items-center">
-                            <div class="icon-wrapper mr-2"
+                        <div class="d-flex align-items-center response-stat-line">
+                            <div class="icon-wrapper mr-2 response-icon-badge"
                                 style="width: 20px; height: 20px; background-color: #f1f5f9;">
                                 <CIcon name="cil-history" size="sm" class="text-info" />
                             </div>
                             <span class="response-count font-weight-bold mr-1">{{ item.ongoingCount }}</span>
-                            <small class="text-muted">{{ $t('table.ongoingResponse') }}</small>
+                            <small class="text-muted response-stat-label">{{ $t('table.ongoingResponse') }}</small>
                         </div>
                     </div>
                 </td>
             </template>
 
-            <!-- Actions: individual icon buttons like FormTables -->
-            <template #actions="{ item }">
-                <td class="align-middle text-right pr-4">
-                    <div class="d-flex align-items-center justify-content-end">
-                        <CButton size="sm" color="info" variant="ghost" class="p-2 mr-2 action-icon-btn btn-preview"
-                            @click.stop="goToPreviewForm(item)" v-c-tooltip="$t('button.preview')" aria-label="Preview">
-                            <CIcon name="cil-magnifying-glass" />
-                        </CButton>
-                        <template v-if="item.canEdit">
-                            <CButton size="sm" color="success" variant="ghost" class="p-2 mr-2 action-icon-btn btn-duplicate"
-                                @click.stop="goToDuplicationForm(item)" v-c-tooltip="$t('table.duplicate')"
-                                aria-label="Duplicate">
-                                <CIcon name="cil-copy" />
-                            </CButton>
-                            <CButton size="sm" color="warning" variant="ghost" class="p-2 mr-2 action-icon-btn btn-edit"
-                                @click.stop="goToEditForm(item)" v-c-tooltip="$t('button.edit')" aria-label="Edit">
-                                <CIcon name="cil-pencil" />
-                            </CButton>
-                            <CButton size="sm" color="danger" variant="ghost" class="p-2 action-icon-btn btn-delete"
-                                @click.stop="confirmDeleteItem(item)" v-c-tooltip="$t('table.delete')"
-                                aria-label="Delete">
-                                <CIcon name="cil-trash" />
-                            </CButton>
+            <!-- Response Settings (Compact active rule icons with hover tooltips) -->
+            <template #responseSettings="{ item }">
+                <td class="align-middle mgmt-settings-cell">
+                    <div v-if="!item.isEmpty" class="response-icons-grid" :class="{ 'is-empty-rules': !item.activeResponseRules || item.activeResponseRules.length === 0 }">
+                        <template v-if="item.activeResponseRules && item.activeResponseRules.length > 0">
+                            <span
+                                v-for="rule in item.activeResponseRules"
+                                :key="rule.key"
+                                class="setting-icon-badge"
+                                :class="rule.iconClass"
+                                v-c-tooltip="rule.tooltip"
+                                :title="rule.tooltip"
+                                :aria-label="rule.tooltip"
+                            >
+                                <CIcon :name="rule.icon" size="sm" />
+                            </span>
                         </template>
+                        <span v-else class="small text-muted">-</span>
+                    </div>
+                </td>
+            </template>
+
+            <!-- Actions: compact 3-dot kebab menu -->
+            <template #actions="{ item }">
+                <td class="align-middle text-right pr-3">
+                    <div v-if="!item.isEmpty" class="d-inline-flex align-items-center justify-content-end">
+                        <CDropdown
+                            variant="ghost"
+                            size="sm"
+                            class="m-0 p-0 custom-dropdown actions-dropdown"
+                            placement="bottom-end"
+                            addMenuClasses="dropdown-menu-right"
+                            :customPopperOptions="{ placement: 'bottom-end', strategy: 'fixed', modifiers: [{ name: 'preventOverflow', options: { boundary: 'viewport', padding: 8 } }] }"
+                            @click.native.stop
+                        >
+                            <template #toggler-content>
+                                <button
+                                    type="button"
+                                    class="action-kebab-btn"
+                                    :aria-label="$t('table.actions')"
+                                    v-c-tooltip="$t('table.actions')"
+                                >
+                                    <CIcon name="cil-options" />
+                                </button>
+                            </template>
+                            <div class="actions-menu-list" @click.stop>
+                                <CDropdownItem class="p-0 border-bottom" @click.stop="goToPreviewForm(item)">
+                                    <div class="dropdown-item-custom actions-item-row d-flex align-items-center w-100">
+                                        <CIcon name="cil-eye" class="actions-item-icon text-info" />
+                                        <span class="actions-item-label text-dark">{{ $t('button.preview') }}</span>
+                                    </div>
+                                </CDropdownItem>
+                                <template v-if="item.canEdit">
+                                    <CDropdownItem class="p-0 border-bottom" @click.stop="goToDuplicationForm(item)">
+                                        <div class="dropdown-item-custom actions-item-row d-flex align-items-center w-100">
+                                            <CIcon name="cil-copy" class="actions-item-icon text-success" />
+                                            <span class="actions-item-label text-dark">{{ $t('table.duplicate') }}</span>
+                                        </div>
+                                    </CDropdownItem>
+                                    <CDropdownItem class="p-0 border-bottom" @click.stop="goToEditForm(item)">
+                                        <div class="dropdown-item-custom actions-item-row d-flex align-items-center w-100">
+                                            <CIcon name="cil-pencil" class="actions-item-icon text-warning" />
+                                            <span class="actions-item-label text-dark">{{ $t('button.edit') }}</span>
+                                        </div>
+                                    </CDropdownItem>
+                                    <CDropdownItem class="p-0" @click.stop="confirmDeleteItem(item)">
+                                        <div class="dropdown-item-custom actions-item-row d-flex align-items-center w-100">
+                                            <CIcon name="cil-trash" class="actions-item-icon text-danger" />
+                                            <span class="actions-item-label text-danger">{{ $t('table.delete') }}</span>
+                                        </div>
+                                    </CDropdownItem>
+                                </template>
+                            </div>
+                        </CDropdown>
                     </div>
                 </td>
             </template>
@@ -251,6 +339,8 @@ import FilterTable from '@/projects/components/Filter/FilterTable.vue'
 import EmptyState from '@/projects/components/Util/EmptyState.vue'
 import TableLoading from '@/projects/components/Util/TableLoading.vue'
 import localeMixin from '@/mixins/localeMixin'
+import { buildActiveResponseRuleBadges, getScheduleStatus, normalizeAllowedEmails } from '@/projects/utils/formPolicy'
+import { buildCompactAccessSummary } from '@/projects/utils/analytics'
 
 export default {
     name: 'ManagementTables',
@@ -280,19 +370,23 @@ export default {
     async created() {
         this.$store.dispatch('User/getAll');
         this.$store.dispatch('Organizations/getAll');
-        this.$store.dispatch('Responses/exp');
+        this.$store.dispatch(
+            'Responses/exp',
+            this.user && this.user._id ? { params: { userId: this.user._id } } : undefined
+        );
     },
     computed: {
         fields() {
             return [
-                { key: 'title', label: this.$t('table.questionnaire'), _style: 'width:18%' },
-                { key: 'access', label: this.$t('table.access'), _style: 'width:10%' },
-                { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:15%' },
-                { key: 'status', label: this.$t('table.status'), _style: 'width:10%' },
-                { key: 'responses', label: this.$t('table.responses'), _style: 'width:15%' },
-                { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:10%' },
-                { key: 'collaborators', label: 'Collaborators', _style: 'width:12%' },
-                { key: 'actions', label: this.$t('table.actions'), _style: 'width:10%; text-align:right' }
+                { key: 'title', label: this.$t('table.questionnaire'), _style: 'width:20%; min-width:190px' },
+                { key: 'access', label: this.$t('table.access'), _style: 'width:11%; white-space:nowrap' },
+                { key: 'timeRange', label: this.$t('table.timeRange'), _style: 'width:12%; min-width:110px' },
+                { key: 'status', label: this.$t('table.status'), _style: 'width:8%; white-space:nowrap' },
+                { key: 'responses', label: this.$t('table.responses'), _style: 'width:13%; min-width:132px; white-space:nowrap' },
+                { key: 'createBy', label: this.$t('table.createdBy'), _style: 'width:12%; min-width:140px' },
+                { key: 'collaborators', label: this.$t('table.collaborators'), _style: 'width:10%; white-space:nowrap' },
+                { key: 'responseSettings', label: this.$t('table.responseSettings'), _style: 'width:9%; min-width:112px; white-space:nowrap' },
+                { key: 'actions', label: this.$t('table.actions'), _style: 'width:5%; min-width:68px; white-space:nowrap; text-align:right' }
             ]
         },
         ...mapGetters('Forms', ['forms']),
@@ -318,7 +412,7 @@ export default {
             const _reactiveUsers = this.users;
             const _reactiveResponses = this.responses;
 
-            const raw = this.items || [];
+            const raw = Array.isArray(this.items) ? this.items : [];
 
             const locale = this.$i18n.locale.toLowerCase();
             const currentUserId = this.user ? this.user._id : null;
@@ -373,78 +467,58 @@ export default {
                 let title = this.getLang(f.title) || this.$t('common.untitled');
                 let description = this.getLang(f.description) || '-';
 
-                // Created By / Organization (extract name + email)
-                let createdBy = '-';
-                let createdName = '-';
-                let createdEmail = '';
-                if (f.creator) {
-                    if (typeof f.creator === 'string') {
-                        createdBy = f.creator;
-                        createdName = f.creator;
-                    } else if (typeof f.creator === 'object') {
-                        createdName = f.creator.name || f.creator.fullname || f.creator.email || '-';
-                        createdEmail = f.creator.email || '';
-                        createdBy = createdName || createdEmail || '-';
-                    }
-                } else if (f.createdBy) {
-                    if (typeof f.createdBy === 'string') {
-                        createdBy = f.createdBy;
-                        createdName = f.createdBy;
-                    } else if (typeof f.createdBy === 'object') {
-                        createdName = f.createdBy.name || f.createdBy.email || '-';
-                        createdEmail = f.createdBy.email || '';
-                        createdBy = createdName || createdEmail || '-';
-                    }
-                }
+                // Created By / Organization (resolve org + name + email)
+                const { createdName, createdEmail, createdOrg } = this.resolveCreatorInfo(f.creator || f.createdBy, locale);
+                let createdBy = createdName || createdEmail || '-';
                 let organization = '-';
                 if (f.organization) {
                     if (typeof f.organization === 'string') organization = f.organization;
                     else if (typeof f.organization === 'object') organization = f.organization.name || f.organization.title || '-';
                 }
 
+                const schedStatus = getScheduleStatus(f.schedule);
                 let timeRange = '-';
                 let daysLeft = '';
                 if (f.schedule && (f.schedule.startAt || f.schedule.endAt)) {
                     const localFormat = locale === 'th' ? 'th-TH' : 'en-GB';
                     const startAt = f.schedule.startAt ? new Date(f.schedule.startAt).toLocaleDateString(localFormat) : '';
                     const endAt = f.schedule.endAt ? new Date(f.schedule.endAt).toLocaleDateString(localFormat) : '';
-                    timeRange = startAt || endAt ? `${startAt}${endAt ? ' - ' + endAt : ''}` : '-';
-                    if (f.schedule.endAt) {
+                    if (startAt && endAt) {
+                        timeRange = `${startAt} - ${endAt}`;
+                    } else if (startAt) {
+                        timeRange = startAt;
+                    } else if (endAt) {
+                        timeRange = `→ ${endAt}`;
+                    }
+                    if (schedStatus === 'draft') {
+                        daysLeft = this.$t('status.draft');
+                    } else if (schedStatus === 'scheduled' && f.schedule.startAt) {
+                        const diffStart = Math.ceil((new Date(f.schedule.startAt) - new Date()) / (1000 * 60 * 60 * 24));
+                        daysLeft = diffStart > 0 ? this.$t('table.startsInDays', { count: diffStart }) : this.$t('status.scheduled');
+                    } else if (f.schedule.endAt) {
                         const diff = Math.ceil((new Date(f.schedule.endAt) - new Date()) / (1000 * 60 * 60 * 24));
                         daysLeft = diff > 0 ? this.$t('table.daysLeft', { count: diff }) : this.$t('table.closed');
+                    } else if (schedStatus === 'open_forever') {
+                        daysLeft = this.$t('table.openForever');
                     }
                 } else if (f.timeRange && typeof f.timeRange === 'string') {
                     timeRange = f.timeRange;
                 }
 
-                // Status: derive from schedule if available
+                // Status: derive consistently from shared schedule policy (respects Draft vs Published)
                 let status = 'Draft';
-                const now = new Date();
-                const hasStart = f.schedule && f.schedule.startAt;
-                const hasEnd = f.schedule && f.schedule.endAt;
-
-                if (hasStart || hasEnd) {
-                    const start = hasStart ? new Date(f.schedule.startAt) : null;
-                    const end = hasEnd ? new Date(f.schedule.endAt) : null;
-
-                    // If current time is outside the set range, it's Closed
-                    if ((start && now < start) || (end && now > end)) {
-                        status = 'Closed';
-                    } else {
-                        status = 'Active';
-                    }
-                } else if (f.status) {
-                    // fallback to existing status field if schedule not present
+                if (schedStatus === 'open' || schedStatus === 'open_forever') {
+                    status = 'Active';
+                } else if (schedStatus === 'scheduled') {
+                    status = 'Scheduled';
+                } else if (schedStatus === 'closed' || schedStatus === 'closed_forever') {
+                    status = 'Closed';
+                } else if (!f.schedule && f.status) {
                     if (typeof f.status === 'string') {
                         status = f.status === 'Pending' ? 'Draft' : f.status;
-                    }
-                    else if (typeof f.status === 'object') {
+                    } else if (typeof f.status === 'object') {
                         status = f.status.type || f.status.name || 'Draft';
                     }
-                }
-                else {
-                    // no schedule or explicit status -> default to Draft
-                    status = 'Draft';
                 }
 
                 // Extract Collaborators
@@ -453,41 +527,72 @@ export default {
                 if (Array.isArray(f.collaborator) && f.collaborator.length > 0) {
                     f.collaborator.forEach(c => {
                         let name = this.getUserName(c.user);
-                        let role = 'Viewer';
-                        if (c.type) {
-                            role = this.getLang(c.type.title) || 'Viewer';
+                        const roleKey = this.classifyRawCollaboratorRole(c && c.type);
+                        const viewerLabel = this.$t('editor.settings.access.viewer');
+                        const editorLabel = this.$t('editor.settings.access.editor');
+                        let role = viewerLabel;
+                        if (roleKey === 'editor') {
+                            const rawRole = c && c.type ? this.getLang(c.type.title) : '';
+                            role = rawRole || editorLabel;
+                        } else if (roleKey === 'viewer') {
+                            const rawRole = c && c.type ? this.getLang(c.type.title) : '';
+                            role = (!rawRole || rawRole === 'ผู้ดู' || rawRole === 'Viewer') ? viewerLabel : rawRole;
+                        } else if (c && c.type) {
+                            role = this.getLang(c.type.title) || viewerLabel;
                         }
-                        collaborators.push({ name, role });
+                        collaborators.push({ name, role, roleKey });
                     });
                 }
 
-                // Access/Visibility Logic (Based on Organization)
+                // Access/Visibility Logic (Explicit Public vs Private)
                 let access = [];
+                const explicitMode = f.settings && f.settings.accessMode;
+                const explicitPublic = explicitMode === 'public';
                 const rawOrgs = f.organization || [];
                 const orgNames = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs]).map(o => this.getOrganizationLabel(o, locale)).filter(Boolean);
 
-                const hasPersonalAccess = f.settings && Array.isArray(f.settings.allowedUser) && f.settings.allowedUser.length > 0;
+                const allowedEmailList = normalizeAllowedEmails(f.settings && f.settings.allowedEmails);
+                const hasAllowedUsers = Boolean(f.settings && Array.isArray(f.settings.allowedUser) && f.settings.allowedUser.length > 0);
+                const hasPersonalAccess = !explicitPublic && (hasAllowedUsers || allowedEmailList.length > 0);
+                const hasRoleAccess = !explicitPublic && Boolean(f.settings && Array.isArray(f.settings.allowedRoles) && f.settings.allowedRoles.length > 0);
 
-                // Tooltip logic
-                let allowedUserList = '';
-                if (hasPersonalAccess) {
-                    allowedUserList = f.settings.allowedUser.map(u => {
-                        if (typeof u === 'object') return u.name || u.fullname || u.email || 'User';
-                        return this.getUserName(u);
-                    }).join(', ');
-                }
-
-                if (orgNames.includes('General') || orgNames.includes('ทั่วไป')) {
+                if (explicitPublic || (explicitMode !== 'private' && (orgNames.includes('General') || orgNames.includes('ทั่วไป')))) {
                     access = ['Public'];
                 } else if (orgNames.length > 0) {
                     access = orgNames;
-                } else {
+                } else if (!hasPersonalAccess && !hasRoleAccess) {
                     access = ['Private'];
                 }
 
-                if (hasPersonalAccess) {
+                const seenPersonalEmails = new Set();
+                const allowedUserLabels = [];
+                if (hasPersonalAccess && hasAllowedUsers) {
                     f.settings.allowedUser.forEach(u => {
-                        access.push('Personal: ' + this.getUserName(u));
+                        const matched = (typeof u === 'object' && u)
+                            ? u
+                            : (this.users || []).find(x => x && String(x._id) === String(u));
+                        const em = matched && typeof matched.email === 'string' ? matched.email.trim().toLowerCase() : '';
+                        if (em) seenPersonalEmails.add(em);
+                        const label = this.getUserName(u);
+                        allowedUserLabels.push(label);
+                        access.push('Personal: ' + label);
+                    });
+                }
+                if (hasPersonalAccess && allowedEmailList.length > 0) {
+                    allowedEmailList.forEach(email => {
+                        if (!seenPersonalEmails.has(email)) {
+                            seenPersonalEmails.add(email);
+                            allowedUserLabels.push(email);
+                            access.push('Personal: ' + email);
+                        }
+                    });
+                }
+                const allowedUserList = allowedUserLabels.join(', ');
+
+                if (hasRoleAccess) {
+                    f.settings.allowedRoles.forEach(r => {
+                        const roleLabel = this.getOrganizationLabel(r, locale) || (typeof r === 'object' ? (r.name || 'Role') : String(r));
+                        access.push('Role: ' + roleLabel);
                     });
                 }
 
@@ -499,6 +604,12 @@ export default {
                 const completedCount = this.getCompletedCount(f);
                 const ongoingCount = this.getOngoingCount(f);
 
+                // Unified summaries for compact table cells
+                const accessSummary = this.buildAccessSummary(access);
+                const collaboratorSummary = this.buildCollaboratorSummary(collaborators);
+
+                const activeResponseRules = this.buildActiveResponseRules(f.settings || {});
+
                 return {
                     _id: f._id,
                     title,
@@ -506,13 +617,17 @@ export default {
                     createdBy,
                     createdName: createdName || createdBy || '-',
                     createdEmail: createdEmail || '',
+                    createdOrg: createdOrg || '',
                     organization,
                     timeRange,
                     daysLeft,
                     access,
+                    accessSummary,
                     status,
                     responses,
                     collaborators,
+                    collaboratorSummary,
+                    activeResponseRules,
                     allowedUserList,
                     canEdit,
                     targetCount,
@@ -551,7 +666,8 @@ export default {
 
             // apply status filter
             if (this.selectedStatus && this.selectedStatus !== 'All') {
-                filtered = filtered.filter(f => f.status === this.selectedStatus);
+                const targetStatus = this.selectedStatus === 'Pending' ? 'Draft' : this.selectedStatus;
+                filtered = filtered.filter(f => f.status === targetStatus);
             }
 
             // search (title only)
@@ -574,16 +690,18 @@ export default {
             const allUsers = this.users || [];
             if (!allUsers.length) return 0;
 
+            const explicitMode = form.settings && form.settings.accessMode;
+            const explicitPublic = explicitMode === 'public';
             const rawOrgs = form.organization || [];
             const formOrgIds = (Array.isArray(rawOrgs) ? rawOrgs : [rawOrgs])
                 .filter(Boolean)
                 .map(o => (o && typeof o === 'object' ? (o._id || o.id) : o)?.toString());
 
-            const isPublicForm = formOrgIds.includes('6a0b51af2dbf6e77c4df73fe') ||
-                (Array.isArray(item.access) && item.access.some(name => name === 'General' || name === 'ทั่วไป' || name === 'Public'));
+            const isPublicForm = explicitPublic || (explicitMode !== 'private' && (formOrgIds.includes('6a0b51af2dbf6e77c4df73fe') ||
+                (Array.isArray(item.access) && item.access.some(name => name === 'General' || name === 'ทั่วไป' || name === 'Public'))));
 
             // Allowed Roles restriction (if specified)
-            const allowedRoles = (form.settings && Array.isArray(form.settings.allowedRoles)) ? form.settings.allowedRoles : [];
+            const allowedRoles = (!explicitPublic && form.settings && Array.isArray(form.settings.allowedRoles)) ? form.settings.allowedRoles : [];
             const allowedRoleIds = allowedRoles.map(r => (r && typeof r === 'object' ? (r._id || r.id) : r)?.toString()).filter(Boolean);
             const hasRoleFilter = allowedRoleIds.length > 0;
 
@@ -605,13 +723,29 @@ export default {
                 }
             });
 
-            // 2. Union explicitly allowed users (settings.allowedUser)
-            const allowedUsers = (form.settings && Array.isArray(form.settings.allowedUser)) ? form.settings.allowedUser : [];
-            allowedUsers.forEach(u => {
-                if (!u) return;
-                const id = (typeof u === 'object' ? (u._id || u.id || u.value) : u)?.toString();
-                if (id) targetUserIds.add(id);
-            });
+            if (!explicitPublic) {
+                // 2. Union explicitly allowed users (settings.allowedUser) & external emails (settings.allowedEmails)
+                const allowedUsers = (form.settings && Array.isArray(form.settings.allowedUser)) ? form.settings.allowedUser : [];
+                allowedUsers.forEach(u => {
+                    if (!u) return;
+                    const id = (typeof u === 'object' ? (u._id || u.id || u.value) : u)?.toString();
+                    if (id) targetUserIds.add(id);
+                });
+
+                const allowedEmails = normalizeAllowedEmails(form.settings && form.settings.allowedEmails);
+                if (allowedEmails.length > 0) {
+                    const emailToUser = new Map();
+                    allUsers.forEach(u => {
+                        if (u && u._id && typeof u.email === 'string') {
+                            emailToUser.set(u.email.trim().toLowerCase(), u._id.toString());
+                        }
+                    });
+                    allowedEmails.forEach(email => {
+                        const matchedId = emailToUser.get(email);
+                        targetUserIds.add(matchedId || `email:${email}`);
+                    });
+                }
+            }
 
             return targetUserIds.size;
         },
@@ -629,7 +763,7 @@ export default {
             formResponses.forEach(r => {
                 const isSubmitted = r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true';
                 if (isSubmitted) {
-                    const responderId = (r.responder && typeof r.responder === 'object' ? (r.responder._id || r.responder.id) : r.responder) || r._id;
+                    const responderId = (r.responder && typeof r.responder === 'object' ? (r.responder._id || r.responder.id) : r.responder) || r.guestSessionId || r._id;
                     completedResponders.add(String(responderId));
                 }
             });
@@ -651,7 +785,7 @@ export default {
             formResponses.forEach(r => {
                 const isSubmitted = r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true';
                 if (isSubmitted) {
-                    const responderId = (r.responder && typeof r.responder === 'object' ? (r.responder._id || r.responder.id) : r.responder) || r._id;
+                    const responderId = (r.responder && typeof r.responder === 'object' ? (r.responder._id || r.responder.id) : r.responder) || r.guestSessionId || r._id;
                     completedResponders.add(String(responderId));
                 }
             });
@@ -661,7 +795,7 @@ export default {
             formResponses.forEach(r => {
                 const isSubmitted = r.submit === true || r.submit === 1 || String(r.submit).toLowerCase() === 'true';
                 if (!isSubmitted) {
-                    const responderId = (r.responder && typeof r.responder === 'object' ? (r.responder._id || r.responder.id) : r.responder) || r._id;
+                    const responderId = (r.responder && typeof r.responder === 'object' ? (r.responder._id || r.responder.id) : r.responder) || r.guestSessionId || r._id;
                     const rIdStr = String(responderId);
                     if (!completedResponders.has(rIdStr)) {
                         ongoingResponders.add(rIdStr);
@@ -715,6 +849,40 @@ export default {
             if (v.includes('private')) return 'visi-private';
             if (v.includes('personal')) return 'visi-personal';
             return 'visi-org';
+        },
+        resolveCreatorInfo(creatorRef, locale) {
+            if (!creatorRef) {
+                return { createdName: '-', createdEmail: '', createdOrg: '' };
+            }
+            const userList = Array.isArray(this.users) ? this.users : [];
+            if (typeof creatorRef === 'string') {
+                const trimmed = creatorRef.trim();
+                if (!trimmed) return { createdName: '-', createdEmail: '', createdOrg: '' };
+                const matched = userList.find(u =>
+                    u && (String(u._id) === trimmed || (u.email && u.email === trimmed) || (u.name && u.name === trimmed))
+                );
+                if (matched) {
+                    return {
+                        createdName: matched.name || matched.fullname || matched.email || trimmed,
+                        createdEmail: matched.email || '',
+                        createdOrg: this.getOrganizationLabel(matched.organization, locale) || ''
+                    };
+                }
+                const display = /^[0-9a-f]{24}$/i.test(trimmed) ? '-' : trimmed;
+                return { createdName: display, createdEmail: '', createdOrg: '' };
+            }
+            if (typeof creatorRef === 'object') {
+                const creatorId = creatorRef._id ? String(creatorRef._id) : '';
+                const matched = userList.find(u =>
+                    u && ((creatorId && String(u._id) === creatorId) || (creatorRef.email && u.email === creatorRef.email))
+                );
+                return {
+                    createdName: creatorRef.name || creatorRef.fullname || (matched && (matched.name || matched.email)) || creatorRef.email || '-',
+                    createdEmail: creatorRef.email || (matched && matched.email) || '',
+                    createdOrg: this.getOrganizationLabel(creatorRef.organization || (matched && matched.organization), locale) || ''
+                };
+            }
+            return { createdName: '-', createdEmail: '', createdOrg: '' };
         },
         getOrganizationLabel(orgRef, locale) {
             if (!orgRef) return null;
@@ -773,17 +941,22 @@ export default {
         // Helper to filter organization/public access
         orgAccessOnly(access) {
             if (!Array.isArray(access)) return [];
-            return access.filter(acc => !acc.startsWith('Personal: '));
+            return access.filter(acc => !acc.startsWith('Personal: ') && !acc.startsWith('Role: '));
         },
         // Helper to filter personal access
         personalAccessOnly(access) {
             if (!Array.isArray(access)) return [];
             return access.filter(acc => acc.startsWith('Personal: '));
         },
+        // Helper to filter role access
+        roleAccessOnly(access) {
+            if (!Array.isArray(access)) return [];
+            return access.filter(acc => acc.startsWith('Role: '));
+        },
         // Helper to filter out public from organization count
         realOrgAccessOnly(access) {
             if (!Array.isArray(access)) return [];
-            return access.filter(acc => !acc.startsWith('Personal: ') && acc !== 'Public' && acc !== 'Publicly');
+            return access.filter(acc => !acc.startsWith('Personal: ') && !acc.startsWith('Role: ') && acc !== 'Public' && acc !== 'Publicly');
         },
         // Helper to group collaborators by their role
         groupCollaboratorsByRole(collaborators) {
@@ -795,22 +968,96 @@ export default {
                 return acc;
             }, {});
         },
+        // Build unified 1-pill access summary with grouped dropdown targets
+        buildAccessSummary(access) {
+            return buildCompactAccessSummary(access, {
+                formatLabel: (val) => this.formatAccessLabel(val),
+                orgUnit: this.$t('table.orgUnit') || 'Orgs',
+                userUnit: this.$t('table.userUnit') || 'Users',
+                roleUnit: this.$t('table.roleUnit') || 'Roles'
+            });
+        },
+        classifyRawCollaboratorRole(typeRef) {
+            if (!typeRef) return 'viewer';
+            const rawTokens = [];
+            if (typeof typeRef === 'string') {
+                rawTokens.push(typeRef);
+            } else if (typeof typeRef === 'object') {
+                if (typeRef._id) rawTokens.push(String(typeRef._id));
+                if (typeRef.id) rawTokens.push(String(typeRef.id));
+                if (typeRef.name) rawTokens.push(String(typeRef.name));
+                if (typeRef.value) rawTokens.push(String(typeRef.value));
+                if (Array.isArray(typeRef.title)) {
+                    typeRef.title.forEach(t => {
+                        if (t && t.value) rawTokens.push(String(t.value));
+                    });
+                } else if (typeof typeRef.title === 'string') {
+                    rawTokens.push(typeRef.title);
+                }
+            }
+            const combined = rawTokens.join(' ').toLowerCase();
+            if (!combined.trim()) return 'viewer';
+            if (combined.includes('edit') || combined.includes('แก้ไข')) return 'editor';
+            if (combined.includes('view') || combined.includes('inspect') || combined.includes('ดู')) return 'viewer';
+            return 'other';
+        },
+        // Build unified single-row collaborator count summary
+        buildCollaboratorSummary(collaborators) {
+            if (!Array.isArray(collaborators) || collaborators.length === 0) {
+                return { editors: 0, viewers: 0, others: 0, label: '', tooltip: '' };
+            }
+            let editors = 0;
+            let viewers = 0;
+            let others = 0;
+            collaborators.forEach(c => {
+                const roleKey = c && c.roleKey ? c.roleKey : this.classifyRawCollaboratorRole(c && (c.type || c.role));
+                if (roleKey === 'editor') editors += 1;
+                else if (roleKey === 'viewer') viewers += 1;
+                else others += 1;
+            });
+
+            const parts = [];
+            if (editors > 0) {
+                const key = editors === 1 ? 'table.collaboratorCount.editorOne' : 'table.collaboratorCount.editorMany';
+                parts.push(this.$t(key, { count: editors }));
+            }
+            if (viewers > 0) {
+                const key = viewers === 1 ? 'table.collaboratorCount.viewerOne' : 'table.collaboratorCount.viewerMany';
+                parts.push(this.$t(key, { count: viewers }));
+            }
+            if (others > 0) {
+                const key = others === 1 ? 'table.collaboratorCount.otherOne' : 'table.collaboratorCount.otherMany';
+                parts.push(this.$t(key, { count: others }));
+            }
+
+            return {
+                editors,
+                viewers,
+                others,
+                label: parts.join(' · '),
+                tooltip: collaborators.map(c => `${c.name} (${c.role})`).join(', ')
+            };
+        },
+        // Build compact list of active response setting icons + tooltips
+        buildActiveResponseRules(rawSettings = {}) {
+            return buildActiveResponseRuleBadges(rawSettings, (key, params) => this.$t(key, params));
+        },
         // Get CSS class based on role for color coding
         getRoleClass(role) {
             if (!role) return 'role-default';
             const r = role.toLowerCase();
-            if (r.includes('owner')) return 'role-owner';
-            if (r.includes('edit')) return 'role-editor';
-            if (r.includes('view')) return 'role-viewer';
+            if (r.includes('owner') || r.includes('เจ้าของ')) return 'role-owner';
+            if (r.includes('edit') || r.includes('แก้ไข')) return 'role-editor';
+            if (r.includes('view') || r.includes('inspect') || r.includes('ดู')) return 'role-viewer';
             return 'role-default';
         },
         // Get icon color class based on role
         getRoleIconClass(role) {
             if (!role) return 'text-primary';
             const r = role.toLowerCase();
-            if (r.includes('owner')) return 'text-warning';
-            if (r.includes('edit')) return 'text-success';
-            if (r.includes('view')) return 'text-secondary';
+            if (r.includes('owner') || r.includes('เจ้าของ')) return 'text-warning';
+            if (r.includes('edit') || r.includes('แก้ไข')) return 'text-success';
+            if (r.includes('view') || r.includes('inspect') || r.includes('ดู')) return 'text-secondary';
             return 'text-primary';
         }
     },
@@ -836,6 +1083,90 @@ export default {
     border: 1px solid #e2e8f0;
     padding: 0;
     overflow: hidden;
+}
+
+@media (min-width: 992px) {
+    .user-tables-container /deep/ .table-responsive {
+        overflow-x: auto;
+        margin-bottom: 0;
+    }
+
+    .mgmt-title-cell {
+        min-width: 190px;
+        max-width: 260px;
+    }
+
+    .mgmt-title-box {
+        max-width: 260px;
+    }
+
+    .mgmt-creator-cell {
+        min-width: 140px;
+        max-width: 200px;
+    }
+
+    .mgmt-creator-box {
+        max-width: 195px;
+    }
+
+    .mgmt-settings-cell {
+        min-width: 112px;
+    }
+}
+
+.user-tables-container /deep/ table.table {
+    margin-bottom: 0;
+}
+
+.user-tables-container /deep/ thead th {
+    white-space: nowrap;
+}
+
+.mgmt-form-title {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.mgmt-form-desc {
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.mgmt-creator-name,
+.mgmt-creator-email {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.mgmt-responses-cell {
+    min-width: 132px;
+    white-space: nowrap;
+}
+
+.response-stat-line {
+    white-space: nowrap;
+    flex-wrap: nowrap;
+}
+
+.response-icon-badge {
+    flex-shrink: 0;
+}
+
+.response-count,
+.response-stat-label {
+    white-space: nowrap;
 }
 
 .user-tables-container.table-empty tbody tr,
@@ -882,14 +1213,14 @@ export default {
     height: 60px;
     border-radius: 16px;
     background: #f1f5f9;
-    color: #94a3b8;
+    color: #64748b;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .text-muted {
-    color: #94a3b8 !important;
+    color: #64748b !important;
 }
 
 .status-badge {
@@ -899,6 +1230,7 @@ export default {
     border-radius: 50rem;
     font-size: 0.85rem;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .status-dot {
@@ -1005,7 +1337,7 @@ export default {
 
 .visi-private {
     background-color: #fef2f2; /* Light red/rose */
-    color: #dc2626; /* Vibrant red text */
+    color: #b91c1c; /* Vibrant red text */
     border: 1px solid #fee2e2;
 }
 
@@ -1050,7 +1382,7 @@ export default {
     border: 1px solid #e2e8f0;
     padding: 4px 8px;
     border-radius: 12px;
-    font-size: 11px;
+    font-size: 0.8125rem;
 }
 
 .icon-wrapper {
@@ -1158,7 +1490,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     color: #475569;
     flex-shrink: 0;
@@ -1169,7 +1501,7 @@ export default {
     align-items: center;
     padding: 0.35rem 0.9rem;
     border-radius: 100px;
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     white-space: nowrap;
     transition: all 0.2s ease;
@@ -1220,5 +1552,143 @@ export default {
 }
 .gap-1 {
     gap: 0.25rem;
+}
+.min-width-0 {
+    min-width: 0;
+}
+.text-truncate-pill {
+    max-width: 220px;
+    overflow: hidden;
+}
+.visi-role {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+}
+.text-role-accent {
+    color: #7e22ce !important;
+}
+.collab-summary {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+}
+.text-success-dark {
+    color: #065f46;
+}
+.text-slate-dark {
+    color: #475569;
+}
+.role-mini-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 100px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+.response-icons-grid {
+    display: inline-grid;
+    grid-template-columns: repeat(3, 28px);
+    gap: 6px;
+    align-items: center;
+}
+.response-icons-grid.is-empty-rules {
+    display: inline-flex;
+}
+.setting-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    cursor: default;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+.setting-icon-badge:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.95);
+}
+.setting-icon-login {
+    background-color: #eef2ff;
+    color: #4338ca;
+}
+.setting-icon-limit {
+    background-color: #ecfdf5;
+    color: #047857;
+}
+.setting-icon-edit {
+    background-color: #fffbeb;
+    color: #b45309;
+}
+.setting-icon-quota {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+}
+.setting-icon-email {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+.setting-icon-notify {
+    background-color: #fef2f2;
+    color: #b91c1c;
+}
+.dropdown-section-header {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+    background-color: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.dropdown-caret {
+    width: 12px !important;
+    height: 12px !important;
+    opacity: 0.7;
+}
+.action-kebab-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-color: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+.action-kebab-btn:hover,
+.action-kebab-btn:focus {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    border-color: #e2e8f0;
+    outline: none;
+}
+.actions-dropdown /deep/ .dropdown-menu,
+.actions-dropdown ::v-deep .dropdown-menu {
+    min-width: 220px !important;
+    max-height: none !important;
+    border-radius: 14px !important;
+}
+.actions-item-row {
+    padding: 0.72rem 1.15rem;
+    gap: 12px;
+    min-width: 220px;
+}
+.actions-item-icon {
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0;
+}
+.actions-item-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
 }
 </style>

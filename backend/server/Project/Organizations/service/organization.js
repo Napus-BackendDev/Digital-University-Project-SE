@@ -7,6 +7,9 @@ const getApiId = function (request) {
 
 exports.onQuery = async function (request, response) {
   try {
+    if (!request.body || !request.body._id || !mongo.ObjectId.isValid(request.body._id)) {
+      return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid ID format");
+    }
     let query = {};
     query._id = new mongo.ObjectId(request.body._id);
     const doc = await Org.onQuery(query);
@@ -37,6 +40,9 @@ exports.onCreate = async function (request, response) {
 
 exports.onUpdate = async function (request, response) {
   try {
+    if (!request.body || !request.body._id || !mongo.ObjectId.isValid(request.body._id)) {
+      return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid ID format");
+    }
     let query = {};
     query._id = new mongo.ObjectId(request.body._id);
     const doc = await Org.onUpdate(query, request.body);
@@ -48,6 +54,9 @@ exports.onUpdate = async function (request, response) {
 
 exports.onDelete = async function (request, response) {
   try {
+    if (!request.body || !request.body._id || !mongo.ObjectId.isValid(request.body._id)) {
+      return ResMessage.sendResponse(response, getApiId(request), 40000, "Invalid ID format");
+    }
     let query = {};
     query._id = new mongo.ObjectId(request.body._id);
     const doc = await Org.onDelete(query);

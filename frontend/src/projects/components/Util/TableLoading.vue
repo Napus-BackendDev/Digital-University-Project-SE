@@ -7,10 +7,10 @@
       <div class="premium-ring-spinner"></div>
     </div>
     <div class="loading-title font-weight-bold text-dark mb-1">
-      {{ text || $t('common.loading') || 'กำลังโหลดข้อมูล...' }}
+      {{ text || ($te && $te('common.loading') ? $t('common.loading') : 'กำลังโหลดข้อมูล...') }}
     </div>
     <div class="loading-sub text-muted small">
-      {{ subText || 'โปรดรอสักครู่ ระบบกำลังเตรียมข้อมูลให้คุณ' }}
+      {{ subText || ($te && $te('common.loadingSubtext') ? $t('common.loadingSubtext') : 'กรุณารอสักครู่ ระบบกำลังจัดเตรียมข้อมูล') }}
     </div>
   </div>
 </template>

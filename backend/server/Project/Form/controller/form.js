@@ -3,7 +3,14 @@ var objSchema = require("../models/form.model");
 const createBaseService = require("../../../../helpers/base.service");
 
 const defaultPopulate = [
-  { path: 'creator', select: '-password' },
+  {
+    path: 'creator',
+    select: '-password',
+    populate: [
+      { path: 'role', select: 'title' },
+      { path: 'organization', select: 'title' }
+    ]
+  },
   {
     path: 'collaborator',
     populate: [
@@ -23,7 +30,14 @@ const formPopulate = [
     populate: { path: "type", select: "type" }
   },
   { path: "status" },
-  { path: "creator", select: "-password" },
+  {
+    path: "creator",
+    select: "-password",
+    populate: [
+      { path: "role", select: "title" },
+      { path: "organization", select: "title" }
+    ]
+  },
   { path: "settings.allowedUser", select: "-password" },
   { path: "settings.allowedRoles", select: "title" },
   {
@@ -40,6 +54,10 @@ const formPopulate = [
     populate: {
       path: "responder",
       select: "-password",
+      populate: [
+        { path: "organization", select: "title" },
+        { path: "role", select: "title" }
+      ]
     },
   },
 ];

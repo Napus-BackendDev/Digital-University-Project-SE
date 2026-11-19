@@ -89,7 +89,17 @@ const upload = multer({
     },
     fileFilter: (req, file, cb) => {
         const ext = path.extname(file.originalname).toLowerCase();
-        
+        const isQuestionUpload = (req.baseUrl || '').includes('/question');
+
+        if (isQuestionUpload) {
+            const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+            const imageMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!imageExts.includes(ext) || !imageMimes.includes(file.mimetype)) {
+                return cb(new Error(`Only image files are allowed for question images (got ${ext} / ${file.mimetype})`), false);
+            }
+            return cb(null, true);
+        }
+
         if (!ALLOWED_EXTENSIONS.includes(ext)) {
             return cb(new Error(`File type ${ext} not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`), false);
         }
@@ -107,6 +117,22 @@ const upload = multer({
         
         if (!allowedMimeTypes.includes(file.mimetype)) {
             return cb(new Error(`MIME type ${file.mimetype} not allowed`), false);
+        }
+
+        const expectedMimeByExt = {
+            '.jpg': ['image/jpeg', 'image/jpg'],
+            '.jpeg': ['image/jpeg', 'image/jpg'],
+            '.png': ['image/png'],
+            '.gif': ['image/gif'],
+            '.pdf': ['application/pdf'],
+            '.doc': ['application/msword'],
+            '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            '.txt': ['text/plain'],
+            '.csv': ['text/csv', 'application/csv', 'text/plain']
+        };
+        const expectedMimes = expectedMimeByExt[ext];
+        if (expectedMimes && !expectedMimes.includes(file.mimetype)) {
+            return cb(new Error(`File extension ${ext} does not match MIME type ${file.mimetype}`), false);
         }
         
         cb(null, true);

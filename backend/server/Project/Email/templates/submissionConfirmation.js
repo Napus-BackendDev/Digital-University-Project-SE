@@ -18,6 +18,9 @@ const buildSubmissionConfirmationHtml = function ({
   referenceNo = '',
   status = 'Received',
   emailMessage = '',
+  contactOrganization = '',
+  contactEmail = '',
+  appName = '',
 }) {
   const safeName = escapeHtml(name);
   const safeFormTitle = escapeHtml(formTitle);
@@ -25,6 +28,7 @@ const buildSubmissionConfirmationHtml = function ({
   const safeReferenceNo = escapeHtml(referenceNo || '-');
   const safeStatus = escapeHtml(status);
   const safeEmailMessage = escapeHtml(emailMessage);
+  const contactText = [contactOrganization, contactEmail].filter(Boolean).join(' · ');
 
   const content = `
     <p style="font-size:16px; margin-bottom:20px; color:#2d3748;">Dear <strong>${safeName}</strong>,</p>
@@ -45,13 +49,16 @@ const buildSubmissionConfirmationHtml = function ({
     </div>
 
     <p style="font-size:14px; color:#718096;">
-      Please keep this email for your records. If you need assistance, contact the system administrator.
+      Please keep this email for your records.${contactText ? ` For inquiries, please contact ${escapeHtml(contactText)}.` : ' If you need assistance, contact the form coordinator.'}
     </p>
   `;
 
   return baseLayout.wrapInLayout(content, {
-      title: `Submission Confirmation: ${safeFormTitle}`,
-      preheader: `Confirmation for your submission to ${safeFormTitle}`
+      title: `Submission Confirmation: ${formTitle}`,
+      preheader: `Confirmation for your submission to ${formTitle}`,
+      appName,
+      contactOrganization,
+      contactEmail
   });
 };
 
@@ -62,7 +69,10 @@ const buildSubmissionConfirmationText = function ({
   referenceNo = '',
   status = 'Received',
   emailMessage = '',
+  contactOrganization = '',
+  contactEmail = '',
 }) {
+  const contactText = [contactOrganization, contactEmail].filter(Boolean).join(' · ');
   return [
     `Dear ${name},`,
     '',
@@ -74,7 +84,7 @@ const buildSubmissionConfirmationText = function ({
     `Status: ${status}`,
     '',
     'Please keep this email for your records.',
-    'If you need assistance, contact the system administrator.',
+    contactText ? `For inquiries, contact: ${contactText}` : 'If you need assistance, contact the form coordinator.',
   ].join('\n');
 };
 

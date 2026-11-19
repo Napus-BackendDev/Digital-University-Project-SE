@@ -54,11 +54,4 @@ module.exports = function (app) {
 
     // การใช้งาน logger ใน Express
     app.use(loggerMiddleware);
-
-    // Handle errors
-    app.use((err, req, res, next) => {
-        // Log error without exposing sensitive details
-        console.error('[Express] Error:', err.message);
-        res.status(500).send({ message: "Internal Server Error" });
-    });
 };

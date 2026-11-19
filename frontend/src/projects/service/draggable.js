@@ -54,22 +54,26 @@ export function buildGridLayoutFromQuestions(localQuestions = [], storedLayout =
 
     const calculateHeight = (q, type) => {
         if (!q) return 8;
-        let px = 180; // base card height
+        let px = 265; // base card height including prompt zone, add-desc box, and answer header
         const titleLangs = Array.isArray(q.title) ? q.title.length : 1;
         px += (titleLangs - 1) * 44;
+        const hasDesc = Array.isArray(q.description) && q.description.some(d => d && d.value && String(d.value).trim().length > 0);
+        if (hasDesc) {
+            px += q.description.length * 52 + 24;
+        }
 
         const safeType = (type || '').toLowerCase();
-        if (safeType === 'short_answer') {
-            px += 50;
-        } else if (safeType === 'paragraph') {
-            px += 110;
+        if (safeType === 'free_text' || safeType === 'short_answer' || safeType === 'paragraph') {
+            px += 95;
         } else if (safeType === 'multiple_choice' || safeType === 'checkbox') {
             const choices = (q.config && Array.isArray(q.config.choices)) ? q.config.choices : [{}];
-            px += choices.length * 48 + 45;
+            px += choices.length * 56 + 45;
         } else if (safeType === 'rating') {
             px += 85;
         } else if (safeType === 'file_upload') {
             px += 140;
+        } else if (safeType === 'section') {
+            px = 145 + (titleLangs - 1) * 44;
         } else if (safeType === 'title_description') {
             const descLangs = (q.config && Array.isArray(q.config.description)) ? q.config.description.length : 1;
             px += descLangs * 85;

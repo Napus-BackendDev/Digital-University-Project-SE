@@ -1,7 +1,7 @@
 <template>
     <div class="widgets-wrapper">
         <CRow class="mb-4">
-            <CCol sm="6" lg="3" @click="$emit('filter', 'All')" style="cursor: pointer;">
+            <CCol sm="6" lg="3" class="mb-3 mb-lg-0" @click="$emit('filter', 'All')" style="cursor: pointer;">
                 <div class="stat-card">
                     <div class="stat-header">
                         <div class="icon-box icon-box--primary">
@@ -15,7 +15,7 @@
                     </div>
                 </div>
             </CCol>
-            <CCol sm="6" lg="3" @click="$emit('filter', 'Active')" style="cursor: pointer;">
+            <CCol sm="6" lg="3" class="mb-3 mb-lg-0" @click="$emit('filter', 'Active')" style="cursor: pointer;">
                 <div class="stat-card">
                     <div class="stat-header">
                         <div class="icon-box icon-box--success">
@@ -29,21 +29,21 @@
                     </div>
                 </div>
             </CCol>
-            <CCol sm="6" lg="3" @click="$emit('filter', 'Pending')" style="cursor: pointer;">
+            <CCol sm="6" lg="3" class="mb-3 mb-lg-0" @click="$emit('filter', 'Draft')" style="cursor: pointer;">
                 <div class="stat-card">
                     <div class="stat-header">
                         <div class="icon-box icon-box--warning">
                             <CIcon name="cil-clock" size="xl" />
                         </div>
-                        <span class="stat-badge stat-badge--warning">{{ $t('status.pending') }}</span>
+                        <span class="stat-badge stat-badge--warning">{{ $t('status.draft') }}</span>
                     </div>
                     <div class="stat-content">
-                        <h2 class="stat-value">{{ stats.pending }}</h2>
-                        <div class="stat-label">{{ $t('widget.pending') }}</div>
+                        <h2 class="stat-value">{{ stats.draft }}</h2>
+                        <div class="stat-label">{{ $t('widget.manage.draft') }}</div>
                     </div>
                 </div>
             </CCol>
-            <CCol sm="6" lg="3" @click="$emit('filter', 'Closed')" style="cursor: pointer;">
+            <CCol sm="6" lg="3" class="mb-3 mb-lg-0" @click="$emit('filter', 'Closed')" style="cursor: pointer;">
                 <div class="stat-card">
                     <div class="stat-header">
                         <div class="icon-box icon-box--info">
@@ -62,6 +62,8 @@
 </template>
 
 <script>
+import { getScheduleStatus } from '@/projects/utils/formPolicy';
+
 export default {
     name: 'WidgetsManageForms',
     props: {
@@ -74,36 +76,36 @@ export default {
     computed: {
         stats() {
             const forms = this.forms || [];
-            const now = new Date();
-            let active = 0, pending = 0, closed = 0;
+            let active = 0, draft = 0, closed = 0;
             for (const f of forms) {
-                let status = 'Pending';
+                let status = 'Draft';
                 if (f) {
-                    const hasStart = f.schedule && f.schedule.startAt;
-                    const hasEnd = f.schedule && f.schedule.endAt;
-                    if (hasStart || hasEnd) {
-                        const start = hasStart ? new Date(f.schedule.startAt) : null;
-                        const end = hasEnd ? new Date(f.schedule.endAt) : null;
-                        
-                        // Outside range = Closed (matching ManagementTables)
-                        if ((start && now < start) || (end && now > end)) {
-                            status = 'Closed';
-                        } else {
-                            status = 'Active';
-                        }
+                    const sched = f.schedule;
+                    const schedStatus = getScheduleStatus(sched);
+                    if (schedStatus === 'open' || schedStatus === 'open_forever') {
+                        status = 'Active';
+                    } else if (schedStatus === 'closed' || schedStatus === 'closed_forever') {
+                        status = 'Closed';
+                    } else if (schedStatus === 'scheduled') {
+                        status = 'Scheduled';
+                    } else if (!sched && f.status) {
+                        const rawStatus = typeof f.status === 'string'
+                            ? f.status
+                            : (f.status.type || f.status.name || 'Draft');
+                        status = rawStatus === 'Pending' ? 'Draft' : rawStatus;
                     }
                 }
 
                 // Align with derived status strings
                 if (status === 'Active') active++;
                 else if (status === 'Closed') closed++;
-                else pending++;
+                else draft++;
             }
 
             return {
                 total: forms.length,
                 active,
-                pending,
+                draft,
                 closed
             };
         }
@@ -173,7 +175,7 @@ export default {
 }
 
 .stat-badge {
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     padding: 3px 8px;
     border-radius: 12px;
@@ -212,7 +214,7 @@ export default {
 
 .stat-label {
     color: #64748b;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     font-weight: 600;
 }
 </style>

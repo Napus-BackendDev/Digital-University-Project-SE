@@ -7,6 +7,9 @@ exports.onQuery = async function (request, response) {
     try {
         let query = {};
         if (request.body && request.body._id) {
+            if (!mongo.ObjectId.isValid(request.body._id)) {
+                return ResMessage.sendResponse(response, 0, 40000, null, "Invalid ID format");
+            }
             query._id = new mongo.ObjectId(request.body._id);
         }
         const doc = await Question.onQuery(query);
@@ -55,6 +58,10 @@ exports.onUpdate = async function (request, response) {
             try { body = { ...body, ...JSON.parse(body.payload) }; } catch (e) { /* keep original body */ }
         }
 
+        if (!body._id || !mongo.ObjectId.isValid(body._id)) {
+            return ResMessage.sendResponse(response, 0, 40000, null, "Invalid or missing _id");
+        }
+
         let query = {};
         query._id = new mongo.ObjectId(body._id);
 
@@ -76,6 +83,9 @@ exports.onUpdate = async function (request, response) {
 
 exports.onDelete = async function (request, response) {
     try {
+        if (!request.body || !request.body._id || !mongo.ObjectId.isValid(request.body._id)) {
+            return ResMessage.sendResponse(response, 0, 40000, null, "Invalid or missing _id");
+        }
         let query = {};
         query._id = new mongo.ObjectId(request.body._id);
         const doc = await Question.onDelete(query);

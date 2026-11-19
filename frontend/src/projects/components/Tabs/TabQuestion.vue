@@ -1,53 +1,29 @@
 <template>
     <div>
-        <CCard class="mb-4 rounded-20 shadow-sm border">
-            <CCardBody>
+        <CCard class="mb-3 rounded-20 shadow-sm border">
+            <CCardBody class="p-3 p-md-4">
                 <div>
                     <!-- ── Form Title  ── -->
-                    <div class="mb-3">
+                    <div class="mb-4">
+                        <span class="d-block field-section-label form-header-section-label mb-2">{{ $t('builder.formTitleLabel') }}</span>
                         <div v-for="(titleItem, tIdx) in (form.title || [])" :key="'ft-' + tIdx"
-                            class="d-flex align-items-center mb-1">
-                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode" color="light"
-                                    size="sm" class="lang-key-dropdown">
-                                    <template #toggler>
-                                        <CButton class="lang-key-btn border shadow-none"
-                                            style="width: 3.2rem; min-width: 3.2rem;">
-                                            {{ (titleItem.key || 'EN').toUpperCase() }}
-                                        </CButton>
-                                    </template>
-                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
-                                        @click="setLangKey(titleItem, lang.value, updateFormMeta)">
-                                        {{ lang.label }}
-                                    </CDropdownItem>
-                                    <CDropdownDivider />
-                                    <CDropdownItem
-                                        @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">
-                                        Other...</CDropdownItem>
-                                </CDropdown>
-                                <div v-else class="manual-lang-input d-flex align-items-center">
-                                    <CInput class="lang-key-input mb-0" v-model="titleItem.key" @change="updateFormMeta"
-                                        @blur="checkManualKey(titleItem)" maxlength="3" style="width: 3.2rem;" />
-                                    <CButton
-                                        @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', updateFormMeta)"
-                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
-                                </div>
-                            </div>
-                            <CInput class="form-title-input flex-grow-1 border-bottom mb-0" v-model="titleItem.value"
-                                @change="updateFormMeta" />
-                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                v-if="hasMultipleLanguages" @click="removeFormTitle(tIdx)">
-                                <CIcon name="cil-minus" />
-                            </CButton>
+                            class="d-flex align-items-start mb-2">
+                            <span class="lang-key-badge mr-2 mt-1 flex-shrink-0">
+                                {{ (titleItem.key || 'EN').toUpperCase() }}
+                            </span>
+                            <CTextarea
+                                class="form-title-input auto-resize-field flex-grow-1 border-bottom mb-0"
+                                v-model="titleItem.value"
+                                rows="1"
+                                @input.native="onAutoResizeInput($event.target, false)"
+                                @keydown.native.enter.prevent="updateFormMeta"
+                                @change="updateFormMeta"
+                            />
                         </div>
-                        <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
-                            @click="addFormTitle" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
-                            <CIcon name="cil-globe-alt" />
-                        </CButton>
                     </div>
 
                     <!-- ── Form Description ── -->
-                    <div v-if="!hasFormDescription" class="add-desc-box mt-3 p-3 rounded-12 d-flex align-items-center justify-content-between" @click="expandFormDesc">
+                    <div v-if="!hasFormDescription" class="add-desc-box mt-4 p-3 rounded-12 d-flex align-items-center justify-content-between" @click="expandFormDesc">
                         <div class="d-flex align-items-center text-muted font-weight-bold">
                             <CIcon name="cil-notes" class="mr-2 text-primary" />
                             <span>{{ $t('builder.addDescriptionPrompt') }}</span>
@@ -58,58 +34,31 @@
                         </CButton>
                     </div>
 
-                    <div v-else class="mt-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <small class="text-muted font-weight-bold">
+                    <div v-else class="mt-4 pt-1">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="field-section-label form-header-section-label">
                                 {{ $t('builder.formDescription') }}
-                            </small>
+                            </span>
                             <CButton size="sm" color="danger" variant="ghost" class="p-0 font-weight-bold d-flex align-items-center text-danger"
-                                @click="removeFormDescBox" v-c-tooltip="'Remove description'">
+                                @click="removeFormDescBox" v-c-tooltip="($te && $te('builder.remove')) ? $t('builder.remove') : 'ลบ'">
                                 <CIcon name="cil-trash" size="sm" class="mr-1" />
                                 <small>{{ $t('builder.remove') }}</small>
                             </CButton>
                         </div>
 
                         <div v-for="(descItem, dIdx) in (form.description || [])" :key="'fd-' + dIdx"
-                            class="d-flex align-items-start mb-1">
-                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
-                                    size="sm" class="lang-key-dropdown">
-                                    <template #toggler>
-                                        <CButton class="lang-key-btn border shadow-none"
-                                            style="width: 3.2rem; min-width: 3.2rem;">
-                                            {{ (descItem.key || 'EN').toUpperCase() }}
-                                        </CButton>
-                                    </template>
-                                    <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
-                                        @click="setLangKey(descItem, lang.value, updateFormMeta)">
-                                        {{ lang.label }}
-                                    </CDropdownItem>
-                                    <CDropdownDivider />
-                                    <CDropdownItem
-                                        @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
-                                        Other...
-                                    </CDropdownItem>
-                                </CDropdown>
-                                <div v-else class="manual-lang-input d-flex align-items-center">
-                                    <CInput class="lang-key-input mb-0" v-model="descItem.key" @change="updateFormMeta"
-                                        @blur="checkManualKey(descItem)" maxlength="3" style="width: 3.2rem;" />
-                                    <CButton
-                                        @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', updateFormMeta)"
-                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
-                                </div>
-                            </div>
-                            <CTextarea class="form-desc-input flex-grow-1 border-bottom mb-0" v-model="descItem.value"
-                                @change="updateFormMeta" rows="2" />
-                            <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                v-if="hasMultipleLanguages" @click="removeFormDesc(dIdx)">
-                                <CIcon name="cil-minus" />
-                            </CButton>
+                            class="d-flex align-items-start mb-2">
+                            <span class="lang-key-badge mr-2 flex-shrink-0">
+                                {{ (descItem.key || 'EN').toUpperCase() }}
+                            </span>
+                            <CTextarea
+                                class="form-desc-input auto-resize-field flex-grow-1 border-bottom mb-0"
+                                v-model="descItem.value"
+                                rows="1"
+                                @input.native="onAutoResizeInput($event.target, false)"
+                                @change="updateFormMeta"
+                            />
                         </div>
-                        <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn" style="width: 3.2rem;"
-                            @click="addFormDesc" size="sm" v-c-tooltip="'Add language'" aria-label="Add language">
-                            <CIcon name="cil-globe-alt" />
-                        </CButton>
                     </div>
 
                 </div>
@@ -117,79 +66,238 @@
         </CCard>
 
         <GridLayout :layout.sync="layout" :key="gridKey" :cols="{ lg: 12, md: 8, sm: 8, xs: 4, xxs: 4 }"
-            :row-height="10" :margin="[10, 20]" :is-draggable="true" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
-            <GridItem v-for="(question, qIndex) in localQuestions" :key="convertIdToStr(question._id || qIndex)"
-                v-bind="getLayoutItem(question, qIndex)">
-                <CCard :id="'question-' + (question._id || qIndex)"
-                    class="position-relative rounded-20 shadow-sm border mb-0 h-100">
-                    <CCardBody class="p-4">
-                        <div class="question-card-content">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div class="number-question" v-if="isCounted(question)">
-                                {{ displayQuestionNumber(question, qIndex) }}</div>
+            :row-height="10" :margin="[0, 20]" :is-draggable="!isMobileViewport" :is-resizable="false" :responsive="true" @layout-updated="onDragStop">
+            <GridItem v-for="{ question, qIndex } in visibleGridEntries" :key="convertIdToStr(question._id || qIndex)"
+                v-bind="getLayoutItem(question, qIndex)"
+                drag-allow-from=".question-drag-handle"
+                class="question-grid-item">
+                <div v-if="!isMobileViewport" class="question-drag-handle" aria-hidden="true">
+                    <svg width="24" height="10" viewBox="0 0 24 10" fill="currentColor">
+                        <circle cx="5" cy="2.5" r="1.5" />
+                        <circle cx="12" cy="2.5" r="1.5" />
+                        <circle cx="19" cy="2.5" r="1.5" />
+                        <circle cx="5" cy="7.5" r="1.5" />
+                        <circle cx="12" cy="7.5" r="1.5" />
+                        <circle cx="19" cy="7.5" r="1.5" />
+                    </svg>
+                </div>
 
-                            <div class="flex-grow-1">
-                                <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
-                                    class="d-flex align-items-center mb-1">
-                                    <div class="lang-key-wrapper flex-shrink-0 mr-1">
-                                        <CDropdown v-if="isCommonLang(titleItem.key) && !titleItem.isManualMode"
-                                            color="light" size="sm" class="lang-key-dropdown">
-                                            <template #toggler>
-                                                <CButton class="lang-key-btn border shadow-none"
-                                                    style="width: 3.2rem; min-width: 3.2rem;">
-                                                    {{ (titleItem.key || 'EN').toUpperCase() }}
-                                                </CButton>
-                                            </template>
-                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
-                                                @click="setLangKey(titleItem, lang.value, () => updateQuestionTitle(question))">
-                                                {{ lang.label }}
-                                            </CDropdownItem>
-                                            <CDropdownDivider />
-                                            <CDropdownItem
-                                                @click="$set(titleItem, 'isManualMode', true); $set(titleItem, 'key', '')">
-                                                Other...</CDropdownItem>
-                                        </CDropdown>
-                                        <div v-else class="manual-lang-input d-flex align-items-center">
-                                            <CInput class="lang-key-input mb-0" v-model="titleItem.key"
-                                                @change="updateQuestionTitle(question)"
-                                                @blur="checkManualKey(titleItem)" maxlength="3"
-                                                style="width: 3.2rem;" />
-                                            <CButton
-                                                @click="$set(titleItem, 'isManualMode', false); setLangKey(titleItem, 'en', () => updateQuestionTitle(question))"
-                                                size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
-                                        </div>
-                                    </div>
-                                    <CInput class="flex-grow-1 mb-0" v-model="titleItem.value"
-                                        @change="updateQuestionTitle(question)" style="background-color: #f8fafc;" />
-                                    <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0"
-                                        v-if="hasMultipleLanguages"
-                                        @click="removeTitle(question, titleIndex)">
-                                        <CIcon name="cil-minus" />
+                <!-- Section Card -->
+                <CCard v-if="isSectionQuestion(question)" :id="'question-' + (question._id || qIndex)"
+                    class="question-item-card section-card position-relative rounded-20 shadow-sm border mb-0 h-100"
+                    :class="{ 'is-active-section': isSectionActive(question), 'is-collapsed-section': isSectionCollapsed(question) }"
+                    @click.native="setActiveSection(question)">
+                    <CCardBody class="p-3 p-md-4">
+                        <div class="section-divider-content">
+                            <div class="section-divider-bar d-flex align-items-center justify-content-between flex-wrap"
+                                :class="{ 'mb-3': !isSectionCollapsed(question) }">
+                                <div class="d-flex align-items-center flex-wrap">
+                                    <span class="section-tab-pill d-inline-flex align-items-center mr-2">
+                                        <CIcon name="cil-view-stream" size="sm" class="mr-1" />
+                                        <span>
+                                            {{ isSectionCollapsed(question)
+                                                ? $t('builder.sectionCollapsedSummary', { section: getSectionNumber(question, qIndex), count: getSectionQuestionCount(qIndex) })
+                                                : `${$t('builder.sectionBadge')} ${getSectionNumber(question, qIndex)}` }}
+                                        </span>
+                                    </span>
+                                    <span v-if="!isSectionCollapsed(question)" class="section-count-badge mr-2">
+                                        {{ $t('builder.sectionQuestionCount', { count: getSectionQuestionCount(qIndex) }) }}
+                                    </span>
+                                    <span v-if="isSectionActive(question) && !isSectionCollapsed(question)" class="section-active-badge">
+                                        {{ $t('builder.activeSectionTag') }}
+                                    </span>
+                                </div>
+                                <div class="section-tab-actions d-flex align-items-center flex-wrap mt-1 mt-sm-0" @click.stop>
+                                    <CButton size="sm" color="light" variant="ghost" class="section-collapse-btn mr-1 d-inline-flex align-items-center"
+                                        :aria-label="isSectionCollapsed(question) ? $t('builder.expandSection') : $t('builder.collapseSection')"
+                                        @click.stop="toggleSectionCollapse(question)">
+                                        <CIcon :name="isSectionCollapsed(question) ? 'cil-chevron-right' : 'cil-chevron-bottom'" size="sm" class="mr-1" />
+                                        <span>{{ isSectionCollapsed(question) ? $t('builder.expandSection') : $t('builder.collapseSection') }}</span>
+                                    </CButton>
+                                    <CButton size="sm" color="light" variant="ghost" class="section-move-btn mr-1"
+                                        :disabled="!canMoveSection(qIndex, -1)" :aria-label="$t('builder.moveUp')"
+                                        v-c-tooltip="$t('builder.moveUp')"
+                                        @click.stop="moveSectionGroup(qIndex, -1)">
+                                        &uarr;
+                                    </CButton>
+                                    <CButton size="sm" color="light" variant="ghost" class="section-move-btn mr-1"
+                                        :disabled="!canMoveSection(qIndex, 1)" :aria-label="$t('builder.moveDown')"
+                                        v-c-tooltip="$t('builder.moveDown')"
+                                        @click.stop="moveSectionGroup(qIndex, 1)">
+                                        &darr;
+                                    </CButton>
+                                    <CButton size="sm" color="danger" variant="ghost"
+                                        :aria-label="$t('builder.remove')"
+                                        :title="$t('builder.removeSectionDividerTip')"
+                                        v-c-tooltip="$t('builder.removeSectionDividerTip')"
+                                        @click.stop="removeQuestion(question._id)">
+                                        <CIcon name="cil-trash" />
                                     </CButton>
                                 </div>
-
-                                <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn mt-1"
-                                    style="width: 3.2rem;" @click="addTitle(question)" size="sm"
-                                    v-c-tooltip="$t('builder.addLanguage')" aria-label="Add language">
-                                    <CIcon name="cil-globe-alt" />
-                                </CButton>
                             </div>
 
-                            <div class="ml-2 flex-shrink-0">
-                                <CButton color="danger" variant="ghost" @click="removeQuestion(question._id)">
-                                    <CIcon name="cil-trash" />
-                                </CButton>
+                            <div v-if="isSectionCollapsed(question) && (getSectionSummaryTitle(question) || getSectionSummaryDescription(question))"
+                                class="section-collapsed-summary-body mt-3">
+                                <div v-if="getSectionSummaryTitle(question)"
+                                    class="section-collapsed-title line-clamp-2"
+                                    :title="getSectionSummaryTitle(question)">
+                                    {{ getSectionSummaryTitle(question) }}
+                                </div>
+                                <div v-if="getSectionSummaryDescription(question)"
+                                    class="section-collapsed-desc line-clamp-2 mt-1"
+                                    :title="getSectionSummaryDescription(question)">
+                                    {{ getSectionSummaryDescription(question) }}
+                                </div>
+                            </div>
+
+                            <div v-if="!isSectionCollapsed(question)">
+                                <!-- Section Title (styled identically to Question Title) -->
+                                <div class="flex-grow-1 mb-3">
+                                    <span class="d-block field-section-label mb-2">{{ $t('builder.questionTitleLabel') }}</span>
+                                    <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
+                                        class="d-flex align-items-start mb-2">
+                                        <span class="lang-key-badge mr-2 flex-shrink-0">
+                                            {{ (titleItem.key || 'EN').toUpperCase() }}
+                                        </span>
+                                        <CTextarea class="flex-grow-1 mb-0 auto-resize-field question-title-input"
+                                            v-model="titleItem.value"
+                                            rows="1"
+                                            :placeholder="$t('builder.sectionTitlePlaceholder')"
+                                            @input.native="onAutoResizeInput($event.target, true)"
+                                            @keydown.native.enter.prevent="updateQuestionTitle(question)"
+                                            @change="updateQuestionTitle(question)" />
+                                    </div>
+                                </div>
+
+                                <!-- Section Description (identical dashed .add-desc-box UX as regular questions) -->
+                                <div class="question-desc-section mt-3">
+                                    <div v-if="!hasQuestionDescription(question)"
+                                        class="add-desc-box question-add-desc-box p-3 rounded-12 d-flex align-items-center justify-content-between"
+                                        @click.stop="expandQuestionDesc(question)">
+                                        <div class="d-flex align-items-center text-muted font-weight-bold">
+                                            <CIcon name="cil-notes" class="mr-2 text-primary" />
+                                            <span>{{ $t('builder.addSectionDescPrompt') }}</span>
+                                        </div>
+                                        <CButton size="sm" color="primary" variant="ghost" class="font-weight-bold">
+                                            <CIcon name="cil-plus" class="mr-1" />
+                                            {{ $t('builder.add') }}
+                                        </CButton>
+                                    </div>
+                                    <div v-else>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="field-section-label">{{ $t('builder.questionDescLabel') }}</span>
+                                            <CButton size="sm" color="danger" variant="ghost"
+                                                class="p-0 font-weight-bold d-flex align-items-center text-danger"
+                                                @click.stop="removeQuestionDescBox(question)">
+                                                <CIcon name="cil-trash" size="sm" class="mr-1" />
+                                                <small>{{ $t('builder.remove') }}</small>
+                                            </CButton>
+                                        </div>
+                                        <div v-for="(descItem, dIdx) in (question.config && question.config.description || [])" :key="'sd-' + dIdx"
+                                            class="d-flex align-items-start mb-2">
+                                            <span class="lang-key-badge mr-2 flex-shrink-0">
+                                                {{ (descItem.key || 'EN').toUpperCase() }}
+                                            </span>
+                                            <CTextarea class="flex-grow-1 mb-0 auto-resize-field question-desc-input"
+                                                v-model="descItem.value"
+                                                rows="1"
+                                                :placeholder="$t('builder.sectionDescPlaceholder')"
+                                                @input.native="onAutoResizeInput($event.target, true)"
+                                                @change="putQuestion(question)" />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </CCardBody>
+                </CCard>
+
+                <CCard v-else :id="'question-' + (question._id || qIndex)"
+                    class="question-item-card position-relative rounded-20 shadow-sm border mb-0 h-100"
+                    :class="{ 'section-member-card': hasSections }"
+                    @click.native="setActiveSectionByQuestionIndex(qIndex)">
+                    <CCardBody class="p-3 p-md-4">
+                        <div class="question-card-content">
+                            <!-- ── Prompt Zone (Question Badge + Question Title + Question Description) ── -->
+                            <div :class="isCounted(question) ? 'question-prompt-zone mb-4' : 'mb-3'">
+                                <div v-if="isCounted(question)" class="d-flex align-items-center mb-3">
+                                    <span class="question-badge-pill">
+                                        {{ $t('builder.questionBadgePrefix') }} {{ displayQuestionNumber(question, qIndex) }}
+                                    </span>
+                                </div>
+
+                                <div class="flex-grow-1 mb-4">
+                                    <span v-if="isCounted(question)" class="d-block field-section-label mb-2">{{ $t('builder.questionTitleLabel') }}</span>
+                                    <div v-for="(titleItem, titleIndex) in (question.title || [])" :key="titleIndex"
+                                        class="d-flex align-items-start mb-2">
+                                        <span class="lang-key-badge mr-2 flex-shrink-0">
+                                            {{ (titleItem.key || 'EN').toUpperCase() }}
+                                        </span>
+                                        <CTextarea class="flex-grow-1 mb-0 auto-resize-field"
+                                            :class="isCounted(question) ? 'question-title-input' : 'non-counted-title-input'"
+                                            v-model="titleItem.value"
+                                            rows="1"
+                                            :placeholder="isCounted(question) ? $t('builder.questionTitlePlaceholder') : ''"
+                                            @input.native="onAutoResizeInput($event.target, true)"
+                                            @keydown.native.enter.prevent="updateQuestionTitle(question)"
+                                            @change="updateQuestionTitle(question)" />
+                                    </div>
+                                </div>
+
+                                <!-- Regular Question Description (Multilingual) -->
+                                <div v-if="isCounted(question)" class="question-desc-section mt-3">
+                                    <div v-if="!hasRegularQuestionDescription(question)"
+                                        class="add-desc-box question-add-desc-box p-3 rounded-12 d-flex align-items-center justify-content-between"
+                                        @click="expandRegularQuestionDesc(question)">
+                                        <div class="d-flex align-items-center text-muted font-weight-bold">
+                                            <CIcon name="cil-notes" class="mr-2 text-primary" />
+                                            <span>{{ $t('builder.addRegularQuestionDescPrompt') }}</span>
+                                        </div>
+                                        <CButton size="sm" color="primary" variant="ghost" class="font-weight-bold">
+                                            <CIcon name="cil-plus" class="mr-1" />
+                                            {{ $t('builder.add') }}
+                                        </CButton>
+                                    </div>
+                                    <div v-else>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="field-section-label">{{ $t('builder.questionDescLabel') }}</span>
+                                            <CButton size="sm" color="danger" variant="ghost"
+                                                class="p-0 font-weight-bold d-flex align-items-center text-danger"
+                                                @click="removeRegularQuestionDescBox(question)">
+                                                <CIcon name="cil-trash" size="sm" class="mr-1" />
+                                                <small>{{ $t('builder.remove') }}</small>
+                                            </CButton>
+                                        </div>
+                                        <div v-for="(descItem, rdIdx) in (question.description || [])" :key="'rqd-' + rdIdx"
+                                            class="d-flex align-items-start mb-2">
+                                            <span class="lang-key-badge mr-2 flex-shrink-0">
+                                                {{ (descItem.key || 'EN').toUpperCase() }}
+                                            </span>
+                                            <CTextarea class="flex-grow-1 mb-0 auto-resize-field question-desc-input"
+                                                v-model="descItem.value"
+                                                rows="1"
+                                                :placeholder="$t('builder.questionDescPlaceholder')"
+                                                @input.native="onAutoResizeInput($event.target, true)"
+                                                @change="putQuestion(question)" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ── Answer / Choices Zone Header ── -->
+                            <div v-if="isCounted(question)" class="question-answer-header d-flex align-items-center mb-3">
+                                <span class="answer-zone-label">
+                                    {{ (getQuestionType(question.type).toLowerCase() === 'multiple_choice' || getQuestionType(question.type).toLowerCase() === 'checkbox')
+                                        ? $t('builder.choicesZoneLabel')
+                                        : $t('builder.answerZoneLabel') }}
+                                </span>
+                                <div class="answer-zone-line flex-grow-1 ml-3"></div>
+                            </div>
 
                         <!-- ── Question Type ── -->
-                        <div v-if="getQuestionType(question.type).toLowerCase() === 'short_answer'">
-                            <CInput disabled style="opacity: 0.55;"
-                                :placeholder="$t('builder.shortAnswerPlaceholder')" />
-                        </div>
-
-                        <div v-else-if="getQuestionType(question.type).toLowerCase() === 'paragraph'">
-                            <CTextarea disabled style="opacity: 0.55;" :placeholder="$t('builder.paragraphPlaceholder')"
+                        <div class="question-answer-zone">
+                        <div v-if="isFreeTextType(question.type)">
+                            <CTextarea disabled style="opacity: 0.55;" :placeholder="$t('builder.freeTextPlaceholder')"
                                 rows="3" />
                         </div>
 
@@ -197,7 +305,7 @@
                             getQuestionType(question.type).toLowerCase() === 'multiple_choice' ||
                             getQuestionType(question.type).toLowerCase() === 'checkbox'">
                             <div v-for="(choice, choiceIndex) in (question.config && question.config.choices || [])"
-                                :key="choice.key || choiceIndex" class="mb-2">
+                                :key="choice.key || choiceIndex" class="mb-3">
                                 <div class="d-flex align-items-center">
                                     <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
                                         class="border rounded-circle mr-2 flex-shrink-0 mb-1"
@@ -207,70 +315,36 @@
                                     <div class="option-langs flex-grow-1">
                                         <div v-for="(lang, li) in (choice.lang || [])" :key="li"
                                             class="d-flex align-items-center mb-1">
-                                            <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                                <CDropdown v-if="isCommonLang(lang.key) && !lang.isManualMode"
-                                                    color="light" size="sm" class="lang-key-dropdown">
-                                                    <template #toggler>
-                                                        <CButton class="lang-key-btn border shadow-none"
-                                                            style="width: 3.2rem; min-width: 3.2rem;">
-                                                            {{ (lang.key || 'EN').toUpperCase() }}
-                                                        </CButton>
-                                                    </template>
-                                                    <CDropdownItem v-for="l in commonLangs" :key="l.value"
-                                                        @click="setLangKey(lang, l.value, () => putQuestion(question))">
-                                                        {{ l.label }}
-                                                    </CDropdownItem>
-                                                    <CDropdownDivider />
-                                                    <CDropdownItem
-                                                        @click="$set(lang, 'isManualMode', true); $set(lang, 'key', '')">
-                                                        Other...</CDropdownItem>
-                                                </CDropdown>
-                                                <div v-else class="manual-lang-input d-flex align-items-center">
-                                                    <CInput class="lang-key-input mb-0" v-model="lang.key"
-                                                        @change="putQuestion(question)" @blur="checkManualKey(lang)"
-                                                        maxlength="3" style="width: 3.2rem;" />
-                                                    <CButton
-                                                        @click="$set(lang, 'isManualMode', false); setLangKey(lang, 'en', () => putQuestion(question))"
-                                                        size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;
-                                                    </CButton>
-                                                </div>
-                                            </div>
-                                            <CInput class="flex-grow-1 mb-0" v-model="lang.value"
+                                            <span class="lang-key-badge mr-2 flex-shrink-0">
+                                                {{ (lang.key || 'EN').toUpperCase() }}
+                                            </span>
+                                            <CInput class="flex-grow-1 mb-0 choice-option-input" v-model="lang.value"
+                                                :placeholder="$t('builder.optionPlaceholder', { n: choiceIndex + 1 })"
                                                 @input="(e) => updateOption(question, choiceIndex, li, e)" />
-                                            <CButton color="danger" variant="ghost" size="sm" class="ml-1 flex-shrink-0"
-                                                v-if="hasMultipleLanguages"
-                                                @click="removeOptionLanguage(question, choiceIndex, li)">
-                                                <CIcon name="cil-minus" />
-                                            </CButton>
                                         </div>
                                     </div>
 
-
                                     <CButton color="danger" variant="ghost" size="sm" class="ml-1 mb-1"
-                                        v-if="question.config && question.config.choices && question.config.choices.length > 1 && (!choice.lang || choice.lang.length <= 1)"
+                                        v-if="question.config && question.config.choices && question.config.choices.length > 1"
+                                        :aria-label="$t('builder.remove')"
                                         @click="removeOption(question, choiceIndex)">
-                                        <CIcon name="cil-minus" />
+                                        <CIcon name="cil-x" />
                                     </CButton>
                                 </div>
-                                <div class="d-flex align-items-center mt-1">
+                                <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
+                                    class="d-flex align-items-center mt-1">
                                     <div style="width: 38px;" class="flex-shrink-0" />
-                                    <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn"
-                                        @click="addOptionLanguage(question, choiceIndex)" size="sm"
-                                        v-c-tooltip="'Add language'" aria-label="Add language">
-                                        <CIcon name="cil-globe-alt" />
-                                    </CButton>
-
-                                    <div v-if="getQuestionType(question.type).toLowerCase() === 'multiple_choice'"
-                                        class="d-flex align-items-center ml-2 flex-shrink-0">
-                                        <CDropdown color="light" size="sm">
+                                    <div class="d-flex align-items-center flex-shrink-0" style="max-width: 75%; min-width: 0;">
+                                        <CDropdown color="light" size="sm" class="mw-100">
                                             <template #toggler>
                                                 <CButton size="sm"
                                                     class="border shadow-none d-flex align-items-center next-action-btn"
+                                                    style="max-width: 100%; min-width: 0;"
                                                     v-c-tooltip="$t('builder.goTo')">
                                                     <CIcon
                                                         :name="!choice.nextQuestion ? 'cil-ban' : (choice.nextQuestion === 'submit' ? 'cil-check-alt' : 'cil-list-low-priority')"
-                                                        class="mr-1" />
-                                                    <span>
+                                                        class="mr-1 flex-shrink-0" />
+                                                    <span class="text-truncate">
                                                         {{
                                                             choice.nextQuestion
                                                                 ? (choice.nextQuestion === 'submit' ? $t('builder.submitForm') :
@@ -351,7 +425,7 @@
                                 <span class="mr-3 small text-muted">{{ $t('builder.maxFiles') }}</span>
                                 <CDropdown color="secondary" variant="outline">
                                     <template #toggler>
-                                        <button class="btn btn-sm border">
+                                        <button class="btn btn-sm border file-config-btn">
                                             {{ (question.config && question.config.maxFiles) || 1 }}
                                         </button>
                                     </template>
@@ -364,7 +438,7 @@
                                 <span class="mr-3 small text-muted">{{ $t('builder.maxFileSize') }}</span>
                                 <CDropdown color="secondary" variant="outline">
                                     <template #toggler>
-                                        <button class="btn btn-sm border">
+                                        <button class="btn btn-sm border file-config-btn">
                                             {{ (question.config && question.config.maxFileSize) ? question.config.maxFileSize + 'MB'
                                                 : '1MB'
                                             }}
@@ -396,7 +470,7 @@
                                         {{ $t('builder.description') }}
                                     </small>
                                     <CButton size="sm" color="danger" variant="ghost" class="p-0 font-weight-bold d-flex align-items-center text-danger"
-                                        @click="removeQuestionDescBox(question)" v-c-tooltip="'Remove description'">
+                                        @click="removeQuestionDescBox(question)" v-c-tooltip="($te && $te('builder.remove')) ? $t('builder.remove') : 'ลบ'">
                                         <CIcon name="cil-trash" size="sm" class="mr-1" />
                                         <small>{{ $t('builder.remove') }}</small>
                                     </CButton>
@@ -404,47 +478,12 @@
 
                                 <div v-for="(descItem, dIdx) in (question.config && question.config.description || [])" :key="'qd-' + dIdx"
                                     class="d-flex align-items-start mb-1">
-                                    <div class="lang-key-wrapper flex-shrink-0 mr-2">
-                                        <CDropdown v-if="isCommonLang(descItem.key) && !descItem.isManualMode" color="light"
-                                            size="sm" class="lang-key-dropdown">
-                                            <template #toggler>
-                                                <CButton class="lang-key-btn border shadow-none"
-                                                    style="width: 3.2rem; min-width: 3.2rem;">
-                                                    {{ (descItem.key || 'EN').toUpperCase() }}
-                                                </CButton>
-                                            </template>
-                                            <CDropdownItem v-for="lang in commonLangs" :key="lang.value"
-                                                @click="setLangKey(descItem, lang.value, () => putQuestion(question))">
-                                                {{ lang.label }}
-                                            </CDropdownItem>
-                                            <CDropdownDivider />
-                                            <CDropdownItem
-                                                @click="$set(descItem, 'isManualMode', true); $set(descItem, 'key', '')">
-                                                Other...</CDropdownItem>
-                                        </CDropdown>
-                                        <div v-else class="manual-lang-input d-flex align-items-center">
-                                            <CInput class="lang-key-input mb-0" v-model="descItem.key"
-                                                @change="putQuestion(question)" @blur="checkManualKey(descItem)"
-                                                maxlength="3" style="width: 3.2rem;" />
-                                            <CButton
-                                                @click="$set(descItem, 'isManualMode', false); setLangKey(descItem, 'en', () => putQuestion(question))"
-                                                size="sm" variant="ghost" class="p-0 ml-1 text-danger">&times;</CButton>
-                                        </div>
-                                    </div>
+                                    <span class="lang-key-badge mr-2 flex-shrink-0">
+                                        {{ (descItem.key || 'EN').toUpperCase() }}
+                                    </span>
                                     <CTextarea class="flex-grow-1" v-model="descItem.value" @change="putQuestion(question)"
                                         rows="2" />
-                                    <CButton color="danger" variant="ghost" size="sm" class="ml-2 flex-shrink-0"
-                                        v-if="hasMultipleLanguages"
-                                        @click="removeConfigDesc(question, dIdx)">
-                                        <CIcon name="cil-minus" />
-                                    </CButton>
                                 </div>
-
-                                <CButton variant="ghost" color="primary" class="icon-btn add-lang-btn"
-                                    style="width: 3.2rem;" @click="addConfigDesc(question)" size="sm"
-                                    v-c-tooltip="'Add language'" aria-label="Add language">
-                                    <CIcon name="cil-globe-alt" />
-                                </CButton>
                             </div>
                         </div>
 
@@ -463,84 +502,142 @@
                                 {{ $t('builder.previewNotAvailable') }}
                             </span>
                         </div>
+                        </div>
 
-                        <!-- ── Footer: Question Type dropdown + Navigation + Required toggle ── -->
-                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap">
-                            <!-- Left: Question Type -->
-                            <div class="d-flex align-items-center mb-2 mb-md-0 flex-shrink-0">
-                                <div class="d-flex align-items-center">
-                                    <span class="text-muted font-weight-bold mr-2">{{ $t('builder.type') }}</span>
-                                    <CDropdown color="light" variant="outline">
+                        <!-- ── Footer: Question Type dropdown + Section selector + Navigation + Required toggle + Delete card ── -->
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap">
+                            <!-- Left: Question Type + Section Selector -->
+                            <div class="d-flex align-items-center flex-wrap mb-2 mb-md-0 flex-shrink-0" style="gap: 10px 14px;">
+                                <div class="d-flex flex-column">
+                                    <div class="d-flex align-items-center">
+                                        <span class="text-muted font-weight-bold mr-2">{{ $t('builder.type') }}</span>
+                                        <CDropdown color="light" variant="outline">
+                                            <template #toggler>
+                                                <button class="btn d-flex align-items-center text-muted border bg-white"
+                                                    style="border-radius: 12px;">
+                                                    <CIcon :name="getIconForType(question.type)" class="mr-2" />
+                                                    <span class="text-capitalize">
+                                                        {{ formatTypeLabel(getQuestionType(question.type)) }}
+                                                    </span>
+                                                </button>
+                                            </template>
+                                            <CDropdownItem v-for="type in typesAll" :key="type._id"
+                                                @click="setQuestionType(question, type._id)">
+                                                <CIcon :name="getIconForType(type._id)" class="mr-2" />
+                                                <span class="text-capitalize">
+                                                    {{ formatTypeLabel(type.type) }}
+                                                </span>
+                                            </CDropdownItem>
+                                        </CDropdown>
+                                    </div>
+                                    <small
+                                        v-if="getChoiceTypeHint(question.type)"
+                                        class="text-muted mt-1 choice-type-hint"
+                                        data-test="choice-type-hint"
+                                    >
+                                        {{ getChoiceTypeHint(question.type) }}
+                                    </small>
+                                </div>
+
+                                <!-- Section Switcher (when form is divided into sections) -->
+                                <div v-if="hasSections && sectionGroups.length > 0" class="d-flex align-items-center question-footer-section-select" @click.stop>
+                                    <span class="text-muted font-weight-bold mr-2">{{ $t('builder.moveToSection') }}</span>
+                                    <CDropdown color="light" variant="outline" class="question-section-dropdown">
                                         <template #toggler>
                                             <button class="btn d-flex align-items-center text-muted border bg-white"
                                                 style="border-radius: 12px;">
-                                                <CIcon :name="getIconForType(question.type)" class="mr-2" />
-                                                <span class="text-capitalize">
-                                                    {{ formatTypeLabel(getQuestionType(question.type)) }}
-                                                </span>
+                                                <CIcon name="cil-view-stream" class="mr-2" />
+                                                <span class="text-dark font-weight-medium">{{ getCurrentQuestionSectionLabel(qIndex) }}</span>
+                                                <CIcon name="cil-chevron-bottom" size="sm" class="ml-2 text-muted" />
                                             </button>
                                         </template>
-                                        <CDropdownItem v-for="type in typesAll" :key="type._id"
-                                            @click="setQuestionType(question, type._id)">
-                                            <CIcon :name="getIconForType(type._id)" class="mr-2" />
-                                            <span class="text-capitalize">
-                                                {{ formatTypeLabel(type.type) }}
-                                            </span>
+                                        <CDropdownItem v-for="(grp, gIdx) in sectionGroups" :key="'mv-sec-' + gIdx"
+                                            @click="moveQuestionToSection(qIndex, gIdx)">
+                                            <div class="d-flex align-items-center justify-content-between" style="min-width: 170px;">
+                                                <span class="text-truncate mr-2">{{ getSectionGroupDisplayTitle(grp) }}</span>
+                                                <CIcon v-if="getQuestionSectionIdx(qIndex) === gIdx" name="cil-check-alt" size="sm" class="text-success flex-shrink-0" />
+                                            </div>
                                         </CDropdownItem>
                                     </CDropdown>
                                 </div>
                             </div>
 
-                            <!-- Right: Navigation Dropdown & Required Toggle -->
-                            <div v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'"
-                                class="d-flex align-items-center flex-wrap">
-
-                                <!-- Question Navigation Dropdown -->
-                                <div class="d-flex align-items-center mr-3 mb-2 mb-md-0">
-                                    <span class="text-muted font-weight-bold mr-2">{{ $t('builder.goTo') }}</span>
-                                    <CDropdown color="light" variant="outline">
-                                        <template #toggler>
-                                            <button class="btn d-flex align-items-center text-muted border bg-white"
-                                                style="border-radius: 12px;">
-                                                <CIcon
-                                                    :name="!question.nextQuestion ? 'cil-check-alt' : 'cil-list-low-priority'"
-                                                    class="mr-2" />
-                                                <span class="text-dark">
-                                                    {{
-                                                        !question.nextQuestion ? $t('builder.submitForm') :
-                                                            (function () {
-                                                                const targetQ = localQuestions.find(q => convertIdToStr(q._id) ===
-                                                                    convertIdToStr(question.nextQuestion));
-                                                                return targetQ ? (isCounted(targetQ) ? getDisplayNumber(targetQ) +
-                                                                    '. ' : '') + getQuestionTitle(targetQ) : '';
-                                                            })()
-                                                    }}
+                            <!-- Right: Navigation Dropdown, Required Toggle & Delete Card -->
+                            <div class="d-flex align-items-center flex-wrap ml-auto">
+                                <template v-if="getQuestionType(question.type).toLowerCase() !== 'title_description' && getQuestionType(question.type).toLowerCase() !== 'image'">
+                                    <!-- Question Navigation Dropdown -->
+                                    <div class="d-flex align-items-center mr-sm-3 mb-2 mb-md-0" style="min-width: 0; max-width: 100%;">
+                                        <span class="text-muted font-weight-bold mr-2 flex-shrink-0">{{ $t('builder.goTo') }}</span>
+                                        <CDropdown color="light" variant="outline" class="mw-100">
+                                            <template #toggler>
+                                                <button class="btn d-flex align-items-center text-muted border bg-white question-goto-btn"
+                                                    style="border-radius: 12px; max-width: 100%; min-width: 0;">
+                                                    <CIcon
+                                                        :name="!question.nextQuestion ? 'cil-check-alt' : 'cil-list-low-priority'"
+                                                        class="mr-2 flex-shrink-0" />
+                                                    <span class="text-dark text-truncate">
+                                                        {{
+                                                            !question.nextQuestion ? $t('builder.submitForm') :
+                                                                (function () {
+                                                                    const targetQ = localQuestions.find(q => convertIdToStr(q._id) ===
+                                                                        convertIdToStr(question.nextQuestion));
+                                                                    return targetQ ? (isCounted(targetQ) ? getDisplayNumber(targetQ) +
+                                                                        '. ' : '') + getQuestionTitle(targetQ) : '';
+                                                                })()
+                                                        }}
+                                                    </span>
+                                                </button>
+                                            </template>
+                                            <CDropdownItem v-for="q in getAvailableNextQuestions(question)"
+                                                :key="'nav_' + q._id"
+                                                @click="setCombinedNavigationValue(question, 'question:' + convertIdToStr(q._id))">
+                                                <CIcon name="cil-list-low-priority" class="mr-2" />
+                                                <span>
+                                                    {{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
+                                                        getQuestionTitle(q) }}
                                                 </span>
-                                            </button>
-                                        </template>
-                                        <CDropdownItem v-for="q in getAvailableNextQuestions(question)"
-                                            :key="'nav_' + q._id"
-                                            @click="setCombinedNavigationValue(question, 'question:' + convertIdToStr(q._id))">
-                                            <CIcon name="cil-list-low-priority" class="mr-2" />
-                                            <span>
-                                                {{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
-                                                    getQuestionTitle(q) }}
-                                            </span>
-                                        </CDropdownItem>
-                                        <CDropdownItem @click="setCombinedNavigationValue(question, 'submit')">
-                                            <CIcon name="cil-check-alt" class="mr-2" />
-                                            <span>{{ $t('builder.submitForm') }}</span>
-                                        </CDropdownItem>
-                                    </CDropdown>
-                                </div>
+                                            </CDropdownItem>
+                                            <CDropdownItem @click="setCombinedNavigationValue(question, 'submit')">
+                                                <CIcon name="cil-check-alt" class="mr-2" />
+                                                <span>{{ $t('builder.submitForm') }}</span>
+                                            </CDropdownItem>
+                                        </CDropdown>
+                                    </div>
 
-                                <!-- Required Toggle -->
-                                <div class="d-flex align-items-center mb-2 mb-md-0">
-                                    <small class="text-muted font-weight-bold text-uppercase mr-2">{{
-                                        $t('builder.requiredLabel') }}</small>
-                                    <CSwitch class="mx-1" color="dark" shape="pill" :checked="question.isRequired"
-                                        @update:checked="val => { question.isRequired = val; putQuestion(question); }" />
-                                </div>
+                                    <!-- Required Toggle -->
+                                    <div class="d-flex align-items-center mb-2 mb-md-0">
+                                        <small class="text-muted font-weight-bold text-uppercase mr-2">{{
+                                            $t('builder.requiredLabel') }}</small>
+                                        <CSwitch class="mx-1" color="dark" shape="pill" :checked="question.isRequired"
+                                            @update:checked="val => { question.isRequired = val; putQuestion(question); }" />
+                                    </div>
+
+                                    <div class="border-left mx-2 mx-sm-3 d-none d-sm-block mb-2 mb-md-0" style="height: 20px;" />
+                                </template>
+
+                                <CButton
+                                    color="secondary"
+                                    variant="ghost"
+                                    size="sm"
+                                    class="mb-2 mb-md-0 mr-1 flex-shrink-0"
+                                    :aria-label="$t('builder.duplicateQuestion')"
+                                    v-c-tooltip="$t('builder.duplicateQuestion')"
+                                    data-test="duplicate-question-btn"
+                                    @click="duplicateQuestion(question, qIndex)"
+                                >
+                                    <CIcon name="cil-copy" />
+                                </CButton>
+
+                                <CButton
+                                    color="danger"
+                                    variant="ghost"
+                                    size="sm"
+                                    class="mb-2 mb-md-0 flex-shrink-0"
+                                    :aria-label="$t('builder.remove')"
+                                    @click="removeQuestion(question._id)"
+                                >
+                                    <CIcon name="cil-trash" />
+                                </CButton>
                             </div>
                         </div>
                         </div>
@@ -629,9 +726,25 @@
 import { mapGetters } from 'vuex';
 import { GridLayout, GridItem } from 'vue-grid-layout'
 import { loadStoredLayout, saveGridLayout, buildGridLayoutFromQuestions, getLayoutItem as svcGetLayoutItem, onDragStop as svcOnDragStop } from '../../service/draggable'
+import {
+    buildQuestionSectionGroups,
+    consolidateQuestionTypes,
+    extractFormLanguages,
+    getQuestionNumberInSection,
+    getQuestionSectionIndex,
+    isFreeTextQuestionType,
+    isNonInputQuestionType,
+    isSectionQuestionType,
+    mergeVisibleOrderWithHiddenSections,
+    normalizeQuestionTypeKey,
+    reorderMoveQuestionToSection,
+    reorderMoveSectionGroup
+} from '@/projects/utils/formPolicy'
+import localeMixin from '@/mixins/localeMixin';
 
 export default {
     name: 'TabQuestion',
+    mixins: [localeMixin],
     props: {
         form: { type: Object, required: true }
     },
@@ -666,6 +779,9 @@ export default {
             showDeleteLangModal: false,
             langToDelete: '',
             isFormDescExpanded: false,
+            isMobileViewport: typeof window !== 'undefined' ? window.innerWidth < 768 : false,
+            activeSectionId: null,
+            collapsedSectionIds: [],
         };
     },
     watch: {
@@ -677,7 +793,7 @@ export default {
                     try {
                         const built = Array.isArray(newForm.questions) ? [...newForm.questions] : [];
                         built.forEach(q => { if (q && !q.config) q.config = {}; });
-                        built.sort((a, b) => (a.order || 999) - (b.order || 999));
+                        built.sort((a, b) => (a.order != null ? a.order : 999) - (b.order != null ? b.order : 999));
 
                         const newIds = built.map(x => this.convertIdToStr(x && x._id));
                         const oldIds = (this.localQuestions || []).map(x => this.convertIdToStr(x && x._id));
@@ -710,7 +826,10 @@ export default {
                 }
 
                 if (newForm) {
-                    this.$nextTick(() => this.reconcileFormLanguages());
+                    this.$nextTick(() => {
+                        this.reconcileFormLanguages();
+                        this.syncAutoResizeFields();
+                    });
                 }
             }
         },
@@ -731,9 +850,18 @@ export default {
         } catch (e) { }
     },
     mounted() {
+        if (typeof window !== 'undefined') {
+            window.addEventListener('resize', this.handleViewportResize);
+        }
         this.$nextTick(() => {
             this.syncCardHeights();
+            this.syncAutoResizeFields();
         });
+    },
+    beforeDestroy() {
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('resize', this.handleViewportResize);
+        }
     },
     computed: {
         ...mapGetters('Setting/question_type', { question_type: 'item' }),
@@ -753,7 +881,34 @@ export default {
             }));
         },
         typesAll() {
-            return [...this.questionTypes];
+            return consolidateQuestionTypes(this.questionTypes);
+        },
+        sectionGroups() {
+            return buildQuestionSectionGroups(this.localQuestions);
+        },
+        hasSections() {
+            return this.sectionGroups.length > 0;
+        },
+        visibleGridEntries() {
+            const list = this.localQuestions || [];
+            const collapsed = new Set((this.collapsedSectionIds || []).map(id => String(id)));
+            const entries = [];
+            let currentSectionCollapsed = false;
+            for (let i = 0; i < list.length; i++) {
+                const q = list[i];
+                if (!q) continue;
+                if (this.isSectionQuestion(q)) {
+                    const secKey = this.convertIdToStr(q._id || i);
+                    currentSectionCollapsed = collapsed.has(secKey);
+                    entries.push({ question: q, qIndex: i });
+                } else if (!currentSectionCollapsed) {
+                    entries.push({ question: q, qIndex: i });
+                }
+            }
+            return entries;
+        },
+        visibleLocalQuestions() {
+            return this.visibleGridEntries.map(e => e.question);
         },
         formTitleEn: {
             get() {
@@ -793,6 +948,9 @@ export default {
         }
     },
     methods: {
+        handleViewportResize() {
+            this.isMobileViewport = typeof window !== 'undefined' && window.innerWidth < 768;
+        },
         resolveImageUrl(value) {
             if (!value || typeof value !== 'string') return '';
             if (value.startsWith('data:') || value.startsWith('http://') || value.startsWith('https://')) {
@@ -825,11 +983,11 @@ export default {
             }
         },
 
-        buildGridLayoutFromQuestions() {
+        buildGridLayoutFromQuestions(useStoredOrder = true) {
             try {
                 const newLayout = buildGridLayoutFromQuestions(
-                    this.localQuestions,
-                    this.storedLayout,
+                    this.visibleLocalQuestions,
+                    useStoredOrder ? this.storedLayout : null,
                     (t) => this.getQuestionType(t),
                     (q) => false
                 );
@@ -868,6 +1026,7 @@ export default {
 
         syncCardHeights() {
             this.$nextTick(() => {
+                this.syncAutoResizeFields();
                 if (!this.layout || this.layout.length === 0 || !this.localQuestions) return;
                 const ROW_HEIGHT = 10;
                 const MARGIN_Y = 20;
@@ -878,9 +1037,14 @@ export default {
                     const item = this.layout[i];
                     const cardEl = document.getElementById('question-' + item.i);
                     let actualPx = 0;
+                    let minGridUnits = 5;
                     if (cardEl) {
+                        const dividerWrapper = cardEl.querySelector('.section-divider-content');
                         const contentWrapper = cardEl.querySelector('.question-card-content');
-                        if (contentWrapper) {
+                        if (dividerWrapper) {
+                            actualPx = dividerWrapper.offsetHeight + 48 + 2;
+                            minGridUnits = cardEl.classList.contains('is-collapsed-section') ? 3 : 4;
+                        } else if (contentWrapper) {
                             actualPx = contentWrapper.offsetHeight + 48 + 2; // p-4 (24px*2) + border
                         } else {
                             const body = cardEl.querySelector('.card-body');
@@ -889,7 +1053,7 @@ export default {
                     }
 
                     const h = actualPx > 50
-                        ? Math.max(5, Math.ceil((actualPx + MARGIN_Y) / UNIT))
+                        ? Math.max(minGridUnits, Math.ceil((actualPx + MARGIN_Y) / UNIT))
                         : item.h;
 
                     if (item.h !== h) this.$set(item, 'h', h);
@@ -903,24 +1067,36 @@ export default {
             return svcGetLayoutItem(this.layout, question, qIndex);
         },
 
+        async commitReorderedQuestions(reordered) {
+            if (!Array.isArray(reordered)) return;
+            this.storedLayout = null;
+            this.localQuestions = reordered;
+            if (this.form && Array.isArray(this.form.questions)) {
+                this.form.questions.splice(0, this.form.questions.length, ...reordered);
+            }
+            this.buildGridLayoutFromQuestions(false);
+            this.saveGrid();
+            try {
+                await this.updateOrdersAndPersist(reordered);
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
         async onDragStop(newLayout) {
             try {
-                let reordered = await svcOnDragStop(newLayout, this.localQuestions, this.convertIdToStr);
-                if (!Array.isArray(reordered)) return;
+                let reorderedVisible = await svcOnDragStop(newLayout, this.visibleLocalQuestions, this.convertIdToStr);
+                if (!Array.isArray(reorderedVisible)) return;
 
+                const reordered = mergeVisibleOrderWithHiddenSections(this.localQuestions, reorderedVisible);
                 const oldIds = (this.localQuestions || []).map(q => this.convertIdToStr(q._id || ''));
                 const newIds = (reordered || []).map(q => this.convertIdToStr(q._id || ''));
                 if (oldIds.join(',') === newIds.join(',')) {
                     this.syncCardHeights();
+                    this.saveGrid();
                     return;
                 }
-                if (Array.isArray(reordered)) {
-                    this.localQuestions = reordered;
-                    this.buildGridLayoutFromQuestions();
-                    try {
-                        await this.updateOrdersAndPersist(reordered);
-                    } catch (e) { console.error(e); }
-                }
+                await this.commitReorderedQuestions(reordered);
             } catch (e) {
                 console.error('onDragStop error', e);
             }
@@ -956,37 +1132,24 @@ export default {
             }
         },
 
+        scrollToTop() {
+            if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+                try {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                } catch (e) {
+                    window.scrollTo(0, 0);
+                    return;
+                }
+            }
+            if (typeof document !== 'undefined') {
+                if (document.documentElement) document.documentElement.scrollTop = 0;
+                if (document.body) document.body.scrollTop = 0;
+            }
+        },
+
         getFormLanguages() {
-            const langs = [];
-            const addKey = (k) => {
-                if (!k) return;
-                const normalized = String(k).trim().toLowerCase();
-                if (normalized && !langs.includes(normalized)) {
-                    langs.push(normalized);
-                }
-            };
-            if (this.form && Array.isArray(this.form.title)) {
-                this.form.title.forEach(t => addKey(t && t.key));
-            }
-            if (this.form && Array.isArray(this.form.description)) {
-                this.form.description.forEach(d => addKey(d && d.key));
-            }
-            (this.localQuestions || []).forEach(q => {
-                if (Array.isArray(q.title)) {
-                    q.title.forEach(t => addKey(t && t.key));
-                }
-                if (q.config && Array.isArray(q.config.description)) {
-                    q.config.description.forEach(d => addKey(d && d.key));
-                }
-                if (q.config && Array.isArray(q.config.choices)) {
-                    q.config.choices.forEach(c => {
-                        if (Array.isArray(c.lang)) {
-                            c.lang.forEach(l => addKey(l && l.key));
-                        }
-                    });
-                }
-            });
-            return langs.length > 0 ? langs : ['en'];
+            return extractFormLanguages(this.form, this.localQuestions);
         },
 
         getNextFormLang() {
@@ -1035,6 +1198,15 @@ export default {
                     activeLangs.forEach(k => {
                         if (!q.title.some(t => (t.key || '').toLowerCase() === k)) {
                             q.title.push({ key: k, value: '' });
+                            qChanged = true;
+                        }
+                    });
+                }
+
+                if (Array.isArray(q.description)) {
+                    activeLangs.forEach(k => {
+                        if (!q.description.some(d => (d.key || '').toLowerCase() === k)) {
+                            q.description.push({ key: k, value: '' });
                             qChanged = true;
                         }
                     });
@@ -1108,6 +1280,13 @@ export default {
                     changed = true;
                 }
 
+                if (Array.isArray(q.description)) {
+                    if (!q.description.some(d => (d.key || '').toLowerCase() === newKey)) {
+                        q.description.push({ key: newKey, value: '' });
+                        changed = true;
+                    }
+                }
+
                 if (q.config && Array.isArray(q.config.description)) {
                     if (!q.config.description.some(d => (d.key || '').toLowerCase() === newKey)) {
                         q.config.description.push({ key: newKey, value: '' });
@@ -1134,7 +1313,11 @@ export default {
             });
 
             this.updateFormMeta();
-            this.$nextTick(() => this.syncCardHeights());
+            this.$nextTick(() => {
+                this.syncAutoResizeFields();
+                this.syncCardHeights();
+                this.scrollToTop();
+            });
             if (promises.length > 0) {
                 await Promise.all(promises);
             }
@@ -1154,14 +1337,12 @@ export default {
             if (!targetKey) return;
 
             if (this.form && Array.isArray(this.form.title)) {
-                this.form.title = this.form.title.filter(t => (t.key || '').toLowerCase() !== targetKey);
-                if (this.form.title.length === 0) {
-                    this.form.title.push({ key: 'en', value: 'Untitled Form' });
-                }
+                const filteredTitle = this.form.title.filter(t => (t.key || '').toLowerCase() !== targetKey);
+                this.$set(this.form, 'title', filteredTitle.length > 0 ? filteredTitle : [{ key: 'en', value: 'Untitled Form' }]);
             }
 
             if (this.form && Array.isArray(this.form.description)) {
-                this.form.description = this.form.description.filter(d => (d.key || '').toLowerCase() !== targetKey);
+                this.$set(this.form, 'description', this.form.description.filter(d => (d.key || '').toLowerCase() !== targetKey));
             }
 
             const promises = [];
@@ -1171,6 +1352,14 @@ export default {
                     const filtered = q.title.filter(t => (t.key || '').toLowerCase() !== targetKey);
                     if (filtered.length !== q.title.length) {
                         this.$set(q, 'title', filtered.length > 0 ? filtered : [{ key: 'en', value: '' }]);
+                        changed = true;
+                    }
+                }
+
+                if (Array.isArray(q.description)) {
+                    const filtered = q.description.filter(d => (d.key || '').toLowerCase() !== targetKey);
+                    if (filtered.length !== q.description.length) {
+                        this.$set(q, 'description', filtered);
                         changed = true;
                     }
                 }
@@ -1201,7 +1390,11 @@ export default {
             });
 
             this.updateFormMeta();
-            this.$nextTick(() => this.syncCardHeights());
+            this.$nextTick(() => {
+                this.syncAutoResizeFields();
+                this.syncCardHeights();
+                this.scrollToTop();
+            });
             if (promises.length > 0) {
                 await Promise.all(promises);
             }
@@ -1238,6 +1431,16 @@ export default {
                         if ((t.key || '').toLowerCase() === oldK) {
                             this.$set(t, 'key', newK);
                             this.$set(t, 'isManualMode', false);
+                            changed = true;
+                        }
+                    });
+                }
+
+                if (Array.isArray(q.description)) {
+                    q.description.forEach(d => {
+                        if ((d.key || '').toLowerCase() === oldK) {
+                            this.$set(d, 'key', newK);
+                            this.$set(d, 'isManualMode', false);
                             changed = true;
                         }
                     });
@@ -1293,6 +1496,71 @@ export default {
             return question.config.description.some(d => d && d.value && typeof d.value === 'string' && d.value.trim().length > 0);
         },
 
+        hasRegularQuestionDescription(question) {
+            if (question && question.isRegularDescExpanded) return true;
+            if (!question || !Array.isArray(question.description) || question.description.length === 0) return false;
+            return question.description.some(d => d && d.value && typeof d.value === 'string' && d.value.trim().length > 0);
+        },
+
+        expandRegularQuestionDesc(question) {
+            this.$set(question, 'isRegularDescExpanded', true);
+            const activeLangs = this.getFormLanguages();
+            if (!Array.isArray(question.description) || question.description.length === 0) {
+                this.$set(question, 'description', activeLangs.map(k => ({ key: k, value: '' })));
+            } else {
+                activeLangs.forEach(k => {
+                    if (!question.description.some(d => (d.key || '').toLowerCase() === k)) {
+                        question.description.push({ key: k, value: '' });
+                    }
+                });
+            }
+            this.$nextTick(() => {
+                this.syncAutoResizeFields();
+                this.syncCardHeights();
+                const card = document.getElementById('question-' + question._id);
+                const el = card && card.querySelector('.question-desc-input textarea');
+                if (el) el.focus();
+            });
+        },
+
+        removeRegularQuestionDescBox(question) {
+            this.$set(question, 'isRegularDescExpanded', false);
+            if (question && Array.isArray(question.description)) {
+                question.description.forEach(d => {
+                    d.value = '';
+                });
+            }
+            this.putQuestion(question);
+            this.syncCardHeights();
+        },
+
+        removeRegularQuestionDescLang(question, idx) {
+            const item = question && question.description && question.description[idx];
+            if (item && item.key) this.requestRemoveLanguageGlobally(item.key);
+        },
+
+        autoResizeEl(el) {
+            if (!el || !el.style) return false;
+            const prevHeight = el.style.height;
+            el.style.height = 'auto';
+            const nextHeight = el.scrollHeight ? `${el.scrollHeight}px` : 'auto';
+            el.style.height = nextHeight;
+            return prevHeight !== nextHeight;
+        },
+
+        onAutoResizeInput(el, shouldSyncCards = true) {
+            const changed = this.autoResizeEl(el);
+            if (shouldSyncCards && changed) {
+                this.syncCardHeights();
+            }
+        },
+
+        syncAutoResizeFields() {
+            if (!this.$el || typeof this.$el.querySelectorAll !== 'function') return;
+            const fields = this.$el.querySelectorAll('.auto-resize-field textarea');
+            fields.forEach(el => this.autoResizeEl(el));
+        },
+
         expandFormDesc() {
             this.isFormDescExpanded = true;
             if (!this.form) return;
@@ -1307,6 +1575,7 @@ export default {
                 });
             }
             this.$nextTick(() => {
+                this.syncAutoResizeFields();
                 const el = this.$el.querySelector('.form-desc-input textarea');
                 if (el) el.focus();
             });
@@ -1407,6 +1676,7 @@ export default {
                 await this.$store.dispatch('Questions/update', {
                     _id: payload._id,
                     title: payload.title,
+                    description: payload.description,
                     form: payload.form,
                     type: payload.type,
                     order: payload.order,
@@ -1418,88 +1688,356 @@ export default {
             }
         },
 
-        async addQuestion(typeId) {
-            const foundType = this.questionTypes.find(type => type._id === typeId || type.type === typeId);
+        async ensureQuestionType(typeId) {
+            const lookup = () => this.questionTypes.find(type => type._id === typeId || type.type === typeId)
+                || (isFreeTextQuestionType(typeId) ? this.typesAll.find(t => t.type === 'free_text') : null);
+            let foundType = lookup();
+            if (!foundType && this.$store && typeof this.$store.dispatch === 'function') {
+                try {
+                    await this.$store.dispatch('Setting/question_type/get');
+                    foundType = lookup();
+                } catch (e) {
+                    // ignore fetch error
+                }
+            }
+            return foundType || null;
+        },
 
-            if (!foundType) return;
-            const isParagraph = foundType.type === 'paragraph';
+        async insertQuestionAt(typeId, insertIndex = null, sourceQuestion = null) {
+            let foundType = null;
+            if (sourceQuestion && sourceQuestion.type && typeof sourceQuestion.type === 'object' && sourceQuestion.type._id) {
+                foundType = { _id: sourceQuestion.type._id, type: sourceQuestion.type.type };
+            }
+            if (!foundType) {
+                const lookupKey = (typeId && typeof typeId === 'object') ? (typeId._id || typeId.type) : typeId;
+                foundType = await this.ensureQuestionType(lookupKey);
+            }
+            if (!foundType && sourceQuestion) {
+                const rawType = this.getQuestionType(sourceQuestion.type);
+                const fallbackId = (sourceQuestion.type && typeof sourceQuestion.type === 'object')
+                    ? sourceQuestion.type._id
+                    : sourceQuestion.type;
+                if (fallbackId || rawType) {
+                    foundType = { _id: fallbackId || rawType, type: rawType || String(fallbackId) };
+                }
+            }
+            if (!foundType) return null;
+
             const isMultipleChoice = foundType.type === 'multiple_choice' || foundType.type === 'checkbox';
             const isCheckboxes = foundType.type === 'checkbox';
             const isRating = foundType.type === 'rating';
             const isFileUpload = foundType.type === 'file_upload';
             const isImage = foundType.type === 'image';
             const isTitleDescription = foundType.type === 'title_description';
+            const isSection = foundType.type === 'section';
 
             const activeLangs = this.getFormLanguages();
-            const config = {
-                choices: (isMultipleChoice || isCheckboxes)
-                    ? [{ key: '0', lang: activeLangs.map(k => ({ key: k, value: k === 'en' ? 'Option 1' : '' })) }]
-                    : [],
-                allowMultipleSelect: isCheckboxes,
-                maxRating: isRating ? 5 : null,
-                maxText: isParagraph ? 300 : null,
-                maxFiles: isFileUpload ? 5 : null,
-                maxFileSize: isFileUpload ? 1 : null,
-                fileTypes: isFileUpload ? ['image', 'pdf', 'doc'] : [],
-                image: null,
-                description: isTitleDescription ? activeLangs.map(k => ({ key: k, value: k === 'en' ? 'Description' : '' })) : [],
-            };
+            let config;
+            if (sourceQuestion && sourceQuestion.config && typeof sourceQuestion.config === 'object') {
+                config = JSON.parse(JSON.stringify(sourceQuestion.config));
+                delete config._id;
+                if (Array.isArray(config.choices)) {
+                    config.choices = config.choices.map((c, cIdx) => {
+                        const clonedChoice = { ...(c || {}) };
+                        delete clonedChoice._id;
+                        delete clonedChoice.nextQuestion;
+                        if (clonedChoice.key === undefined || clonedChoice.key === null) {
+                            clonedChoice.key = String(cIdx);
+                        }
+                        if (Array.isArray(clonedChoice.lang)) {
+                            clonedChoice.lang = clonedChoice.lang.map(l => ({
+                                key: l && l.key ? l.key : 'en',
+                                value: l && l.value !== undefined ? l.value : ''
+                            }));
+                        }
+                        return clonedChoice;
+                    });
+                }
+                if (Array.isArray(config.description)) {
+                    config.description = config.description.map(d => ({
+                        key: d && d.key ? d.key : 'en',
+                        value: d && d.value !== undefined ? d.value : ''
+                    }));
+                }
+            } else {
+                config = {
+                    choices: (isMultipleChoice || isCheckboxes)
+                        ? [{ key: '0', lang: activeLangs.map(k => ({ key: k, value: k === 'en' ? 'Option 1' : '' })) }]
+                        : [],
+                    allowMultipleSelect: isCheckboxes,
+                    maxRating: isRating ? 5 : null,
+                    maxText: null,
+                    maxFiles: isFileUpload ? 5 : null,
+                    maxFileSize: isFileUpload ? 1 : null,
+                    fileTypes: isFileUpload ? ['image', 'pdf', 'doc'] : [],
+                    image: null,
+                    description: isTitleDescription
+                        ? activeLangs.map(k => ({ key: k, value: k === 'en' ? 'Description' : '' }))
+                        : (isSection ? activeLangs.map(k => ({ key: k, value: '' })) : []),
+                };
+            }
+
+            const currentLen = (this.localQuestions || []).length;
+            const targetIdx = typeof insertIndex === 'number'
+                ? Math.max(0, Math.min(insertIndex, currentLen))
+                : currentLen;
+
+            const defaultTitleEn = isSection ? '' : 'Untitled Question';
+            const clonedTitle = (sourceQuestion && Array.isArray(sourceQuestion.title))
+                ? JSON.parse(JSON.stringify(sourceQuestion.title)).map(t => ({
+                    key: t && t.key ? t.key : 'en',
+                    value: t && t.value !== undefined ? t.value : ''
+                }))
+                : activeLangs.map(k => ({ key: k, value: k === 'en' ? defaultTitleEn : '' }));
+
+            const clonedDescription = (sourceQuestion && Array.isArray(sourceQuestion.description))
+                ? JSON.parse(JSON.stringify(sourceQuestion.description)).map(d => ({
+                    key: d && d.key ? d.key : 'en',
+                    value: d && d.value !== undefined ? d.value : ''
+                }))
+                : (!isSection && !isTitleDescription && !isImage
+                    ? activeLangs.map(k => ({ key: k, value: '' }))
+                    : []);
 
             const payload = {
                 form: this.form && this.form._id ? this.form._id : undefined,
-                title: activeLangs.map(k => ({ key: k, value: k === 'en' ? 'Untitled Question' : '' })),
-                order: this.localQuestions.length + 1,
+                title: clonedTitle,
+                description: clonedDescription,
+                order: targetIdx + 1,
                 type: foundType._id,
-                isRequired: false,
+                isRequired: sourceQuestion ? Boolean(sourceQuestion.isRequired) : false,
                 nextQuestion: null,
                 config,
             };
 
+            let created = null;
             if (!this.form || !this.form._id) {
-                const tmp = {
+                created = {
                     _id: 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
                     ...payload,
+                    type: foundType,
                 };
-                // Chain from the previous "end" question
-                const lastQuestion = this.localQuestions[this.localQuestions.length - 1];
-                if (lastQuestion) {
-                    this.$set(lastQuestion, 'nextQuestion', tmp._id);
-                    this.putQuestion(lastQuestion);
-                }
-                this.localQuestions.push(tmp);
-                this.buildGridLayoutFromQuestions();
-                return tmp;
-            }
-
-            try {
-                const res = await this.$store.dispatch('Questions/create', payload);
-                const created = res && res.data && res.data.data;
-                if (created && created._id) {
+            } else {
+                try {
+                    const res = await this.$store.dispatch('Questions/create', payload);
+                    created = res && res.data && res.data.data;
+                    if (!created || !created._id) {
+                        console.error('addQuestion: backend did not return a created document with _id', res);
+                        return null;
+                    }
                     if (!created.type || typeof created.type === 'string') {
-                        const foundType = this.questionTypes.find(t => t._id === typeId);
-                        if (foundType) created.type = foundType;
+                        created.type = foundType;
                     }
-                    // Chain from the previous "end" question
-                    const lastQuestion = this.localQuestions[this.localQuestions.length - 1];
-                    if (lastQuestion) {
-                        this.$set(lastQuestion, 'nextQuestion', created._id);
-                        this.putQuestion(lastQuestion);
-                    }
-
-                    this.localQuestions.push(created);
-                    if (this.form && Array.isArray(this.form.questions)) {
-                        this.form.questions.push(created);
-                    }
-                    this.buildGridLayoutFromQuestions();
-                    return created;
-                } else {
-                    console.error('addQuestion: backend did not return a created document with _id', res);
+                } catch (e) {
+                    console.error('addQuestion failed:', e);
                     return null;
                 }
-            } catch (e) {
-                console.error('addQuestion failed:', e);
-                return null;
             }
+
+            if (targetIdx > 0) {
+                const prevQ = this.localQuestions[targetIdx - 1];
+                if (prevQ && this.isCounted(prevQ) && !isSection && !prevQ.nextQuestion) {
+                    this.$set(prevQ, 'nextQuestion', created._id);
+                    if (this.form && this.form._id && prevQ._id && !String(prevQ._id).startsWith('tmp-')) {
+                        this.putQuestion(prevQ);
+                    }
+                }
+            }
+
+            const nextList = [...(this.localQuestions || [])];
+            nextList.splice(targetIdx, 0, created);
+
+            this.storedLayout = null;
+            this.localQuestions = nextList;
+            if (this.form && Array.isArray(this.form.questions)) {
+                this.form.questions.splice(0, this.form.questions.length, ...nextList);
+            }
+            this.buildGridLayoutFromQuestions(false);
+            this.saveGrid();
+
+            if (targetIdx < currentLen) {
+                await this.updateOrdersAndPersist(nextList);
+            }
+            if (isSection) {
+                this.setActiveSection(created);
+            }
+            return created;
+        },
+
+        async ensureLeadingSection() {
+            const list = this.localQuestions || [];
+            if (list.length === 0 || this.isSectionQuestion(list[0])) return false;
+            const created = await this.insertQuestionAt('section', 0);
+            return Boolean(created);
+        },
+
+        getActiveSectionTargetEndIndex() {
+            const groups = this.sectionGroups;
+            if (!groups || groups.length === 0) return null;
+            if (this.activeSectionId) {
+                const matched = groups.find(g => g.headerQuestion && this.convertIdToStr(g.headerQuestion._id) === this.convertIdToStr(this.activeSectionId));
+                if (matched) return matched.endIndex + 1;
+            }
+            return groups[groups.length - 1].endIndex + 1;
+        },
+
+        async addQuestion(typeId) {
+            const foundType = await this.ensureQuestionType(typeId);
+            if (!foundType) return null;
+
+            if (foundType.type === 'section') {
+                if (!this.hasSections && (this.localQuestions || []).length > 0) {
+                    await this.ensureLeadingSection();
+                }
+                const createdSection = await this.insertQuestionAt(foundType._id, (this.localQuestions || []).length);
+                return createdSection;
+            }
+
+            if (this.hasSections) {
+                const targetIdx = this.getActiveSectionTargetEndIndex();
+                if (typeof targetIdx === 'number') {
+                    return await this.insertQuestionAt(foundType._id, targetIdx);
+                }
+            }
+
+            return await this.insertQuestionAt(foundType._id, (this.localQuestions || []).length);
+        },
+
+        async moveQuestionToSection(qIndex, targetSectionIdx) {
+            const { questions: nextList, newIndex } = reorderMoveQuestionToSection(
+                this.localQuestions,
+                qIndex,
+                targetSectionIdx
+            );
+            if (newIndex === qIndex) return;
+            await this.commitReorderedQuestions(nextList);
+            const movedItem = nextList[newIndex];
+            this.setActiveSectionByQuestionIndex(newIndex);
+            if (movedItem && movedItem._id) {
+                this.scrollToQuestion(movedItem._id);
+            }
+        },
+
+        async moveSectionGroup(qIndex, delta) {
+            const { questions: nextList, newHeaderIndex } = reorderMoveSectionGroup(
+                this.localQuestions,
+                qIndex,
+                delta
+            );
+            if (newHeaderIndex === qIndex && nextList.length === this.localQuestions.length) return;
+            await this.commitReorderedQuestions(nextList);
+            const movedHeader = nextList[newHeaderIndex];
+            if (movedHeader && movedHeader._id) {
+                this.setActiveSection(movedHeader);
+                this.scrollToQuestion(movedHeader._id);
+            }
+        },
+
+        setActiveSection(sectionQuestion) {
+            if (!sectionQuestion || !sectionQuestion._id) return;
+            this.activeSectionId = this.convertIdToStr(sectionQuestion._id);
+        },
+
+        setActiveSectionByQuestionIndex(qIndex) {
+            if (!this.hasSections) return;
+            const secIdx = getQuestionSectionIndex(this.localQuestions, qIndex);
+            const grp = secIdx >= 0 ? this.sectionGroups[secIdx] : null;
+            if (grp && grp.headerQuestion) {
+                this.setActiveSection(grp.headerQuestion);
+            }
+        },
+
+        isSectionActive(sectionQuestion) {
+            if (!sectionQuestion || !this.hasSections) return false;
+            if (!this.activeSectionId) {
+                const lastGroup = this.sectionGroups[this.sectionGroups.length - 1];
+                return Boolean(lastGroup && lastGroup.headerQuestion === sectionQuestion);
+            }
+            return this.convertIdToStr(sectionQuestion._id) === this.convertIdToStr(this.activeSectionId);
+        },
+
+        isSectionCollapsed(sectionQuestion) {
+            if (!sectionQuestion) return false;
+            const key = this.convertIdToStr(sectionQuestion._id);
+            if (!key) return false;
+            return (this.collapsedSectionIds || []).some(id => String(id) === String(key));
+        },
+
+        toggleSectionCollapse(sectionQuestion) {
+            if (!sectionQuestion) return;
+            const key = this.convertIdToStr(sectionQuestion._id);
+            if (!key) return;
+            const next = [...(this.collapsedSectionIds || [])];
+            const idx = next.findIndex(id => String(id) === String(key));
+            if (idx === -1) {
+                next.push(key);
+            } else {
+                next.splice(idx, 1);
+            }
+            this.collapsedSectionIds = next;
+            this.storedLayout = null;
+            this.buildGridLayoutFromQuestions(false);
+        },
+
+        getSectionSummaryTitle(sectionQuestion) {
+            if (!sectionQuestion || !Array.isArray(sectionQuestion.title)) return '';
+            const raw = this.getLang(sectionQuestion.title);
+            const clean = raw ? String(raw).trim() : '';
+            if (!clean || clean === 'Untitled' || clean === 'Untitled Question' || clean === 'Untitled Section') return '';
+            return clean;
+        },
+
+        getSectionSummaryDescription(sectionQuestion) {
+            const descArr = sectionQuestion && sectionQuestion.config && sectionQuestion.config.description;
+            if (!Array.isArray(descArr) || descArr.length === 0) return '';
+            const raw = this.getLang(descArr);
+            return raw ? String(raw).trim() : '';
+        },
+
+        getSectionQuestionCount(sectionIndex) {
+            const grp = this.sectionGroups.find(g => g.headerIndex === sectionIndex || g.startIndex === sectionIndex);
+            return grp ? grp.questionCount : 0;
+        },
+
+        canMoveSection(qIndex, delta) {
+            const grpIdx = this.sectionGroups.findIndex(g => g.headerIndex === qIndex || g.startIndex === qIndex);
+            if (grpIdx === -1) return false;
+            return delta < 0 ? grpIdx > 0 : grpIdx < this.sectionGroups.length - 1;
+        },
+
+        getQuestionSectionIdx(qIndex) {
+            return getQuestionSectionIndex(this.localQuestions, qIndex);
+        },
+
+        getCurrentQuestionSectionLabel(qIndex) {
+            const idx = this.getQuestionSectionIdx(qIndex);
+            const grp = idx >= 0 ? this.sectionGroups[idx] : null;
+            const num = grp ? grp.sectionNumber : 1;
+            return `${this.$t('builder.sectionBadge')} ${num}`;
+        },
+
+        getSectionGroupDisplayTitle(grp) {
+            if (!grp) return '';
+            const base = `${this.$t('builder.sectionBadge')} ${grp.sectionNumber}`;
+            const clean = grp.headerQuestion ? this.getSectionSummaryTitle(grp.headerQuestion) : '';
+            const shortClean = clean && clean.length > 40 ? `${clean.slice(0, 40)}...` : clean;
+            return shortClean ? `${base} · ${shortClean}` : base;
+        },
+
+        async duplicateQuestion(question, qIndex = null) {
+            if (!question || this.isSectionQuestion(question)) return null;
+            const currentIdx = (typeof qIndex === 'number' && qIndex >= 0 && this.localQuestions[qIndex] === question)
+                ? qIndex
+                : (this.localQuestions || []).findIndex(q => q === question || (q && question._id && this.convertIdToStr(q._id) === this.convertIdToStr(question._id)));
+            const insertIdx = currentIdx !== -1 ? currentIdx + 1 : (this.localQuestions || []).length;
+            const typeRef = (question.type && typeof question.type === 'object')
+                ? (question.type._id || question.type.type)
+                : (question.type || this.getQuestionType(question.type));
+            const created = await this.insertQuestionAt(typeRef, insertIdx, question);
+            if (created && created._id) {
+                this.scrollToQuestion(created._id);
+            }
+            return created;
         },
 
         async removeQuestion(qId) {
@@ -1508,8 +2046,13 @@ export default {
             if (index === -1) return;
 
             const q = this.localQuestions[index];
+            if (this.convertIdToStr(this.activeSectionId) === this.convertIdToStr(qId)) {
+                this.activeSectionId = null;
+            }
+            this.storedLayout = null;
             this.localQuestions.splice(index, 1);
-            this.buildGridLayoutFromQuestions();
+            this.buildGridLayoutFromQuestions(false);
+            this.saveGrid();
 
             if (this.form && Array.isArray(this.form.questions)) {
                 const fIndex = this.form.questions.findIndex(item => this.convertIdToStr(item && item._id) === this.convertIdToStr(qId));
@@ -1574,24 +2117,37 @@ export default {
             const found = this.questionTypes.find(t => t._id === typeObjOrId);
             return found ? (found.type || '') : typeObjOrId;
         },
+        isFreeTextType(typeObjOrId) {
+            return isFreeTextQuestionType(this.getQuestionType(typeObjOrId));
+        },
         formatTypeLabel(rawType) {
             if (!rawType) return '';
-            const key = rawType.toLowerCase().replace(/ /g, '_');
+            const key = normalizeQuestionTypeKey(rawType);
             if (this.$te(`types.${key}`)) {
                 return this.$t(`types.${key}`);
             }
             return rawType.split('_').join(' ');
         },
+        getChoiceTypeHint(typeObjOrId) {
+            const key = normalizeQuestionTypeKey(this.getQuestionType(typeObjOrId));
+            if (key === 'multiple_choice' || key === 'checkbox') {
+                const hintKey = `types.hints.${key}`;
+                if (this.$te && this.$te(hintKey)) {
+                    return this.$t(hintKey);
+                }
+            }
+            return '';
+        },
         getIconForType(typeObjOrId) {
-            const typeStr = (this.getQuestionType(typeObjOrId) || '').toLowerCase().replace(/ /g, '_');
+            const typeStr = normalizeQuestionTypeKey(this.getQuestionType(typeObjOrId));
             switch (typeStr) {
-                case 'short_answer': return 'cil-minus';
-                case 'paragraph': return 'cil-align-left';
+                case 'free_text': return 'cil-align-left';
                 case 'multiple_choice': return 'cil-circle';
                 case 'checkbox': return 'cil-square';
                 case 'rating': return 'cil-star';
                 case 'file_upload': return 'cil-cloud-upload';
                 case 'title_description': return 'cil-text';
+                case 'section': return 'cil-view-stream';
                 case 'image': return 'cil-image-1';
                 default: return 'cil-notes';
             }
@@ -1625,8 +2181,11 @@ export default {
 
             const maxSize = 5 * 1024 * 1024; // 5MB limit
             if (file.size > maxSize) {
-                if (this.$toast) this.$toast.error('Image size cannot exceed 5MB');
-                else alert('Image size cannot exceed 5MB');
+                const msg = (this.$te && this.$te('builder.imageSizeLimit'))
+                    ? this.$t('builder.imageSizeLimit')
+                    : 'Image file size must not exceed 5 MB.';
+                if (this.$toast) this.$toast.error(msg);
+                else alert(msg);
                 return;
             }
             this.modalImageFile = file;
@@ -1729,28 +2288,36 @@ export default {
             question.config.choices.splice(oIndex, 1);
             this.putQuestion(question);
         },
+        isSectionQuestion(question) {
+            return isSectionQuestionType(question && question.type);
+        },
+        getSectionNumber(question, index) {
+            let count = 0;
+            const limit = typeof index === 'number' ? index : (this.localQuestions || []).length - 1;
+            for (let i = 0; i <= limit && i < (this.localQuestions || []).length; i++) {
+                if (this.isSectionQuestion(this.localQuestions[i])) count++;
+            }
+            return count || 1;
+        },
+        async moveQuestionStep(index, delta) {
+            const list = this.localQuestions || [];
+            const targetIndex = index + delta;
+            if (index < 0 || targetIndex < 0 || targetIndex >= list.length) return;
+            const reordered = [...list];
+            const [moved] = reordered.splice(index, 1);
+            reordered.splice(targetIndex, 0, moved);
+            await this.commitReorderedQuestions(reordered);
+        },
         isCounted(question) {
             if (!question) return false;
-            const type = (this.getQuestionType(question.type) || '').toLowerCase().replace(/[\s&/]+/g, '_');
-            return type !== 'title_description' && type !== 'image';
+            return !isNonInputQuestionType(this.getQuestionType(question.type));
         },
         getDisplayNumber(question) {
             if (!question) return 0;
-            let num = 0;
-            for (let i = 0; i < this.localQuestions.length; i++) {
-                const item = this.localQuestions[i];
-                if (this.isCounted(item)) num++;
-                if (item === question) return num;
-            }
-            return num;
+            return getQuestionNumberInSection(this.localQuestions, question);
         },
         displayQuestionNumber(question, index) {
-            let num = 0;
-            for (let i = 0; i <= index && i < this.localQuestions.length; i++) {
-                const item = this.localQuestions[i];
-                if (this.isCounted(item)) num++;
-            }
-            return num;
+            return getQuestionNumberInSection(this.localQuestions, index);
         },
         toggleFileType(question, ftKey) {
             if (!question) return;
@@ -1844,11 +2411,11 @@ export default {
         },
         getQuestionTitle(q) {
             if (!q || !Array.isArray(q.title) || q.title.length === 0) return 'Untitled';
-            const enTitle = q.title.find(t => t.key && t.key.toLowerCase() === 'en');
-            if (enTitle && enTitle.value) {
-                return enTitle.value.length > 50 ? enTitle.value.substring(0, 50) + '...' : enTitle.value;
+            const resolved = this.getLang(q.title);
+            if (resolved) {
+                return resolved.length > 50 ? resolved.substring(0, 50) + '...' : resolved;
             }
-            return q.title[0].value ? (q.title[0].value.length > 50 ? q.title[0].value.substring(0, 50) + '...' : q.title[0].value) : 'Untitled';
+            return 'Untitled';
         },
         getCombinedNavigationValue(question) {
             if (!question.nextQuestion) return 'submit';
@@ -1888,7 +2455,7 @@ export default {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #adb5bd;
+    color: #64748b;
 }
 
 .image-preview {
@@ -1897,6 +2464,23 @@ export default {
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+.lang-key-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    min-width: 3rem;
+    height: 34px;
+    padding: 0 0.45rem;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
 }
 
 .lang-key-btn {
@@ -1924,9 +2508,285 @@ export default {
 
 .lang-key-input>>>input::placeholder {
     font-weight: 400;
-    color: #adb5bd;
+    color: #64748b;
     text-transform: none;
     letter-spacing: 0;
+}
+
+.question-drag-handle {
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 18px;
+    border-radius: 999px;
+    color: #64748b;
+    opacity: 0;
+    cursor: grab;
+    touch-action: none;
+    pointer-events: auto;
+    transition: opacity 0.16s ease, color 0.16s ease, background-color 0.16s ease;
+}
+
+.question-drag-handle svg {
+    pointer-events: none;
+}
+
+::v-deep .question-grid-item:hover .question-drag-handle,
+::v-deep .vue-grid-item.vue-draggable-dragging .question-drag-handle {
+    opacity: 1;
+}
+
+.question-drag-handle:hover {
+    color: #475569;
+    background-color: rgba(148, 163, 184, 0.16);
+}
+
+.question-drag-handle:active {
+    cursor: grabbing;
+}
+
+.question-prompt-zone {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.field-section-label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #334155;
+    letter-spacing: 0.01em;
+}
+
+.form-header-section-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.form-title-input >>> textarea {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+}
+
+.form-desc-input >>> textarea {
+    font-size: 1.05rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.question-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.28rem 0.85rem;
+}
+
+.auto-resize-field >>> textarea {
+    resize: none !important;
+    overflow: hidden !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.question-title-input >>> textarea,
+.non-counted-title-input >>> textarea {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 1.02rem;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.45;
+    padding: 0.5rem 0.75rem;
+    min-height: 40px;
+}
+
+.question-title-input >>> textarea:focus,
+.non-counted-title-input >>> textarea:focus {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.16);
+}
+
+.question-desc-section {
+    border-top: none;
+}
+
+.question-desc-input >>> textarea {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    color: #475569;
+    line-height: 1.5;
+    padding: 0.45rem 0.75rem;
+    min-height: 36px;
+}
+
+.question-add-desc-btn {
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #64748b;
+    text-decoration: none;
+}
+
+.question-add-desc-btn:hover {
+    color: #334155;
+    text-decoration: none;
+}
+
+.answer-zone-label {
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #475569;
+    flex-shrink: 0;
+}
+
+.answer-zone-line {
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.question-answer-zone {
+    padding: 0.25rem 0 0 0.25rem;
+}
+
+.choice-option-input >>> input {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-weight: 400;
+    color: #334155;
+}
+
+.section-card {
+    background: #ffffff;
+    border-top: 3px solid #64748b !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.section-card.is-active-section {
+    border-top-color: #334155 !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+}
+
+.section-card.is-collapsed-section {
+    background: #f8fafc;
+}
+
+.section-tab-pill {
+    background: #475569;
+    color: #ffffff;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    letter-spacing: 0.01em;
+}
+
+.section-count-badge {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.section-collapsed-summary-body {
+    padding-top: 0.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.section-collapsed-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #1e293b;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.section-collapsed-desc {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: #64748b;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.section-active-badge {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #334155;
+    background: #e2e8f0;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+}
+
+.section-collapse-btn {
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #475569 !important;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    border-radius: 8px !important;
+    padding: 0.22rem 0.6rem;
+}
+
+.section-collapse-btn:hover {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+
+.section-member-card {
+    border-left: 3px solid #cbd5e1 !important;
+}
+
+.section-move-btn {
+    min-width: 28px;
+    height: 28px;
+    padding: 0;
+    font-weight: 700;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 8px;
+}
+
+.section-title-input >>> textarea {
+    background-color: #ffffff;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.45;
+    min-height: 38px;
+}
+
+.section-add-desc-btn {
+    font-size: 0.85rem;
+    text-decoration: none;
 }
 
 .questions-wrapper {
@@ -1996,11 +2856,21 @@ export default {
     transform: translateY(-1px);
 }
 
+.add-desc-box .btn,
+.add-option-btn {
+    font-size: 0.8125rem;
+}
+
+.file-config-btn {
+    font-size: 0.8125rem;
+}
+
 .next-action-btn {
     background-color: #fef3c7;
     color: #92400e;
     border: 1px solid #fcd34d;
     font-weight: 600;
+    font-size: 0.8125rem;
 }
 
 ::v-deep .vue-grid-item {
@@ -2020,5 +2890,23 @@ export default {
 
 ::v-deep .dropdown-menu.show {
     z-index: 9999;
+}
+
+@media (max-width: 767.98px) {
+    .question-card-content,
+    .question-goto-btn,
+    .next-action-btn {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    ::v-deep .dropdown-menu {
+        max-width: calc(100vw - 32px);
+    }
+
+    ::v-deep .dropdown-item span {
+        white-space: normal;
+        word-break: break-word;
+    }
 }
 </style>

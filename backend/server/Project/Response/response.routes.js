@@ -8,6 +8,22 @@ router.get("/exp", function (req, res, next) {
     next();
 }, response.onQuerys);
 
+// Unified External Export (single endpoint: evaluator status + assessment answers)
+router.get("/export-analytics", function (req, res, next) {
+    req.query.apiId = 6;
+    next();
+}, response.onExportAnalytics);
+
+router.get("/export/:formId", function (req, res, next) {
+    req.query.apiId = 6;
+    next();
+}, response.onExport);
+
+router.get("/export", function (req, res, next) {
+    req.query.apiId = 6;
+    next();
+}, response.onExport);
+
 // Get by filter (single or list)
 router.post("/get", function (req, res, next) {
     req.query.apiId = 2;

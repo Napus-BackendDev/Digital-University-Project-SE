@@ -1,6 +1,6 @@
 <template>
     <div class="flex-grow-1">
-        <Header :title="$t('nav.manage')" :description="$t('description')" :showCreateButton="true" />
+        <Header :title="$t('hero.manageTitle')" :description="$t('hero.manageDesc')" :showCreateButton="true" />
         <WidgetsManageForms :forms="filteredForms" @filter="(status) => $refs.table.filterStatus(status)" />
         
         <ManagementTables ref="table" :items="filteredForms" :loading="loading" />
@@ -85,7 +85,7 @@ export default {
                     });
                     this.loading = false;
                     // Background non-blocking response counts fetch
-                    this.$store.dispatch('Responses/exp').catch(e => console.error("[ManageForms.vue] Background responses sync error:", e));
+                    this.$store.dispatch('Responses/exp', { params: { userId: this.user._id } }).catch(e => console.error("[ManageForms.vue] Background responses sync error:", e));
                 } catch (err) {
                     console.error("[ManageForms.vue] Error fetching forms:", err);
                 } finally {

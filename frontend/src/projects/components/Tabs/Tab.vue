@@ -1,21 +1,25 @@
 <template>
     <CRow>
-        <CCol md="9" class="mb-4">
-            <TabQuestion v-if="activeTab === 'question'" ref="tabQuestion" :form="form"
+        <CCol md="9" class="mb-4 order-2 order-md-1">
+            <TabQuestion v-if="activeTab === 'question' && !readOnly" ref="tabQuestion" :form="form"
                 @auto-save="triggerAutoSave" />
-            <TabResponses v-else-if="activeTab === 'response'" ref="tabResponses" :responses="form"
-                @auto-save="triggerAutoSave" />
-            <TabSetting v-else-if="activeTab === 'setting'" ref="tabSetting" :settings="form"
+            <TabSetting v-else-if="activeTab === 'setting' && !readOnly" ref="tabSetting" :settings="form"
+                :sections="settingSections"
                 @auto-save="triggerAutoSave" />
         </CCol>
 
         <Toolbar 
+            class="order-1 order-md-2 mb-3 mb-md-0"
             :activeTab="activeTab" 
             :form="form"
-            @update:activeTab="(val) => $emit('update:activeTab', val)"
+            :readOnly="readOnly"
+            @update:activeTab="(val) => { if (!readOnly) $emit('update:activeTab', val); }"
             :questionTypes="questionTypes"
+            :activeLanguages="activeFormLanguages"
             @add-question="addAndOpen"
             @open-image="openImageInQuestionTab"
+            @add-language="onAddFormLanguage"
+            @remove-language="onRemoveFormLanguage"
         />
     </CRow>
 </template>
@@ -23,15 +27,14 @@
 <script>
 import { mapGetters } from 'vuex';
 import TabQuestion from './TabQuestion.vue';
-import TabResponses from './TabResponses.vue';
 import TabSetting from './TabSetting.vue';
 import Toolbar from './Toolbar.vue';
+import { extractFormLanguages, isFreeTextQuestionType, isNonInputQuestionType } from '@/projects/utils/formPolicy';
 
 export default {
     name: 'Tab',
     components: {
         TabQuestion,
-        TabResponses,
         TabSetting,
         Toolbar
     },
@@ -43,6 +46,14 @@ export default {
         activeTab: {
             type: String,
             default: 'question'
+        },
+        readOnly: {
+            type: Boolean,
+            default: false
+        },
+        settingSections: {
+            type: Array,
+            default: null
         }
     },
     data() {
@@ -60,13 +71,18 @@ export default {
                 _id: type._id,
                 type: type.type,
             }));
+        },
+        activeFormLanguages() {
+            return extractFormLanguages(this.form);
         }
     },
     methods: {
         triggerAutoSave() {
+            if (this.readOnly) return;
             this.$emit('auto-save');
         },
         async addAndOpen(typeId) {
+            if (this.readOnly) return;
             this.$emit('update:activeTab', 'question');
             await this.$nextTick();
             if (this.$refs.tabQuestion && typeof this.$refs.tabQuestion.addQuestion === 'function') {
@@ -80,7 +96,17 @@ export default {
                 }
             }
         },
+        async addSampleQuestion() {
+            if (this.readOnly) return;
+            const preferred = this.questionTypes.find(t => isFreeTextQuestionType(t && t.type))
+                || this.questionTypes.find(t => t.type === 'multiple_choice')
+                || this.questionTypes.find(t => !isNonInputQuestionType(t));
+            if (preferred) {
+                await this.addAndOpen(preferred._id);
+            }
+        },
         openImageInQuestionTab() {
+            if (this.readOnly) return;
             this.$emit('update:activeTab', 'question');
             this.$nextTick(() => {
                 if (this.$refs.tabQuestion) {
@@ -89,6 +115,20 @@ export default {
                     this.$refs.tabQuestion.showImageModal = true;
                 }
             });
+        },
+        async onAddFormLanguage(langKey) {
+            if (this.readOnly) return;
+            this.$emit('update:activeTab', 'question');
+            await this.$nextTick();
+            if (this.$refs.tabQuestion && typeof this.$refs.tabQuestion.addLanguageGlobally === 'function') {
+                await this.$refs.tabQuestion.addLanguageGlobally(langKey);
+            }
+        },
+        onRemoveFormLanguage(langKey) {
+            if (this.readOnly) return;
+            if (this.$refs.tabQuestion && typeof this.$refs.tabQuestion.requestRemoveLanguageGlobally === 'function') {
+                this.$refs.tabQuestion.requestRemoveLanguageGlobally(langKey);
+            }
         }
     }
 }

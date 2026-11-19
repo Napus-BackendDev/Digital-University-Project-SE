@@ -13,7 +13,13 @@ function getJwtSecret() {
  */
 async function requireAuth(req, res, next) {
     try {
-        const token = req.cookies.token;
+        let token = req.cookies && req.cookies.token;
+        if (!token && req.headers && req.headers.authorization) {
+            const parts = req.headers.authorization.split(' ');
+            if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
+                token = parts[1];
+            }
+        }
         if (!token) {
             return res.status(401).json({ message: "Unauthorized: No token provided. Please login." });
         }

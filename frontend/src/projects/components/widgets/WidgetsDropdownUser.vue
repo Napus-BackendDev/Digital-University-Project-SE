@@ -1,6 +1,6 @@
 <template>
     <CRow class="mb-4">
-        <CCol sm="6" lg="3" @click="$emit('filter', 'All')" style="cursor: pointer;">
+        <CCol sm="6" lg="3" class="mb-3 mb-lg-0" @click="$emit('filter', 'All')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box icon-box--primary">
@@ -14,13 +14,13 @@
                 </div>
             </div>
         </CCol>
-        <CCol sm="6" lg="3" @click="$emit('filter', 'Completed')" style="cursor: pointer;">
+        <CCol sm="6" lg="3" class="mb-3 mb-lg-0" @click="$emit('filter', 'Completed')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box icon-box--success">
                         <CIcon name="cil-check-circle" size="xl" />
                     </div>
-                    <span class="stat-badge stat-badge--success">{{ $t('status.completed') }}</span>
+                    <span class="stat-badge stat-badge--success">{{ $t('respondentStatus.completed') }}</span>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.completed }}</h2>
@@ -28,13 +28,13 @@
                 </div>
             </div>
         </CCol>
-        <CCol sm="6" lg="3" @click="$emit('filter', 'Pending')" style="cursor: pointer;">
+        <CCol sm="6" lg="3" class="mb-3 mb-lg-0" @click="$emit('filter', 'Pending')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box icon-box--warning">
                         <CIcon name="cil-clock" size="xl" />
                     </div>
-                    <span class="stat-badge stat-badge--warning">{{ $t('status.pending') }}</span>
+                    <span class="stat-badge stat-badge--warning">{{ $t('respondentStatus.pending') }}</span>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.pending }}</h2>
@@ -42,13 +42,13 @@
                 </div>
             </div>
         </CCol>
-        <CCol sm="6" lg="3" @click="$emit('filter', 'In Progress')" style="cursor: pointer;">
+        <CCol sm="6" lg="3" class="mb-3 mb-lg-0" @click="$emit('filter', 'In Progress')" style="cursor: pointer;">
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="icon-box icon-box--info">
                         <CIcon name="cil-speedometer" size="xl" />
                     </div>
-                    <span class="stat-badge stat-badge--info">{{ $t('status.inprogress') }}</span>
+                    <span class="stat-badge stat-badge--info">{{ $t('respondentStatus.inprogress') }}</span>
                 </div>
                 <div class="stat-content">
                     <h2 class="stat-value">{{ stats.inProgress }}</h2>
@@ -133,7 +133,7 @@ export default {
 }
 
 .stat-badge {
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     padding: 3px 8px;
     border-radius: 12px;
@@ -172,7 +172,7 @@ export default {
 
 .stat-label {
     color: #64748b;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     font-weight: 600;
 }
 </style>

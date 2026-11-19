@@ -119,3 +119,18 @@
 - **ไฟล์ข้อมูลที่จัดเก็บ:**
   - ผัง Master รวมทุกส่วน: [full_system_and_workflow_nunito.excalidraw](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/docs/diagrams/full_system_and_workflow_nunito.excalidraw) (2,002 elements)
   - ผังเฉพาะ BPMN 2.0: [business_process_model_bpmn.excalidraw](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/docs/diagrams/business_process_model_bpmn.excalidraw) (416 elements)
+
+---
+
+### 6. ผังฉบับสมบูรณ์ล่าสุดสำหรับนำเสนอผู้ว่าจ้าง (Complete Blueprint & Live Screenshots Edition)
+
+- **ไฟล์ชุดใหม่ (แยกไฟล์อิสระ ไม่เขียนทับของเดิม):**
+  - [business_process_model_complete.excalidraw](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/docs/diagrams/business_process_model_complete.excalidraw) (`474` elements, `11` embedded screenshots)
+  - [business_process_model_complete.png](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/docs/diagrams/business_process_model_complete.png) (`5580x6426 px`)
+  - [business_process_model_complete.claims.json](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/docs/diagrams/business_process_model_complete.claims.json) (สมุดหลักฐานอ้างอิง `path:line` ระดับซอร์สโค้ดจริง)
+- **สิ่งที่อัปเดตให้ตรงกับระบบล่าสุด:**
+  - **นำทางหลัก 4 โมดูล:** `/forms`, `/manage`, `/analytics`, `/email` (เส้นทางเดิม `/permissions` redirect ไป `ManageForms`, จัดการสิทธิ์ผ่าน Settings & Form Access Control)
+  - **Wizard 5 ขั้นตอน & กฎคำตอบ 6 ข้อ:** Language -> Questions (`8` ชนิด + Title/Image + Skip Logic) -> Schedule/Access/Collaborators -> Response Settings (`6` กฎ) -> Review/Share/QR (`form-qr-<id>.png`)
+  - **ระบบส่งออกครบ 6 ช่องทาง (`F6`):** Analytics Overall (`.xlsx` / `.json`), Analytics รายฟอร์ม (`.xlsx` / `.json`), `TabResponses` Excel (`SheetJS` + `applySheetHyperlinks`) & JSON (`targetEvaluators` + `individualResponses`), `/response/:id` (`.xlsx` / `.json`) และ QR Code PNG
+  - **ระบบอีเมลครบ 4 Triggers & Per-Account Email Studio (`F7`):** `ResponseNotification`/`creatorNotification`, `submissionConfirmation`, `invitationOrganization`, `invitationCollaboration` พร้อมแยกเทมเพลตอิสระต่อบัญชี `{ owner, code }` และปุ่ม `Send Test` ส่งกลับเข้าเมลเจ้าของบัญชีทันที (`POST /api/v1/settings/emailTemplate/test`)
+  - **ภาพหน้าจอเว็บจริงล่าสุด 11 ภาพ (`docs/diagrams/screenshots/v2/`):** แนบครบในหมวด `F1–F7` เพื่อใช้ประกอบการนำเสนอผู้ว่าจ้างทันทีบน `http://127.0.0.1:3000`

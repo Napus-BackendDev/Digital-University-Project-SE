@@ -1,7 +1,7 @@
 <template>
-    <CCard class="mb-4 border-0 shadow-sm rounded-20">
-        <CCardBody class="p-4">
-            <h5 class="mb-4 font-weight-bold text-dark">{{ $t('editor.settings.access.title') }}</h5>
+    <CCard :class="embedded ? 'mb-0 border-0 shadow-none bg-transparent' : 'mb-4 border-0 shadow-sm rounded-20'" style="overflow: visible;">
+        <CCardBody :class="embedded ? 'px-3 px-md-4 pt-1 pb-3 pb-md-4' : 'p-3 p-md-4'">
+            <h5 v-if="!embedded" class="mb-4 font-weight-bold text-dark">{{ $t('editor.settings.access.title') }}</h5>
 
             <!-- Selected Collaborators List -->
             <div class="mb-4">
@@ -28,28 +28,32 @@
                 <CRow>
                     <CCol md="6" class="mb-3">
                         <label class="mb-2 font-weight-bold small text-muted d-block">{{ $t('editor.settings.access.emailPlaceholder') }}</label>
-                        <v-select 
-                            :options="userOptions" 
-                            v-model="selectedUser"
-                            multiple
-                            :close-on-select="false"
-                            :reduce="user => user.value"
-                            :placeholder="$t('editor.settings.access.emailPlaceholder')"
-                            class="form-select-custom"
+                        <UserEmailTokenInput
+                            ref="collaboratorTokenInput"
+                            v-model="pendingCollaborators"
+                            :users="users"
+                            :excluded-user-ids="savedCollaboratorIds"
+                            :excluded-emails="savedCollaboratorEmails"
+                            :placeholder="$t('editor.settings.access.emailFreetextPlaceholder')"
+                            :add-more-placeholder="$t('editor.settings.access.addMorePlaceholder')"
+                            :error.sync="collaboratorEmailError"
+                            invalid-error-key="editor.settings.access.invalidCollaboratorEmails"
+                            @submit="addCollaborator"
                         />
                     </CCol>
                     <CCol md="4" class="mb-3">
                         <label class="mb-2 font-weight-bold small text-muted d-block">{{ $t('editor.settings.access.role') || 'Role' }}</label>
-                        <v-select 
-                            :options="collaboratorOptions" 
+                        <v-select
+                            :options="collaboratorOptions"
                             v-model="newCollaborator.type"
                             :reduce="role => role.value"
                             class="form-select-custom"
                             :clearable="false"
+                            :searchable="false"
                         />
                     </CCol>
                     <CCol md="2" class="mb-3">
-                        <label class="mb-2 d-none d-md-block">&nbsp;</label>
+                        <label class="mb-2 font-weight-bold small d-none d-md-block" aria-hidden="true">&nbsp;</label>
                         <CButton color="primary" block style="height: 45px; border-radius: 12px;"
                             class="font-weight-bold" @click="addCollaborator">
                             {{ $t('editor.settings.access.add') }}
@@ -81,22 +85,29 @@ import { mapGetters } from 'vuex';
 import localeMixin from '@/mixins/localeMixin'
 import vSelect from 'vue-select'
 import 'vue-select/dist/vue-select.css'
+import UserEmailTokenInput from './UserEmailTokenInput.vue'
 
 export default {
     name: 'AccessControl',
     mixins: [localeMixin],
     components: {
-        vSelect
+        vSelect,
+        UserEmailTokenInput
     },
     props: {
         settings: {
             type: Object,
             required: true
+        },
+        embedded: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
         return {
-            selectedUser: [],
+            pendingCollaborators: [],
+            collaboratorEmailError: '',
             newCollaborator: {
                 type: null
             }
@@ -126,15 +137,38 @@ export default {
         ...mapGetters('Setting/collaborator', { collaboratorItems: 'item' }),
         ...mapGetters('User', ['users']),
 
-        userOptions() {
-            if (!this.users || !Array.isArray(this.users)) return [];
-            return this.users.map(u => ({
-                label: `${u.name || u.fullname || u.email || 'Unknown'} <${u.email}>`,
-                value: u.email,
-                name: u.name || u.fullname || u.email
-            }));
-        },
+        savedCollaboratorIdentifiers() {
+            const ids = [];
+            const emails = [];
+            const usersList = Array.isArray(this.users) ? this.users : [];
+            const savedList = (this.settings && Array.isArray(this.settings.collaborator)) ? this.settings.collaborator : [];
 
+            savedList.forEach(c => {
+                if (!c) return;
+                if (c.email) emails.push(String(c.email).trim().toLowerCase());
+                const u = c.user;
+                if (!u) return;
+                if (typeof u === 'object') {
+                    if (u._id) ids.push(String(u._id));
+                    if (u.email) emails.push(String(u.email).trim().toLowerCase());
+                } else {
+                    const uid = String(u);
+                    ids.push(uid);
+                    const matched = usersList.find(x => x && String(x._id) === uid);
+                    if (matched && matched.email) {
+                        emails.push(String(matched.email).trim().toLowerCase());
+                    }
+                }
+            });
+
+            return { ids, emails };
+        },
+        savedCollaboratorIds() {
+            return this.savedCollaboratorIdentifiers.ids;
+        },
+        savedCollaboratorEmails() {
+            return this.savedCollaboratorIdentifiers.emails;
+        },
         visionOptions() {
             if (!this.statusItems || !Array.isArray(this.statusItems)) return [];
             return this.statusItems.map(item => ({
@@ -146,7 +180,7 @@ export default {
             if (!this.collaboratorItems || !Array.isArray(this.collaboratorItems)) return [];
             return this.collaboratorItems.map(item => ({
                 value: item._id,
-                label: this.getLang(item.title)
+                label: this.normalizeCollaboratorLabel(this.getLang(item.title))
             }));
         },
         selectedControllId() {
@@ -165,18 +199,26 @@ export default {
             if (!userRef) return 'Unknown';
             if (typeof userRef === 'object' && userRef.email) return userRef.name || userRef.email;
             if (!this.users) return userRef;
-            const u = this.users.find(x => x._id === userRef);
-            return u ? (u.name || u.email) : userRef;
+            const uid = typeof userRef === 'object' ? userRef._id : userRef;
+            const u = this.users.find(x => String(x._id) === String(uid));
+            return u ? (u.name || u.email) : (uid || userRef);
+        },
+        normalizeCollaboratorLabel(label) {
+            const trimmed = String(label || '').trim();
+            if (trimmed === 'ผู้ดู' && this.$te && this.$te('editor.settings.access.viewer')) {
+                return this.$t('editor.settings.access.viewer');
+            }
+            return trimmed || (this.$te && this.$te('editor.settings.access.viewer') ? this.$t('editor.settings.access.viewer') : 'Viewer');
         },
         getRoleName(typeRef) {
             if (!typeRef) return '';
             const tid = typeof typeRef === 'object' ? typeRef._id : typeRef;
             const t = this.collaboratorItems ? this.collaboratorItems.find(x => x._id === tid) : null;
-            return t ? this.getLang(t.title) : 'Viewer';
+            return t ? this.normalizeCollaboratorLabel(this.getLang(t.title)) : this.normalizeCollaboratorLabel('Viewer');
         },
         getRoleClass(typeRef) {
             const name = String(this.getRoleName(typeRef)).toLowerCase();
-            return name.includes('edit') ? 'editor' : 'viewer';
+            return (name.includes('edit') || name.includes('แก้ไข')) ? 'editor' : 'viewer';
         },
         onStatusChange(val) {
             const newId = typeof val === 'object' && val !== null ? val._id : val;
@@ -185,32 +227,74 @@ export default {
                 this.triggerAutoSave();
             }
         },
+        isAlreadySavedCollaborator(candidate) {
+            const savedList = (this.settings && Array.isArray(this.settings.collaborator)) ? this.settings.collaborator : [];
+            const usersList = Array.isArray(this.users) ? this.users : [];
+            return savedList.some(c => {
+                if (!c) return false;
+                const u = c.user;
+                const uId = (u && typeof u === 'object' && u._id) ? String(u._id) : (typeof u !== 'object' ? String(u) : null);
+                if (candidate.userId && uId && uId === String(candidate.userId)) {
+                    return true;
+                }
+                const savedEmail = (c.email || (u && typeof u === 'object' ? u.email : '') || '').trim().toLowerCase();
+                if (savedEmail && candidate.email && savedEmail === candidate.email) {
+                    return true;
+                }
+                if (uId && candidate.email) {
+                    const matched = usersList.find(x => x && String(x._id) === uId);
+                    if (matched && matched.email && matched.email.trim().toLowerCase() === candidate.email) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        },
         addCollaborator() {
-            if (!this.selectedUser || this.selectedUser.length === 0 || !this.newCollaborator.type) return;
+            if (!this.newCollaborator.type) return;
+
+            const { candidates, invalidEntries } = this.$refs.collaboratorTokenInput
+                ? this.$refs.collaboratorTokenInput.consumeCandidatesForSubmit()
+                : { candidates: [...this.pendingCollaborators], invalidEntries: [] };
+
+            if (candidates.length === 0 && invalidEntries.length === 0) {
+                this.collaboratorEmailError = '';
+                return;
+            }
 
             if (!Array.isArray(this.settings.collaborator)) {
                 this.$set(this.settings, 'collaborator', []);
             }
 
-            this.selectedUser.forEach(email => {
-                const userObj = this.users ? this.users.find(u => u.email === email) : null;
-                if (!userObj) return;
-
-                const exists = this.settings.collaborator.find(c => {
-                    let uId = (c.user && c.user._id) ? c.user._id : c.user;
-                    return String(uId) === String(userObj._id);
-                });
-
-                if (!exists) {
+            let addedAny = false;
+            candidates.forEach(candidate => {
+                if (this.isAlreadySavedCollaborator(candidate)) return;
+                if (candidate.userId) {
                     this.settings.collaborator.push({
-                        user: userObj._id,
+                        user: candidate.userId,
+                        type: this.newCollaborator.type
+                    });
+                } else if (candidate.email) {
+                    this.settings.collaborator.push({
+                        user: { email: candidate.email, name: candidate.email },
+                        email: candidate.email,
                         type: this.newCollaborator.type
                     });
                 }
+                addedAny = true;
             });
 
-            this.selectedUser = [];
-            this.triggerAutoSave();
+            if (invalidEntries.length > 0) {
+                this.collaboratorEmailError = this.$t('editor.settings.access.invalidCollaboratorEmails', {
+                    emails: invalidEntries.join(', ')
+                });
+            } else {
+                this.collaboratorEmailError = '';
+            }
+
+            if (addedAny) {
+                this.triggerAutoSave();
+            }
         },
         removeCollaborator(index) {
             if (Array.isArray(this.settings.collaborator)) {
@@ -228,58 +312,60 @@ export default {
 <style scoped>
 .rounded-20 {
     border-radius: 20px !important;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .form-select-custom {
-    min-height: 45px !important;
-    background-color: #f8f9fa !important;
+    min-height: 45px;
+    background-color: transparent !important;
     border-radius: 12px !important;
-    border: 1px solid #e2e8f0 !important;
-    transition: all 0.3s ease;
+    border: none !important;
     box-shadow: none !important;
 }
 
 .form-select-custom:focus-within {
-    border-color: #6366f1 !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    box-shadow: none !important;
 }
 
-/* v-select custom styling to match system */
+/* v-select custom styling matched cleanly to .collab-chip-box */
 .form-select-custom.v-select >>> .vs__dropdown-toggle {
+    height: 45px !important;
     min-height: 45px !important;
-    background-color: #f8f9fa !important;
+    background-color: #f8fafc !important;
     border-radius: 12px !important;
-    border: 1px solid #e2e8f0 !important;
-    padding: 2px 0.5rem;
+    border: 1px solid #cbd5e1 !important;
+    padding: 0 10px !important;
+    display: flex;
+    align-items: center;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-select-custom.v-select >>> .vs__selected-options {
-    padding: 0;
-    max-height: 120px;
-    overflow-y: auto;
+    padding: 0 !important;
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding: 4px 0;
+    align-items: center;
+    flex-wrap: nowrap;
+    min-width: 0;
 }
 
-/* Hide scrollbar but keep functionality */
-.form-select-custom.v-select >>> .vs__selected-options::-webkit-scrollbar {
-    display: none;
+.form-select-custom.v-select >>> .vs__actions {
+    padding: 0 4px !important;
+    display: flex;
+    align-items: center;
 }
 
 .form-select-custom.v-select >>> .vs__selected {
-    background-color: #f1f5f9 !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    padding: 2px 8px !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 2px !important;
     margin: 0 !important;
-    font-size: 0.85rem !important;
-    color: #475569 !important;
-    max-width: 250px !important;
-    display: inline-flex;
-    align-items: center;
+    font-size: 0.92rem !important;
+    font-weight: 500 !important;
+    color: #0f172a !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .form-select-custom.v-select >>> .vs__deselect {
@@ -290,14 +376,51 @@ export default {
 
 .form-select-custom.v-select >>> .vs__search {
     margin: 0;
-    padding: 0 0.25rem;
-    min-height: 38px;
+    padding: 0;
+    min-height: 0;
+    height: 32px;
     flex-grow: 1;
 }
 
+.form-select-custom.v-select.vs--open {
+    position: relative;
+    z-index: 1050;
+}
+
 .form-select-custom.v-select.vs--open >>> .vs__dropdown-toggle {
-    border-color: #6366f1 !important;
-    background-color: #fff !important;
+    border-color: #8c1515 !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(140, 21, 21, 0.14) !important;
+}
+
+.form-select-custom.v-select >>> .vs__dropdown-menu {
+    max-height: 225px !important;
+    overflow-y: auto !important;
+}
+
+.form-select-custom.v-select >>> .vs-dropdown-search-wrap {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.form-select-custom.v-select >>> .vs-dropdown-search-input {
+    width: 100%;
+    height: 34px;
+    padding: 4px 10px;
+    font-size: 0.875rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    outline: none;
+}
+
+.form-select-custom.v-select >>> .vs-dropdown-search-input:focus {
+    border-color: #8c1515;
+    background-color: #fff;
 }
 
 .org-list {
@@ -356,7 +479,7 @@ export default {
     padding: 1rem 1.25rem;
     background-color: #f0f7ff;
     border-radius: 12px;
-    border-left: 4px solid #3b82f6;
+    border: 1px solid #bfdbfe;
     color: #1e40af;
 }
 
@@ -367,7 +490,7 @@ export default {
 
 .role-badge {
     font-weight: 800;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding: 2px 8px;

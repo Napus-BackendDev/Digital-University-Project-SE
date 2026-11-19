@@ -28,7 +28,7 @@ Vue.mixin(localeMixin)
 
 import GAuth from 'vue-google-oauth2'
 const gauthOption = {
-  clientId: process.env.VUE_APP_CLIENTID,
+  clientId: process.env.VUE_APP_CLIENTID || process.env.VUE_APP_GOOGLE_CLIENT_ID,
   scope: process.env.VUE_APP_SCOPE,
   prompt: process.env.VUE_APP_PROMPT
 }

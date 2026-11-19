@@ -100,17 +100,27 @@
                     <img src="@/assets/logo.svg" alt="MFU Logo" height="72" />
                   </div>
                   <h2 class="h4 font-weight-bold text-dark mb-2">
-                    {{ isThai ? 'เข้าสู่ระบบด้วยบัญชีมหาวิทยาลัย' : 'University Single Sign-On' }}
+                    {{ isExternalFormLogin
+                      ? (isThai ? 'เข้าสู่ระบบด้วยบัญชี Google' : 'Sign in with Google Account')
+                      : (isThai ? 'เข้าสู่ระบบด้วยบัญชีมหาวิทยาลัย' : 'University Single Sign-On')
+                    }}
                   </h2>
                   <p class="text-muted small mb-0">
-                    {{ isThai 
-                      ? 'เฉพาะนักศึกษาและบุคลากรมหาวิทยาลัยแม่ฟ้าหลวง' 
-                      : 'Exclusive for Mae Fah Luang University students and staff' 
+                    {{ isExternalFormLogin
+                      ? (isThai
+                        ? 'รองรับทั้งบัญชีมหาวิทยาลัย และอีเมลภายนอก (เช่น Gmail) สำหรับผู้ตอบแบบสอบถาม'
+                        : 'Supports both university accounts and external Google emails (e.g. Gmail) for respondents')
+                      : (isThai
+                        ? 'เฉพาะนักศึกษาและบุคลากรมหาวิทยาลัยแม่ฟ้าหลวง'
+                        : 'Exclusive for Mae Fah Luang University students and staff')
                     }}
                   </p>
                   <div class="domain-badges mt-2 d-flex justify-content-center flex-wrap">
                     <span class="badge badge-pill badge-light border text-muted mr-1 mb-1 px-2 py-1">@lamduan.mfu.ac.th</span>
-                    <span class="badge badge-pill badge-light border text-muted mb-1 px-2 py-1">@mfu.ac.th</span>
+                    <span class="badge badge-pill badge-light border text-muted mr-1 mb-1 px-2 py-1">@mfu.ac.th</span>
+                    <span v-if="isExternalFormLogin" data-test="external-gmail-badge" class="badge badge-pill badge-primary-soft border text-primary mb-1 px-2 py-1">
+                      @gmail.com / {{ isThai ? 'อีเมลภายนอก' : 'External Email' }}
+                    </span>
                   </div>
                 </div>
 
@@ -119,16 +129,16 @@
                   v-if="currentActiveUser"
                   color="warning"
                   closeButton
-                  class="d-flex align-items-center justify-content-between p-3 mb-4 rounded-lg"
+                  class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between p-3 pr-5 mb-4 rounded-lg"
                 >
-                  <div class="d-flex align-items-center overflow-hidden">
+                  <div class="d-flex align-items-center overflow-hidden" style="min-width: 0;">
                     <CIcon name="cil-info" class="mr-2 text-warning flex-shrink-0" size="lg" />
-                    <div class="small text-truncate">
-                      <div>{{ isThai ? 'เข้าสู่ระบบอยู่แล้ว:' : 'Logged in as:' }} <strong>{{ currentActiveUser.name }}</strong></div>
+                    <div class="small text-truncate" style="min-width: 0;">
+                      <div class="text-truncate">{{ isThai ? 'เข้าสู่ระบบอยู่แล้ว:' : 'Logged in as:' }} <strong>{{ currentActiveUser.name }}</strong></div>
                       <div class="text-muted text-truncate">{{ currentActiveUser.email }}</div>
                     </div>
                   </div>
-                  <CButton color="primary" size="sm" class="ml-2 px-3 flex-shrink-0" @click="goToHome">
+                  <CButton color="primary" size="sm" class="mt-2 mt-sm-0 ml-sm-3 px-3 flex-shrink-0 text-nowrap" @click="goToHome">
                     {{ isThai ? 'ไปหน้าหลัก' : 'Go to App' }}
                   </CButton>
                 </CAlert>
@@ -269,11 +279,16 @@ export default {
   computed: {
     isThai() {
       return this.$i18n.locale === 'th';
+    },
+    isExternalFormLogin() {
+      const q = (this.$route && this.$route.query) || {};
+      if (String(q.allowExternal || '') === '1') return true;
+      const redirect = typeof q.redirect === 'string' ? q.redirect : '';
+      return redirect.startsWith('/forms/');
     }
   },
   async created() {
     await this.checkCurrentSession();
-    this.fetchUsersList();
   },
   mounted() {
     this.initGoogleIdentity();
@@ -417,14 +432,17 @@ export default {
     },
     async checkCurrentSession() {
       const savedUserId = window.localStorage.getItem('activeUserId');
-      if (savedUserId) {
-        try {
-          const res = await api.user('get', { _id: savedUserId });
-          const data = res && res.data && res.data.data;
-          this.currentActiveUser = Array.isArray(data) ? data[0] : (data?.data || data);
-        } catch (e) {
-          this.currentActiveUser = null;
-        }
+      if (!savedUserId) {
+        this.currentActiveUser = null;
+        return;
+      }
+      try {
+        const res = await api.auth('me');
+        this.currentActiveUser = (res && res.data && res.data.user) || null;
+      } catch (e) {
+        this.currentActiveUser = null;
+        window.localStorage.removeItem('activeUserId');
+        window.localStorage.removeItem('authToken');
       }
     },
     async fetchUsersList() {
@@ -545,7 +563,7 @@ $mfu-gold-hover: #e5a93c;
 
   .text-gold-light {
     color: rgba($mfu-gold, 0.85);
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     letter-spacing: 0.5px;
   }
 
@@ -631,7 +649,7 @@ $mfu-gold-hover: #e5a93c;
 
   .domain-badges {
     .badge {
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
       background: #f8fafc;
       color: #64748b;
       border-radius: 12px !important;
@@ -667,7 +685,7 @@ $mfu-gold-hover: #e5a93c;
     }
 
     .btn-oauth-subtitle {
-      font-size: 0.8rem;
+      font-size: 0.8125rem;
     }
   }
 
@@ -675,6 +693,12 @@ $mfu-gold-hover: #e5a93c;
     background: #f8fafc;
     border: 1px solid #f1f5f9;
     border-radius: 12px !important;
+  }
+
+  .badge-primary-soft {
+    background-color: #eff6ff;
+    border-color: #bfdbfe !important;
+    font-weight: 600;
   }
 
   .help-section {
@@ -698,9 +722,15 @@ $mfu-gold-hover: #e5a93c;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
 
+  &.text-white-60,
   .text-white-60 {
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.85);
   }
+}
+
+.text-white-60 {
+  color: rgba(255, 255, 255, 0.85);
 }
 </style>

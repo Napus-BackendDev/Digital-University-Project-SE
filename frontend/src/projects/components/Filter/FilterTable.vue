@@ -10,10 +10,20 @@
                         <input
                             type="text"
                             class="form-control modern-input"
+                            :class="{ 'has-clear': Boolean(searchQuery) }"
                             :value="searchQuery"
                             @input="$emit('update:searchQuery', $event.target.value)"
-                            :placeholder="$t('table.searchPlaceholder')"
+                            :placeholder="searchPlaceholder || $t('table.searchPlaceholder')"
                         />
+                        <button
+                            v-if="searchQuery"
+                            type="button"
+                            class="clear-search-btn"
+                            aria-label="Clear search"
+                            @click="$emit('update:searchQuery', '')"
+                        >
+                            ×
+                        </button>
                     </div>
                 </CCol>
 
@@ -22,25 +32,36 @@
                     <label class="filter-label">{{ $t('table.status') }}</label>
                     <CDropdown class="filter-dropdown w-100">
                         <template #toggler>
-                            <button class="btn modern-dropdown-btn w-100">
+                            <button class="btn modern-dropdown-btn w-100" type="button">
                                 <div class="d-flex align-items-center text-truncate">
                                     <CIcon name="cil-filter" size="sm" class="mr-2 text-muted" />
-                                    <span class="text-truncate font-weight-medium">{{ selectedStatus === 'All' ? $t('status.all') :
-                                        $t('status.' + selectedStatus.toLowerCase().replace(/\s/g, '')) }}</span>
+                                    <span class="text-truncate font-weight-medium">{{ selectedStatusLabel }}</span>
                                 </div>
                                 <CIcon name="cil-chevron-bottom" size="sm" class="text-muted ml-2" />
                             </button>
                         </template>
-                        <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}</CDropdownItem>
-                        <template v-if="managementMode">
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}</CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Active')">{{ $t('status.active') }}</CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Closed')">{{ $t('status.closed') }}</CDropdownItem>
+                        <template v-if="Array.isArray(statusOptions) && statusOptions.length > 0">
+                            <CDropdownItem
+                                v-for="opt in statusOptions"
+                                :key="opt.value"
+                                @click="$emit('update:selectedStatus', opt.value)"
+                            >
+                                {{ opt.label }}
+                            </CDropdownItem>
                         </template>
                         <template v-else>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('status.pending') }}</CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'In Progress')">{{ $t('status.inprogress') }}</CDropdownItem>
-                            <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{ $t('status.completed') }}</CDropdownItem>
+                            <CDropdownItem @click="$emit('update:selectedStatus', 'All')">{{ $t('status.all') }}</CDropdownItem>
+                            <template v-if="managementMode">
+                                <CDropdownItem @click="$emit('update:selectedStatus', 'Draft')">{{ $t('status.draft') }}</CDropdownItem>
+                                <CDropdownItem @click="$emit('update:selectedStatus', 'Scheduled')">{{ $t('status.scheduled') }}</CDropdownItem>
+                                <CDropdownItem @click="$emit('update:selectedStatus', 'Active')">{{ $t('status.active') }}</CDropdownItem>
+                                <CDropdownItem @click="$emit('update:selectedStatus', 'Closed')">{{ $t('status.closed') }}</CDropdownItem>
+                            </template>
+                            <template v-else>
+                                <CDropdownItem @click="$emit('update:selectedStatus', 'Pending')">{{ $t('respondentStatus.pending') }}</CDropdownItem>
+                                <CDropdownItem @click="$emit('update:selectedStatus', 'In Progress')">{{ $t('respondentStatus.inprogress') }}</CDropdownItem>
+                                <CDropdownItem @click="$emit('update:selectedStatus', 'Completed')">{{ $t('respondentStatus.completed') }}</CDropdownItem>
+                            </template>
                         </template>
                     </CDropdown>
                 </CCol>
@@ -63,28 +84,62 @@
                 </CCol>
 
                 <!-- Time Range: From -->
-                <CCol col="6" sm="6" md="6" lg="2" class="mb-2 mb-lg-0">
+                <CCol col="12" sm="6" md="6" lg="2" class="mb-2 mb-lg-0">
                     <label class="filter-label">{{ $t('table.dateFrom') }}</label>
-                    <div class="filter-input-wrap">
+                    <div class="filter-input-wrap picker-field-wrap">
                         <input
                             type="date"
-                            class="form-control modern-input modern-date"
+                            class="form-control modern-input modern-date picker-only-input"
+                            :class="{ 'has-picker-clear': Boolean(startDate) }"
                             :value="startDate"
                             @input="onDateInput('startDate', $event.target.value)"
+                            @mousedown.prevent
+                            @click="onPickerClick($event)"
+                            @keydown="onPickerKeydown"
+                            @beforeinput="onPickerBeforeInput"
+                            @paste.prevent
+                            @drop.prevent
                         />
+                        <button
+                            v-if="startDate"
+                            type="button"
+                            class="picker-clear-btn"
+                            aria-label="Clear start date"
+                            @click.stop="onDateInput('startDate', '')"
+                        >
+                            ×
+                        </button>
+                        <CIcon name="cil-calendar" size="sm" class="picker-field-icon" />
                     </div>
                 </CCol>
 
                 <!-- Time Range: To -->
-                <CCol col="6" sm="6" md="6" lg="2" class="mb-2 mb-lg-0">
+                <CCol col="12" sm="6" md="6" lg="2" class="mb-2 mb-lg-0">
                     <label class="filter-label">{{ $t('table.dateTo') }}</label>
-                    <div class="filter-input-wrap">
+                    <div class="filter-input-wrap picker-field-wrap">
                         <input
                             type="date"
-                            class="form-control modern-input modern-date"
+                            class="form-control modern-input modern-date picker-only-input"
+                            :class="{ 'has-picker-clear': Boolean(endDate) }"
                             :value="endDate"
                             @input="onDateInput('endDate', $event.target.value)"
+                            @mousedown.prevent
+                            @click="onPickerClick($event)"
+                            @keydown="onPickerKeydown"
+                            @beforeinput="onPickerBeforeInput"
+                            @paste.prevent
+                            @drop.prevent
                         />
+                        <button
+                            v-if="endDate"
+                            type="button"
+                            class="picker-clear-btn"
+                            aria-label="Clear end date"
+                            @click.stop="onDateInput('endDate', '')"
+                        >
+                            ×
+                        </button>
+                        <CIcon name="cil-calendar" size="sm" class="picker-field-icon" />
                     </div>
                 </CCol>
             </CRow>
@@ -93,12 +148,17 @@
 </template>
 
 <script>
-import moment from 'moment'
+import { resolveQuickDateRange } from '@/projects/utils/analytics'
+import { tryOpenDatePicker, handleDatePickerKeydown, blockFreeTextBeforeInput } from '@/projects/utils/formPolicy'
 
 export default {
     name: 'FilterTable',
     props: {
         searchQuery: {
+            type: String,
+            default: ''
+        },
+        searchPlaceholder: {
             type: String,
             default: ''
         },
@@ -109,6 +169,10 @@ export default {
         selectedStatus: {
             type: String,
             default: 'All'
+        },
+        statusOptions: {
+            type: Array,
+            default: null
         },
         startDate: {
             type: String,
@@ -130,28 +194,48 @@ export default {
             ]
         }
     },
+    computed: {
+        selectedStatusLabel() {
+            if (Array.isArray(this.statusOptions) && this.statusOptions.length > 0) {
+                const matched = this.statusOptions.find(opt => opt && opt.value === this.selectedStatus);
+                if (matched) return matched.label;
+            }
+            if (!this.selectedStatus || this.selectedStatus === 'All' || this.selectedStatus === 'all') {
+                return this.$t('status.all');
+            }
+            const prefix = this.managementMode ? 'status.' : 'respondentStatus.';
+            return this.$t(prefix + String(this.selectedStatus).toLowerCase().replace(/\s/g, ''));
+        }
+    },
+    watch: {
+        startDate(val) {
+            if (!val && !this.endDate) this.currentShortcut = 'all';
+        },
+        endDate(val) {
+            if (!val && !this.startDate) this.currentShortcut = 'all';
+        }
+    },
     methods: {
         applyQuickDate(type) {
             this.currentShortcut = type;
-            let start = '';
-            let end = '';
-            if (type === 'today') {
-                start = moment().format('YYYY-MM-DD');
-                end = moment().format('YYYY-MM-DD');
-            } else if (type === 'last7Days') {
-                start = moment().subtract(6, 'days').format('YYYY-MM-DD');
-                end = moment().format('YYYY-MM-DD');
-            } else if (type === 'last30Days') {
-                start = moment().subtract(30, 'days').format('YYYY-MM-DD');
-                end = moment().format('YYYY-MM-DD');
-            }
-
-            this.$emit('update:startDate', start);
-            this.$emit('update:endDate', end);
+            const { startDate, endDate } = resolveQuickDateRange(type);
+            this.$emit('update:startDate', startDate);
+            this.$emit('update:endDate', endDate);
         },
         onDateInput(prop, value) {
             this.currentShortcut = '';
             this.$emit(`update:${prop}`, value);
+        },
+        onPickerClick(event) {
+            if (event && event.currentTarget) {
+                tryOpenDatePicker(event.currentTarget);
+            }
+        },
+        onPickerKeydown(event) {
+            handleDatePickerKeydown(event);
+        },
+        onPickerBeforeInput(event) {
+            blockFreeTextBeforeInput(event);
         }
     }
 }
@@ -166,7 +250,7 @@ export default {
 }
 
 .filter-label {
-    font-size: 0.72rem;
+    font-size: 0.875rem;
     font-weight: 700;
     color: #64748b;
     text-transform: uppercase;
@@ -184,7 +268,7 @@ export default {
 .filter-icon {
     position: absolute;
     left: 12px;
-    color: #94a3b8;
+    color: #64748b;
     pointer-events: none;
     z-index: 2;
     width: 16px;
@@ -195,8 +279,30 @@ export default {
     padding-left: 36px;
 }
 
+.filter-input-wrap .modern-input.has-clear {
+    padding-right: 34px;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 8px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 1.05rem;
+    line-height: 1;
+    padding: 4px 6px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.clear-search-btn:hover {
+    color: #0f172a;
+}
+
 .modern-input {
-    height: 40px;
+    height: 44px;
+    min-height: 44px;
     background: #f8fafc;
     border: 1px solid #cbd5e1;
     border-radius: 12px;
@@ -207,9 +313,27 @@ export default {
 }
 
 .modern-date {
+    min-height: 44px;
     padding-left: 10px !important;
-    padding-right: 6px !important;
     font-size: 0.825rem;
+}
+
+.modern-date.picker-only-input {
+    padding-right: 28px !important;
+}
+
+.modern-date.picker-only-input.has-picker-clear {
+    padding-right: 46px !important;
+}
+
+.filter-input-wrap .picker-field-icon {
+    right: 8px;
+}
+
+.filter-input-wrap .picker-clear-btn {
+    right: 26px;
+    width: 18px;
+    height: 18px;
 }
 
 .modern-input:focus {
@@ -220,7 +344,8 @@ export default {
 }
 
 .modern-dropdown-btn {
-    height: 40px;
+    height: 44px;
+    min-height: 44px;
     background: #f8fafc;
     border: 1px solid #cbd5e1;
     border-radius: 12px;
@@ -242,19 +367,26 @@ export default {
 
 .segmented-control {
     display: flex;
+    align-items: center;
     background: #f1f5f9;
     padding: 3px;
     border-radius: 12px;
-    height: 40px;
+    min-height: 50px;
+    height: auto;
 }
 
 .segmented-btn {
     flex: 1;
+    min-height: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     background: transparent;
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    color: #64748b;
+    color: #475569;
     border-radius: 10px;
     padding: 0 4px;
     white-space: nowrap;

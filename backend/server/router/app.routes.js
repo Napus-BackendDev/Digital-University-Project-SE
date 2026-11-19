@@ -1,6 +1,7 @@
 const formRoutes = require("../Project/Form/form.routes");
 const questionRoutes = require("../Project/Questions/questions.routes");
 const responseRoutes = require("../Project/Response/response.routes");
+const analyticsRoutes = require("../Project/Analytics/analytics.routes");
 const settingsRoutes = require("../Project/Settings/setting.routes");
 const authRoutes = require("../Project/Auth/auth.routes");
 const userRoutes = require("../Project/User/user.routes");
@@ -16,6 +17,7 @@ module.exports = function (app) {
   app.use(path + '/form', formRoutes);
   app.use(path + '/question', questionRoutes);
   app.use(path + '/response', responseRoutes);
+  app.use(path + '/analytics', analyticsRoutes);
   app.use(path + '/user', userRoutes);
   app.use(path + '/settings', settingsRoutes);
   app.use(path + '/organization', organizationRoutes);

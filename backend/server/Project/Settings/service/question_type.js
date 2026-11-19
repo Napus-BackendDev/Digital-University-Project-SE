@@ -21,7 +21,19 @@ exports.onQuerys = async function (request, response, next) {
     try {
         var querys = {};
 
-        const doc = await Question_Types.onQuerys(querys);
+        let doc = await Question_Types.onQuerys(querys);
+        const hasSectionType = Array.isArray(doc) && doc.some(
+            (item) => item && String(item.type || '').trim().toLowerCase() === 'section'
+        );
+        if (!hasSectionType) {
+            try {
+                await Question_Types.onCreate({ type: 'section' });
+                doc = await Question_Types.onQuerys(querys);
+            } catch (seedErr) {
+                // Ignore duplicate/race errors and return latest queried list
+                doc = await Question_Types.onQuerys(querys);
+            }
+        }
 
         var resData = await resMsg.onMessage_Response(0,20000)
         resData.data = doc
