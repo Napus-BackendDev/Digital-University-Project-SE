@@ -1,6 +1,6 @@
 # แผน QA/QC และ UX Audit — MFU E-Questionnaires
 
-ปรับปรุงล่าสุด: 2026-11-18 · ผู้ตรวจ: Claude (orchestrator / QA) · ผู้ลงมือแก้: Antigravity CLI (`agy`)
+ปรับปรุงล่าสุด: 2026-11-18 · ผู้ตรวจ: QA Reviewer (orchestrator / QA) · ผู้ลงมือแก้: Antigravity CLI (`agy`)
 
 ## 1. ระบบนี้คืออะไร
 
@@ -40,7 +40,7 @@ Stack: Vue 2 + CoreUI (frontend :8080), Node/Express + Mongoose (backend :8081),
 
 ## 3. สถานะ Requirement จาก Feedback (ตรวจกับโค้ด 2026-11-18)
 
-ผลจาก gap analysis ของ agy ที่ Claude ตรวจซ้ำแล้ว · ✅ ครบ · 🟡 บางส่วน · ❌ ยังไม่มี
+ผลจาก gap analysis ของ agy ที่ QA Reviewer ตรวจซ้ำแล้ว · ✅ ครบ · 🟡 บางส่วน · ❌ ยังไม่มี
 
 | ID | Requirement | สถานะ | งานที่ต้องทำ / Batch |
 |---|---|---|---|
@@ -75,7 +75,7 @@ Stack: Vue 2 + CoreUI (frontend :8080), Node/Express + Mongoose (backend :8081),
 
 ## 4. Test Cases
 
-สถานะเริ่มต้น `Not Run` · ผู้รัน: Claude (Jest + ตรวจโค้ด + เบราว์เซอร์จริงเมื่อมี session ล็อกอิน)
+สถานะเริ่มต้น `Not Run` · ผู้รัน: QA Reviewer (Jest + ตรวจโค้ด + เบราว์เซอร์จริงเมื่อมี session ล็อกอิน)
 
 | TC | Req | ขั้นตอน | ผลที่คาดหวัง | สถานะ |
 |---|---|---|---|---|
@@ -109,14 +109,14 @@ Stack: Vue 2 + CoreUI (frontend :8080), Node/Express + Mongoose (backend :8081),
 
 ## 5. รอบการทำงาน (Loop)
 
-1. Claude แตกงานพร้อมเกณฑ์ผ่าน → ส่ง `agy` (`--mode accept-edits`, ห้ามรันคำสั่ง shell)
-2. Claude ตรวจ `git diff` เทียบ baseline (`refs/napus/b1`, …) รัน Jest/build ตรวจหน้าจอจริง
+1. QA Reviewer แตกงานพร้อมเกณฑ์ผ่าน → ส่ง `agy` (`--mode accept-edits`, ห้ามรันคำสั่ง shell)
+2. QA Reviewer ตรวจ `git diff` เทียบ baseline (`refs/napus/b1`, …) รัน Jest/build ตรวจหน้าจอจริง
 3. ไม่ผ่าน → ส่งกลับ agy ในบทสนทนาเดิมพร้อมหลักฐาน · ผ่าน → อัปเดตสถานะ TC
 4. ไม่ commit/push จนกว่าผู้ใช้สั่ง
 
 ## 6. ผลรอบที่ 1 (2026-11-18)
 
-ทุกชุดงานทำโดย agy ตรวจโดย Claude (ตรวจ diff เทียบ baseline, รัน Jest frontend + backend, วัดหน้าจอจริงเท่าที่เข้าได้โดยไม่ล็อกอิน)
+ทุกชุดงานทำโดย agy ตรวจโดย QA Reviewer (ตรวจ diff เทียบ baseline, รัน Jest frontend + backend, วัดหน้าจอจริงเท่าที่เข้าได้โดยไม่ล็อกอิน)
 
 | ชุด | ครอบคลุม | Defect ที่ QA เจอและให้แก้ | ผล |
 |---|---|---|---|

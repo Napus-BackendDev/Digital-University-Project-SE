@@ -4055,6 +4055,21 @@
     - `/analytics/6af5b3e1b80a4751680de68e` (Row 1) และ `/analytics/6afa869f86dce111787aac60` (Row 2): `.header-title-block` กว้าง `548px` ไม่ยุบตัว, ไม่พบ i18n key ตกหล่น (`analytics.*`/`button.*`), แท็บ `สรุปรายคำถาม` + ปุ่ม `"+13 คำตอบเพิ่มเติม"`/`"ย่อลง"` และแท็บ `สถานะผู้ตอบรายบุคคล` + ปุ่ม `"กลับรายการแบบสอบถาม"` ทำงานสมบูรณ์; ส่วน viewport มือถือ (`390x844`) ตรวจไปแล้วในรอบก่อนแก้ CSS เล็กน้อย (overflow `374.67px <= 390px`, 4 KPIs เรียงซ้อนลงสะอาด)
 - **เรื่องค้าง**: ปิดงาน Analytics แบบแยกฟอร์มเรียบร้อย (`task-18966` และ `task-18967` ยังรันต่อไว้ให้ผู้ใช้ใช้งาน)
 
+### 2026-11-20 12:52 — เปิดรันระบบหลัง server restart (`Backend 8081` + `Frontend 8080`)
+- **ความต้องการผู้ใช้**: รันระบบให้หน่อยสิ
+- **ผลตรวจจริง**:
+  - Backend daemon (`task-19562`): `npm run serve:dev` กำลังรัน, `✅ MongoDB connected`, `GET http://localhost:8081/api/v1/health` ตอบ `200` (`"status":"healthy"`, `"mongodb":{"state":"connected","connected":true}`)
+  - Frontend daemon (`task-19563`): `npm run serve` กำลังรัน, `DONE Compiled successfully in 9418ms`, `GET http://localhost:8080/` ตอบ `200`
+- **เรื่องค้าง**: ทั้ง 2 dev servers เปิดรันค้างไว้พร้อมใช้งานบน `http://localhost:8080/` (แนะนำ `/browser` หากต้องการให้เปิดทดสอบในเบราว์เซอร์ต่อ)
+
+### 2026-11-20 12:59 — ตรวจความสะอาดและ Commit + Push ขึ้น GitHub (`origin/feature/feedback-ux-qa`)
+- **ความต้องการผู้ใช้**: commit และ push เข้า github ให้หน่อยนะ
+- **สิ่งที่ทำจริง**:
+  - ตรวจไฟล์และ commit บน branch `feature/feedback-ux-qa` (ฐาน `origin/main` `216d33de`): ไม่พบไฟล์ dev/secret (`.env*`, `CLAUDE.md`, `.claude/` ถูกกันใน `.gitignore` ครบ)
+  - ลบ `Co-Authored-By: Claude...` และคำว่า `Claude` ออกจากข้อความ commit และ [ux-qa-plan.md](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/docs/qa/ux-qa-plan.md) ตามกฎ `AGENTS.md` ก่อน commit/push
+  - รวมเอกสาร + [memory.md](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/memory.md) และ push branch `feature/feedback-ux-qa` ขึ้น GitHub (`origin`)
+- **เรื่องค้าง**: ดำเนินการ commit และ push branch `feature/feedback-ux-qa` ขึ้น GitHub (`origin`) เรียบร้อย (dev servers `task-19562`, `task-19563` ยังรันอยู่)
+
 ### 2026-11-18 — สำรวจโค้ดล่าสุด + ตรวจว่าเชื่อม Antigravity CLI ได้ไหม (ผู้ใช้จะให้ Claude เป็น orchestrator คุม Antigravity)
 - ผู้ใช้: ขอให้ดูโค้ดล่าสุด และตอบว่า Claude ต่อกับ Antigravity CLI ในเครื่องได้ไหม เพราะงานถัดไปให้ Claude เป็นผู้คุมงาน ส่วน Antigravity ช่วยทำ
 - สถานะโค้ด: HEAD `216d33de` (main); มีไฟล์ที่ยังไม่ commit 115 ไฟล์ (ส่วนใหญ่ `frontend/src/projects` 49, `backend/server/Project` 31) รวมงาน /forms, คัดลอก API ของรอบนี้
@@ -4105,3 +4120,8 @@
 - agy: Flash โควตาหมด (รีเซ็ต ~4 ชม.), ใช้ `gemini-4-argon-high`; Sonnet ใน agy พยายามรัน Bash แล้วหยุด
 - ผลสุดท้าย: frontend 123/123, backend 108/108; สรุป `docs/qa/ux-qa-plan.md` §9
 - `TabResponses.vue` ไม่ถูก import แล้ว (ลบได้); ยังไม่ commit; backend :8081 + frontend :8080 รันอยู่
+
+### 2026-11-19 — Commit
+- ผู้ใช้: "Commit"
+- ผลที่ทำจริง: ตรวจ working tree ไม่พบ secret (`.env` ถูก ignore); อยู่บน `main` จึงสร้าง branch `feature/feedback-ux-qa` แล้ว commit ทั้งหมด 162 ไฟล์ เป็น `2d8f86e8` "feat: apply review feedback with UX/QA pass for older users" (รวมงานค้างจากเซสชันก่อนหน้าที่ยังไม่ commit ด้วย)
+- ไม่ได้ push; working tree สะอาดหลัง commit ยกเว้นบันทึกนี้
