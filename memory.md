@@ -4070,6 +4070,105 @@
   - รวมเอกสาร + [memory.md](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/memory.md) และ push branch `feature/feedback-ux-qa` ขึ้น GitHub (`origin`)
 - **เรื่องค้าง**: ดำเนินการ commit และ push branch `feature/feedback-ux-qa` ขึ้น GitHub (`origin`) เรียบร้อย (dev servers `task-19562`, `task-19563` ยังรันอยู่)
 
+### 2026-11-20 13:04 — ปรับปุ่มคัดลอกคำถามและปุ่มลบคำถามในหน้าออกแบบคำถาม
+- **ความต้องการผู้ใช้**: ปรับปุ่มคัดลอกคำถามให้ชัดกว่าเดิม และให้ปุ่มลบคำถามมี hover state พร้อม tooltip ขึ้นบอกว่าคือปุ่มอะไร
+- **สิ่งที่แก้ไขจริง**:
+  - [TabQuestion.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/components/Tabs/TabQuestion.vue#L618-L639), [TabQuestion.vue (CSS)](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/components/Tabs/TabQuestion.vue#L2876-L2972):
+    - เปลี่ยนปุ่มคัดลอกคำถาม (`duplicate-question-btn`) และปุ่มลบคำถาม (`delete-question-btn`) จาก `variant="ghost"` สีจางเป็นปุ่มไอคอนขนาด `34x34px` ที่มีกรอบ/พื้นหลังชัด (`#f1f5f9` / `#cbd5e1` / `#334155` สำหรับคัดลอก และ `#fff5f5` / `#fecaca` / `#dc2626` สำหรับลบ) พร้อมเอฟเฟกต์ `:hover` / `:focus-visible`
+    - เพิ่ม pure CSS tooltip (`data-tooltip` + `::before`/`::after`) แสดงป้าย `"ทำสำเนาคำถาม"` / `"ลบคำถาม"` ด้านบนทันทีเมื่อ hover/focus (จัด `right: 0` บนปุ่มลบเพื่อไม่ให้ล้นขอบขวาการ์ด)
+  - [th.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/store/lang/th.js#L770-L771), [en.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/store/lang/en.js#L770-L771): เพิ่ม `builder.deleteQuestion` (`"ลบคำถาม"` / `"Delete question"`)
+  - [QuestionCardStructure.spec.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/tests/unit/QuestionCardStructure.spec.js#L232-L246): เพิ่มเทสตรวจ class, `data-tooltip`, และ `aria-label` ของทั้งสองปุ่ม
+- **ผลการตรวจจริง**:
+  - `npx vue-cli-service test:unit tests/unit/QuestionCardStructure.spec.js --watchAll=false`: **ผ่าน `1/1` suite (`7/7` tests)**
+  - `impeccable.cmd detect --json` บน `TabQuestion.vue`: `[]` (`0` findings)
+  - Webpack dev server (`task-19563`): `DONE Compiled successfully in 747ms`
+- **เรื่องค้าง**: รอผู้ใช้รีเฟรช/ลอง hover บน http://localhost:8080/ (ยังไม่ commit รอบนี้)
+
+### 2026-11-20 13:06 — แยก Section พร้อมเลขนำหน้าและจำกัดเลื่อน 5 รายการใน Dropdown "ไปที่:"
+- **ความต้องการผู้ใช้**: ใน dropdown "ไปที่:" อยากให้แยก Section โดยใส่เลข 1 ... เป็นตัวแทน และแสดงประมาณ 5 คำถามแล้วให้เลื่อนเอา
+- **สิ่งที่แก้ไขจริง**:
+  - [TabQuestion.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/components/Tabs/TabQuestion.vue#L362-L387), [Footer Go-To](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/components/Tabs/TabQuestion.vue#L590-L613), [`getGroupedNextQuestions`](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/components/Tabs/TabQuestion.vue#L2427-L2448), [CSS](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/components/Tabs/TabQuestion.vue#L3040-L3078):
+    - เพิ่ม helper `getGroupedNextQuestions(question)` แยกคำถามปลายทางตาม `sectionGroups` พร้อมหัวข้อ Section ขึ้นต้นด้วยเลข (`1. <ชื่อส่วนหรือส่วนที่ 1>`, `2. ...`) ใช้ร่วมกันทั้ง dropdown ของ Choice และ Footer คำถาม
+    - ครอบรายการคำถามด้วย `.goto-questions-scroll` (`max-height: 205px; overflow-y: auto`) ให้แสดง ~5 คำถามและ scroll เลื่อนได้ โดยปัก `ไม่ดำเนินการ` / `ส่งแบบสอบถาม` ไว้นอกพื้นที่เลื่อนให้กดได้ตลอด
+  - [QuestionCardStructure.spec.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/tests/unit/QuestionCardStructure.spec.js#L248-L270): เพิ่มเทสตรวจการแบ่งกลุ่ม Section และ `.goto-questions-scroll`
+- **ผลการตรวจจริง**:
+  - `npx vue-cli-service test:unit tests/unit/QuestionCardStructure.spec.js --watchAll=false`: **ผ่าน `1/1` suite (`8/8` tests)**
+  - `impeccable.cmd detect --json` บน `TabQuestion.vue`: `[]` (`0` findings)
+  - Webpack dev server (`task-19563`): `DONE Compiled successfully in 660ms` บน http://localhost:8080/
+- **เรื่องค้าง**: รอผู้ใช้ตรวจหน้าจริงบน http://localhost:8080/ (ยังไม่ commit งานแก้ล่าสุด 2 รอบใน `TabQuestion.vue` และไฟล์ประกอบ)
+
+### 2026-11-20 13:09 — ถอดเมนูและหน้า `/analytics` ที่ซ้ำกับหน้าจัดการฟอร์ม (คงหน้ารายงานเดี่ยว `/analytics/:formId`)
+- **ความต้องการผู้ใช้**: เอาหน้าวิเคราะห์ (`/analytics`) ออก เนื่องจากฟังก์ชันการใช้งานซ้ำซ้อน
+- **สิ่งที่แก้ไขจริง**:
+  - [TheSidebar.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/containers/TheSidebar.vue): ลบเมนู `nav.analytics` (`/analytics`) และ method `analytics()` ออก เหลือเมนู `ฟอร์ม`, `จัดการฟอร์ม`, `อีเมล`
+  - [router/index.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/router/index.js#L89-L100): ลบ import `Analytics.vue`, เปลี่ยน `/analytics` เป็น `redirect: { name: 'ManageForms' }` และคง route `analytics/:formId` (`AnalyticsFormReport`) ไว้ให้หน้าจัดการฟอร์ม/Builder เปิดดูรายงานรายฟอร์มต่อ
+  - [AnalyticsFormDetail.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/views/AnalyticsFormDetail.vue#L457-L459), [th.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/store/lang/th.js#L613), [en.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/store/lang/en.js#L613): เปลี่ยนปุ่มย้อนกลับในหน้ารายงานเดี่ยวให้กลับไป `{ name: 'ManageForms' }` (`"กลับหน้าจัดการฟอร์ม"` / `"Back to Manage Forms"`)
+  - ลบไฟล์ที่ไม่ใช้แล้ว `frontend/src/projects/views/Analytics.vue` และ `frontend/src/projects/components/analytics/PopularFormsTable.vue`
+  - อัปเดตเทส [TheSidebar.spec.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/tests/unit/TheSidebar.spec.js#L74-L93) และ [AnalyticsViews.spec.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/tests/unit/AnalyticsViews.spec.js)
+- **ผลการตรวจจริง**:
+  - Frontend Jest (`npx vue-cli-service test:unit --watchAll=false`, `task-19703`): **ผ่าน `21/21` suites (`121/121` tests)**
+  - Impeccable (`impeccable.cmd detect --json` บน `TheSidebar.vue`, `AnalyticsFormDetail.vue`): `[]` (`0` findings)
+  - Webpack dev server (`task-19563`): `DONE Compiled successfully in 165ms` บน http://localhost:8080/
+- **เรื่องค้าง**: รอผู้ใช้ตรวจหน้าเว็บและสั่ง commit/push รอบใหม่เมื่อพร้อมครับ
+
+### 2026-11-20 13:14 — สร้าง Mock Up แบบสอบถาม Public 3 Sections (Section ละ 5 ข้อ) + 10 Responses ใน dev DB
+- **ความต้องการผู้ใช้**: สร้าง mock up data แบบสอบถามจริง 3 Sections (Section ละ 5 ข้อ), ตั้งค่าเป็น Public และมีผู้ตอบ ~10 คน
+- **สิ่งที่ทำจริง**:
+  - รันสคริปต์ seed ใน `scratch/seed_mock_3sec.js` (นอก workspace git) สร้างฟอร์มลง MongoDB dev:
+    - **Form ID**: `6affe51c1b71ad69e64a3064` (`แบบสำรวจความพึงพอใจการใช้บริการหอสมุดและพื้นที่การเรียนรู้ (MFU Learning Space) ประจำปีการศึกษา 2569`)
+    - **ตั้งค่า**: `accessMode: 'public'`, `isPublished: true`, `mode: 'always'`, `requireLogin: false`, creator `Napus Samuanpho` (`napus.dev@gmail.com`)
+    - **โครงสร้างคำถาม (18 รายการ = 3 Sections + 15 คำถามจริง)**:
+      1. ส่วนที่ 1: ข้อมูลทั่วไปและพฤติกรรมการใช้บริการ (5 ข้อ: `multiple_choice` × 2, `checkbox` × 2, `free_text` × 1)
+      2. ส่วนที่ 2: ความพึงพอใจด้านสภาพแวดล้อมและทรัพยากรสารสนเทศ (5 ข้อ: `rating` × 4, `multiple_choice` × 1)
+      3. ส่วนที่ 3: บริการดิจิทัลและข้อเสนอแนะเพื่อการพัฒนา (5 ข้อ: `rating` × 2, `checkbox` × 1, `multiple_choice` × 1, `free_text` × 1)
+    - **ผู้ตอบ (10 คน, `submit: true`)**: สมาชิก MFU 8 ท่าน + บุคคลภายนอก (Guest) 2 ท่าน ตอบครบทุกข้อ
+- **ผลการตรวจจริง**:
+  - สคริปต์ `seed_mock_3sec.js` (exit `0`) บันทึกข้อมูลลง MongoDB dev สำเร็จ (`Form ID: 6affe51c1b71ad69e64a3064`, `Total items: 18`, `Total submitted responses: 10`)
+- **เรื่องค้าง**: พร้อมทดสอบเปิดทำแบบสอบถาม/แก้ไข/ดูรายงานบน http://localhost:8080/ ได้ทันทีครับ
+
+### 2026-11-20 13:29 — ขยาย Container โหมด Public ใน `TheContainer.vue` ให้เท่ากับหน้าทำฟอร์มในระบบ
+- **ความต้องการผู้ใช้**: หน้าทำแบบสอบถามโหมด Public แคบเกิน ให้ขยาย container ให้เท่ากับการทำฟอร์มในระบบ
+- **สิ่งที่แก้ไขจริง**:
+  - [TheContainer.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/containers/TheContainer.vue#L92-L98): ขยาย `.c-container-public` จาก `max-width: 860px !important;` เป็น `max-width: 1360px !important;` ให้สอดคล้องกับ `.fillform-body` (`max-width: 1360px`) และ `<CCol lg="9" xl="8">` ของ [FormFill.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/views/page/FormFill.vue#L108)
+- **ผลการตรวจจริง**:
+  - `impeccable.cmd detect --json` บน `TheContainer.vue`: `[]` (`0` findings)
+  - Webpack dev server (`task-19563`) & Production Build (`task-19781`): ผ่านสมบูรณ์
+- **เรื่องค้าง**: รอผู้ใช้รีเฟรชหน้า http://localhost:8080/forms/6affe51c1b71ad69e64a3064 (และสั่ง commit/push รอบใหม่เมื่อพร้อม)
+
+### 2026-11-20 13:32 — ขยายดาวให้คะแนน (Rating 5 ดาว) ให้กว้างเต็มการ์ดและใหญ่ขึ้นทั้งในหน้าทำฟอร์มและออกแบบคำถาม
+- **ความต้องการผู้ใช้**: ดาว 5 ดวงในข้อ `rating` กระจุกตรงกลางและเล็ก อยากให้กระจายเต็มความกว้างและใหญ่ขึ้น ทั้งการทำฟอร์มข้างในและข้างนอกระบบ
+- **สิ่งที่แก้ไขจริง**:
+  - [FormFill.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/views/page/FormFill.vue#L2243-L2286), [L2632-L2634](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/views/page/FormFill.vue#L2632-L2634): เอา `max-width: 440px` ออกจาก `.rating-scale-wrapper` และ `margin: auto` บน `.star-btn:first-child/:last-child`; ปรับ `.star-btn` เป็น `flex: 1 1 0` พร้อม `font-size: clamp(2.15rem, 4vw, 3rem)` ให้ดาวกระจายเต็มความกว้างการ์ดทั้งโหมดทำฟอร์มในระบบ (`/preview/:id`, `?source=internal`) และโหมด Public
+  - [TabQuestion.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/components/Tabs/TabQuestion.vue#L413-L417): ขยายไอคอนดาวตัวอย่างในหน้าออกแบบคำถามจาก `:height="22"` เป็น `:height="30"`
+- **ผลการตรวจจริง**:
+  - `impeccable.cmd detect --json` บน `FormFill.vue`, `TabQuestion.vue`: `[]` (`0` findings)
+  - Webpack dev server (`task-19563`) & Production Build (`task-19800`): ผ่านสมบูรณ์
+- **เรื่องค้าง**: รอผู้ใช้ตรวจบน http://localhost:8080/preview/6affe51c1b71ad69e64a3064 และ http://localhost:8080/forms/6affe51c1b71ad69e64a3064 (พร้อม commit/push เมื่อสั่ง)
+
+### 2026-11-20 13:34 — ย้ายหมายเหตุประเภทตัวเลือกไว้หลัง Dropdown "ส่วน:" พร้อมดอกจันแดง
+- **ความต้องการผู้ใช้**: ย้ายหมายเหตุ `"เลือกได้ 1 คำตอบ · ตั้งค่าข้ามไปข้ออื่นได้"` ไปไว้ข้างหลัง dropdown `ส่วน:` และแสดงตัวแดง/ดอกจันแดงให้รู้ชัดเจนว่าเป็นหมายเหตุ
+- **สิ่งที่แก้ไขจริง**:
+  - [TabQuestion.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/components/Tabs/TabQuestion.vue#L519-L573), [CSS](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/components/Tabs/TabQuestion.vue#L3084-L3097): ย้าย `<small data-test="choice-type-hint">` ออกมาจากใต้ `ประเภท` มาวางหลัง `question-footer-section-select` (`ส่วน:`) พร้อม `<span class="choice-type-hint-star">*</span>` และสีแดง `#dc2626`
+  - [QuestionCardStructure.spec.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/tests/unit/QuestionCardStructure.spec.js#L269-L276): ตรวจตำแหน่ง `choice-type-hint` หลัง `question-footer-section-select` และดอกจัน `*`
+- **ผลการตรวจจริง**:
+  - `npx vue-cli-service test:unit tests/unit/QuestionCardStructure.spec.js --watchAll=false`: **ผ่าน `1/1` suite (`8/8` tests)**
+  - `impeccable.cmd detect --json` บน `TabQuestion.vue`: `[]` (`0` findings)
+  - Webpack dev server (`task-19563`): `DONE Compiled successfully in 722ms` บน http://localhost:8080/
+- **เรื่องค้าง**: ดำเนินการตรวจ Jest `21/21` (`121/121`), commit และ push ขึ้น `origin/feature/feedback-ux-qa` เรียบร้อย (dev servers `task-19562`, `task-19563` ยังรันอยู่)
+
+### 2026-11-20 13:11 — ย้ายปุ่มตั้งค่า SMTP เข้า Hero Banner และลบแถบ Tab ในหน้า `/email`
+- **ความต้องการผู้ใช้**: เอาแถบ tab `[เทมเพลตอีเมล]` และ `[ตั้งค่า SMTP]` ออก แล้วปรับ `"ตั้งค่า SMTP"` เป็นปุ่มใน Hero Banner แทน
+- **สิ่งที่แก้ไขจริง**:
+  - [email/index.vue](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/views/email/index.vue#L3-L35), [CSS](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/src/projects/views/email/index.vue#L945-L982):
+    - ลบแถบ `.studio-mode-tabs` (`email-admin-tabs`) ด้านล่าง Hero Banner ออกทั้งหมด
+    - ย้ายปุ่ม `"ตั้งค่า SMTP (ผู้ดูแลระบบ)"` (`data-test="email-btn-smtp"`, `.btn-hero-smtp`) ไปไว้ใน `<Header #actions>` (เฉพาะ `isAdminAccount`) และเมื่อกดเข้าหน้า SMTP จะเปลี่ยนปุ่มเป็น `"← เทมเพลตอีเมล"` (`data-test="email-btn-back-templates"`, `.btn-hero-smtp-back`) พร้อมเปลี่ยนหัวข้อ Hero เป็น `"ตั้งค่า SMTP (ผู้ดูแลระบบ)"`
+  - [emailStudio.spec.js](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/tests/unit/emailStudio.spec.js#L24-L27), [L417-L488](file:///C:/Users/asus/Documents/GitHub/Digital-University-Project-SE/frontend/tests/unit/emailStudio.spec.js#L417-L488): อัปเดต `Header` stub ให้รองรับ `<slot name="actions" />` และเทสกดปุ่ม `[data-test="email-btn-smtp"]` ใน Hero Banner
+- **ผลการตรวจจริง**:
+  - Frontend Jest (`npx vue-cli-service test:unit --watchAll=false`, `task-19731`): **ผ่าน `21/21` suites (`121/121` tests)**
+  - Impeccable (`impeccable.cmd detect --json` บน `email/index.vue`): `[]` (`0` findings)
+  - Webpack dev server (`task-19563`): `DONE Compiled successfully in 606ms` บน http://localhost:8080/
+- **เรื่องค้าง**: รอผู้ใช้ตรวจหน้าจริงบน http://localhost:8080/ และสั่ง commit/push รอบใหม่เมื่อพร้อมครับ
+
 ### 2026-11-18 — สำรวจโค้ดล่าสุด + ตรวจว่าเชื่อม Antigravity CLI ได้ไหม (ผู้ใช้จะให้ Claude เป็น orchestrator คุม Antigravity)
 - ผู้ใช้: ขอให้ดูโค้ดล่าสุด และตอบว่า Claude ต่อกับ Antigravity CLI ในเครื่องได้ไหม เพราะงานถัดไปให้ Claude เป็นผู้คุมงาน ส่วน Antigravity ช่วยทำ
 - สถานะโค้ด: HEAD `216d33de` (main); มีไฟล์ที่ยังไม่ commit 115 ไฟล์ (ส่วนใหญ่ `frontend/src/projects` 49, `backend/server/Project` 31) รวมงาน /forms, คัดลอก API ของรอบนี้

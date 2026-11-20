@@ -2243,9 +2243,10 @@ export default {
 .rating-container {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: nowrap;
-    gap: clamp(6px, 2vw, 16px);
-    padding: 10px 0;
+    gap: clamp(4px, 1.2vw, 12px);
+    padding: 12px 0;
     width: 100%;
     overflow-x: auto;
     scrollbar-width: none;
@@ -2256,27 +2257,30 @@ export default {
 }
 
 .star-btn {
-    flex: 0 0 auto;
+    flex: 1 1 0;
+    min-width: 40px;
     background: none;
     border: none;
-    font-size: 2.15rem;
+    border-radius: 10px;
+    font-size: clamp(2.15rem, 4vw, 3rem);
     cursor: pointer;
     color: #dadce0;
-    padding: 4px 8px;
+    padding: 6px 4px;
     line-height: 1;
     text-align: center;
-    transition: color 0.15s, transform 0.1s;
+    transition: color 0.15s ease, transform 0.15s ease;
 }
 
-.star-btn:first-child {
-    margin-left: auto;
+.star-btn:focus-visible {
+    outline: 2px solid #8c1515;
+    outline-offset: 2px;
 }
 
-.star-btn:last-child {
-    margin-right: auto;
+.star-btn:hover:not(:disabled) {
+    color: #f9ab00;
+    transform: scale(1.1);
 }
 
-.star-btn:hover,
 .star-btn.star-active {
     color: #f9ab00;
 }
@@ -2627,8 +2631,6 @@ export default {
 
 .rating-scale-wrapper {
     width: 100%;
-    max-width: 440px;
-    margin: 0 auto;
 }
 
 .rating-anchors {

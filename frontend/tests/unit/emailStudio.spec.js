@@ -23,7 +23,7 @@ const baseMocks = {
 const baseStubs = {
   Header: {
     props: ['title', 'description'],
-    template: '<div class="stub-header"><h1>{{ title }}</h1><p>{{ description }}</p></div>'
+    template: '<div class="stub-header"><h1>{{ title }}</h1><p>{{ description }}</p><slot name="actions" /></div>'
   },
   CIcon: {
     props: ['name'],
@@ -415,6 +415,7 @@ describe('EmailStudio redesigned single-screen UI', () => {
       stubs: baseStubs
     })
     expect(staffWrapper.find('[data-test="email-admin-tabs"]').exists()).toBe(false)
+    expect(staffWrapper.find('[data-test="email-btn-smtp"]').exists()).toBe(false)
     expect(Service.setting).not.toHaveBeenCalledWith('smtp-get', expect.anything())
 
     settingSpy.mockImplementation((method, payload) => {
@@ -481,8 +482,9 @@ describe('EmailStudio redesigned single-screen UI', () => {
       stubs: baseStubs
     })
 
-    expect(adminWrapper.find('[data-test="email-admin-tabs"]').exists()).toBe(true)
-    await adminWrapper.find('[data-test="email-tab-smtp"]').trigger('click')
+    expect(adminWrapper.find('[data-test="email-admin-tabs"]').exists()).toBe(false)
+    expect(adminWrapper.find('[data-test="email-btn-smtp"]').exists()).toBe(true)
+    await adminWrapper.find('[data-test="email-btn-smtp"]').trigger('click')
     await Promise.resolve()
     await adminWrapper.vm.$nextTick()
 

@@ -335,7 +335,7 @@
                                     class="d-flex align-items-center mt-1">
                                     <div style="width: 38px;" class="flex-shrink-0" />
                                     <div class="d-flex align-items-center flex-shrink-0" style="max-width: 75%; min-width: 0;">
-                                        <CDropdown color="light" size="sm" class="mw-100">
+                                        <CDropdown color="light" size="sm" class="mw-100 goto-dropdown">
                                             <template #toggler>
                                                 <CButton size="sm"
                                                     class="border shadow-none d-flex align-items-center next-action-btn"
@@ -365,13 +365,22 @@
                                                 <span>{{ $t('builder.noAction') }}</span>
                                             </CDropdownItem>
                                             <CDropdownDivider />
-                                            <CDropdownItem v-for="q in getAvailableNextQuestions(question)" :key="q._id"
-                                                @click="$set(choice, 'nextQuestion', q._id); putQuestion(question)">
-                                                <CIcon name="cil-list-low-priority" class="mr-2" />
-                                                <span>{{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
-                                                    getQuestionTitle(q)
-                                                }}</span>
-                                            </CDropdownItem>
+                                            <div class="goto-questions-scroll">
+                                                <template v-for="grp in getGroupedNextQuestions(question)">
+                                                    <div v-if="grp.label" :key="'ch-hdr-' + grp.key" class="goto-section-header">
+                                                        {{ grp.label }}
+                                                    </div>
+                                                    <CDropdownItem v-for="q in grp.questions" :key="q._id"
+                                                        :class="{ 'goto-item-indented': Boolean(grp.label) }"
+                                                        @click="$set(choice, 'nextQuestion', q._id); putQuestion(question)">
+                                                        <CIcon name="cil-list-low-priority" class="mr-2 flex-shrink-0" />
+                                                        <span class="text-truncate">{{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
+                                                            getQuestionTitle(q)
+                                                        }}</span>
+                                                    </CDropdownItem>
+                                                </template>
+                                            </div>
+                                            <CDropdownDivider />
                                             <CDropdownItem
                                                 @click="$set(choice, 'nextQuestion', 'submit'); putQuestion(question)">
                                                 <CIcon name="cil-check-alt" class="mr-2" />
@@ -403,8 +412,8 @@
                             </CDropdown>
                             <div v-for="n in ((question.config && question.config.maxRating) || 5)" :key="n"
                                 class="d-flex flex-grow-1 flex-column align-items-center">
-                                <span>{{ n }}</span>
-                                <CIcon name="cil-star" :height="22" />
+                                <span class="mb-1 font-weight-semibold text-muted">{{ n }}</span>
+                                <CIcon name="cil-star" :height="30" class="text-warning" />
                             </div>
                         </div>
 
@@ -507,36 +516,27 @@
                         <!-- ── Footer: Question Type dropdown + Section selector + Navigation + Required toggle + Delete card ── -->
                         <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap">
                             <!-- Left: Question Type + Section Selector -->
-                            <div class="d-flex align-items-center flex-wrap mb-2 mb-md-0 flex-shrink-0" style="gap: 10px 14px;">
-                                <div class="d-flex flex-column">
-                                    <div class="d-flex align-items-center">
-                                        <span class="text-muted font-weight-bold mr-2">{{ $t('builder.type') }}</span>
-                                        <CDropdown color="light" variant="outline">
-                                            <template #toggler>
-                                                <button class="btn d-flex align-items-center text-muted border bg-white"
-                                                    style="border-radius: 12px;">
-                                                    <CIcon :name="getIconForType(question.type)" class="mr-2" />
-                                                    <span class="text-capitalize">
-                                                        {{ formatTypeLabel(getQuestionType(question.type)) }}
-                                                    </span>
-                                                </button>
-                                            </template>
-                                            <CDropdownItem v-for="type in typesAll" :key="type._id"
-                                                @click="setQuestionType(question, type._id)">
-                                                <CIcon :name="getIconForType(type._id)" class="mr-2" />
+                            <div class="d-flex align-items-center flex-wrap mb-2 mb-md-0" style="gap: 10px 14px;">
+                                <div class="d-flex align-items-center">
+                                    <span class="text-muted font-weight-bold mr-2">{{ $t('builder.type') }}</span>
+                                    <CDropdown color="light" variant="outline">
+                                        <template #toggler>
+                                            <button class="btn d-flex align-items-center text-muted border bg-white"
+                                                style="border-radius: 12px;">
+                                                <CIcon :name="getIconForType(question.type)" class="mr-2" />
                                                 <span class="text-capitalize">
-                                                    {{ formatTypeLabel(type.type) }}
+                                                    {{ formatTypeLabel(getQuestionType(question.type)) }}
                                                 </span>
-                                            </CDropdownItem>
-                                        </CDropdown>
-                                    </div>
-                                    <small
-                                        v-if="getChoiceTypeHint(question.type)"
-                                        class="text-muted mt-1 choice-type-hint"
-                                        data-test="choice-type-hint"
-                                    >
-                                        {{ getChoiceTypeHint(question.type) }}
-                                    </small>
+                                            </button>
+                                        </template>
+                                        <CDropdownItem v-for="type in typesAll" :key="type._id"
+                                            @click="setQuestionType(question, type._id)">
+                                            <CIcon :name="getIconForType(type._id)" class="mr-2" />
+                                            <span class="text-capitalize">
+                                                {{ formatTypeLabel(type.type) }}
+                                            </span>
+                                        </CDropdownItem>
+                                    </CDropdown>
                                 </div>
 
                                 <!-- Section Switcher (when form is divided into sections) -->
@@ -560,6 +560,15 @@
                                         </CDropdownItem>
                                     </CDropdown>
                                 </div>
+
+                                <small
+                                    v-if="getChoiceTypeHint(question.type)"
+                                    class="choice-type-hint d-inline-flex align-items-center"
+                                    data-test="choice-type-hint"
+                                >
+                                    <span class="choice-type-hint-star" aria-hidden="true">*</span>
+                                    <span>{{ getChoiceTypeHint(question.type) }}</span>
+                                </small>
                             </div>
 
                             <!-- Right: Navigation Dropdown, Required Toggle & Delete Card -->
@@ -568,7 +577,7 @@
                                     <!-- Question Navigation Dropdown -->
                                     <div class="d-flex align-items-center mr-sm-3 mb-2 mb-md-0" style="min-width: 0; max-width: 100%;">
                                         <span class="text-muted font-weight-bold mr-2 flex-shrink-0">{{ $t('builder.goTo') }}</span>
-                                        <CDropdown color="light" variant="outline" class="mw-100">
+                                        <CDropdown color="light" variant="outline" class="mw-100 goto-dropdown">
                                             <template #toggler>
                                                 <button class="btn d-flex align-items-center text-muted border bg-white question-goto-btn"
                                                     style="border-radius: 12px; max-width: 100%; min-width: 0;">
@@ -588,15 +597,24 @@
                                                     </span>
                                                 </button>
                                             </template>
-                                            <CDropdownItem v-for="q in getAvailableNextQuestions(question)"
-                                                :key="'nav_' + q._id"
-                                                @click="setCombinedNavigationValue(question, 'question:' + convertIdToStr(q._id))">
-                                                <CIcon name="cil-list-low-priority" class="mr-2" />
-                                                <span>
-                                                    {{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
-                                                        getQuestionTitle(q) }}
-                                                </span>
-                                            </CDropdownItem>
+                                            <div class="goto-questions-scroll">
+                                                <template v-for="grp in getGroupedNextQuestions(question)">
+                                                    <div v-if="grp.label" :key="'nav-hdr-' + grp.key" class="goto-section-header">
+                                                        {{ grp.label }}
+                                                    </div>
+                                                    <CDropdownItem v-for="q in grp.questions"
+                                                        :key="'nav_' + q._id"
+                                                        :class="{ 'goto-item-indented': Boolean(grp.label) }"
+                                                        @click="setCombinedNavigationValue(question, 'question:' + convertIdToStr(q._id))">
+                                                        <CIcon name="cil-list-low-priority" class="mr-2 flex-shrink-0" />
+                                                        <span class="text-truncate">
+                                                            {{ isCounted(q) ? getDisplayNumber(q) + '.' : '' }} {{
+                                                                getQuestionTitle(q) }}
+                                                        </span>
+                                                    </CDropdownItem>
+                                                </template>
+                                            </div>
+                                            <CDropdownDivider />
                                             <CDropdownItem @click="setCombinedNavigationValue(question, 'submit')">
                                                 <CIcon name="cil-check-alt" class="mr-2" />
                                                 <span>{{ $t('builder.submitForm') }}</span>
@@ -615,29 +633,27 @@
                                     <div class="border-left mx-2 mx-sm-3 d-none d-sm-block mb-2 mb-md-0" style="height: 20px;" />
                                 </template>
 
-                                <CButton
-                                    color="secondary"
-                                    variant="ghost"
-                                    size="sm"
-                                    class="mb-2 mb-md-0 mr-1 flex-shrink-0"
+                                <button
+                                    type="button"
+                                    class="q-action-btn q-action-btn--copy mb-2 mb-md-0 mr-2 flex-shrink-0"
                                     :aria-label="$t('builder.duplicateQuestion')"
-                                    v-c-tooltip="$t('builder.duplicateQuestion')"
+                                    :data-tooltip="$t('builder.duplicateQuestion')"
                                     data-test="duplicate-question-btn"
                                     @click="duplicateQuestion(question, qIndex)"
                                 >
-                                    <CIcon name="cil-copy" />
-                                </CButton>
+                                    <CIcon name="cil-copy" size="sm" />
+                                </button>
 
-                                <CButton
-                                    color="danger"
-                                    variant="ghost"
-                                    size="sm"
-                                    class="mb-2 mb-md-0 flex-shrink-0"
-                                    :aria-label="$t('builder.remove')"
+                                <button
+                                    type="button"
+                                    class="q-action-btn q-action-btn--delete mb-2 mb-md-0 flex-shrink-0"
+                                    :aria-label="$t('builder.deleteQuestion')"
+                                    :data-tooltip="$t('builder.deleteQuestion')"
+                                    data-test="delete-question-btn"
                                     @click="removeQuestion(question._id)"
                                 >
-                                    <CIcon name="cil-trash" />
-                                </CButton>
+                                    <CIcon name="cil-trash" size="sm" />
+                                </button>
                             </div>
                         </div>
                         </div>
@@ -2409,6 +2425,30 @@ export default {
                 q && this.convertIdToStr(q._id) !== myId && this.isCounted(q)
             );
         },
+        getGroupedNextQuestions(question) {
+            const available = this.getAvailableNextQuestions(question);
+            if (!available.length) return [];
+            if (!this.hasSections || !this.sectionGroups.length) {
+                return [{ key: 'all', label: '', questions: available }];
+            }
+            const availableIds = new Set(available.map(q => this.convertIdToStr(q._id)));
+            const groups = [];
+            this.sectionGroups.forEach((grp, gIdx) => {
+                const list = (this.localQuestions || [])
+                    .slice(grp.startIndex, grp.endIndex + 1)
+                    .filter(q => q && availableIds.has(this.convertIdToStr(q._id)));
+                if (!list.length) return;
+                const cleanTitle = grp.headerQuestion ? this.getSectionSummaryTitle(grp.headerQuestion) : '';
+                const shortTitle = cleanTitle && cleanTitle.length > 36 ? `${cleanTitle.slice(0, 36)}...` : cleanTitle;
+                const fallbackLabel = `${this.$t('builder.sectionBadge')} ${grp.sectionNumber}`;
+                groups.push({
+                    key: `sec-${gIdx}-${grp.sectionNumber}`,
+                    label: `${grp.sectionNumber}. ${shortTitle || fallbackLabel}`,
+                    questions: list
+                });
+            });
+            return groups;
+        },
         getQuestionTitle(q) {
             if (!q || !Array.isArray(q.title) || q.title.length === 0) return 'Untitled';
             const resolved = this.getLang(q.title);
@@ -2873,6 +2913,111 @@ export default {
     font-size: 0.8125rem;
 }
 
+.q-action-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.q-action-btn:focus-visible {
+    outline: 2px solid #8c1515;
+    outline-offset: 2px;
+}
+
+.q-action-btn--copy {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+}
+
+.q-action-btn--copy:hover,
+.q-action-btn--copy:focus-visible {
+    background-color: #e2e8f0;
+    border-color: #64748b;
+    color: #0f172a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+}
+
+.q-action-btn--delete {
+    background-color: #fff5f5;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+}
+
+.q-action-btn--delete:hover,
+.q-action-btn--delete:focus-visible {
+    background-color: #fee2e2;
+    border-color: #dc2626;
+    color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.16);
+}
+
+.q-action-btn[data-tooltip]::before,
+.q-action-btn[data-tooltip]::after {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 300;
+}
+
+.q-action-btn[data-tooltip]::after {
+    content: attr(data-tooltip);
+    bottom: calc(100% + 9px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background-color: #0f172a;
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 6px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.q-action-btn[data-tooltip]::before {
+    content: '';
+    bottom: calc(100% + 3px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border: 5px solid transparent;
+    border-top-color: #0f172a;
+}
+
+.q-action-btn--delete[data-tooltip]::after {
+    left: auto;
+    right: 0;
+    transform: translateY(4px);
+}
+
+.q-action-btn[data-tooltip]:hover::before,
+.q-action-btn[data-tooltip]:focus-visible::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.q-action-btn[data-tooltip]:hover::after,
+.q-action-btn[data-tooltip]:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.q-action-btn--delete[data-tooltip]:hover::after,
+.q-action-btn--delete[data-tooltip]:focus-visible::after {
+    transform: translateY(0);
+}
+
 ::v-deep .vue-grid-item {
     overflow: visible;
     z-index: 1;
@@ -2890,6 +3035,61 @@ export default {
 
 ::v-deep .dropdown-menu.show {
     z-index: 9999;
+}
+
+::v-deep .goto-dropdown .dropdown-menu {
+    min-width: 260px;
+    max-width: 340px;
+    padding: 6px 0;
+}
+
+.goto-questions-scroll {
+    max-height: 205px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.goto-section-header {
+    padding: 6px 14px 4px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #8c1515;
+    background-color: #fef2f2;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #fee2e2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.goto-questions-scroll > .goto-section-header:first-child {
+    border-top: none;
+}
+
+::v-deep .goto-item-indented .dropdown-item {
+    padding-left: 24px;
+}
+
+::v-deep .goto-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    font-size: 0.875rem;
+}
+
+.choice-type-hint {
+    color: #dc2626;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.3;
+    gap: 4px;
+}
+
+.choice-type-hint-star {
+    color: #dc2626;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1;
 }
 
 @media (max-width: 767.98px) {

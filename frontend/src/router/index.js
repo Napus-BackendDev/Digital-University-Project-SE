@@ -28,7 +28,6 @@ const CreateForm = () => import('@/projects/views/page/CreateForm.vue')
 const Response = () => import('@/projects/views/Responsedetail.vue')
 
 // Admin
-const Analytics = () => import('@/projects/views/Analytics.vue')
 const AnalyticsFormDetail = () => import('@/projects/views/AnalyticsFormDetail.vue')
 const Permission = () => import('@/projects/views/security/Permission.vue')
 const Email = () => import('@/projects/views/email/index.vue')
@@ -88,8 +87,7 @@ const router = new Router({
                 },
                 {
                     path: 'analytics',
-                    name: 'Analytics',
-                    component: Analytics,
+                    redirect: { name: 'ManageForms' },
                     meta: { requiresAuth: true }
                 },
                 {

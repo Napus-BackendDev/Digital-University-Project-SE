@@ -609,7 +609,7 @@ const th = {
         searchPeople: "ค้นหาชื่อหรือหน่วยงาน...",
         noPeopleMatch: "ไม่พบรายชื่อที่ตรงกับคำค้นหา",
         viewReport: "ดูรายงาน",
-        backToForms: "กลับรายการแบบสอบถาม",
+        backToForms: "กลับหน้าจัดการฟอร์ม",
         formNotFoundTitle: "ไม่พบรายงานแบบสอบถาม",
         formNotFoundDesc: "ไม่พบแบบสอบถามนี้ หรือคุณไม่มีสิทธิ์เข้าถึงรายงานวิเคราะห์ผลของแบบสอบถามนี้",
         totalResponsesLabel: "ผู้ตอบทั้งหมด",
@@ -768,6 +768,7 @@ const th = {
         moveUp: "เลื่อนขึ้น",
         moveDown: "เลื่อนลง",
         duplicateQuestion: "ทำสำเนาคำถาม",
+        deleteQuestion: "ลบคำถาม",
         deleteLanguageTitle: "ยืนยันการลบภาษา",
         deleteLanguageConfirm: "ยืนยันการลบภาษา {lang} หรือไม่ ข้อความหัวข้อ คำอธิบาย และตัวเลือกทั้งหมดในภาษานี้จะถูกลบออกจากแบบสอบถาม",
         delete: "ลบ"

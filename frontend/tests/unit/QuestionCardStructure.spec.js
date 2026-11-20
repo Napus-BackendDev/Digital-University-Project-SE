@@ -91,7 +91,7 @@ describe('TabQuestion visual hierarchy and question description', () => {
         },
         mocks: {
             $t: (key) => key,
-            $te: () => false,
+            $te: (key) => key.startsWith('types.hints.'),
             $i18n: { locale: 'th' }
         }
     });
@@ -226,5 +226,52 @@ describe('TabQuestion visual hierarchy and question description', () => {
         await wrapper.vm.$nextTick();
         expect(wrapper.vm.localQuestions.map(q => q._id)).toEqual(['created_2', 'created_3', 'q1', 'created_1', 'q2']);
         expect(wrapper.vm.layout.map(l => String(l.i))).toEqual(['created_2', 'created_3', 'q1', 'created_1', 'q2']);
+    });
+
+    test('renders high-contrast duplicate and delete buttons with hover tooltips', () => {
+        const wrapper = mountBuilder();
+        const dupBtn = wrapper.find('[data-test="duplicate-question-btn"]');
+        const delBtn = wrapper.find('[data-test="delete-question-btn"]');
+
+        expect(dupBtn.exists()).toBe(true);
+        expect(dupBtn.classes()).toContain('q-action-btn--copy');
+        expect(dupBtn.attributes('data-tooltip')).toBe('builder.duplicateQuestion');
+        expect(dupBtn.attributes('aria-label')).toBe('builder.duplicateQuestion');
+
+        expect(delBtn.exists()).toBe(true);
+        expect(delBtn.classes()).toContain('q-action-btn--delete');
+        expect(delBtn.attributes('data-tooltip')).toBe('builder.deleteQuestion');
+        expect(delBtn.attributes('aria-label')).toBe('builder.deleteQuestion');
+    });
+
+    test('groups Go-To dropdown targets by numbered section inside a 5-item scrollable container', () => {
+        const list = [
+            { _id: 'sec1', order: 1, type: { _id: 't_sec', type: 'section' }, title: [{ key: 'th', value: 'ข้อมูลทั่วไป' }], config: { description: [] } },
+            { _id: 'q1', order: 2, type: { _id: 't_mc', type: 'multiple_choice' }, title: [{ key: 'th', value: 'คำถามข้อ 1' }], description: [], config: { choices: [{ key: '0', lang: [{ key: 'th', value: 'ใช่' }] }] } },
+            { _id: 'q2', order: 3, type: { _id: 't_ft', type: 'free_text' }, title: [{ key: 'th', value: 'คำถามข้อ 2' }], description: [], config: {} },
+            { _id: 'sec2', order: 4, type: { _id: 't_sec', type: 'section' }, title: [], config: { description: [] } },
+            { _id: 'q3', order: 5, type: { _id: 't_ft', type: 'free_text' }, title: [{ key: 'th', value: 'คำถามข้อ 3' }], description: [], config: {} }
+        ];
+        const wrapper = mountBuilder(list);
+        const groups = wrapper.vm.getGroupedNextQuestions(wrapper.vm.localQuestions[1]);
+
+        expect(groups).toHaveLength(2);
+        expect(groups[0].label).toBe('1. ข้อมูลทั่วไป');
+        expect(groups[0].questions.map(q => q._id)).toEqual(['q2']);
+        expect(groups[1].label).toBe('2. builder.sectionBadge 2');
+        expect(groups[1].questions.map(q => q._id)).toEqual(['q3']);
+
+        expect(wrapper.find('.goto-questions-scroll').exists()).toBe(true);
+        const headers = wrapper.findAll('.goto-section-header');
+        expect(headers.length).toBeGreaterThanOrEqual(2);
+        expect(headers.at(0).text()).toBe('1. ข้อมูลทั่วไป');
+
+        const hintEl = wrapper.find('[data-test="choice-type-hint"]');
+        expect(hintEl.exists()).toBe(true);
+        expect(hintEl.find('.choice-type-hint-star').text()).toBe('*');
+        const footerHtml = wrapper.find('.border-top').html();
+        expect(footerHtml.indexOf('question-footer-section-select')).toBeLessThan(
+            footerHtml.indexOf('choice-type-hint')
+        );
     });
 });

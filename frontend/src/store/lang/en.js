@@ -609,7 +609,7 @@ const en = {
         searchPeople: "Search name or organization...",
         noPeopleMatch: "No matching respondents found",
         viewReport: "View Report",
-        backToForms: "Back to Forms",
+        backToForms: "Back to Manage Forms",
         formNotFoundTitle: "Form report unavailable",
         formNotFoundDesc: "This questionnaire could not be found or you do not have permission to view its analytics.",
         totalResponsesLabel: "Total Responses",
@@ -768,6 +768,7 @@ const en = {
         moveUp: "Move up",
         moveDown: "Move down",
         duplicateQuestion: "Duplicate question",
+        deleteQuestion: "Delete question",
         deleteLanguageTitle: "Confirm Delete Language",
         deleteLanguageConfirm: "Are you sure you want to delete the {lang} language? All titles, descriptions, and choices in this language will be removed across the entire form.",
         delete: "Delete"

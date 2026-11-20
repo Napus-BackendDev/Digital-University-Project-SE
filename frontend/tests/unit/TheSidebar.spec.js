@@ -71,24 +71,24 @@ describe('TheSidebar.vue navigation visibility (Requirement 5.1 / B6-1)', () => 
             .toEqual(['/forms']);
     });
 
-    test('shows manage, analytics, and email menus for Admin, Staff, and roles granted permission', () => {
+    test('shows manage and email menus for Admin, Staff, and roles granted permission', () => {
         const adminWrapper = mountSidebarWithRole({
             title: [{ key: 'th', value: 'ผู้ดูแลระบบ (Admin)' }, { key: 'en', value: 'Admin' }]
         });
         expect(adminWrapper.findAll('.nav-stub span').wrappers.map(w => w.attributes('data-to')))
-            .toEqual(['/forms', '/manage', '/analytics', '/email']);
+            .toEqual(['/forms', '/manage', '/email']);
 
         const staffWrapper = mountSidebarWithRole({
             title: [{ key: 'en', value: 'Staff' }]
         });
         expect(staffWrapper.findAll('.nav-stub span').wrappers.map(w => w.attributes('data-to')))
-            .toEqual(['/forms', '/manage', '/analytics', '/email']);
+            .toEqual(['/forms', '/manage', '/email']);
 
         const studentWithMatrixWrapper = mountSidebarWithRole({
             title: [{ key: 'en', value: 'Student' }],
             permission: [{ page: 'manage', access: [{ key: 'read', value: true }] }]
         });
         expect(studentWithMatrixWrapper.findAll('.nav-stub span').wrappers.map(w => w.attributes('data-to')))
-            .toEqual(['/forms', '/manage', '/analytics', '/email']);
+            .toEqual(['/forms', '/manage', '/email']);
     });
 });

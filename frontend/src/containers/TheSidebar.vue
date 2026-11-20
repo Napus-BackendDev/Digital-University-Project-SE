@@ -105,9 +105,6 @@ export default {
         formBuilder() {
             this.$router.push('/manage')
         },
-        analytics() {
-            this.$router.push('/analytics')
-        },
         async logout() {
             try {
                 await api.auth('logout');
@@ -157,12 +154,6 @@ export default {
                         name: this.$t('nav.manage'),
                         to: '/manage',
                         icon: 'cib-ghost',
-                    },
-                    {
-                        _name: 'CSidebarNavItem',
-                        name: this.$t('nav.analytics'),
-                        to: '/analytics',
-                        icon: 'cil-chart',
                     },
                     {
                         _name: 'CSidebarNavItem',

@@ -90,7 +90,7 @@ export default {
 }
 
 .c-container-public {
-  max-width: 860px !important;
+  max-width: 1360px !important;
   width: 100% !important;
   margin: 0 auto !important;
   padding-left: 16px !important;

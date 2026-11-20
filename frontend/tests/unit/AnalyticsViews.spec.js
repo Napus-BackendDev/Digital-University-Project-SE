@@ -1,10 +1,8 @@
 import { createLocalVue, mount, shallowMount } from '@vue/test-utils';
 import Vuex from 'vuex';
-import Analytics from '@/projects/views/Analytics.vue';
 import AnalyticsFormDetail from '@/projects/views/AnalyticsFormDetail.vue';
 import SubmissionTrendChart from '@/projects/components/analytics/SubmissionTrendChart.vue';
 import AnalyticsBreakdownCharts from '@/projects/components/analytics/AnalyticsBreakdownCharts.vue';
-import PopularFormsTable from '@/projects/components/analytics/PopularFormsTable.vue';
 import FormReportDetails from '@/projects/components/analytics/FormReportDetails.vue';
 import Service from '@/service/api';
 import * as apiUrl from '@/projects/utils/apiUrl';
@@ -223,35 +221,6 @@ describe('Analytics UI components & per-form architecture', () => {
         jest.restoreAllMocks();
     });
 
-    test('Analytics.vue renders PopularFormsTable directly at top without cross-form KPIs, combined charts, or quick inspector drawer', async () => {
-        const store = createMockStore();
-        const wrapper = shallowMount(Analytics, {
-            localVue,
-            store,
-            stubs: baseStubs,
-            mocks: {
-                ...mocks,
-                $router: { push: jest.fn() }
-            }
-        });
-        await wrapper.vm.$nextTick();
-
-        expect(wrapper.find(PopularFormsTable).exists()).toBe(true);
-        expect(wrapper.find(SubmissionTrendChart).exists()).toBe(false);
-        expect(wrapper.find(AnalyticsBreakdownCharts).exists()).toBe(false);
-        expect(wrapper.find(FormReportDetails).exists()).toBe(false);
-        expect(wrapper.find('.export-dropdown').exists()).toBe(false);
-        expect(wrapper.text()).not.toContain('analytics.exportSummary');
-
-        // Verify single-form export copies response/export/:formId API URL
-        wrapper.find(PopularFormsTable).vm.$emit('export-form', {
-            item: { id: 'f1', formName: 'Course Evaluation' },
-            format: 'json'
-        });
-        await wrapper.vm.$nextTick();
-        expect(copySpy).toHaveBeenCalledWith(expect.stringContaining('response/export/f1'));
-    });
-
     test('SubmissionTrendChart uses localized analytics.allTime label and plots 2 series (completed + ongoing)', () => {
         const store = createMockStore();
         const wrapper = shallowMount(SubmissionTrendChart, {
@@ -322,92 +291,6 @@ describe('Analytics UI components & per-form architecture', () => {
         });
 
         expect(withoutRating.text()).not.toContain('analytics.ratingDistributionLabel');
-    });
-
-    test('PopularFormsTable renders metrics rows without eye icon, supports pagination/filters, and drills to AnalyticsFormReport', async () => {
-        const store = createMockStore();
-        const pushMock = jest.fn();
-        const formsList = Array.from({ length: 7 }, (_, i) => ({
-            id: `f-${i + 1}`,
-            formName: `Survey ${i + 1}`,
-            description: `Description ${i + 1}`,
-            access: ['org1'],
-            completedCount: i + 1,
-            targetCount: 10,
-            responseRate: (i + 1) * 10,
-            ongoingCount: 1,
-            completionRate: 75,
-            avgRating: 4.0,
-            ratingCount: 2,
-            status: 'Active',
-            isClosingSoon: i === 0,
-            daysLeft: i + 1,
-            scheduleRange: '01/05/2026 - 10/05/2026'
-        }));
-
-        const wrapper = mount(PopularFormsTable, {
-            localVue,
-            store,
-            propsData: {
-                timeRange: '7d',
-                formRows: formsList,
-                loading: false,
-                statusCounts: { all: 7, Active: 7, Pending: 0, Closed: 0, closingSoon: 1 }
-            },
-            stubs: baseStubs,
-            mocks: {
-                ...mocks,
-                $router: { push: pushMock }
-            }
-        });
-
-        expect(wrapper.findAll('.table-row-stub')).toHaveLength(5);
-        expect(wrapper.text()).toContain('analytics.viewReport');
-        expect(wrapper.find('[title="analytics.quickPreview"]').exists()).toBe(false);
-
-        await wrapper.find('.per-page-10').trigger('click');
-        expect(wrapper.findAll('.table-row-stub')).toHaveLength(7);
-
-        // Clicking View Report navigates directly to dedicated AnalyticsFormReport preserving timeRange query
-        await wrapper.find('.drill-btn').trigger('click');
-        expect(pushMock).toHaveBeenCalledWith({
-            name: 'AnalyticsFormReport',
-            params: { formId: 'f-7' },
-            query: { timeRange: '7d' }
-        });
-
-        // Quick filters do NOT contain closingSoon tab & export menu emits cleanly
-        expect(wrapper.find('.status-tab-closingSoon').exists()).toBe(false);
-        await wrapper.find('.icon-action-btn--export').trigger('click');
-        const exportMenuOpts = wrapper.findAll('.row-export-option');
-        expect(exportMenuOpts).toHaveLength(2);
-        await exportMenuOpts.at(0).trigger('click');
-        expect(wrapper.emitted('export-form')[0][0]).toEqual(expect.objectContaining({ format: 'xlsx' }));
-    });
-
-    test('Standalone fallback table hides unowned forms when current user is a Student without ownership', () => {
-        const studentStore = createMockStore({
-            currentUser: { _id: 'student99', role: { title: 'Student' } }
-        });
-        const table = mount(PopularFormsTable, {
-            localVue,
-            store: studentStore,
-            stubs: baseStubs,
-            mocks
-        });
-        expect(table.findAll('.table-row-stub')).toHaveLength(0);
-    });
-
-    test('PopularFormsTable renders TableLoading inside #loading slot when loading is true', () => {
-        const store = createMockStore();
-        const loadingWrapper = mount(PopularFormsTable, {
-            localVue,
-            store,
-            propsData: { loading: true },
-            stubs: baseStubs,
-            mocks
-        });
-        expect(loadingWrapper.find('.table-loading-stub').exists()).toBe(true);
     });
 
     test('FormReportDetails renders inline tabs for question stats (+N expand, clickable files) and respondent filter/search', async () => {
@@ -553,9 +436,9 @@ describe('Analytics UI components & per-form architecture', () => {
         expect(wrapperNoRating.find(SubmissionTrendChart).exists()).toBe(true);
         expect(wrapperNoRating.find(FormReportDetails).exists()).toBe(true);
 
-        // Back button navigates to /analytics list; legacy link to /manage/:_id?tab=response is removed and Copy API is supported
+        // Back button navigates to /manage list; legacy link to /manage/:_id?tab=response is removed and Copy API is supported
         await wrapperNoRating.find('.back-link-btn').trigger('click');
-        expect(pushMock).toHaveBeenCalledWith({ name: 'Analytics' });
+        expect(pushMock).toHaveBeenCalledWith({ name: 'ManageForms' });
         expect(wrapperNoRating.find('.btn-individual-responses').exists()).toBe(false);
         await wrapperNoRating.vm.copyFormApiUrl();
         expect(copySpy).toHaveBeenCalledWith(expect.stringContaining('response/export/f2'));

@@ -455,7 +455,7 @@ export default {
             }
         },
         goBackToList() {
-            this.$router.push({ name: 'Analytics' });
+            this.$router.push({ name: 'ManageForms' });
         },
         async exportFormExcel() {
             if (!this.resolvedFormId || this.isExporting) return;

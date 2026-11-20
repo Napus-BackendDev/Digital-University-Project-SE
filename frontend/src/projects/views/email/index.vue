@@ -1,37 +1,34 @@
 <template>
   <div class="email-studio-page">
     <Header
-      :title="tr('email.pageTitle', 'Email Templates')"
+      :title="activeWorkspaceTab === 'smtp' ? tr('email.tabSmtpAdmin', 'SMTP Settings (Admin)') : tr('email.pageTitle', 'Email Templates')"
       :description="tr('email.pageSubtitle', 'Customize notification email subjects and wording for your forms, and preview how they look before saving.')"
-    />
-
-    <!-- Admin View Switcher (Email Templates | SMTP Settings) -->
-    <div v-if="isAdminAccount" class="studio-mode-tabs mb-3" role="tablist" data-test="email-admin-tabs">
-      <button
-        type="button"
-        role="tab"
-        :aria-selected="activeWorkspaceTab === 'templates'"
-        class="studio-mode-tab"
-        :class="{ 'is-active': activeWorkspaceTab === 'templates' }"
-        data-test="email-tab-templates"
-        @click="activeWorkspaceTab = 'templates'"
-      >
-        <CIcon name="cil-envelope-open" size="sm" class="mr-2" />
-        <span>{{ tr('email.tabTemplates', 'Email Templates') }}</span>
-      </button>
-      <button
-        type="button"
-        role="tab"
-        :aria-selected="activeWorkspaceTab === 'smtp'"
-        class="studio-mode-tab"
-        :class="{ 'is-active': activeWorkspaceTab === 'smtp' }"
-        data-test="email-tab-smtp"
-        @click="activeWorkspaceTab = 'smtp'"
-      >
-        <CIcon name="cil-settings" size="sm" class="mr-2" />
-        <span>{{ tr('email.tabSmtpAdmin', 'SMTP Settings (Admin)') }}</span>
-      </button>
-    </div>
+    >
+      <template #actions>
+        <div v-if="isAdminAccount" class="d-flex align-items-center">
+          <button
+            v-if="activeWorkspaceTab === 'templates'"
+            type="button"
+            class="btn-hero-smtp"
+            data-test="email-btn-smtp"
+            @click="activeWorkspaceTab = 'smtp'"
+          >
+            <CIcon name="cil-settings" size="sm" class="mr-2" />
+            <span>{{ tr('email.tabSmtpAdmin', 'SMTP Settings (Admin)') }}</span>
+          </button>
+          <button
+            v-else
+            type="button"
+            class="btn-hero-smtp-back"
+            data-test="email-btn-back-templates"
+            @click="activeWorkspaceTab = 'templates'"
+          >
+            <CIcon name="cil-arrow-left" size="sm" class="mr-2" />
+            <span>{{ tr('email.tabTemplates', 'Email Templates') }}</span>
+          </button>
+        </div>
+      </template>
+    </Header>
 
     <!-- Admin SMTP Settings Workspace -->
     <SmtpSettingsPanel
@@ -946,38 +943,49 @@ export default {
   padding-bottom: 1.5rem;
 }
 
-.studio-mode-tabs {
+.btn-hero-smtp {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  justify-content: center;
+  background-color: #8c1515;
+  color: #ffffff;
+  border: 1px solid #8c1515;
   border-radius: 10px;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(140, 21, 21, 0.2);
+  transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.studio-mode-tab {
+.btn-hero-smtp:hover {
+  background-color: #721010;
+  border-color: #721010;
+  transform: translateY(-1px);
+}
+
+.btn-hero-smtp-back {
   display: inline-flex;
   align-items: center;
-  border: none;
-  background: transparent;
-  color: #475569;
-  font-size: 0.84rem;
+  justify-content: center;
+  background-color: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  padding: 0.45rem 0.9rem;
-  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.studio-mode-tab:hover {
-  color: #0f172a;
-}
-
-.studio-mode-tab.is-active {
-  background: #ffffff;
+.btn-hero-smtp-back:hover {
+  border-color: #8c1515;
   color: #8c1515;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  background-color: #fffafa;
 }
 
 .mfu-email-contact-strip {
